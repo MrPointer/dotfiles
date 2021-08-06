@@ -1,0 +1,9 @@
+# Fix VPN's MTU
+sudo vpn-up
+
+# dev-env
+source /home/timorg/dev-env/common/global-config.sh /home/timorg/dev-env/common/global-env-config.sh
+source /home/timorg/dev-env/devbox/devbox-functions.sh
+
+#source /home/timorg/dev-env/devbox/devbox-startup.sh
+

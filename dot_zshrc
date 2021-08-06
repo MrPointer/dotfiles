@@ -144,12 +144,10 @@ autoload -U +X bashcompinit && bashcompinit
 # Register pipx completions
 eval "$(register-python-argcomplete pipx)"
 
-# Fix VPN's MTU
-sudo vpn-up
+sedg_dir="$HOME/.sedg"
+sedg_zsh_dir="$sedg_dir/zsh"
 
-# dev-env
-source /home/timorg/dev-env/common/global-config.sh /home/timorg/dev-env/common/global-env-config.sh
-source /home/timorg/dev-env/devbox/devbox-functions.sh
-
-#source /home/timorg/dev-env/devbox/devbox-startup.sh
+if [ -d "$sedg_zsh_dir" ]; then
+    [ -f "${sedg_zsh_dir}/.zshrc" ] && source "${sedg_zsh_dir}/.zshrc}"
+fi
 
