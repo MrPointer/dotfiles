@@ -1,0 +1,21 @@
+[user]
+	name = Timor Gruber
+	email = {{ .email }}
+{{- if eq .chezmoi.hostname "TimorG-LT-IL" }}
+	signingkey = 90BBCCC1DDED66C4
+{{- else }}
+	signingkey = E1B39E9320C37806
+{{- end }}
+[pull]
+	rebase = true
+[core]
+	autocrlf = input
+[alias]
+	exe = update-index --chmod=+x
+	root = rev-parse --show-toplevel
+[http]
+	postBuffer = 524288000
+[commit]
+	gpgsign = true
+[gpg]
+	program = gpg
