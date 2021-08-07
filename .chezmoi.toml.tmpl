@@ -1,0 +1,10 @@
+{{ $email := "" }}
+{{- if eq .chezmoi.hostname "TimorG-LT-IL" }}
+{{ $email = "timor.gruber@solaredge.com" }}
+{{- else }}
+{{ $email = "timor.gruber@gmail.com" }}
+{{- end }}
+
+[data]
+    email = {{ $email | quote }}
+
