@@ -1,0 +1,5 @@
+README.md
+{{- if ne .chezmoi.hostname "TimorG-LT-IL" }}
+.sedg/ # only manage .sedg on work-laptop
+{{- end }}
+
