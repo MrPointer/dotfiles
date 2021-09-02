@@ -10,6 +10,20 @@ get_download_tool() {
     fi
 }
 
+package_manager_requires_root() {
+    case "$1" in
+    brew)
+        return 1
+        ;;
+    apt | dnf)
+        return 0
+        ;;
+    *)
+        return 0
+        ;;
+    esac
+}
+
 invoke_actual_installation() {
     # Create temporary executable file to hold the contents
     # of the downloaded implementation script
@@ -35,7 +49,12 @@ invoke_actual_installation() {
         return 2
     fi
 
-    if ! "$TMP_IMPL_INSTALL_PATH" "$@"; then
+    PACKAGE_MANAGER_IMPL_INSTALL_OPTIONS="--package-manager $PKG_MANAGER"
+    if package_manager_requires_root "$PKG_MANAGER"; then
+        PACKAGE_MANAGER_IMPL_INSTALL_OPTIONS="$PACKAGE_MANAGER_IMPL_INSTALL_OPTIONS --system-package-manager"
+    fi
+
+    if ! "$TMP_IMPL_INSTALL_PATH" "$PACKAGE_MANAGER_IMPL_INSTALL_OPTIONS" "$@"; then
         echo "Failed on actual installation of dotfiles, sorry..."
         return 3
     fi
@@ -102,10 +121,10 @@ get_system_type() {
 
 install_bash_with_package_manager() {
     case "$1" in
-    "apt")
+    apt)
         sudo apt install -y bash
         ;;
-    "dnf")
+    dnf)
         sudo dnf install -y bash
         ;;
     *) ;;
@@ -137,14 +156,14 @@ detect_system() {
     SYSTEM_TYPE="$(get_system_type)"
 
     case "$SYSTEM_TYPE" in
-    "linux")
+    linux)
         DISTRO_NAME="$(get_linux_distro_name)"
         if [ -z "$DISTRO_NAME" ]; then
             echo "Failed detecting linux distribution, or distro not supported: $DISTRO_NAME"
             return 1
         fi
         ;;
-    "mac")
+    mac)
         DISTRO_NAME="mac"
         ;;
     *)

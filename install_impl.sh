@@ -14,6 +14,8 @@ Example: $PROGRAM_NAME -h
 Options:
   -h, --help                Show this message and exit
   -v, --verbose             Enable verbose output
+  --package-manager         Package manager to use for installing prerequisites
+  --system-package-manager  Treat the given package manager as a system package manager, i.e. run it as root
   --work-environment        Treat this installation as a work environment
   --work-email=[email]      Use given email address as work's email address
   --no-python               Don't install python
@@ -107,8 +109,26 @@ function apply_dotfiles() {
     return 0
 }
 
-    success "Successfully applied dotfiles"
-    return 0
+function install_git() {
+    if hash git 2>/dev/null; then
+        return 0
+    fi
+
+    [ "$VERBOSE" = true ] && info "Installing git"
+
+    if [ -z "$PACKAGE_MANAGER" ]; then
+        error "Package manager not set, something went wrong. Please install git manually."
+        return 1
+    fi
+
+    local install_git_cmd=()
+    if [ "$SYSTEM_PACKAGE_MANAGER" = true ]; then
+        install_git_cmd=(sudo)
+    fi
+
+    install_git_cmd+=("$PACKAGE_MANAGER" install git)
+
+    eval "${install_git_cmd[@]}"
 }
 
 ###
@@ -186,6 +206,11 @@ function install_dotfiles() {
     fi
     [ "$VERBOSE" = true ] && success "Successfully prepared dotfiles environment"
 
+    if ! install_git; then
+        error "Failed installing git"
+    fi
+    [ "$VERBOSE" = true ] && success "Successfully installed git"
+
     if ! apply_dotfiles; then
         error "Failed applying dotfiles"
         return 3
@@ -252,8 +277,9 @@ function parse_arguments() {
 
     local short_options=hv
     local long_options=help,verbose
+    long_options+=,package-manager:,system-package-manager
     long_options+=,no-python,no-gpg,no-brew,prefer-brew
-    long_options+=,work-environment,work-email
+    long_options+=,work-environment,work-email:
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -278,6 +304,14 @@ function parse_arguments() {
         -v | --verbose)
             VERBOSE=true
             shift
+            ;;
+        --package-manager)
+            PACKAGE_MANAGER="$2"
+            shift 2
+            ;;
+        --system-package-manager)
+            SYSTEM_PACKAGE_MANAGER=true
+            shift 2
             ;;
         --work-environment)
             WORK_ENVIRONMENT=true
@@ -315,6 +349,11 @@ function parse_arguments() {
     done
 
     return 0
+}
+
+function _set_package_management_defaults() {
+    PACKAGE_MANAGER=""
+    SYSTEM_PACKAGE_MANAGER=false
 }
 
 function _set_installed_tools_defaults() {
@@ -365,6 +404,7 @@ function set_defaults() {
     _set_personal_info_defaults
     _set_dotfiles_manager_defaults
     _set_installed_tools_defaults
+    _set_package_management_defaults
 }
 
 ###
