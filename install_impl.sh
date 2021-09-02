@@ -126,6 +126,8 @@ function prepare_dotfiles_environment() {
 
     {
         printf "%s\n" "[data.personal]"
+        printf "%s\n" "work_env = $WORK_ENVIRONMENT"
+        printf "%s\n" "full_name = $FULL_NAME"
         printf "%s\n" "email = $ACTIVE_EMAIL"
 
         printf "%s\n" "[data.installed]"
@@ -139,7 +141,7 @@ function prepare_dotfiles_environment() {
 
     local text_inlined_tools
     text_inlined_tools="$(join_by , "${PACKAGE_MANAGER_INSTALLED_TOOLS[@]}")"
-    printf "%s\n" "system_tools = ${text_inlined_tools}" >> "$ENVIRONMENT_TEMPLATE_FILE_PATH"
+    printf "%s\n" "system_tools = ${text_inlined_tools}" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
 ###
@@ -330,10 +332,10 @@ function _set_dotfiles_manager_defaults() {
 
 function _set_personal_info_defaults() {
     GITHUB_USERNAME="MrPointer"
+    FULL_NAME="Timor Gruber"
     PERSONAL_EMAIL="timor.gruber@gmail.com"
     WORK_EMAIL="timor.gruber@solaredge.com"
 }
-
 
 ###
 # Set default color codes for colorful prints.

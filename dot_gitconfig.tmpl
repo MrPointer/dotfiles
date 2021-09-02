@@ -1,7 +1,7 @@
 [user]
-	name = Timor Gruber
-	email = {{ .email }}
-{{- if eq .chezmoi.hostname "TimorG-LT-IL" }}
+	name = {{ .personal.full_name }}
+	email = {{ .personal.email }}
+{{- if .personal.work_env }}
 	signingkey = 90BBCCC1DDED66C4
 {{- else }}
 	signingkey = E1B39E9320C37806
