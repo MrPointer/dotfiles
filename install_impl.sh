@@ -56,14 +56,23 @@ function join_by {
 function _reinstall_chezmoi_as_package() {
     [ "$INSTALL_BREW" = false ] && return 0
 
-    info "Installing chezmoi using brew"
-    if ! brew install chezmoi; then
-        error "Failed installing chezmoi using brew, will keep existing binary at $CHEZMOI_BINARY_PATH"
-        return 1
-    fi
-    success "Successfully installed chezmoi as a brew package"
+    local brew_chezmoi_installed=false
+    info "Installing $DOTFILES_MANAGER using brew"
 
-    info "Removing standalone chezmoi binary"
+    if brew list | grep -q "$DOTFILES_MANAGER"; then
+        info "$DOTFILES_MANAGER is already installed as a brew package, skipping"
+        brew_chezmoi_installed=true
+    fi
+
+    if [ "$brew_chezmoi_installed" = false ]; then
+        if ! brew install "$DOTFILES_MANAGER"; then
+            error "Failed installing $DOTFILES_MANAGER using brew, will keep existing binary at $CHEZMOI_BINARY_PATH"
+            return 1
+        fi
+        success "Successfully installed $DOTFILES_MANAGER as a brew package"
+    fi
+
+    info "Removing standalone $DOTFILES_MANAGER binary"
     if ! rm "$CHEZMOI_BINARY_PATH"; then
         warning "Failed removing standalone chezmoi binary (downloaded at first) at $CHEZMOI_BINARY_PATH"
     else
@@ -139,6 +148,11 @@ function prepare_dotfiles_environment() {
 ###
 function install_dotfiles_manager() {
     info "Installing dotfiles manager ($DOTFILES_MANAGER)"
+
+    if hash "$DOTFILES_MANAGER" 2>/dev/null; then
+        info "$DOTFILES_MANAGER already installed, skipping"
+        return 0
+    fi
 
     local installation_failed=false
 
