@@ -297,12 +297,6 @@ function parse_arguments() {
     return 0
 }
 
-function _set_personal_info_defaults() {
-    GITHUB_USERNAME="MrPointer"
-    PERSONAL_EMAIL="timor.gruber@gmail.com"
-    WORK_EMAIL="timor.gruber@solaredge.com"
-}
-
 function _set_installed_tools_defaults() {
     INSTALL_GPG=true
     INSTALL_PYTHON=true
@@ -319,6 +313,13 @@ function _set_dotfiles_manager_defaults() {
     )
     ENVIRONMENT_TEMPLATE_FILE_PATH="$HOME/.config/chezmoi/chezmoi.toml"
 }
+
+function _set_personal_info_defaults() {
+    GITHUB_USERNAME="MrPointer"
+    PERSONAL_EMAIL="timor.gruber@gmail.com"
+    WORK_EMAIL="timor.gruber@solaredge.com"
+}
+
 
 ###
 # Set default color codes for colorful prints.
@@ -339,9 +340,9 @@ function set_defaults() {
     WORK_ENVIRONMENT=false
 
     _set_color_defaults
+    _set_personal_info_defaults
     _set_dotfiles_manager_defaults
     _set_installed_tools_defaults
-    _set_personal_info_defaults
 }
 
 ###
