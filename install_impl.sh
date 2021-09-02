@@ -40,6 +40,14 @@ function success() {
     cecho "$GREEN_COLOR" "$@"
 }
 
+###
+# Join strings, just as in Python's str.join().
+# Arguments:
+#       $1 - String to join with (e.g. ',')
+#       $2..$N - Variable number of strings to join
+# Output (stdout):
+#       Single string representing the joined string
+###
 function join_by {
     local d=${1-} f=${2-}
     if shift 2; then printf %s "$f" "${@/#/$d}"; fi
@@ -65,6 +73,9 @@ function _reinstall_chezmoi_as_package() {
     return 0
 }
 
+###
+# Finalize installation by executing post-install commands.
+###
 function post_install() {
     info "Executing post-install commands (finalization)"
 
@@ -76,6 +87,9 @@ function post_install() {
     return 0
 }
 
+###
+# Apply dotfiles, optionally by using a dotfiles manager.
+###
 function apply_dotfiles() {
     info "Applying dotfiles"
 
@@ -88,6 +102,10 @@ function apply_dotfiles() {
     return 0
 }
 
+###
+# Prepare dotfiles environment before applying dotfiles.
+# This might be a useful step for some dotfiles managers.
+###
 function prepare_dotfiles_environment() {
     info "Preparing dotfiles environment"
 
@@ -138,6 +156,9 @@ function install_dotfiles_manager() {
     return 0
 }
 
+###
+# Install dotfiles. This is the main "driver" function.
+###
 function install_dotfiles() {
     if ! install_dotfiles_manager; then
         error "Failed installing dotfiles manager"
@@ -162,22 +183,32 @@ function install_dotfiles() {
     return 0
 }
 
+###
+# Checks which download tool is locally available from a preset list
+# and outputs the first that has been found.
+###
 function get_download_tool() {
-    if hash curl 2>/dev/null; then
-        echo "curl"
-    elif hash wget 2>/dev/null; then
-        echo "wget"
-    else
-        echo ""
-    fi
+    local optional_download_tools=(
+        curl
+        wget
+    )
+
+    for download_tool in "${optional_download_tools[@]}"; do
+        if hash "${download_tool}" 2>/dev/null; then
+            echo "${download_tool}"
+            return 0
+        fi
+    done
+
+    echo ""
+    return 1
 }
 
 ###
 # Set global variables
 ###
 function set_globals() {
-    DOWNLOAD_TOOL="$(get_download_tool)"
-    if [ -z "$DOWNLOAD_TOOL" ]; then
+    if ! DOWNLOAD_TOOL="$(get_download_tool)"; then
         error "Couldn't determine download tool, aborting"
         return 1
     fi
