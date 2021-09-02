@@ -57,26 +57,26 @@ function _reinstall_chezmoi_as_package() {
     [ "$INSTALL_BREW" = false ] && return 0
 
     local brew_chezmoi_installed=false
-    info "Installing $DOTFILES_MANAGER using brew"
 
     if brew list | grep -q "$DOTFILES_MANAGER"; then
-        info "$DOTFILES_MANAGER is already installed as a brew package, skipping"
         brew_chezmoi_installed=true
     fi
 
     if [ "$brew_chezmoi_installed" = false ]; then
+        [ "$VERBOSE" = true ] && info "Installing $DOTFILES_MANAGER using brew"
+
         if ! brew install "$DOTFILES_MANAGER"; then
             error "Failed installing $DOTFILES_MANAGER using brew, will keep existing binary at $CHEZMOI_BINARY_PATH"
             return 1
         fi
-        success "Successfully installed $DOTFILES_MANAGER as a brew package"
+        [ "$VERBOSE" = true ] && success "Successfully installed $DOTFILES_MANAGER as a brew package"
     fi
 
-    info "Removing standalone $DOTFILES_MANAGER binary"
+    [ "$VERBOSE" = true ] && info "Removing standalone $DOTFILES_MANAGER binary"
     if ! rm "$CHEZMOI_BINARY_PATH"; then
         warning "Failed removing standalone chezmoi binary (downloaded at first) at $CHEZMOI_BINARY_PATH"
     else
-        success "Successfully removed standalone chezmoi binary"
+        [ "$VERBOSE" = true ] && success "Successfully removed standalone chezmoi binary"
     fi
 
     return 0
@@ -86,13 +86,12 @@ function _reinstall_chezmoi_as_package() {
 # Finalize installation by executing post-install commands.
 ###
 function post_install() {
-    info "Executing post-install commands (finalization)"
+    [ "$VERBOSE" = true ] && info "Executing post-install commands (finalization)"
 
     if ! _reinstall_chezmoi_as_package; then
         error "Failed reinstalling chezmoi as an updatable package"
         return 1
     fi
-
     return 0
 }
 
@@ -100,12 +99,13 @@ function post_install() {
 # Apply dotfiles, optionally by using a dotfiles manager.
 ###
 function apply_dotfiles() {
-    info "Applying dotfiles"
+    [ "$VERBOSE" = true ] && info "Applying dotfiles"
 
     if ! eval "${APPLY_DOTFILES_CMD[@]}"; then
-        error "Failed applying dotfiles"
         return 1
     fi
+    return 0
+}
 
     success "Successfully applied dotfiles"
     return 0
@@ -150,7 +150,7 @@ function prepare_dotfiles_environment() {
 # To avoid any errors and complicated checks, just install the latest binary at this stage.
 ###
 function install_dotfiles_manager() {
-    info "Installing dotfiles manager ($DOTFILES_MANAGER)"
+    [ "$VERBOSE" = true ] && info "Installing dotfiles manager ($DOTFILES_MANAGER)"
 
     if hash "$DOTFILES_MANAGER" 2>/dev/null; then
         info "$DOTFILES_MANAGER already installed, skipping"
@@ -166,10 +166,8 @@ function install_dotfiles_manager() {
     fi
 
     if [ "$installation_failed" = true ]; then
-        error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
         return 1
     fi
-
     return 0
 }
 
@@ -178,7 +176,7 @@ function install_dotfiles_manager() {
 ###
 function install_dotfiles() {
     if ! install_dotfiles_manager; then
-        error "Failed installing dotfiles manager"
+        error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
         return 1
     fi
 
@@ -186,16 +184,19 @@ function install_dotfiles() {
         error "Failed preparing dotfiles environment"
         return 2
     fi
+    [ "$VERBOSE" = true ] && success "Successfully prepared dotfiles environment"
 
     if ! apply_dotfiles; then
         error "Failed applying dotfiles"
         return 3
     fi
+    [ "$VERBOSE" = true ] && success "Successfully applied dotfiles"
 
     if ! post_install; then
-        error "Failed executing post-install stuff (finalization)"
+        error "Failed finalizing installation"
         return 4
     fi
+    [ "$VERBOSE" = true ] && success "Successfully finalized installation"
 
     return 0
 }
