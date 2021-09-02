@@ -129,6 +129,7 @@ function prepare_dotfiles_environment() {
         printf "%s\n" "work_env = $WORK_ENVIRONMENT"
         printf "%s\n" "full_name = $FULL_NAME"
         printf "%s\n" "email = $ACTIVE_EMAIL"
+        printf "%s\n" "signing_key = $ACTIVE_GPG_SIGNING_KEY"
 
         printf "%s\n" "[data.installed]"
         printf "%s\n" "python = $INSTALL_PYTHON"
@@ -231,8 +232,10 @@ function set_globals() {
 
     if [ "$WORK_ENVIRONMENT" = true ]; then
         ACTIVE_EMAIL="$WORK_EMAIL"
+        ACTIVE_GPG_SIGNING_KEY="$WORK_GPG_SIGNING_KEY"
     else
         ACTIVE_EMAIL="$PERSONAL_EMAIL"
+        ACTIVE_GPG_SIGNING_KEY="$PERSONAL_GPG_SIGNING_KEY"
     fi
 }
 
@@ -334,7 +337,9 @@ function _set_personal_info_defaults() {
     GITHUB_USERNAME="MrPointer"
     FULL_NAME="Timor Gruber"
     PERSONAL_EMAIL="timor.gruber@gmail.com"
+    PERSONAL_GPG_SIGNING_KEY=E1B39E9320C37806
     WORK_EMAIL="timor.gruber@solaredge.com"
+    WORK_GPG_SIGNING_KEY=90BBCCC1DDED66C4
 }
 
 ###

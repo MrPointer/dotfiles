@@ -1,11 +1,7 @@
 [user]
 	name = {{ .personal.full_name }}
 	email = {{ .personal.email }}
-{{- if .personal.work_env }}
-	signingkey = 90BBCCC1DDED66C4
-{{- else }}
-	signingkey = E1B39E9320C37806
-{{- end }}
+	signingkey = {{ .personal.signing_key }}
 [pull]
 	rebase = true
 [core]
