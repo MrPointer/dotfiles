@@ -144,13 +144,12 @@ autoload -U +X bashcompinit && bashcompinit
 # Register pipx completions
 eval "$(register-python-argcomplete pipx)"
 
-{{- if ne .chezmoi.hostname "TimorG-LT-IL" }}
+{{- if .personal.work_env -}}
 
 sedg_dir="$HOME/.sedg"
 sedg_zsh_dir="$sedg_dir/zsh"
-
 if [ -d "$sedg_zsh_dir" ]; then
-    [ -f "${sedg_zsh_dir}/.zshrc" ] && source "${sedg_zsh_dir}/.zshrc"
+	[ -f "${sedg_zsh_dir}/.zshrc" ] && source "${sedg_zsh_dir}/.zshrc"
 fi
 
-{{- end }}
+{{- end -}}
