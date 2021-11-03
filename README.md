@@ -26,7 +26,6 @@ The following options can be passed to the command above to customize the instal
 
 | Option                     | Description                                                                                    |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
-| `-h` or `--help`           | Show help message and exit                                                                     |
 | `-v` or `--verbose`        | Enable verbose output                                                                          |
 | `--package-manager`        | Package manager to use for installing prerequisites                                            |
 | `--system-package-manager` | Treat the given package manager as a system package manager, i.e. run it as root               |
@@ -45,7 +44,9 @@ I'm using a dedicated dotfiles manager, [chezmoi][chezmoi-url], which provides t
 per-machine differences, and a lot more.  
 Other managers might be considered in the future, especially if [chezmoi][chezmoi-url] becomes stale.  
 
-### Installation Bootstrap
+### Installation Process
+
+#### Bootstrap
 
 To create a single-click installation experience, I'm bootstrapping the process
 by making sure everything is available, and only then proceed with the actual installation.  
@@ -57,7 +58,7 @@ The installation utilizes the guessed system package manager, e.g. `apt` for `De
 If the installation fails for some reason, then the user is prompted to manually install `bash`.  
 After `bash` is properly installed, it's used to execute the actual installation script, written in `bash`.  
 
-#### Installation Process
+#### Actual Installation
 
 The actual installation script installs the dotfiles manager in some way, preferably standalone,
 creates a config file for it, prompting the user for some required info such as name and email,
