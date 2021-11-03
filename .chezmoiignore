@@ -1,5 +1,9 @@
 README.md
-{{- if ne .chezmoi.hostname "TimorG-LT-IL" }}
+install.sh
+install_impl.sh
+*.code-workspace
+.vscode/
+
+{{- if .personal.work_env }}
 .sedg/ # only manage .sedg on work-laptop
 {{- end }}
-
