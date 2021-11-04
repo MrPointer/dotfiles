@@ -12,17 +12,16 @@ Implementation of the dotfiles installation, executed by the plain old shell wra
 Example: $PROGRAM_NAME -h
 
 Options:
-  -h, --help                Show this message and exit
-  -v, --verbose             Enable verbose output
-  --package-manager         Package manager to use for installing prerequisites
-  --system-package-manager  Treat the given package manager as a system package manager, i.e. run it as root
-  --work-environment        Treat this installation as a work environment
-  --work-email=[email]      Use given email address as work's email address
-  --shell=[shell]           Install given shell if required and set it as user's default. Defaults to zsh.
-  --no-python               Don't install python
-  --no-gpg                  Don't install gpg
-  --no-brew                 Don't install brew (Homebrew)
-  --prefer-brew             Prefer installing tools with brew rather than system's package manager (Doesn't apply for Mac)
+  -h, --help                        Show this message and exit
+  -v, --verbose                     Enable verbose output
+  --package-manager=[manager]       Package manager to use for installing prerequisites
+  --work-environment                Treat this installation as a work environment
+  --work-email=[email]              Use given email address as work's email address
+  --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh.
+  --no-python                       Don't install python
+  --no-gpg                          Don't install gpg
+  --no-brew                         Don't install brew (Homebrew)
+  --prefer-brew                     Prefer installing tools with brew rather than system's package manager (Doesn't apply for Mac)
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
 }
@@ -57,6 +56,18 @@ function join_by {
 }
 
 ###
+# Checks whether the current user is root.
+# Returns:
+#       0 if the user is root, 1 otherwise.
+###
+function root_user {
+    local current_uid
+    current_uid=$(id -u)
+
+    ((current_uid == 0 ))
+}
+
+###
 # Install given package(s) using either system's package manager or homebrew, depending on the passed options.
 # Arguments:
 #       $1..$N - Variable number of packages to install
@@ -72,7 +83,7 @@ function install_package {
     fi
 
     local install_package_cmd=()
-    if [ "$SYSTEM_PACKAGE_MANAGER" = true ]; then
+    if [ "$ROOT_USER" = false ]; then
         install_package_cmd=(sudo)
     fi
 
@@ -310,6 +321,10 @@ function set_globals {
         return 1
     fi
 
+    if root_user; then
+        ROOT_USER=true
+    fi
+
     if [ "$WORK_ENVIRONMENT" = true ]; then
         ACTIVE_EMAIL="$WORK_EMAIL"
         ACTIVE_GPG_SIGNING_KEY="$WORK_GPG_SIGNING_KEY"
@@ -331,7 +346,7 @@ function parse_arguments {
 
     local short_options=hv
     local long_options=help,verbose
-    long_options+=,package-manager:,system-package-manager
+    long_options+=,package-manager:
     long_options+=,shell:,no-python,no-gpg,no-brew,prefer-brew
     long_options+=,work-environment,work-email:
 
@@ -361,10 +376,6 @@ function parse_arguments {
             ;;
         --package-manager)
             PACKAGE_MANAGER="${2:-}"
-            shift 2
-            ;;
-        --system-package-manager)
-            SYSTEM_PACKAGE_MANAGER=true
             shift 2
             ;;
         --work-environment)
@@ -411,7 +422,6 @@ function parse_arguments {
 
 function _set_package_management_defaults {
     PACKAGE_MANAGER=""
-    SYSTEM_PACKAGE_MANAGER=false
 }
 
 function _set_installed_tools_defaults {
@@ -458,6 +468,7 @@ function _set_color_defaults {
 function set_defaults {
     VERBOSE=false
     WORK_ENVIRONMENT=false
+    ROOT_USER=false
 
     _set_color_defaults
     _set_personal_info_defaults
