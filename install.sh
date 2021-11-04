@@ -35,9 +35,7 @@ invoke_actual_installation() {
         return 2
     fi
 
-    PACKAGE_MANAGER_IMPL_INSTALL_OPTIONS="--package-manager $PKG_MANAGER"
-
-    if ! "$TMP_IMPL_INSTALL_PATH" "$PACKAGE_MANAGER_IMPL_INSTALL_OPTIONS" "$@"; then
+    if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" "$@"; then
         echo "Failed on actual installation of dotfiles, sorry..."
         return 3
     fi
