@@ -31,10 +31,14 @@ The following options can be passed to the command above to customize the instal
 | `--system-package-manager` | Treat the given package manager as a system package manager, i.e. run it as root               |
 | `--work-environment`       | Treat this installation as a work environment                                                  |
 | `--work-email=[email]`     | Use given email address as work's email address                                                |
+| `--shell=[shell]`          | Install given shell if required and set it as user's default. Defaults to zsh.                 |
 | `--no-python`              | Don't install python                                                                           |
 | `--no-gpg`                 | Don't install gpg                                                                              |
-| `--no-brew`                | Don't install brew (Linuxbrew/Homebrew)                                                        |
-| `--prefer-brew`            | Prefer installing "system" tools with brew rather than package manager (Doesn't apply for Mac) |
+| `--no-brew`                | Don't install brew (Homebrew)                                                                  |
+| `--prefer-brew`            | Prefer installing tools with brew rather than system's package manager (Doesn't apply for Mac) |
+
+To add options to the install command above, append it after the last closing parentheses `)`, like so:
+`bash -c "$(curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install.sh) --verbose"`
 
 ## Overview
 

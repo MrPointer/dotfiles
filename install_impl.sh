@@ -21,7 +21,7 @@ Options:
   --shell=[shell]           Install given shell if required and set it as user's default. Defaults to zsh.
   --no-python               Don't install python
   --no-gpg                  Don't install gpg
-  --no-brew                 Don't install brew (Linuxbrew/Homebrew)
+  --no-brew                 Don't install brew (Homebrew)
   --prefer-brew             Prefer installing tools with brew rather than system's package manager (Doesn't apply for Mac)
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
