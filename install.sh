@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 get_download_tool() {
     if hash curl 2>/dev/null; then
