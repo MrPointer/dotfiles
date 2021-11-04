@@ -18,10 +18,11 @@ Options:
   --system-package-manager  Treat the given package manager as a system package manager, i.e. run it as root
   --work-environment        Treat this installation as a work environment
   --work-email=[email]      Use given email address as work's email address
+  --shell=[shell]           Install given shell if required and set it as user's default. Defaults to zsh.
   --no-python               Don't install python
   --no-gpg                  Don't install gpg
   --no-brew                 Don't install brew (Linuxbrew/Homebrew)
-  --prefer-brew             Prefer installing "system" tools with brew rather than package manager (Doesn't apply for Mac)
+  --prefer-brew             Prefer installing tools with brew rather than system's package manager (Doesn't apply for Mac)
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
 }
@@ -50,9 +51,34 @@ function success() {
 # Output (stdout):
 #       Single string representing the joined string
 ###
-function join_by {
+function join_by() {
     local d=${1-} f=${2-}
     if shift 2; then printf %s "$f" "${@/#/$d}"; fi
+}
+
+###
+# Install given package(s) using either system's package manager or homebrew, depending on the passed options.
+# Arguments:
+#       $1..$N - Variable number of packages to install
+# Returns:
+#       Install tool's result, zero on success.
+###
+function install_package() {
+    local packages=("$@")
+
+    if [ -z "$PACKAGE_MANAGER" ]; then
+        error "Package manager not set, something went wrong. Please install packages manually."
+        return 1
+    fi
+
+    local install_package_cmd=()
+    if [ "$SYSTEM_PACKAGE_MANAGER" = true ]; then
+        install_package_cmd=(sudo)
+    fi
+
+    install_package_cmd+=("$PACKAGE_MANAGER" install "${packages[@]}")
+
+    eval "${install_package_cmd[@]}"
 }
 
 function _reinstall_chezmoi_as_package() {
@@ -109,28 +135,6 @@ function apply_dotfiles() {
     return 0
 }
 
-function install_git() {
-    if hash git 2>/dev/null; then
-        return 0
-    fi
-
-    [ "$VERBOSE" = true ] && info "Installing git"
-
-    if [ -z "$PACKAGE_MANAGER" ]; then
-        error "Package manager not set, something went wrong. Please install git manually."
-        return 1
-    fi
-
-    local install_git_cmd=()
-    if [ "$SYSTEM_PACKAGE_MANAGER" = true ]; then
-        install_git_cmd=(sudo)
-    fi
-
-    install_git_cmd+=("$PACKAGE_MANAGER" install git)
-
-    eval "${install_git_cmd[@]}"
-}
-
 ###
 # Prepare dotfiles environment before applying dotfiles.
 # This might be a useful step for some dotfiles managers.
@@ -151,6 +155,9 @@ function prepare_dotfiles_environment() {
         printf "%s\n" "email = $ACTIVE_EMAIL"
         printf "%s\n" "signing_key = $ACTIVE_GPG_SIGNING_KEY"
 
+        printf "%s\n" "[data.system]"
+        printf "%s\n" "shell = $SHELL_TO_INSTALL"
+
         printf "%s\n" "[data.installed]"
         printf "%s\n" "python = $INSTALL_PYTHON"
         printf "%s\n" "gpg = $INSTALL_GPG"
@@ -163,6 +170,48 @@ function prepare_dotfiles_environment() {
     local text_inlined_tools
     text_inlined_tools="$(join_by , "${PACKAGE_MANAGER_INSTALLED_TOOLS[@]}")"
     printf "%s\n" "system_tools = ${text_inlined_tools}" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
+}
+
+###
+# Install selected shell using either system's package manager or homebrew, depending on the passed options.
+# If selected shell is already installed, do nothing.
+# Otherwise, also configure it as user's default shell.
+###
+function install_shell() {
+    if hash "$SHELL_TO_INSTALL" &> /dev/null; then
+        return 0
+    fi
+
+    [ "$VERBOSE" = true ] && echo "Installing shell"
+
+    # First install the shell
+    if ! install_package "$SHELL_TO_INSTALL"; then
+        return 1
+    fi
+
+    # Find installed shell's location
+    local shell_path
+    shell_path="$(which "$SHELL_TO_INSTALL")"
+
+    local current_user_name
+    current_user_name="$(id -u -n)"
+
+    # Then configure it as user's default shell
+    sudo chsh -s "$shell_path" "$current_user_name"
+}
+
+###
+# Install git using either system's package manager or homebrew, depending on the passed options.
+# If git is already installed, do nothing.
+###
+function install_git() {
+    if hash git 2>/dev/null; then
+        return 0
+    fi
+
+    [ "$VERBOSE" = true ] && info "Installing git"
+
+    install_package git
 }
 
 ###
@@ -200,16 +249,21 @@ function install_dotfiles() {
         return 1
     fi
 
+    if ! install_git; then
+        error "Failed installing git"
+    fi
+    [ "$VERBOSE" = true ] && success "Successfully installed git"
+
+    if ! install_shell; then
+        error "Failed installing shell"
+    fi
+    [ "$VERBOSE" = true ] && success "Successfully installed shell"
+
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
         return 2
     fi
     [ "$VERBOSE" = true ] && success "Successfully prepared dotfiles environment"
-
-    if ! install_git; then
-        error "Failed installing git"
-    fi
-    [ "$VERBOSE" = true ] && success "Successfully installed git"
 
     if ! apply_dotfiles; then
         error "Failed applying dotfiles"
@@ -278,7 +332,7 @@ function parse_arguments() {
     local short_options=hv
     local long_options=help,verbose
     long_options+=,package-manager:,system-package-manager
-    long_options+=,no-python,no-gpg,no-brew,prefer-brew
+    long_options+=,shell:,no-python,no-gpg,no-brew,prefer-brew
     long_options+=,work-environment,work-email:
 
     # -temporarily store output to be able to check for errors
@@ -306,7 +360,7 @@ function parse_arguments() {
             shift
             ;;
         --package-manager)
-            PACKAGE_MANAGER="$2"
+            PACKAGE_MANAGER="${2:-}"
             shift 2
             ;;
         --system-package-manager)
@@ -318,7 +372,11 @@ function parse_arguments() {
             shift
             ;;
         --work-email)
-            WORK_EMAIL="$2"
+            WORK_EMAIL="${2:-}"
+            shift 2
+            ;;
+        --shell)
+            SHELL_TO_INSTALL="${2:-}"
             shift 2
             ;;
         --no-python)
@@ -357,6 +415,7 @@ function _set_package_management_defaults() {
 }
 
 function _set_installed_tools_defaults() {
+    SHELL_TO_INSTALL=zsh
     INSTALL_GPG=true
     INSTALL_PYTHON=true
     INSTALL_BREW=true
