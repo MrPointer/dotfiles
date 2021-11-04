@@ -3,7 +3,7 @@
 # saner programming env: these switches turn some bugs into errors
 set -o pipefail -o nounset
 
-function show_usage() {
+function show_usage {
     cat <<DOTFILES_INSTALL_IMPL_USAGE
 Usage: $PROGRAM_NAME [OPTION]... 
 
@@ -27,19 +27,19 @@ Options:
 DOTFILES_INSTALL_IMPL_USAGE
 }
 
-function cecho() {
+function cecho {
     printf "${1}%s${NEUTRAL_COLOR}\n" "${@:2}"
 }
-function warning() {
+function warning {
     cecho "$YELLOW_COLOR" "$@"
 }
-function error() {
+function error {
     cecho "$RED_COLOR" "$@" >&2
 }
-function info() {
+function info {
     cecho "$BLUE_COLOR" "$@"
 }
-function success() {
+function success {
     cecho "$GREEN_COLOR" "$@"
 }
 
@@ -51,7 +51,7 @@ function success() {
 # Output (stdout):
 #       Single string representing the joined string
 ###
-function join_by() {
+function join_by {
     local d=${1-} f=${2-}
     if shift 2; then printf %s "$f" "${@/#/$d}"; fi
 }
@@ -63,7 +63,7 @@ function join_by() {
 # Returns:
 #       Install tool's result, zero on success.
 ###
-function install_package() {
+function install_package {
     local packages=("$@")
 
     if [ -z "$PACKAGE_MANAGER" ]; then
@@ -81,7 +81,7 @@ function install_package() {
     eval "${install_package_cmd[@]}"
 }
 
-function _reinstall_chezmoi_as_package() {
+function _reinstall_chezmoi_as_package {
     [ "$INSTALL_BREW" = false ] && return 0
 
     local brew_chezmoi_installed=false
@@ -113,7 +113,7 @@ function _reinstall_chezmoi_as_package() {
 ###
 # Finalize installation by executing post-install commands.
 ###
-function post_install() {
+function post_install {
     [ "$VERBOSE" = true ] && info "Executing post-install commands (finalization)"
 
     if ! _reinstall_chezmoi_as_package; then
@@ -126,7 +126,7 @@ function post_install() {
 ###
 # Apply dotfiles, optionally by using a dotfiles manager.
 ###
-function apply_dotfiles() {
+function apply_dotfiles {
     [ "$VERBOSE" = true ] && info "Applying dotfiles"
 
     if ! eval "${APPLY_DOTFILES_CMD[@]}"; then
@@ -139,7 +139,7 @@ function apply_dotfiles() {
 # Prepare dotfiles environment before applying dotfiles.
 # This might be a useful step for some dotfiles managers.
 ###
-function prepare_dotfiles_environment() {
+function prepare_dotfiles_environment {
     info "Preparing dotfiles environment"
 
     # The first print zeroes the template file if it already has content
@@ -177,7 +177,7 @@ function prepare_dotfiles_environment() {
 # If selected shell is already installed, do nothing.
 # Otherwise, also configure it as user's default shell.
 ###
-function install_shell() {
+function install_shell {
     if hash "$SHELL_TO_INSTALL" &> /dev/null; then
         return 0
     fi
@@ -204,7 +204,7 @@ function install_shell() {
 # Install git using either system's package manager or homebrew, depending on the passed options.
 # If git is already installed, do nothing.
 ###
-function install_git() {
+function install_git {
     if hash git 2>/dev/null; then
         return 0
     fi
@@ -218,7 +218,7 @@ function install_git() {
 # Install chezmoi, our dotfiles manager.
 # To avoid any errors and complicated checks, just install the latest binary at this stage.
 ###
-function install_dotfiles_manager() {
+function install_dotfiles_manager {
     [ "$VERBOSE" = true ] && info "Installing dotfiles manager ($DOTFILES_MANAGER)"
 
     if hash "$DOTFILES_MANAGER" 2>/dev/null; then
@@ -243,7 +243,7 @@ function install_dotfiles_manager() {
 ###
 # Install dotfiles. This is the main "driver" function.
 ###
-function install_dotfiles() {
+function install_dotfiles {
     if ! install_dotfiles_manager; then
         error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
         return 1
@@ -284,7 +284,7 @@ function install_dotfiles() {
 # Checks which download tool is locally available from a preset list
 # and outputs the first that has been found.
 ###
-function get_download_tool() {
+function get_download_tool {
     local optional_download_tools=(
         curl
         wget
@@ -304,7 +304,7 @@ function get_download_tool() {
 ###
 # Set global variables
 ###
-function set_globals() {
+function set_globals {
     if ! DOWNLOAD_TOOL="$(get_download_tool)"; then
         error "Couldn't determine download tool, aborting"
         return 1
@@ -322,7 +322,7 @@ function set_globals() {
 ###
 # Parse arguments/options using getopt, the almighty C-based parser.
 ###
-function parse_arguments() {
+function parse_arguments {
     getopt --test >/dev/null
     if (($? != 4)); then
         error "I'm sorry, 'getopt --test' failed in this environment."
@@ -409,12 +409,12 @@ function parse_arguments() {
     return 0
 }
 
-function _set_package_management_defaults() {
+function _set_package_management_defaults {
     PACKAGE_MANAGER=""
     SYSTEM_PACKAGE_MANAGER=false
 }
 
-function _set_installed_tools_defaults() {
+function _set_installed_tools_defaults {
     SHELL_TO_INSTALL=zsh
     INSTALL_GPG=true
     INSTALL_PYTHON=true
@@ -423,7 +423,7 @@ function _set_installed_tools_defaults() {
     PREFER_BREW_FOR_ALL_TOOLS=false
 }
 
-function _set_dotfiles_manager_defaults() {
+function _set_dotfiles_manager_defaults {
     DOTFILES_MANAGER=chezmoi
     CHEZMOI_BINARY_PATH="$HOME/bin/chezmoi"
     APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER"
@@ -432,7 +432,7 @@ function _set_dotfiles_manager_defaults() {
     ENVIRONMENT_TEMPLATE_FILE_PATH="$HOME/.config/chezmoi/chezmoi.toml"
 }
 
-function _set_personal_info_defaults() {
+function _set_personal_info_defaults {
     GITHUB_USERNAME="MrPointer"
     FULL_NAME="Timor Gruber"
     PERSONAL_EMAIL="timor.gruber@gmail.com"
@@ -444,7 +444,7 @@ function _set_personal_info_defaults() {
 ###
 # Set default color codes for colorful prints.
 ###
-function _set_color_defaults() {
+function _set_color_defaults {
     RED_COLOR="\033[0;31m"
     GREEN_COLOR="\033[0;32m"
     YELLOW_COLOR="\033[1;33m"
@@ -455,7 +455,7 @@ function _set_color_defaults() {
 ###
 # Set script default values for later show_usage.
 ###
-function set_defaults() {
+function set_defaults {
     VERBOSE=false
     WORK_ENVIRONMENT=false
 
@@ -469,7 +469,7 @@ function set_defaults() {
 ###
 # This is the script's entry point, just like in any other programming language.
 ###
-function main() {
+function main {
     if [[ -v ZSH_NAME && -n "$ZSH_NAME" ]]; then
         error "I'm a Bash script, please do not run me as 'zsh script_name'" \
             ", but rather execute me directly!"
