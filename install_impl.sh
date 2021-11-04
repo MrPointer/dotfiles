@@ -240,9 +240,9 @@ function install_dotfiles_manager {
     local installation_failed=false
 
     if [[ "$DOWNLOAD_TOOL" == "curl" ]]; then
-        ! sh -c '$(curl -fsLS git.io/chezmoi)' && installation_failed=true
+        ! bash -c '$(curl -fsLS git.io/chezmoi)' && installation_failed=true
     elif [[ "$DOWNLOAD_TOOL" == "wget" ]]; then
-        ! sh -c '$(wget -qO- git.io/chezmoi)' && installation_failed=true
+        ! bash -c '$(wget -qO- git.io/chezmoi)' && installation_failed=true
     fi
 
     if [ "$installation_failed" = true ]; then
