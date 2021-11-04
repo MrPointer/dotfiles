@@ -340,10 +340,10 @@ function parse_arguments {
     # -pass arguments only via   -- "$@"   to separate them correctly
     if ! PARSED=$(
         getopt --options="$short_options" --longoptions="$long_options" \
-            --name "$PROGRAM_PATH" -- "$@"
+            --name "Dotfiles installer" -- "$@"
     ); then
         # getopt has complained about wrong arguments to stdout
-        error "Wrong arguments to $PROGRAM_NAME" && return 2
+        error "Wrong arguments to Dotfiles installer" && return 2
     fi
 
     # read getopt’s output this way to handle the quoting right:
