@@ -162,12 +162,12 @@ function prepare_dotfiles_environment {
     {
         printf "%s\n" "[data.personal]"
         printf "%s\n" "work_env = $WORK_ENVIRONMENT"
-        printf "%s\n" "full_name = $FULL_NAME"
-        printf "%s\n" "email = $ACTIVE_EMAIL"
-        printf "%s\n" "signing_key = $ACTIVE_GPG_SIGNING_KEY"
+        printf "%s\n" "full_name = \"$FULL_NAME\""
+        printf "%s\n" "email = \"$ACTIVE_EMAIL\""
+        printf "%s\n" "signing_key = \"$ACTIVE_GPG_SIGNING_KEY\""
 
         printf "%s\n" "[data.system]"
-        printf "%s\n" "shell = $SHELL_TO_INSTALL"
+        printf "%s\n" "shell = \"$SHELL_TO_INSTALL\""
 
         printf "%s\n" "[data.installed]"
         printf "%s\n" "python = $INSTALL_PYTHON"
