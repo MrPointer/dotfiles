@@ -3,7 +3,7 @@ export VISUAL=vim
 export EDITOR="$VISUAL"
 
 # Path to your oh-my-zsh installation.
-export ZSH="/home/timorg/.oh-my-zsh"
+export ZSH="/home/{{- .system.user -}}/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -141,6 +141,7 @@ alias vim="nvim"
 autoload -U +X compinit && compinit
 autoload -U +X bashcompinit && bashcompinit
 
+{{ if .system.tools }}
 # Register pipx completions
 eval "$(register-python-argcomplete pipx)"
 
@@ -150,7 +151,7 @@ sedg_dir="$HOME/.sedg"
 sedg_zsh_dir="$sedg_dir/zsh"
 
 if [ -d "$sedg_zsh_dir" ]; then
-	[ -f "${sedg_zsh_dir}/.zshrc" ] && source "${sedg_zsh_dir}/.zshrc"
+  [ -f "${sedg_zsh_dir}/.zshrc" ] && source "${sedg_zsh_dir}/.zshrc"
 fi
 
 {{- end }}
