@@ -294,7 +294,7 @@ function install_brew {
 
     [ "$VERBOSE" = true ] && info "Adding brew to $PATH by appending to the user profile $SHELL_USER_PROFILE"
 
-    if ! echo "'eval \"$($BREW_LOCATION_RESOLVING_CMD)\"'" >>"$SHELL_USER_PROFILE"; then
+    if ! echo "'eval \"\$($BREW_LOCATION_RESOLVING_CMD)\"'" >>"$SHELL_USER_PROFILE"; then
         return 2
     fi
     eval "$($BREW_LOCATION_RESOLVING_CMD)"
