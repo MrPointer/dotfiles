@@ -229,6 +229,10 @@ function prepare_dotfiles_environment {
     printf "%s\n" "system_tools = ${text_inlined_tools}" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
+function reload_shell_user_profile {
+    source "$SHELL_USER_PROFILE"
+}
+
 ###
 # Install selected shell using either system's package manager or homebrew, depending on the passed options.
 # If selected shell is already installed, do nothing.
@@ -290,7 +294,7 @@ function install_brew {
 
     [ "$VERBOSE" = true ] && info "Adding brew to $PATH by appending to the user profile $SHELL_USER_PROFILE"
 
-    if ! echo "eval \"$($BREW_LOCATION_RESOLVING_CMD)\"" >>"$SHELL_USER_PROFILE"; then
+    if ! echo "'eval \"$($BREW_LOCATION_RESOLVING_CMD)\"'" >>"$SHELL_USER_PROFILE"; then
         return 2
     fi
     eval "$($BREW_LOCATION_RESOLVING_CMD)"
@@ -351,8 +355,10 @@ function install_dotfiles {
         return 2
     fi
     [ "$VERBOSE" = true ] && success "Successfully installed $SHELL_TO_INSTALL"
-    # Relogin to apply changes in $PATH
-    su - "$CURRENT_USER_NAME"
+    if ! reload_shell_user_profile; then
+        error "Failed reloading shell user profile"
+        return 2
+    fi
 
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
