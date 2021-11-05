@@ -64,7 +64,7 @@ function root_user {
     local current_uid
     current_uid=$(id -u)
 
-    ((current_uid == 0 ))
+    ((current_uid == 0))
 }
 
 function _install_packages_with_brew {
@@ -169,7 +169,7 @@ function apply_dotfiles {
 function prepare_dotfiles_environment {
     info "Preparing dotfiles environment"
 
-    if ! mkdir -p "$ENVIRONMENT_TEMPLATE_CONFIG_DIR" &> /dev/null; then
+    if ! mkdir -p "$ENVIRONMENT_TEMPLATE_CONFIG_DIR" &>/dev/null; then
         error "Couldn't create environment's dotfiles config directory"
         return 1
     fi
@@ -210,7 +210,7 @@ function prepare_dotfiles_environment {
 # Otherwise, also configure it as user's default shell.
 ###
 function install_shell {
-    if hash "$SHELL_TO_INSTALL" &> /dev/null; then
+    if hash "$SHELL_TO_INSTALL" &>/dev/null; then
         return 0
     fi
 
@@ -247,6 +247,25 @@ function install_git {
 }
 
 ###
+# Install Homebrew using their official standalone script.
+# The script requires some interactivity.
+###
+function install_brew {
+    if hash brew &>/dev/null; then
+        return 0
+    fi
+
+    [ "$VERBOSE" = true ] && info "Installing brew"
+
+    local install_brew_cmd=(
+        bash -c
+        "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    )
+
+    eval "${install_brew_cmd[@]}"
+}
+
+###
 # Install chezmoi, our dotfiles manager.
 # To avoid any errors and complicated checks, just install the latest binary at this stage.
 ###
@@ -280,6 +299,15 @@ function install_dotfiles {
         error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
         return 1
     fi
+    [ "$VERBOSE" = true ] && success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
+
+    if [ "$INSTALL_BREW" = true ]; then
+        if ! install_brew; then
+            error "Failed installing brew"
+            return 2
+        fi
+        [ "$VERBOSE" = true ] && success "Successfully installed brew"
+    fi
 
     if ! install_git; then
         error "Failed installing git"
@@ -289,25 +317,25 @@ function install_dotfiles {
 
     if ! install_shell; then
         error "Failed installing shell"
-        return 3
+        return 2
     fi
-    [ "$VERBOSE" = true ] && success "Successfully installed shell"
+    [ "$VERBOSE" = true ] && success "Successfully installed $SHELL_TO_INSTALL"
 
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
-        return 4
+        return 3
     fi
     [ "$VERBOSE" = true ] && success "Successfully prepared dotfiles environment"
 
     if ! apply_dotfiles; then
         error "Failed applying dotfiles"
-        return 5
+        return 4
     fi
     [ "$VERBOSE" = true ] && success "Successfully applied dotfiles"
 
     if ! post_install; then
         error "Failed finalizing installation"
-        return 6
+        return 5
     fi
     [ "$VERBOSE" = true ] && success "Successfully finalized installation"
 
@@ -445,15 +473,15 @@ function parse_arguments {
 
 function _set_package_management_defaults {
     PACKAGE_MANAGER=""
+    INSTALL_BREW=true
+    PREFER_BREW_FOR_ALL_TOOLS=true
 }
 
 function _set_installed_tools_defaults {
     SHELL_TO_INSTALL=zsh
     INSTALL_GPG=true
     INSTALL_PYTHON=true
-    INSTALL_BREW=true
     PACKAGE_MANAGER_INSTALLED_TOOLS=(gpg)
-    PREFER_BREW_FOR_ALL_TOOLS=true
 }
 
 function _set_dotfiles_manager_defaults {
