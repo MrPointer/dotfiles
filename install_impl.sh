@@ -101,10 +101,11 @@ function _install_packages_with_package_manager {
 ###
 function install_packages {
     if [ "$PREFER_BREW_FOR_ALL_TOOLS" = true ]; then
-        _install_packages_with_brew "$@"
+        ! _install_packages_with_brew "$@" && return 1
     else
-        _install_packages_with_package_manager "$@"
+        ! _install_packages_with_package_manager "$@" && return 1
     fi
+    return 0
 }
 
 function _reinstall_chezmoi_as_package {
@@ -282,29 +283,31 @@ function install_dotfiles {
 
     if ! install_git; then
         error "Failed installing git"
+        return 2
     fi
     [ "$VERBOSE" = true ] && success "Successfully installed git"
 
     if ! install_shell; then
         error "Failed installing shell"
+        return 3
     fi
     [ "$VERBOSE" = true ] && success "Successfully installed shell"
 
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
-        return 2
+        return 4
     fi
     [ "$VERBOSE" = true ] && success "Successfully prepared dotfiles environment"
 
     if ! apply_dotfiles; then
         error "Failed applying dotfiles"
-        return 3
+        return 5
     fi
     [ "$VERBOSE" = true ] && success "Successfully applied dotfiles"
 
     if ! post_install; then
         error "Failed finalizing installation"
-        return 4
+        return 6
     fi
     [ "$VERBOSE" = true ] && success "Successfully finalized installation"
 
