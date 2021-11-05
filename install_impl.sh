@@ -87,7 +87,7 @@ function _install_packages_with_package_manager {
     if [ "$ROOT_USER" = false ]; then
         install_package_cmd=(sudo)
     fi
-    install_package_cmd+=("$PACKAGE_MANAGER" install "${packages[@]}")
+    install_package_cmd+=("$PACKAGE_MANAGER" install -y "${packages[@]}")
 
     eval "${install_package_cmd[@]}"
 }
