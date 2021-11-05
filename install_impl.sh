@@ -225,11 +225,8 @@ function install_shell {
     local shell_path
     shell_path="$(which "$SHELL_TO_INSTALL")"
 
-    local current_user_name
-    current_user_name="$(id -u -n)"
-
     # Then configure it as user's default shell
-    sudo chsh -s "$shell_path" "$current_user_name"
+    sudo chsh -s "$shell_path" "$CURRENT_USER_NAME"
 }
 
 ###
@@ -307,6 +304,8 @@ function install_dotfiles {
             return 2
         fi
         [ "$VERBOSE" = true ] && success "Successfully installed brew"
+        # Relogin to apply changes in $PATH
+        su - "$CURRENT_USER_NAME"
     fi
 
     if ! install_git; then
@@ -320,6 +319,8 @@ function install_dotfiles {
         return 2
     fi
     [ "$VERBOSE" = true ] && success "Successfully installed $SHELL_TO_INSTALL"
+    # Relogin to apply changes in $PATH
+    su - "$CURRENT_USER_NAME"
 
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
@@ -376,6 +377,8 @@ function set_globals {
         error "Couldn't determine download tool, aborting"
         return 1
     fi
+
+    CURRENT_USER_NAME="$(id -u -n)"
 
     if root_user; then
         ROOT_USER=true
