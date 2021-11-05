@@ -56,6 +56,31 @@ function join_by {
 }
 
 ###
+# Retrieves thw path to the given shell's user profile.
+# Arguments:
+#       $1 - Name of the shell to retrieve for
+# Output (stdout):
+#       Path to the given shell's user profile
+# Returns:
+#       0 on success, 1 if an unknown/unsupported shell has been specified
+###
+function get_shell_user_profile {
+    local shell_name="${1:-}"
+
+    case "$shell_name" in
+    bash)
+        echo "${HOME}/.profile"
+        ;;
+    zsh)
+        echo "${HOME}/.zprofile"
+        ;;
+    *)
+        return 1
+        ;;
+    esac
+}
+
+###
 # Checks whether the current user is root.
 # Returns:
 #       0 if the user is root, 1 otherwise.
@@ -259,7 +284,14 @@ function install_brew {
         "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     )
 
-    eval "${install_brew_cmd[@]}"
+    if ! eval "${install_brew_cmd[@]}"; then
+        return 1
+    fi
+
+    if ! echo "eval \"$($BREW_LOCATION_RESOLVING_CMD)\"" >>"$SHELL_USER_PROFILE"; then
+        return 2
+    fi
+    eval "$($BREW_LOCATION_RESOLVING_CMD)"
 }
 
 ###
@@ -304,8 +336,6 @@ function install_dotfiles {
             return 2
         fi
         [ "$VERBOSE" = true ] && success "Successfully installed brew"
-        # Relogin to apply changes in $PATH
-        su - "$CURRENT_USER_NAME"
     fi
 
     if ! install_git; then
@@ -382,6 +412,11 @@ function set_globals {
 
     if root_user; then
         ROOT_USER=true
+    fi
+
+    if ! SHELL_USER_PROFILE="$(get_shell_user_profile "$SHELL_TO_INSTALL")"; then
+        error "Failed determining shell's user profile"
+        return 2
     fi
 
     if [ "$WORK_ENVIRONMENT" = true ]; then
@@ -483,10 +518,15 @@ function _set_package_management_defaults {
     PACKAGE_MANAGER=""
     INSTALL_BREW=true
     PREFER_BREW_FOR_ALL_TOOLS=true
+    BREW_LOCATION_RESOLVING_CMD="/home/linuxbrew/.linuxbrew/bin/brew shellenv"
+}
+
+function _set_shell_defaults {
+    SHELL_TO_INSTALL=zsh
+    SHELL_USER_PROFILE=""
 }
 
 function _set_installed_tools_defaults {
-    SHELL_TO_INSTALL=zsh
     INSTALL_GPG=true
     INSTALL_PYTHON=true
     PACKAGE_MANAGER_INSTALLED_TOOLS=(gpg)
@@ -534,6 +574,7 @@ function set_defaults {
     _set_personal_info_defaults
     _set_dotfiles_manager_defaults
     _set_installed_tools_defaults
+    _set_shell_defaults
     _set_package_management_defaults
 }
 
