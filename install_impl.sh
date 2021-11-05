@@ -153,10 +153,15 @@ function apply_dotfiles {
 function prepare_dotfiles_environment {
     info "Preparing dotfiles environment"
 
+    if ! mkdir -p "$ENVIRONMENT_TEMPLATE_CONFIG_DIR" &> /dev/null; then
+        error "Couldn't create environment's dotfiles config directory"
+        return 1
+    fi
+
     # The first print zeroes the template file if it already has content
     if ! printf "%s\n" "[data]" >"$ENVIRONMENT_TEMPLATE_FILE_PATH"; then
         error "Failed initializing environment template file!"
-        return 1
+        return 2
     fi
 
     {
@@ -439,7 +444,8 @@ function _set_dotfiles_manager_defaults {
     APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER"
         init --apply "$GITHUB_USERNAME"
     )
-    ENVIRONMENT_TEMPLATE_FILE_PATH="$HOME/.config/chezmoi/chezmoi.toml"
+    ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/chezmoi"
+    ENVIRONMENT_TEMPLATE_FILE_PATH="$ENVIRONMENT_TEMPLATE_CONFIG_DIR/chezmoi.toml"
 }
 
 function _set_personal_info_defaults {
