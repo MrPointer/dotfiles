@@ -146,15 +146,15 @@ function _reinstall_chezmoi_as_package {
         [ "$VERBOSE" = true ] && info "Installing $DOTFILES_MANAGER using brew"
 
         if ! _install_packages_with_brew "$DOTFILES_MANAGER"; then
-            error "Failed installing $DOTFILES_MANAGER using brew, will keep existing binary at $CHEZMOI_BINARY_PATH"
+            error "Failed installing $DOTFILES_MANAGER using brew, will keep existing binary at $DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
             return 1
         fi
         [ "$VERBOSE" = true ] && success "Successfully installed $DOTFILES_MANAGER as a brew package"
     fi
 
     [ "$VERBOSE" = true ] && info "Removing standalone $DOTFILES_MANAGER binary"
-    if ! rm "$CHEZMOI_BINARY_PATH"; then
-        warning "Failed removing standalone chezmoi binary (downloaded at first) at $CHEZMOI_BINARY_PATH"
+    if ! rm "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"; then
+        warning "Failed removing standalone chezmoi binary (downloaded at first) at $DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
     else
         [ "$VERBOSE" = true ] && success "Successfully removed standalone chezmoi binary"
     fi
@@ -192,7 +192,7 @@ function apply_dotfiles {
 # This might be a useful step for some dotfiles managers.
 ###
 function prepare_dotfiles_environment {
-    info "Preparing dotfiles environment"
+    [ "$VERBOSE" = true ] && info "Preparing dotfiles environment"
 
     if ! mkdir -p "$ENVIRONMENT_TEMPLATE_CONFIG_DIR" &>/dev/null; then
         error "Couldn't create environment's dotfiles config directory"
@@ -229,6 +229,9 @@ function prepare_dotfiles_environment {
     printf "%s\n" "system_tools = ${text_inlined_tools}" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
+###
+# Reload target shell's user profile, to activate changes.
+###
 function reload_shell_user_profile {
     source "$SHELL_USER_PROFILE"
 }
@@ -542,12 +545,12 @@ function _set_installed_tools_defaults {
 
 function _set_dotfiles_manager_defaults {
     DOTFILES_MANAGER=chezmoi
-    CHEZMOI_BINARY_PATH="$HOME/bin/chezmoi"
-    APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER"
+    DOTFILES_MANAGER_STANDALONE_BINARY_PATH="${HOME}/bin/${DOTFILES_MANAGER}"
+    APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
         init --apply "$GITHUB_USERNAME"
     )
-    ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/chezmoi"
-    ENVIRONMENT_TEMPLATE_FILE_PATH="$ENVIRONMENT_TEMPLATE_CONFIG_DIR/chezmoi.toml"
+    ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/${DOTFILES_MANAGER}"
+    ENVIRONMENT_TEMPLATE_FILE_PATH="${ENVIRONMENT_TEMPLATE_CONFIG_DIR}/${DOTFILES_MANAGER}.toml"
 }
 
 function _set_personal_info_defaults {
