@@ -21,7 +21,7 @@ Options:
   --no-python                       Don't install python
   --no-gpg                          Don't install gpg
   --no-brew                         Don't install brew (Homebrew)
-  --prefer-brew                     Prefer installing tools with brew rather than system's package manager (Doesn't apply for Mac)
+  --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
 }
@@ -67,14 +67,15 @@ function root_user {
     ((current_uid == 0 ))
 }
 
-###
-# Install given package(s) using either system's package manager or homebrew, depending on the passed options.
-# Arguments:
-#       $1..$N - Variable number of packages to install
-# Returns:
-#       Install tool's result, zero on success.
-###
-function install_package {
+function _install_packages_with_brew {
+    local packages=("$@")
+
+    install_package_cmd=(brew install "${packages[@]}")
+
+    eval "${install_package_cmd[@]}"
+}
+
+function _install_packages_with_package_manager {
     local packages=("$@")
 
     if [ -z "$PACKAGE_MANAGER" ]; then
@@ -86,10 +87,24 @@ function install_package {
     if [ "$ROOT_USER" = false ]; then
         install_package_cmd=(sudo)
     fi
-
     install_package_cmd+=("$PACKAGE_MANAGER" install "${packages[@]}")
 
     eval "${install_package_cmd[@]}"
+}
+
+###
+# Install given package(s) using either system's package manager or homebrew, depending on the passed options.
+# Arguments:
+#       $1..$N - Variable number of packages to install
+# Returns:
+#       Install tool's result, zero on success.
+###
+function install_packages {
+    if [ "$PREFER_BREW_FOR_ALL_TOOLS" = true ]; then
+        _install_packages_with_brew "$@"
+    else
+        _install_packages_with_package_manager "$@"
+    fi
 }
 
 function _reinstall_chezmoi_as_package {
@@ -201,7 +216,7 @@ function install_shell {
     [ "$VERBOSE" = true ] && echo "Installing shell"
 
     # First install the shell
-    if ! install_package "$SHELL_TO_INSTALL"; then
+    if ! install_packages "$SHELL_TO_INSTALL"; then
         return 1
     fi
 
@@ -227,7 +242,7 @@ function install_git {
 
     [ "$VERBOSE" = true ] && info "Installing git"
 
-    install_package git
+    install_packages git
 }
 
 ###
@@ -352,7 +367,7 @@ function parse_arguments {
     local short_options=hv
     local long_options=help,verbose
     long_options+=,package-manager:
-    long_options+=,shell:,no-python,no-gpg,no-brew,prefer-brew
+    long_options+=,shell:,no-python,no-gpg,no-brew,prefer-package-manager
     long_options+=,work-environment,work-email:
 
     # -temporarily store output to be able to check for errors
@@ -407,8 +422,8 @@ function parse_arguments {
             INSTALL_BREW=false
             shift
             ;;
-        --prefer-brew)
-            PREFER_BREW_FOR_ALL_TOOLS=true
+        --prefer-package-manager)
+            PREFER_BREW_FOR_ALL_TOOLS=false
             shift
             ;;
         --)
@@ -435,7 +450,7 @@ function _set_installed_tools_defaults {
     INSTALL_PYTHON=true
     INSTALL_BREW=true
     PACKAGE_MANAGER_INSTALLED_TOOLS=(gpg)
-    PREFER_BREW_FOR_ALL_TOOLS=false
+    PREFER_BREW_FOR_ALL_TOOLS=true
 }
 
 function _set_dotfiles_manager_defaults {

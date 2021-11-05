@@ -34,7 +34,7 @@ The following options can be passed to the command above to customize the instal
 | `--no-python`                 | Don't install python                                                                           |
 | `--no-gpg`                    | Don't install gpg                                                                              |
 | `--no-brew`                   | Don't install brew (Homebrew)                                                                  |
-| `--prefer-brew`               | Prefer installing tools with brew rather than system's package manager (Doesn't apply for Mac) |
+| `--prefer-package-manager`    | Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac) |
 
 To add options to the install command above, append it after the last closing parentheses `)`, like so:  
 `bash -c "$(curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install.sh) --verbose"`
