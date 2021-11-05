@@ -215,18 +215,9 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "%s\n" "shell = \"$SHELL_TO_INSTALL\""
 
-        printf "%s\n" "[data.installed]"
-        printf "%s\n" "python = $INSTALL_PYTHON"
-        printf "%s\n" "gpg = $INSTALL_GPG"
-        printf "%s\n" "brew = $INSTALL_BREW"
-
         printf "%s\n" "[data.install_config]"
         printf "%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
-
-    local text_inlined_tools
-    text_inlined_tools="$(join_by , "${PACKAGE_MANAGER_INSTALLED_TOOLS[@]}")"
-    printf "%s\n" "system_tools = ${text_inlined_tools}" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
 ###
