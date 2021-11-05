@@ -70,7 +70,7 @@ function root_user {
 function _install_packages_with_brew {
     local packages=("$@")
 
-    install_package_cmd=(brew install "${packages[@]}")
+    install_package_cmd=(brew install --force-bottle "${packages[@]}")
 
     eval "${install_package_cmd[@]}"
 }
@@ -119,7 +119,7 @@ function _reinstall_chezmoi_as_package {
     if [ "$brew_chezmoi_installed" = false ]; then
         [ "$VERBOSE" = true ] && info "Installing $DOTFILES_MANAGER using brew"
 
-        if ! brew install "$DOTFILES_MANAGER"; then
+        if ! _install_packages_with_brew "$DOTFILES_MANAGER"; then
             error "Failed installing $DOTFILES_MANAGER using brew, will keep existing binary at $CHEZMOI_BINARY_PATH"
             return 1
         fi
