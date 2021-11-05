@@ -367,6 +367,11 @@ function get_download_tool {
 # Set global variables
 ###
 function set_globals {
+    # Can't prefer to install with brew if brew should not even be installed
+    if [ "$INSTALL_BREW" = false ]; then
+        PREFER_BREW_FOR_ALL_TOOLS=false
+    fi
+
     if ! DOWNLOAD_TOOL="$(get_download_tool)"; then
         error "Couldn't determine download tool, aborting"
         return 1
