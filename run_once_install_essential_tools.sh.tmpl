@@ -1,0 +1,9 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{-    if (eq (lower .chezmoi.osRelease.name) "debian" "ubuntu" "kubuntu" "lubuntu" "xubuntu" "mint") -}}
+{{         include "install_essential_tools_debian.sh" }}
+{{-    else if (eq (lower .chezmoi.osRelease.name) "fedora" "centos" "redhat") -}}
+{{         include "install_essential_tools_fedora.sh" }}
+{{-    end -}}
+{{- else if (eq .chezmoi.os "darwin" ) -}}
+{{         include "install_essential_tools_darwin.sh" }}
+{{- end -}}
