@@ -141,13 +141,12 @@ alias vim="nvim"
 autoload -U +X compinit && compinit
 autoload -U +X bashcompinit && bashcompinit
 
-{{ if .system.tools }}
 # Register pipx completions
 eval "$(register-python-argcomplete pipx)"
 
 {{ if .personal.work_env -}}
 # Load sedg specifics
-{{- template "sedg_profile" }}
+{{ template "sedg_profile" . }}
 
 if [ -d "SEDG_ZSH_DIR" ]; then
   [ -f "$SEDG_ZSH_RC_EXTENSION" ] && source "$SEDG_ZSH_RC_EXTENSION"
