@@ -17,7 +17,8 @@ Options:
   --package-manager=[manager]       Package manager to use for installing prerequisites
   --work-environment                Treat this installation as a work environment
   --work-email=[email]              Use given email address as work's email address
-  --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh.
+  --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
+  --brew-shell                      Install shell using brew. By default it's installed with system's package manager
   --no-python                       Don't install python
   --no-gpg                          Don't install gpg
   --no-brew                         Don't install brew (Homebrew)
@@ -97,7 +98,7 @@ function _install_packages_with_brew {
 
     install_package_cmd=(brew install --force-bottle "${packages[@]}")
 
-    eval "${install_package_cmd[@]}"
+    "${install_package_cmd[@]}"
 }
 
 function _install_packages_with_package_manager {
@@ -114,7 +115,7 @@ function _install_packages_with_package_manager {
     fi
     install_package_cmd+=("$PACKAGE_MANAGER" install -y "${packages[@]}")
 
-    eval "${install_package_cmd[@]}"
+    "${install_package_cmd[@]}"
 }
 
 ###
@@ -181,7 +182,7 @@ function post_install {
 function apply_dotfiles {
     [ "$VERBOSE" = true ] && info "Applying dotfiles"
 
-    if ! eval "${APPLY_DOTFILES_CMD[@]}"; then
+    if ! "${APPLY_DOTFILES_CMD[@]}"; then
         return 1
     fi
     return 0
@@ -215,7 +216,7 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
-        
+
         printf "%s\n" "[data.install_config]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
@@ -240,9 +241,13 @@ function install_shell {
 
     [ "$VERBOSE" = true ] && echo "Installing shell"
 
-    # First install the shell
-    if ! install_packages "$SHELL_TO_INSTALL"; then
-        return 1
+    # First install our shell
+    if [ "$INSTALL_SHELL_WITH_BREW" = true ]; then
+        # User has insisted on installing it with brew, so we follow along
+        ! _install_packages_with_brew "$SHELL_TO_INSTALL" && return 1
+    else
+        # Otherwise, we always use the system's package-manager, even if other tools are installed via brew
+        ! _install_packages_with_package_manager "$SHELL_TO_INSTALL" && return 2
     fi
 
     # Find installed shell's location
@@ -280,10 +285,10 @@ function install_brew {
 
     local install_brew_cmd=(
         bash -c
-        "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        \#"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"\#
     )
 
-    if ! eval "${install_brew_cmd[@]}"; then
+    if ! "${install_brew_cmd[@]}"; then
         return 1
     fi
 
@@ -444,7 +449,8 @@ function parse_arguments {
     local short_options=hv
     local long_options=help,verbose
     long_options+=,package-manager:
-    long_options+=,shell:,no-python,no-gpg,no-brew,prefer-package-manager
+    long_options+=,shell:,brew-shell,no-python,no-gpg
+    long_options+=,-brew,prefer-package-manager
     long_options+=,work-environment,work-email:
 
     # -temporarily store output to be able to check for errors
@@ -487,6 +493,10 @@ function parse_arguments {
             SHELL_TO_INSTALL="${2:-}"
             shift 2
             ;;
+        --brew-shell)
+            INSTALL_SHELL_WITH_BREW=true
+            shift
+            ;;
         --no-python)
             INSTALL_PYTHON=false
             shift
@@ -525,6 +535,7 @@ function _set_package_management_defaults {
 }
 
 function _set_shell_defaults {
+    INSTALL_SHELL_WITH_BREW=false
     SHELL_TO_INSTALL=zsh
     SHELL_USER_PROFILE=""
 }
