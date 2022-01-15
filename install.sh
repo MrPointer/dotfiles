@@ -21,11 +21,11 @@ invoke_actual_installation() {
     IMPL_DOWNLOAD_RESULT=0
     case "$DOWNLOAD_TOOL" in
     curl)
-        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install-impl.sh -o "$TMP_IMPL_INSTALL_PATH"
+        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_BRANCH"/install-impl.sh -o "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     wget)
-        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/main/install-impl.sh -O "$TMP_IMPL_INSTALL_PATH"
+        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_BRANCH"/install-impl.sh -O "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     esac
@@ -133,6 +133,53 @@ install_bash() {
     return 0
 }
 
+###
+# Parse arguments/options using getopt, the almighty C-based parser.
+###
+parse_arguments() {
+    getopt --test >/dev/null
+    if [ $? -ne 4 ]; then
+        error "I'm sorry, 'getopt --test' failed in this environment."
+        return 1
+    fi
+
+    long_options=branch
+
+    # -temporarily store output to be able to check for errors
+    # -activate quoting/enhanced mode (e.g. by writing out “--options”)
+    # -pass arguments only via   -- "$@"   to separate them correctly
+    if ! PARSED=$(
+        getopt --longoptions="$long_options" \
+            --name "Dotfiles installer" -- "$@"
+    ); then
+        # getopt has complained about wrong arguments to stdout
+        error "Wrong arguments to Dotfiles installer" && return 2
+    fi
+
+    # read getopt’s output this way to handle the quoting right:
+    eval set -- "$PARSED"
+
+    while true; do
+        case $1 in
+        --branch)
+            INSTALL_BRANCH="${2:-main}"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            error "Programming error"
+            return 3
+            ;;
+        esac
+    done
+
+    unset long_options
+    return 0
+}
+
 detect_system() {
     SYSTEM_TYPE="$(get_system_type)"
 
@@ -169,28 +216,39 @@ detect_system() {
     printf "%s\n\n" "Package manager: $PKG_MANAGER"
 }
 
+set_defaults() {
+    INSTALL_BRANCH="main"
+}
+
 main() {
     echo "Installing dotfiles, but first some bootstraping"
 
+    set_defaults # Should never fail
+
     if ! detect_system; then
-        echo "Detected system is not supported, sorry"
+        echo "Detected system is not supported, sorry" >&2
         return 1
     fi
 
+    if ! parse_arguments "$@"; then
+        echo "Failed parsing arguments, aborting" >&2
+        return 2
+    fi
+
     if ! install_bash "$PKG_MANAGER"; then
-        echo "Failed installing bash!"
-        return 1
+        echo "Failed installing bash!" >&2
+        return 3
     fi
 
     DOWNLOAD_TOOL="$(get_download_tool)"
     if [ -z "$DOWNLOAD_TOOL" ]; then
-        echo "Neither 'curl' nor 'wget' are available, please install one of them manually."
-        return 2
+        echo "Neither 'curl' nor 'wget' are available, please install one of them manually." >&2
+        return 4
     fi
 
     if ! invoke_actual_installation "$@"; then
-        echo "Failed to install dotfiles"
-        return 3
+        echo "Failed to install dotfiles" >&2
+        return 5
     fi
 
     echo "Successfully completed dotfiles installation [from bootstrap]"
