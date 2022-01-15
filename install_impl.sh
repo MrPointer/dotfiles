@@ -14,15 +14,13 @@ Example: $PROGRAM_NAME -h
 Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
-  --package-manager=[manager]       Package manager to use for installing prerequisites
   --work-environment                Treat this installation as a work environment
   --work-email=[email]              Use given email address as work's email address
   --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
   --brew-shell                      Install shell using brew. By default it's installed with system's package manager
-  --no-python                       Don't install python
-  --no-gpg                          Don't install gpg
   --no-brew                         Don't install brew (Homebrew)
   --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
+  --package-manager=[manager]       Package manager to use for installing prerequisites
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
 }
@@ -437,10 +435,9 @@ function parse_arguments {
 
     local short_options=hv
     local long_options=help,verbose
-    long_options+=,package-manager:
-    long_options+=,shell:,brew-shell,no-python,no-gpg
-    long_options+=,-brew,prefer-package-manager
     long_options+=,work-environment,work-email:
+    long_options+=,shell:,brew-shell
+    long_options+=,no-brew,prefer-package-manager,package-manager:
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -466,10 +463,6 @@ function parse_arguments {
             VERBOSE=true
             shift
             ;;
-        --package-manager)
-            PACKAGE_MANAGER="${2:-}"
-            shift 2
-            ;;
         --work-environment)
             WORK_ENVIRONMENT=true
             shift
@@ -486,14 +479,6 @@ function parse_arguments {
             INSTALL_SHELL_WITH_BREW=true
             shift
             ;;
-        --no-python)
-            INSTALL_PYTHON=false
-            shift
-            ;;
-        --no-gpg)
-            INSTALL_GPG=false
-            shift
-            ;;
         --no-brew)
             INSTALL_BREW=false
             shift
@@ -501,6 +486,10 @@ function parse_arguments {
         --prefer-package-manager)
             PREFER_BREW_FOR_ALL_TOOLS=false
             shift
+            ;;
+        --package-manager)
+            PACKAGE_MANAGER="${2:-}"
+            shift 2
             ;;
         --)
             shift
@@ -527,12 +516,6 @@ function _set_shell_defaults {
     INSTALL_SHELL_WITH_BREW=false
     SHELL_TO_INSTALL=zsh
     SHELL_USER_PROFILE=""
-}
-
-function _set_installed_tools_defaults {
-    INSTALL_GPG=true
-    INSTALL_PYTHON=true
-    PACKAGE_MANAGER_INSTALLED_TOOLS=(gpg)
 }
 
 function _set_dotfiles_manager_defaults {
@@ -564,7 +547,6 @@ function set_defaults {
 
     _set_personal_info_defaults
     _set_dotfiles_manager_defaults
-    _set_installed_tools_defaults
     _set_shell_defaults
     _set_package_management_defaults
 }
