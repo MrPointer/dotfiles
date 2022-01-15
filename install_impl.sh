@@ -268,20 +268,6 @@ function install_shell {
 }
 
 ###
-# Install git using either system's package manager or homebrew, depending on the passed options.
-# If git is already installed, do nothing.
-###
-function install_git {
-    if hash git 2>/dev/null; then
-        return 0
-    fi
-
-    [ "$VERBOSE" = true ] && info "Installing git"
-
-    install_packages git
-}
-
-###
 # Install Homebrew using their official standalone script.
 # The script requires some interactivity.
 ###
@@ -352,12 +338,6 @@ function install_dotfiles {
         fi
         [ "$VERBOSE" = true ] && success "Successfully installed brew"
     fi
-
-    if ! install_git; then
-        error "Failed installing git"
-        return 2
-    fi
-    [ "$VERBOSE" = true ] && success "Successfully installed git"
 
     if ! install_shell; then
         error "Failed installing shell"
