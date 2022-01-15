@@ -64,7 +64,7 @@ function join_by {
 }
 
 ###
-# Retrieves thw path to the given shell's user profile.
+# Retrieves the path to the given shell's user profile.
 # Arguments:
 #       $1 - Name of the shell to retrieve for
 # Output (stdout):
@@ -141,6 +141,13 @@ function install_packages {
     return 0
 }
 
+###
+# Reload target shell's user profile, to activate changes.
+###
+function _reload_shell_user_profile {
+    source "$SHELL_USER_PROFILE"
+}
+
 function _reinstall_chezmoi_as_package {
     [ "$INSTALL_BREW" = false ] && return 0
 
@@ -180,6 +187,15 @@ function post_install {
         error "Failed reinstalling chezmoi as an updatable package"
         return 1
     fi
+
+    if [[ "$SHELL_TO_INSTALL" == "bash" ]]; then
+        if ! _reload_shell_user_profile; then
+            warning "Failed reloading shell profile, please attempt a manual re-login"
+        fi
+    else
+        warning "You've installed a new shell, please re-login to apply changes"
+    fi
+
     return 0
 }
 
@@ -227,13 +243,6 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.install_config]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
-}
-
-###
-# Reload target shell's user profile, to activate changes.
-###
-function reload_shell_user_profile {
-    source "$SHELL_USER_PROFILE"
 }
 
 ###
@@ -342,10 +351,6 @@ function install_dotfiles {
         return 2
     fi
     [ "$VERBOSE" = true ] && success "Successfully installed $SHELL_TO_INSTALL"
-    if ! reload_shell_user_profile; then
-        error "Failed reloading shell user profile"
-        return 2
-    fi
 
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
