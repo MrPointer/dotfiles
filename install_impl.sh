@@ -27,6 +27,15 @@ Options:
 DOTFILES_INSTALL_IMPL_USAGE
 }
 
+###
+# Set default color codes for colorful prints
+###
+RED_COLOR="\033[0;31m"
+GREEN_COLOR="\033[0;32m"
+YELLOW_COLOR="\033[1;33m"
+BLUE_COLOR="\033[0;34m"
+NEUTRAL_COLOR="\033[0m"
+
 function cecho {
     printf "${1}%s${NEUTRAL_COLOR}\n" "${@:2}"
 }
@@ -566,17 +575,6 @@ function _set_personal_info_defaults {
 }
 
 ###
-# Set default color codes for colorful prints.
-###
-function _set_color_defaults {
-    RED_COLOR="\033[0;31m"
-    GREEN_COLOR="\033[0;32m"
-    YELLOW_COLOR="\033[1;33m"
-    BLUE_COLOR="\033[0;34m"
-    NEUTRAL_COLOR="\033[0m"
-}
-
-###
 # Set script default values for later show_usage.
 ###
 function set_defaults {
@@ -584,7 +582,6 @@ function set_defaults {
     WORK_ENVIRONMENT=false
     ROOT_USER=false
 
-    _set_color_defaults
     _set_personal_info_defaults
     _set_dotfiles_manager_defaults
     _set_installed_tools_defaults
