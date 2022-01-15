@@ -5,7 +5,7 @@
     stripComponents = 1
     refreshPeriod = "168h"
 ["antigen.zsh"]
-    type = file
-    url = "git.io/antigen"
+    type = "file"
+    url = "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh"
     executable = true
     refreshPeriod = "168h"
