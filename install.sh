@@ -21,11 +21,11 @@ invoke_actual_installation() {
     IMPL_DOWNLOAD_RESULT=0
     case "$DOWNLOAD_TOOL" in
     curl)
-        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install_impl.sh -o "$TMP_IMPL_INSTALL_PATH"
+        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install-impl.sh -o "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     wget)
-        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/main/install_impl.sh -O "$TMP_IMPL_INSTALL_PATH"
+        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/main/install-impl.sh -O "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     esac
