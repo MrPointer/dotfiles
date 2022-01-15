@@ -1,5 +1,30 @@
 #!/usr/bin/env sh
 
+###
+# Set default color codes for colorful prints
+###
+RED_COLOR="\033[0;31m"
+GREEN_COLOR="\033[0;32m"
+YELLOW_COLOR="\033[1;33m"
+BLUE_COLOR="\033[0;34m"
+NEUTRAL_COLOR="\033[0m"
+
+error() {
+    printf "${RED_COLOR}%s${NEUTRAL_COLOR}\n" "$@"
+}
+
+warning() {
+    printf "${YELLOW_COLOR}%s${NEUTRAL_COLOR}\n" "$@"
+}
+
+info() {
+    printf "${BLUE_COLOR}%s${NEUTRAL_COLOR}\n" "$@"
+}
+
+success() {
+    printf "${GREEN_COLOR}%s${NEUTRAL_COLOR}\n" "$@"
+}
+
 get_download_tool() {
     if hash curl 2>/dev/null; then
         echo "curl"
@@ -31,12 +56,12 @@ invoke_actual_installation() {
     esac
 
     if [ $IMPL_DOWNLOAD_RESULT -ne 0 ]; then
-        echo "Failed downloading implementation script!"
+        error "Failed downloading implementation script!"
         return 2
     fi
 
     if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" "$@"; then
-        echo "Failed on actual installation of dotfiles, sorry..."
+        error "Failed on actual installation of dotfiles, sorry..."
         return 3
     fi
 }
@@ -118,15 +143,15 @@ bash_exists() {
 }
 
 install_bash() {
-    printf "%s" "Checking if bash exists... "
+    info "Checking if bash exists"
     if bash_exists; then
-        echo "OK"
+        info "Bash exists!"
         return 0
     fi
 
-    echo "bash does not exist, trying to install it"
+    info "bash does not exist, trying to install it"
     if ! install_bash_with_package_manager "$1"; then
-        echo "Failed installing bash using $1"
+        error "Failed installing bash using $1"
         return 5
     fi
 
@@ -202,18 +227,19 @@ detect_system() {
 
     PKG_MANAGER="$(get_default_system_package_manager "$DISTRO_NAME")"
     if [ -z "$PKG_MANAGER" ]; then
-        echo "Failed determining package manager for distro: $DISTRO_NAME"
+        error "Failed determining package manager for distro: $DISTRO_NAME"
         return 3
     fi
     if ! hash "$PKG_MANAGER" 2>/dev/null; then
-        echo "Package manager '$PKG_MANAGER' couldn't be found for distro: $DISTRO_NAME, maybe you need to install it manually?"
+        error "Package manager '$PKG_MANAGER' couldn't be found for distro: $DISTRO_NAME, maybe you need to install it manually?"
         return 4
     fi
 
-    echo "Determined system:"
-    echo "Type: $SYSTEM_TYPE"
-    echo "Distro: $DISTRO_NAME"
-    printf "%s\n\n" "Package manager: $PKG_MANAGER"
+    info "Determined system:"
+    info "Type: $SYSTEM_TYPE"
+    info "Distro: $DISTRO_NAME"
+    info "Package manager: $PKG_MANAGER"
+    printf "\n" # Print an empty line
 }
 
 set_defaults() {
@@ -221,37 +247,37 @@ set_defaults() {
 }
 
 main() {
-    echo "Installing dotfiles, but first some bootstraping"
+    info "Installing dotfiles, but first some bootstraping"
 
     set_defaults # Should never fail
 
     if ! detect_system; then
-        echo "Detected system is not supported, sorry" >&2
+        error "Detected system is not supported, sorry"
         return 1
     fi
 
     if ! parse_arguments "$@"; then
-        echo "Failed parsing arguments, aborting" >&2
+        error "Failed parsing arguments, aborting"
         return 2
     fi
 
     if ! install_bash "$PKG_MANAGER"; then
-        echo "Failed installing bash!" >&2
+        error "Failed installing bash!"
         return 3
     fi
 
     DOWNLOAD_TOOL="$(get_download_tool)"
     if [ -z "$DOWNLOAD_TOOL" ]; then
-        echo "Neither 'curl' nor 'wget' are available, please install one of them manually." >&2
+        error "Neither 'curl' nor 'wget' are available, please install one of them manually."
         return 4
     fi
 
     if ! invoke_actual_installation "$@"; then
-        echo "Failed to install dotfiles" >&2
+        error "Failed to install dotfiles"
         return 5
     fi
 
-    echo "Successfully completed dotfiles installation [from bootstrap]"
+    success "Successfully completed dotfiles installation [from bootstrap]"
     return 0
 }
 
