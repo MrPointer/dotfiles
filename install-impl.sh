@@ -295,11 +295,16 @@ function install_brew {
         return 1
     fi
 
-    [ "$VERBOSE" = true ] && info "Adding brew to $PATH by appending to the user profile $SHELL_USER_PROFILE"
+    [ "$VERBOSE" = true ] && info "Adding brew to \$PATH by appending to the user profile $SHELL_USER_PROFILE"
 
-    if ! echo "eval \"\$($BREW_LOCATION_RESOLVING_CMD)\"" >>"$SHELL_USER_PROFILE"; then
-        return 2
+    # Only append resolving command to the profile if it's not already there (maybe we're re-installing?)
+    if ! grep -q "$BREW_LOCATION_RESOLVING_CMD" "$SHELL_USER_PROFILE"; then
+        if ! echo "eval \"\$($BREW_LOCATION_RESOLVING_CMD)\"" >>"$SHELL_USER_PROFILE"; then
+            return 2
+        fi
     fi
+
+    # Eval brew for current session ot be able to use it later, if needed
     eval "$($BREW_LOCATION_RESOLVING_CMD)"
 }
 
