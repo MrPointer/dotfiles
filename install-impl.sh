@@ -547,7 +547,7 @@ function _set_personal_info_defaults {
     GITHUB_USERNAME="MrPointer"
     FULL_NAME="Timor Gruber"
     PERSONAL_EMAIL="timor.gruber@gmail.com"
-    PERSONAL_GPG_SIGNING_KEY=E1B39E9320C37806
+    PERSONAL_GPG_SIGNING_KEY=D8B3170598131C15
     WORK_EMAIL="timor.gruber@solaredge.com"
     WORK_GPG_SIGNING_KEY=90BBCCC1DDED66C4
 }
