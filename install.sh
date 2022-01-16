@@ -200,6 +200,8 @@ parse_arguments() {
             ;;
         esac
     done
+    
+    warning "INSTALL_BRANCH: $INSTALL_BRANCH"
 
     unset long_options
     return 0
