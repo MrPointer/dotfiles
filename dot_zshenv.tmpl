@@ -1,0 +1,5 @@
+. "$HOME/.zprofile"
+
+{{ if .personal.work_env -}}
+source "$HOME"/dev-env.sh
+{{- end }}
