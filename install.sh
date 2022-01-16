@@ -168,13 +168,14 @@ parse_arguments() {
         return 1
     fi
 
+    short_options=""
     long_options=branch:
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
     # -pass arguments only via   -- "$@"   to separate them correctly
     if ! PARSED=$(
-        getopt --longoptions="$long_options" \
+        getopt --options="$short_options" --longoptions="$long_options" \
             --name "Dotfiles installer-bootstrapper" -- "$@"
     ); then
         # getopt has complained about wrong arguments to stdout
@@ -185,7 +186,7 @@ parse_arguments() {
     eval set -- "$PARSED"
 
     while true; do
-        case $1 in
+        case "$1" in
         --branch)
             INSTALL_BRANCH="${2:-main}"
             shift 2
