@@ -175,10 +175,10 @@ parse_arguments() {
     # -pass arguments only via   -- "$@"   to separate them correctly
     if ! PARSED=$(
         getopt --longoptions="$long_options" \
-            --name "Dotfiles installer" -- "$@"
+            --name "Dotfiles installer-bootstrapper" -- "$@"
     ); then
         # getopt has complained about wrong arguments to stdout
-        error "Wrong arguments to Dotfiles installer" && return 2
+        error "Wrong arguments to Dotfiles installer-bootstrapper" && return 2
     fi
 
     # read getopt’s output this way to handle the quoting right:
@@ -247,7 +247,7 @@ set_defaults() {
 }
 
 main() {
-    info "Installing dotfiles, but first some bootstraping"
+    info "Installing dotfiles, but first some bootstrapping"
 
     set_defaults # Should never fail
 
