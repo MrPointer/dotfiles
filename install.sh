@@ -168,7 +168,7 @@ parse_arguments() {
         return 1
     fi
 
-    long_options=branch
+    long_options=branch:
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
