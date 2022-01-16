@@ -186,7 +186,7 @@ function post_install {
 
     if ! _reinstall_chezmoi_as_package; then
         error "Failed reinstalling chezmoi as an updatable package"
-        return 1
+        # It's not a fatal error, we can proceed
     fi
 
     if [[ "$SHELL_TO_INSTALL" == "bash" ]]; then
