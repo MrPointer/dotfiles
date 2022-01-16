@@ -162,50 +162,18 @@ install_bash() {
 # Parse arguments/options using getopt, the almighty C-based parser.
 ###
 parse_arguments() {
-    getopt --test >/dev/null
-    if [ $? -ne 4 ]; then
-        error "I'm sorry, 'getopt --test' failed in this environment."
-        return 1
-    fi
-
-    short_options=""
-    long_options=branch:
-
-    # -temporarily store output to be able to check for errors
-    # -activate quoting/enhanced mode (e.g. by writing out “--options”)
-    # -pass arguments only via   -- "$@"   to separate them correctly
-    if ! PARSED=$(
-        getopt --options="$short_options" --longoptions="$long_options" \
-            --name "Dotfiles installer-bootstrapper" -- "$@"
-    ); then
-        # getopt has complained about wrong arguments to stdout
-        error "Wrong arguments to Dotfiles installer-bootstrapper" && return 2
-    fi
-
-    # read getopt’s output this way to handle the quoting right:
-    eval set -- "$PARSED"
-
-    while true; do
-        case "$1" in
+    while [ "$#" -gt 0 ]; do
+        case $1 in
         --branch)
             INSTALL_BRANCH="${2:-main}"
             shift 2
             ;;
-        --)
-            shift
-            break
-            ;;
         *)
-            error "Programming error"
-            return 3
+            # Probably options to the real installer (implementation), simply shift past them
+            shift
             ;;
         esac
     done
-    
-    warning "INSTALL_BRANCH: $INSTALL_BRANCH"
-
-    unset long_options
-    return 0
 }
 
 detect_system() {
