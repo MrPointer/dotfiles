@@ -443,6 +443,8 @@ function parse_arguments {
     long_options+=,work-environment,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
+    # Options from the bootstrap script, here just to save this parser from failing as they are all passed
+    long_options+=,branch:
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -494,6 +496,10 @@ function parse_arguments {
             ;;
         --package-manager)
             PACKAGE_MANAGER="${2:-}"
+            shift 2
+            ;;
+        # Options from the bootstrap script, here just to save this parser from failing as they are all passed
+        --branch)
             shift 2
             ;;
         --)
