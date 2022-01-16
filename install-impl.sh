@@ -241,8 +241,11 @@ function prepare_dotfiles_environment {
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
 
-        printf "%s\n" "[data.install_config]"
+        printf "%s\n" "[data.tools_preferences]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
+
+        printf "%s\n" "[data.tools]"
+        printf "\t%s\n" "brew = $INSTALL_BREW"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 

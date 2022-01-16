@@ -73,29 +73,19 @@ DISABLE_AUTO_UPDATE="true"
 #    git
 #)
 
-# Enable homebrew completions
-if type brew &>/dev/null; then
-	FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
-	
-	autoload -Uz compinit
-	compinit
-fi
-
 # Load ohmyzsh
 source $ZSH/oh-my-zsh.sh
 
 # Load antigen
 source ~/antigen.zsh
 
-# Load the oh-my-zsh's library.
+# Load oh-my-zsh's library
 antigen use oh-my-zsh
 
 # Bundles from the default repo (robbyrussell's oh-my-zsh).
 antigen bundle git
 antigen bundle docker
 antigen bundle sudo
-antigen bundle systemd
-antigen bundle ubuntu
 antigen bundle screen
 
 # Syntax highlighting bundle.
@@ -133,16 +123,30 @@ antigen apply
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+
+{{ if .tools.brew -}}
+# Enable homebrew completions
+if type brew &>/dev/null; then
+	FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+fi
+{{- end }}
+
+{{ if .tools.nvim -}}
 alias vi="nvim"
 alias vim="nvim"
+{{- end }}
 
+{{ if .tools.fzf -}}
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+{{- end }}
 
 autoload -U +X compinit && compinit
 autoload -U +X bashcompinit && bashcompinit
 
+{{ if .tools.pipx -}}
 # Register pipx completions
 eval "$(register-python-argcomplete pipx)"
+{{- end }}
 
 {{ if .personal.work_env -}}
 # Load sedg specifics
