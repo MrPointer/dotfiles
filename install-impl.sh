@@ -15,7 +15,7 @@ Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
   --branch=[branch]                 Use the given branch for installation reference. Defaults to main
-  --work-environment                Treat this installation as a work environment
+  --work-env                        Treat this installation as a work environment
   --work-email=[email]              Use given email address as work's email address
   --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
   --brew-shell                      Install shell using brew. By default it's installed with system's package manager
@@ -451,7 +451,7 @@ function parse_arguments {
     local short_options=hv
     local long_options=help,verbose
     long_options+=,branch:
-    long_options+=,work-environment,work-email:
+    long_options+=,work-env,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
 
@@ -483,7 +483,7 @@ function parse_arguments {
             INSTALL_BRANCH="${2:-main}"
             shift 2
             ;;
-        --work-environment)
+        --work-env)
             WORK_ENVIRONMENT=true
             shift
             ;;

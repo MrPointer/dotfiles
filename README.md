@@ -28,7 +28,7 @@ The following options can be passed to the command above to customize the instal
 | ----------------------------- | ---------------------------------------------------------------------------------------------- |
 | `-v` or `--verbose`           | Enable verbose output                                                                          |
 | `--branch=[branch]`           | Use the given branch for installation reference. Defaults to `main`                            |
-| `--work-environment`          | Treat this installation as a work environment                                                  |
+| `--work-env`                  | Treat this installation as a work environment                                                  |
 | `--work-email=[email]`        | Use given email address as work's email address                                                |
 | `--shell=[shell]`             | Install given shell if required and set it as user's default. Defaults to zsh.                 |
 | `--no-brew`                   | Don't install brew (Homebrew)                                                                  |
