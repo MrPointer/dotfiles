@@ -14,6 +14,7 @@ Example: $PROGRAM_NAME -h
 Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
+  --branch=[branch]                 Use the given branch for installation reference. Defaults to main
   --work-environment                Treat this installation as a work environment
   --work-email=[email]              Use given email address as work's email address
   --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
@@ -398,6 +399,10 @@ function get_download_tool {
 # Set global variables
 ###
 function set_globals {
+    if [[ -n "$INSTALL_BRANCH" ]]; then
+        APPLY_DOTFILES_CMD+=(--branch "$INSTALL_BRANCH")
+    fi
+
     # Can't prefer to install with brew if brew should not even be installed
     if [ "$INSTALL_BREW" = false ]; then
         PREFER_BREW_FOR_ALL_TOOLS=false
@@ -440,11 +445,10 @@ function parse_arguments {
 
     local short_options=hv
     local long_options=help,verbose
+    long_options+=,branch:
     long_options+=,work-environment,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
-    # Options from the bootstrap script, here just to save this parser from failing as they are all passed
-    long_options+=,branch:
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -469,6 +473,10 @@ function parse_arguments {
         -v | --verbose)
             VERBOSE=true
             shift
+            ;;
+        --branch)
+            INSTALL_BRANCH="${2:-main}"
+            shift 2
             ;;
         --work-environment)
             WORK_ENVIRONMENT=true
@@ -496,10 +504,6 @@ function parse_arguments {
             ;;
         --package-manager)
             PACKAGE_MANAGER="${2:-}"
-            shift 2
-            ;;
-        # Options from the bootstrap script, here just to save this parser from failing as they are all passed
-        --branch)
             shift 2
             ;;
         --)
@@ -553,6 +557,7 @@ function _set_personal_info_defaults {
 ###
 function set_defaults {
     VERBOSE=false
+    INSTALL_BRANCH=main
     WORK_ENVIRONMENT=false
     ROOT_USER=false
 
