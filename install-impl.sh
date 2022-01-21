@@ -292,12 +292,7 @@ function install_brew {
 
     [ "$VERBOSE" = true ] && info "Installing brew"
 
-    local install_brew_cmd=(
-        bash -c
-        \#"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"\#
-    )
-
-    if ! "${install_brew_cmd[@]}"; then
+    if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
         return 1
     fi
 
