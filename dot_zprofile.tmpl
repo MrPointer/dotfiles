@@ -2,6 +2,11 @@
 export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
 export GPG_TTY=$(tty)
 
+{{ if .tools.brew -}}
+# Load (home)brew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+{{ - end }}
+
 # pip zsh completion start
 function _pip_completion {
   local words cword
