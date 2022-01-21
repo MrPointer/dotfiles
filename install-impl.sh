@@ -294,7 +294,7 @@ function install_brew {
 
     local install_brew_cmd=(
         bash -c
-        \"\$\(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh\)\"
+        \#"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"\#
     )
 
     if ! "${install_brew_cmd[@]}"; then
