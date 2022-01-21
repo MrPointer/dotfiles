@@ -246,6 +246,9 @@ function prepare_dotfiles_environment {
 
         printf "%s\n" "[data.tools]"
         printf "\t%s\n" "brew = $INSTALL_BREW"
+        printf "\t%s\n" "pipx = false"
+        printf "\t%s\n" "nvim = false"
+        printf "\t%s\n" "fzf = false"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
