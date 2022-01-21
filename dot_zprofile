@@ -2,8 +2,6 @@
 export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
 export GPG_TTY=$(tty)
 
-eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
-
 # pip zsh completion start
 function _pip_completion {
   local words cword

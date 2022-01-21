@@ -14,17 +14,26 @@ Example: $PROGRAM_NAME -h
 Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
-  --package-manager=[manager]       Package manager to use for installing prerequisites
-  --work-environment                Treat this installation as a work environment
+  --branch=[branch]                 Use the given branch for installation reference. Defaults to main
+  --work-env                        Treat this installation as a work environment
   --work-email=[email]              Use given email address as work's email address
-  --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh.
-  --no-python                       Don't install python
-  --no-gpg                          Don't install gpg
+  --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
+  --brew-shell                      Install shell using brew. By default it's installed with system's package manager
   --no-brew                         Don't install brew (Homebrew)
   --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
+  --package-manager=[manager]       Package manager to use for installing prerequisites
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
 }
+
+###
+# Set default color codes for colorful prints
+###
+RED_COLOR="\033[0;31m"
+GREEN_COLOR="\033[0;32m"
+YELLOW_COLOR="\033[1;33m"
+BLUE_COLOR="\033[0;34m"
+NEUTRAL_COLOR="\033[0m"
 
 function cecho {
     printf "${1}%s${NEUTRAL_COLOR}\n" "${@:2}"
@@ -56,7 +65,7 @@ function join_by {
 }
 
 ###
-# Retrieves thw path to the given shell's user profile.
+# Retrieves the path to the given shell's user profile.
 # Arguments:
 #       $1 - Name of the shell to retrieve for
 # Output (stdout):
@@ -97,7 +106,7 @@ function _install_packages_with_brew {
 
     install_package_cmd=(brew install --force-bottle "${packages[@]}")
 
-    eval "${install_package_cmd[@]}"
+    "${install_package_cmd[@]}"
 }
 
 function _install_packages_with_package_manager {
@@ -114,7 +123,7 @@ function _install_packages_with_package_manager {
     fi
     install_package_cmd+=("$PACKAGE_MANAGER" install -y "${packages[@]}")
 
-    eval "${install_package_cmd[@]}"
+    "${install_package_cmd[@]}"
 }
 
 ###
@@ -131,6 +140,13 @@ function install_packages {
         ! _install_packages_with_package_manager "$@" && return 1
     fi
     return 0
+}
+
+###
+# Reload target shell's user profile, to activate changes.
+###
+function _reload_shell_user_profile {
+    source "$SHELL_USER_PROFILE"
 }
 
 function _reinstall_chezmoi_as_package {
@@ -170,8 +186,17 @@ function post_install {
 
     if ! _reinstall_chezmoi_as_package; then
         error "Failed reinstalling chezmoi as an updatable package"
-        return 1
+        # It's not a fatal error, we can proceed
     fi
+
+    if [[ "$SHELL_TO_INSTALL" == "bash" ]]; then
+        if ! _reload_shell_user_profile; then
+            warning "Failed reloading shell profile, please attempt a manual re-login"
+        fi
+    else
+        warning "You've installed a new shell, please re-login to apply changes"
+    fi
+
     return 0
 }
 
@@ -181,7 +206,7 @@ function post_install {
 function apply_dotfiles {
     [ "$VERBOSE" = true ] && info "Applying dotfiles"
 
-    if ! eval "${APPLY_DOTFILES_CMD[@]}"; then
+    if ! "${APPLY_DOTFILES_CMD[@]}"; then
         return 1
     fi
     return 0
@@ -215,17 +240,16 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
-        
-        printf "%s\n" "[data.install_config]"
-        printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
-    } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
-}
 
-###
-# Reload target shell's user profile, to activate changes.
-###
-function reload_shell_user_profile {
-    source "$SHELL_USER_PROFILE"
+        printf "%s\n" "[data.tools_preferences]"
+        printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
+
+        printf "%s\n" "[data.tools]"
+        printf "\t%s\n" "brew = $INSTALL_BREW"
+        printf "\t%s\n" "pipx = false"
+        printf "\t%s\n" "nvim = false"
+        printf "\t%s\n" "fzf = false"
+    } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
 ###
@@ -240,9 +264,13 @@ function install_shell {
 
     [ "$VERBOSE" = true ] && echo "Installing shell"
 
-    # First install the shell
-    if ! install_packages "$SHELL_TO_INSTALL"; then
-        return 1
+    # First install our shell
+    if [ "$INSTALL_SHELL_WITH_BREW" = true ]; then
+        # User has insisted on installing it with brew, so we follow along
+        ! _install_packages_with_brew "$SHELL_TO_INSTALL" && return 1
+    else
+        # Otherwise, we always use the system's package-manager, even if other tools are installed via brew
+        ! _install_packages_with_package_manager "$SHELL_TO_INSTALL" && return 2
     fi
 
     # Find installed shell's location
@@ -251,20 +279,6 @@ function install_shell {
 
     # Then configure it as user's default shell
     sudo chsh -s "$shell_path" "$CURRENT_USER_NAME"
-}
-
-###
-# Install git using either system's package manager or homebrew, depending on the passed options.
-# If git is already installed, do nothing.
-###
-function install_git {
-    if hash git 2>/dev/null; then
-        return 0
-    fi
-
-    [ "$VERBOSE" = true ] && info "Installing git"
-
-    install_packages git
 }
 
 ###
@@ -280,18 +294,23 @@ function install_brew {
 
     local install_brew_cmd=(
         bash -c
-        "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        \"\$\(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh\)\"
     )
 
-    if ! eval "${install_brew_cmd[@]}"; then
+    if ! "${install_brew_cmd[@]}"; then
         return 1
     fi
 
-    [ "$VERBOSE" = true ] && info "Adding brew to $PATH by appending to the user profile $SHELL_USER_PROFILE"
+    [ "$VERBOSE" = true ] && info "Adding brew to \$PATH by appending to the user profile $SHELL_USER_PROFILE"
 
-    if ! echo "eval \"\$($BREW_LOCATION_RESOLVING_CMD)\"" >>"$SHELL_USER_PROFILE"; then
-        return 2
+    # Only append resolving command to the profile if it's not already there (maybe we're re-installing?)
+    if ! grep -q "$BREW_LOCATION_RESOLVING_CMD" "$SHELL_USER_PROFILE" &>/dev/null; then
+        if ! echo "eval \"\$($BREW_LOCATION_RESOLVING_CMD)\"" >>"$SHELL_USER_PROFILE"; then
+            return 2
+        fi
     fi
+
+    # Eval brew for current session ot be able to use it later, if needed
     eval "$($BREW_LOCATION_RESOLVING_CMD)"
 }
 
@@ -339,21 +358,11 @@ function install_dotfiles {
         [ "$VERBOSE" = true ] && success "Successfully installed brew"
     fi
 
-    if ! install_git; then
-        error "Failed installing git"
-        return 2
-    fi
-    [ "$VERBOSE" = true ] && success "Successfully installed git"
-
     if ! install_shell; then
         error "Failed installing shell"
         return 2
     fi
     [ "$VERBOSE" = true ] && success "Successfully installed $SHELL_TO_INSTALL"
-    if ! reload_shell_user_profile; then
-        error "Failed reloading shell user profile"
-        return 2
-    fi
 
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
@@ -401,6 +410,10 @@ function get_download_tool {
 # Set global variables
 ###
 function set_globals {
+    if [[ -n "$INSTALL_BRANCH" ]]; then
+        APPLY_DOTFILES_CMD+=(--branch "$INSTALL_BRANCH")
+    fi
+
     # Can't prefer to install with brew if brew should not even be installed
     if [ "$INSTALL_BREW" = false ]; then
         PREFER_BREW_FOR_ALL_TOOLS=false
@@ -443,9 +456,10 @@ function parse_arguments {
 
     local short_options=hv
     local long_options=help,verbose
-    long_options+=,package-manager:
-    long_options+=,shell:,no-python,no-gpg,no-brew,prefer-package-manager
-    long_options+=,work-environment,work-email:
+    long_options+=,branch:
+    long_options+=,work-env,work-email:
+    long_options+=,shell:,brew-shell
+    long_options+=,no-brew,prefer-package-manager,package-manager:
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -471,11 +485,11 @@ function parse_arguments {
             VERBOSE=true
             shift
             ;;
-        --package-manager)
-            PACKAGE_MANAGER="${2:-}"
+        --branch)
+            INSTALL_BRANCH="${2:-main}"
             shift 2
             ;;
-        --work-environment)
+        --work-env)
             WORK_ENVIRONMENT=true
             shift
             ;;
@@ -487,12 +501,8 @@ function parse_arguments {
             SHELL_TO_INSTALL="${2:-}"
             shift 2
             ;;
-        --no-python)
-            INSTALL_PYTHON=false
-            shift
-            ;;
-        --no-gpg)
-            INSTALL_GPG=false
+        --brew-shell)
+            INSTALL_SHELL_WITH_BREW=true
             shift
             ;;
         --no-brew)
@@ -502,6 +512,10 @@ function parse_arguments {
         --prefer-package-manager)
             PREFER_BREW_FOR_ALL_TOOLS=false
             shift
+            ;;
+        --package-manager)
+            PACKAGE_MANAGER="${2:-}"
+            shift 2
             ;;
         --)
             shift
@@ -525,14 +539,9 @@ function _set_package_management_defaults {
 }
 
 function _set_shell_defaults {
+    INSTALL_SHELL_WITH_BREW=false
     SHELL_TO_INSTALL=zsh
     SHELL_USER_PROFILE=""
-}
-
-function _set_installed_tools_defaults {
-    INSTALL_GPG=true
-    INSTALL_PYTHON=true
-    PACKAGE_MANAGER_INSTALLED_TOOLS=(gpg)
 }
 
 function _set_dotfiles_manager_defaults {
@@ -549,20 +558,9 @@ function _set_personal_info_defaults {
     GITHUB_USERNAME="MrPointer"
     FULL_NAME="Timor Gruber"
     PERSONAL_EMAIL="timor.gruber@gmail.com"
-    PERSONAL_GPG_SIGNING_KEY=E1B39E9320C37806
+    PERSONAL_GPG_SIGNING_KEY=D8B3170598131C15
     WORK_EMAIL="timor.gruber@solaredge.com"
     WORK_GPG_SIGNING_KEY=90BBCCC1DDED66C4
-}
-
-###
-# Set default color codes for colorful prints.
-###
-function _set_color_defaults {
-    RED_COLOR="\033[0;31m"
-    GREEN_COLOR="\033[0;32m"
-    YELLOW_COLOR="\033[1;33m"
-    BLUE_COLOR="\033[0;34m"
-    NEUTRAL_COLOR="\033[0m"
 }
 
 ###
@@ -570,13 +568,12 @@ function _set_color_defaults {
 ###
 function set_defaults {
     VERBOSE=false
+    INSTALL_BRANCH=main
     WORK_ENVIRONMENT=false
     ROOT_USER=false
 
-    _set_color_defaults
     _set_personal_info_defaults
     _set_dotfiles_manager_defaults
-    _set_installed_tools_defaults
     _set_shell_defaults
     _set_package_management_defaults
 }
