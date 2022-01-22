@@ -165,14 +165,14 @@ function _reinstall_chezmoi_as_package {
             error "Failed installing $DOTFILES_MANAGER using brew, will keep existing binary at $DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
             return 1
         fi
-        [ "$VERBOSE" = true ] && success "Successfully installed $DOTFILES_MANAGER as a brew package"
+        success "Successfully installed $DOTFILES_MANAGER as a brew package"
     fi
 
     [ "$VERBOSE" = true ] && info "Removing standalone $DOTFILES_MANAGER binary"
     if ! rm "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"; then
         warning "Failed removing standalone chezmoi binary (downloaded at first) at $DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
     else
-        [ "$VERBOSE" = true ] && success "Successfully removed standalone chezmoi binary"
+        success "Successfully removed standalone chezmoi binary"
     fi
 
     return 0
@@ -182,8 +182,6 @@ function _reinstall_chezmoi_as_package {
 # Finalize installation by executing post-install commands.
 ###
 function post_install {
-    [ "$VERBOSE" = true ] && info "Executing post-install commands (finalization)"
-
     if ! _reinstall_chezmoi_as_package; then
         error "Failed reinstalling chezmoi as an updatable package"
         # It's not a fatal error, we can proceed
@@ -204,12 +202,7 @@ function post_install {
 # Apply dotfiles, optionally by using a dotfiles manager.
 ###
 function apply_dotfiles {
-    [ "$VERBOSE" = true ] && info "Applying dotfiles"
-
-    if ! "${APPLY_DOTFILES_CMD[@]}"; then
-        return 1
-    fi
-    return 0
+    "${APPLY_DOTFILES_CMD[@]}"
 }
 
 ###
@@ -217,8 +210,6 @@ function apply_dotfiles {
 # This might be a useful step for some dotfiles managers.
 ###
 function prepare_dotfiles_environment {
-    [ "$VERBOSE" = true ] && info "Preparing dotfiles environment"
-
     if ! mkdir -p "$ENVIRONMENT_TEMPLATE_CONFIG_DIR" &>/dev/null; then
         error "Couldn't create environment's dotfiles config directory"
         return 1
@@ -262,8 +253,6 @@ function install_shell {
         return 0
     fi
 
-    [ "$VERBOSE" = true ] && echo "Installing shell"
-
     # First install our shell
     if [ "$INSTALL_SHELL_WITH_BREW" = true ]; then
         # User has insisted on installing it with brew, so we follow along
@@ -290,13 +279,9 @@ function install_brew {
         return 0
     fi
 
-    [ "$VERBOSE" = true ] && info "Installing brew"
-
     if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
         return 1
     fi
-
-    [ "$VERBOSE" = true ] && info "Adding brew to \$PATH by appending to the user profile $SHELL_USER_PROFILE"
 
     # Eval brew for current session to be able to use it later, if needed
     eval "$($BREW_LOCATION_RESOLVING_CMD)"
@@ -307,8 +292,6 @@ function install_brew {
 # To avoid any errors and complicated checks, just install the latest binary at this stage.
 ###
 function install_dotfiles_manager {
-    [ "$VERBOSE" = true ] && info "Installing dotfiles manager ($DOTFILES_MANAGER)"
-
     if hash "$DOTFILES_MANAGER" 2>/dev/null; then
         info "$DOTFILES_MANAGER already installed, skipping"
         return 0
@@ -332,43 +315,49 @@ function install_dotfiles_manager {
 # Install dotfiles. This is the main "driver" function.
 ###
 function install_dotfiles {
+    info "Installing dotfiles manager ($DOTFILES_MANAGER)"
     if ! install_dotfiles_manager; then
         error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
         return 1
     fi
-    [ "$VERBOSE" = true ] && success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
+    success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
 
     if [ "$INSTALL_BREW" = true ]; then
+        info "Installing brew"
         if ! install_brew; then
             error "Failed installing brew"
             return 2
         fi
-        [ "$VERBOSE" = true ] && success "Successfully installed brew"
+        success "Successfully installed brew"
     fi
 
+    info "Installing shell"
     if ! install_shell; then
         error "Failed installing shell"
         return 2
     fi
-    [ "$VERBOSE" = true ] && success "Successfully installed $SHELL_TO_INSTALL"
+    success "Successfully installed $SHELL_TO_INSTALL"
 
+    info "Preparing dotfiles environment"
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
         return 3
     fi
-    [ "$VERBOSE" = true ] && success "Successfully prepared dotfiles environment"
+    success "Successfully prepared dotfiles environment"
 
+    info "Applying dotfiles"
     if ! apply_dotfiles; then
         error "Failed applying dotfiles"
         return 4
     fi
-    [ "$VERBOSE" = true ] && success "Successfully applied dotfiles"
+    success "Successfully applied dotfiles"
 
+    info "Finalizing installation"
     if ! post_install; then
         error "Failed finalizing installation"
         return 5
     fi
-    [ "$VERBOSE" = true ] && success "Successfully finalized installation"
+    success "Successfully finalized installation"
 
     return 0
 }
