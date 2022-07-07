@@ -36,7 +36,13 @@ BLUE_COLOR="\033[0;34m"
 NEUTRAL_COLOR="\033[0m"
 
 function cecho {
-    printf "${1}%s${NEUTRAL_COLOR}\n" "${@:2}"
+    local string_placeholders=""
+    for ((i = 1; i < $#; i++)); do
+        string_placeholders+="%s"
+    done
+
+    # shellcheck disable=SC2059
+    printf "${1}${string_placeholders}${NEUTRAL_COLOR}\n" "${@:2}"
 }
 function warning {
     cecho "$YELLOW_COLOR" "$@"
@@ -112,13 +118,13 @@ function _install_packages_with_brew {
 function _install_packages_with_package_manager {
     local packages=("$@")
 
-    if [ -z "$PACKAGE_MANAGER" ]; then
+    if [[ -z "$PACKAGE_MANAGER" ]]; then
         error "Package manager not set, something went wrong. Please install packages manually."
         return 1
     fi
 
     local install_package_cmd=()
-    if [ "$ROOT_USER" = false ]; then
+    if [[ "$ROOT_USER" == false ]]; then
         install_package_cmd=(sudo)
     fi
     install_package_cmd+=("$PACKAGE_MANAGER" install -y "${packages[@]}")
@@ -134,7 +140,7 @@ function _install_packages_with_package_manager {
 #       Install tool's result, zero on success.
 ###
 function install_packages {
-    if [ "$PREFER_BREW_FOR_ALL_TOOLS" = true ]; then
+    if [[ "$PREFER_BREW_FOR_ALL_TOOLS" == true ]]; then
         ! _install_packages_with_brew "$@" && return 1
     else
         ! _install_packages_with_package_manager "$@" && return 1
@@ -150,7 +156,7 @@ function _reload_shell_user_profile {
 }
 
 function _reinstall_chezmoi_as_package {
-    [ "$INSTALL_BREW" = false ] && return 0
+    [ "$INSTALL_BREW" == false ] && return 0
 
     local brew_chezmoi_installed=false
 
@@ -158,8 +164,8 @@ function _reinstall_chezmoi_as_package {
         brew_chezmoi_installed=true
     fi
 
-    if [ "$brew_chezmoi_installed" = false ]; then
-        [ "$VERBOSE" = true ] && info "Installing $DOTFILES_MANAGER using brew"
+    if [[ "$brew_chezmoi_installed" == false ]]; then
+        [ "$VERBOSE" == true ] && info "Installing $DOTFILES_MANAGER using brew"
 
         if ! _install_packages_with_brew "$DOTFILES_MANAGER"; then
             error "Failed installing $DOTFILES_MANAGER using brew, will keep existing binary at $DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
@@ -168,7 +174,7 @@ function _reinstall_chezmoi_as_package {
         success "Successfully installed $DOTFILES_MANAGER as a brew package"
     fi
 
-    [ "$VERBOSE" = true ] && info "Removing standalone $DOTFILES_MANAGER binary"
+    [ "$VERBOSE" == true ] && info "Removing standalone $DOTFILES_MANAGER binary"
     if ! rm "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"; then
         warning "Failed removing standalone chezmoi binary (downloaded at first) at $DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
     else
@@ -254,7 +260,7 @@ function install_shell {
     fi
 
     # First install our shell
-    if [ "$INSTALL_SHELL_WITH_BREW" = true ]; then
+    if [[ "$INSTALL_SHELL_WITH_BREW" == true ]]; then
         # User has insisted on installing it with brew, so we follow along
         ! _install_packages_with_brew "$SHELL_TO_INSTALL" && return 1
     else
@@ -305,7 +311,7 @@ function install_dotfiles_manager {
         ! sh -c "$(wget -qO- git.io/chezmoi)" && installation_failed=true
     fi
 
-    if [ "$installation_failed" = true ]; then
+    if [[ "$installation_failed" == true ]]; then
         return 1
     fi
     return 0
@@ -322,7 +328,7 @@ function install_dotfiles {
     fi
     success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
 
-    if [ "$INSTALL_BREW" = true ]; then
+    if [[ "$INSTALL_BREW" == true ]]; then
         info "Installing brew"
         if ! install_brew; then
             error "Failed installing brew"
@@ -392,7 +398,7 @@ function set_globals {
     fi
 
     # Can't prefer to install with brew if brew should not even be installed
-    if [ "$INSTALL_BREW" = false ]; then
+    if [[ "$INSTALL_BREW" == false ]]; then
         PREFER_BREW_FOR_ALL_TOOLS=false
     fi
 
@@ -412,7 +418,7 @@ function set_globals {
         return 2
     fi
 
-    if [ "$WORK_ENVIRONMENT" = true ]; then
+    if [[ "$WORK_ENVIRONMENT" == true ]]; then
         ACTIVE_EMAIL="$WORK_EMAIL"
         ACTIVE_GPG_SIGNING_KEY="$WORK_GPG_SIGNING_KEY"
     else
@@ -559,12 +565,6 @@ function set_defaults {
 # This is the script's entry point, just like in any other programming language.
 ###
 function main {
-    if [[ -v ZSH_NAME && -n "$ZSH_NAME" ]]; then
-        error "I'm a Bash script, please do not run me as 'zsh script_name'" \
-            ", but rather execute me directly!"
-        return 1
-    fi
-
     if ! set_defaults; then
         error "Failed setting default values, aborting"
         return 1
