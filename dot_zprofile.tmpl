@@ -18,3 +18,11 @@ function _pip_completion {
 }
 compctl -K _pip_completion /usr/bin/python -m pip
 # pip zsh completion end
+
+{{ if .personal.work_env -}}
+# Load sedg specifics
+source {{ .system.work_dotfiles_profile }}
+
+# Add sedg executables-dir to $PATH as well
+export PATH="$SEDG_EXECUTABLES_DIR:$PATH"
+{{- end }}

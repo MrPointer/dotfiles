@@ -237,6 +237,8 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
+        printf "\t%s\n" "work_dotfiles_dir = \"$WORK_DOTFILES_DIR\""
+        printf "\t%s\n" "work_dotfiles_profile = \"$WORK_DOTFILES_PROFILE\""
 
         printf "%s\n" "[data.tools_preferences]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
@@ -514,6 +516,12 @@ function parse_arguments {
     return 0
 }
 
+function _set_work_info_defaults () {
+    WORK_DOTFILES_DIR="$HOME/.sedg"
+    WORK_DOTFILES_PROFILE="$WORK_DOTFILES_DIR/profile"
+}
+
+
 function _set_package_management_defaults {
     PACKAGE_MANAGER=""
     INSTALL_BREW=true
@@ -559,6 +567,7 @@ function set_defaults {
     _set_dotfiles_manager_defaults
     _set_shell_defaults
     _set_package_management_defaults
+    _set_work_info_defaults
 }
 
 ###
