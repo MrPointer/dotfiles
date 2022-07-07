@@ -2,7 +2,7 @@
 {{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
 
-### Fix VPN's MTU
-sudo vpn-up
+### Fix VPN
+sudo fix-vpn up
 {{- end }}
 {{- end -}}
