@@ -94,59 +94,19 @@ function configure_vpn_fix_tool {
 }
 
 ###
+# Checks whether the vpn fix tool has already been configured
+###
+function vpn_fix_tool_already_configured {
+    [[ -f "$FIX_TOOL_LINK_TARGET" ]] || return 1
+    [[ -f "$FIX_TOOL_SUDOERS_FILE" ]] || return 1
+    return 0
+}
+
+###
 # Set global variables
 ###
 function set_globals {
     :
-}
-
-###
-# Parse arguments/options using getopt, the almighty C-based parser.
-###
-function parse_arguments {
-    getopt --test >/dev/null
-    if (($? != 4)); then
-        error "I'm sorry, 'getopt --test' failed in this environment."
-        return 1
-    fi
-
-    local short_options=hv
-    local long_options=help
-
-    # -temporarily store output to be able to check for errors
-    # -activate quoting/enhanced mode (e.g. by writing out “--options”)
-    # -pass arguments only via   -- "$@"   to separate them correctly
-    if ! PARSED=$(
-        getopt --options="$short_options" --longoptions="$long_options" \
-            --name "$PROGRAM_PATH" -- "$@"
-    ); then
-        # getopt has complained about wrong arguments to stdout
-        error "Wrong arguments to $PROGRAM_NAME" && return 2
-    fi
-
-    # read getopt’s output this way to handle the quoting right:
-    eval set -- "$PARSED"
-
-    while true; do
-        case $1 in
-        -h | --help)
-            show_usage
-            exit 0
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            error "Programming error"
-            return 3
-            ;;
-        esac
-    done
-
-    # Arguments can be parsed here - Anything left will be now at $1, $2, etc.
-
-    return 0
 }
 
 ###
@@ -187,20 +147,20 @@ function main {
         return 1
     fi
 
-    if ! parse_arguments "$@"; then
-        error "Couldn't parse arguments, aborting"
+    if ! set_globals; then
+        error "Failed setting global variables, aborting"
         return 2
     fi
 
-    if ! set_globals; then
-        error "Failed setting global variables, aborting"
-        return 3
+    if vpn_fix_tool_already_configured; then
+        # Do nothing and exit silently
+        return 0
     fi
 
     info "Configuring vpn fix tool"
     if ! configure_vpn_fix_tool; then
         error "Failed configuring vpn fix tool"
-        return 4
+        return 3
     fi
 
     success "Successfully configured vpn fix tool"
