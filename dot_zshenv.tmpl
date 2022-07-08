@@ -1,10 +1,29 @@
 export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
 
-{{ if .tools.brew -}}
-# Load (home)brew
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-{{- end }}
+if [[ -d /home/linuxbrew/ && -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+    # Load (home)brew
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
 
 {{ if .personal.work_env -}}
 source {{ .system.work_dotfiles_zsh_dir }}/.zshenv
 {{- end }}
+
+if [[ -d "$HOME/.pyenv" ]]; then
+  # Enable pyenv
+  export PYENV_ROOT="$HOME/.pyenv"
+  export PATH="$PYENV_ROOT/bin:$PATH"
+  eval "$(pyenv init --path)"
+  eval "$(pyenv init -)"
+  eval "$(pyenv virtualenv-init -)"
+fi
+
+if [[ -d "/home/linuxbrew/.linuxbrew/lib/ruby" ]]; then
+  # Add Ruby's exec dir to make Ruby execs available
+  export PATH="$PATH:/home/linuxbrew/.linuxbrew/lib/ruby/gems/3.1.0/bin"
+fi
+
+if [[ -d "/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot" ]]; then
+    # Add Portia's cross-toolchain to enable native cross-compilation
+    export PATH="$PATH:/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+fi
