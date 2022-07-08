@@ -61,7 +61,7 @@ invoke_actual_installation() {
     fi
 
     if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" "$@"; then
-        error "Failed on actual installation of dotfiles, sorry..."
+        error "Real installer failed, sorry..."
         return 3
     fi
 
@@ -248,7 +248,7 @@ main() {
 
     info "Running real bootstrap installation (bash script)"
     if ! invoke_actual_installation "$@"; then
-        error "Failed to install dotfiles"
+        error "Failed installing dotfiles [from bootstrap]"
         return 5
     fi
 

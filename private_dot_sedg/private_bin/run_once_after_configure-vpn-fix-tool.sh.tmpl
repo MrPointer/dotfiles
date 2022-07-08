@@ -71,7 +71,7 @@ function _link_system_files {
 }
 
 ###
-# Configures vpn fix tool
+# Configures vpn fix-tool
 ###
 function configure_vpn_fix_tool {
     # Get general work-profile's vars
@@ -94,7 +94,7 @@ function configure_vpn_fix_tool {
 }
 
 ###
-# Checks whether the vpn fix tool has already been configured
+# Checks whether the vpn fix-tool has already been configured
 ###
 function vpn_fix_tool_already_configured {
     [[ -f "$FIX_TOOL_LINK_TARGET" ]] || return 1
@@ -157,13 +157,13 @@ function main {
         return 0
     fi
 
-    info "Configuring vpn fix tool"
+    info "Configuring vpn fix-tool"
     if ! configure_vpn_fix_tool; then
-        error "Failed configuring vpn fix tool"
+        error "Failed configuring vpn fix-tool"
         return 3
     fi
 
-    success "Successfully configured vpn fix tool"
+    success "Successfully configured vpn fix-tool"
     return 0
 }
 
