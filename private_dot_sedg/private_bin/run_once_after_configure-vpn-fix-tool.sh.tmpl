@@ -62,21 +62,18 @@ function info {
 
 function _enable_sudo_access {
     sudo tee "$FIX_TOOL_SUDOERS_FILE" <<VPN_FIX_TOOL_SUDO_CONTENT >/dev/null
-    $USER ALL = NOPASSWD: $FIX_TOOL_LINK_TARGET
+$USER ALL = NOPASSWD: $FIX_TOOL_LINK_TARGET
 VPN_FIX_TOOL_SUDO_CONTENT
 }
 
 function _link_system_files {
-    sudo ln -s "$SEDG_FIX_VPN_EXECUTABLE" -t "$FIX_TOOL_LINK_TARGET"
+    sudo ln -s "$SEDG_FIX_VPN_EXECUTABLE_PATH" "$FIX_TOOL_LINK_TARGET"
 }
 
 ###
 # Configures vpn fix-tool
 ###
 function configure_vpn_fix_tool {
-    # Get general work-profile's vars
-    source {{ .system.work_dotfiles_profile }}
-
     info "Linking vpn fix-tool to system dirs"
     if ! _link_system_files; then
         error "Failed linking vpn fix-tool to system dirs"
@@ -106,14 +103,17 @@ function vpn_fix_tool_already_configured {
 # Set global variables
 ###
 function set_globals {
-    :
+    # Get general work-profile's vars
+    source {{ .system.work_dotfiles_profile }}
+
+    FIX_TOOL_LINK_TARGET="${FIX_TOOL_LINK_TARGET_DIR}/${SEDG_FIX_VPN_EXECUTABLE_NAME}"
 }
 
 ###
 # Set default values to be used throughout the script (global variables).
 ###
 function set_defaults {
-    FIX_TOOL_LINK_TARGET="/usr/local/bin"
+    FIX_TOOL_LINK_TARGET_DIR="/usr/local/bin"
     SUDOERS_DIR="/etc/sudoers.d"
     FIX_TOOL_SUDOERS_FILE="$SUDOERS_DIR/vpn-fix-tool"
 }
