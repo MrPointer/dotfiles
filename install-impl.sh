@@ -14,9 +14,9 @@ Example: $PROGRAM_NAME -h
 Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
-  --branch=[branch]                 Use the given branch for installation reference. Defaults to main
+  --ref=[git-ref]                   Reference the given git-ref for installation (can be any git ref - commit, branch, tag). Defaults to 'main'
   --work-env                        Treat this installation as a work environment
-  --work-email=[email]              Use given email address as work's email address
+  --work-email=[email]              Use given email address as work's email address. Defaults to 'timor.gruber@solaredge.com'
   --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
   --brew-shell                      Install shell using brew. By default it's installed with system's package manager
   --no-brew                         Don't install brew (Homebrew)
@@ -395,8 +395,8 @@ function get_download_tool {
 # Set global variables
 ###
 function set_globals {
-    if [[ -n "$INSTALL_BRANCH" ]]; then
-        APPLY_DOTFILES_CMD+=(--branch "$INSTALL_BRANCH")
+    if [[ -n "$INSTALL_REF" ]]; then
+        APPLY_DOTFILES_CMD+=(--branch "$INSTALL_REF")
     fi
 
     # Can't prefer to install with brew if brew should not even be installed
@@ -441,7 +441,7 @@ function parse_arguments {
 
     local short_options=hv
     local long_options=help,verbose
-    long_options+=,branch:
+    long_options+=,ref:
     long_options+=,work-env,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
@@ -470,8 +470,8 @@ function parse_arguments {
             VERBOSE=true
             shift
             ;;
-        --branch)
-            INSTALL_BRANCH="${2:-main}"
+        --ref)
+            INSTALL_REF="${2:-main}"
             shift 2
             ;;
         --work-env)
@@ -559,7 +559,7 @@ function _set_personal_info_defaults {
 ###
 function set_defaults {
     VERBOSE=false
-    INSTALL_BRANCH=main
+    INSTALL_REF=main
     WORK_ENVIRONMENT=false
     ROOT_USER=false
 

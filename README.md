@@ -24,17 +24,17 @@ that would query some required info, and then will install the dotfiles manager 
 
 The following options can be passed to the command above to customize the installation:  
 
-| Option                        | Description                                                                                    |
-| ----------------------------- | ---------------------------------------------------------------------------------------------- |
-| `-v` or `--verbose`           | Enable verbose output                                                                          |
-| `--branch=[branch]`           | Use the given branch for installation reference. Defaults to `main`                            |
-| `--work-env`                  | Treat this installation as a work environment                                                  |
-| `--work-email=[email]`        | Use given email address as work's email address                                                |
-| `--shell=[shell]`             | Install given shell if required and set it as user's default. Defaults to zsh.                 |
-| `--no-brew`                   | Don't install brew (Homebrew)                                                                  |
-| `--brew-shell`                | Install shell using brew. By default it's installed with system's package manager              |
-| `--prefer-package-manager`    | Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac) |
-| `--package-manager=[manager]` | Package manager to use for installing prerequisites                                            |
+| Option                        | Description                                                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `-v` or `--verbose`           | Enable verbose output                                                                                       |
+| `--ref=[git-ref]`             | Reference the given git-ref for installation (can be any git ref - commit, branch, tag). Defaults to `main` |
+| `--work-env`                  | Treat this installation as a work environment                                                               |
+| `--work-email=[email]`        | Use given email address as work's email address. Defaults to `timor.gruber@solaredge.com`                   |
+| `--shell=[shell]`             | Install given shell if required and set it as user's default. Defaults to `zsh`.                            |
+| `--no-brew`                   | Don't install `brew` (Homebrew)                                                                             |
+| `--brew-shell`                | Install shell using `brew`. By default it's installed with system's package manager                         |
+| `--prefer-package-manager`    | Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)              |
+| `--package-manager=[manager]` | Package manager to use for installing prerequisites                                                         |
 
 To add options to the install command above, append it after the last closing parentheses `)`, like so:  
 `bash -c "$(curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install.sh) --verbose"`
