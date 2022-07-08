@@ -44,13 +44,13 @@ invoke_actual_installation() {
     # Execute manually for every type of download tool to get exit code, it's impossible otherwise...
     # Shell commands executed with "-c" must be in single-quotes to catch their exit codes correctly
     IMPL_DOWNLOAD_RESULT=0
-    case "$DOWNLOAD_TOOL" in
+    case "$v_DOWNLOAD_TOOL" in
     curl)
-        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_BRANCH"/install-impl.sh -o "$TMP_IMPL_INSTALL_PATH"
+        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_REF"/install-impl.sh -o "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     wget)
-        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_BRANCH"/install-impl.sh -O "$TMP_IMPL_INSTALL_PATH"
+        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_REF"/install-impl.sh -O "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     esac
@@ -61,9 +61,11 @@ invoke_actual_installation() {
     fi
 
     if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" "$@"; then
-        error "Failed on actual installation of dotfiles, sorry..."
+        error "Real installer failed, sorry..."
         return 3
     fi
+
+    return 0
 }
 
 get_default_system_package_manager() {
@@ -164,8 +166,8 @@ install_bash() {
 parse_arguments() {
     while [ "$#" -gt 0 ]; do
         case $1 in
-        --branch)
-            INSTALL_BRANCH="${2:-main}"
+        --ref)
+            [ -n "$2" ] && INSTALL_REF="${2}"
             shift 2
             ;;
         *)
@@ -214,7 +216,7 @@ detect_system() {
 }
 
 set_defaults() {
-    INSTALL_BRANCH="main"
+    INSTALL_REF="main"
 }
 
 main() {
@@ -232,19 +234,21 @@ main() {
         return 2
     fi
 
+    info "Installing bash (if required)"
     if ! install_bash "$PKG_MANAGER"; then
         error "Failed installing bash!"
         return 3
     fi
 
-    DOWNLOAD_TOOL="$(get_download_tool)"
-    if [ -z "$DOWNLOAD_TOOL" ]; then
-        error "Neither 'curl' nor 'wget' are available, please install one of them manually."
+    v_DOWNLOAD_TOOL="$(get_download_tool)"
+    if [ -z "$v_DOWNLOAD_TOOL" ]; then
+        error "Neither 'curl' nor 'wget' are available, please install one of them manually"
         return 4
     fi
 
+    info "Running real bootstrap installation (bash script)"
     if ! invoke_actual_installation "$@"; then
-        error "Failed to install dotfiles"
+        error "Failed installing dotfiles [from bootstrap]"
         return 5
     fi
 

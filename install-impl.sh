@@ -14,9 +14,9 @@ Example: $PROGRAM_NAME -h
 Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
-  --branch=[branch]                 Use the given branch for installation reference. Defaults to main
+  --ref=[git-ref]                   Reference the given git-ref for installation (can be any git ref - commit, branch, tag). Defaults to 'main'
   --work-env                        Treat this installation as a work environment
-  --work-email=[email]              Use given email address as work's email address
+  --work-email=[email]              Use given email address as work's email address. Defaults to 'timor.gruber@solaredge.com'
   --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
   --brew-shell                      Install shell using brew. By default it's installed with system's package manager
   --no-brew                         Don't install brew (Homebrew)
@@ -237,15 +237,12 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
+        printf "\t%s\n" "work_dotfiles_dir = \"${WORK_DOTFILES_DIR}\""
+        printf "\t%s\n" "work_dotfiles_zsh_dir = \"${WORK_DOTFILES_DIR}/zsh\""
+        printf "\t%s\n" "work_dotfiles_profile = \"${WORK_DOTFILES_PROFILE}\""
 
         printf "%s\n" "[data.tools_preferences]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
-
-        printf "%s\n" "[data.tools]"
-        printf "\t%s\n" "brew = $INSTALL_BREW"
-        printf "\t%s\n" "pipx = false"
-        printf "\t%s\n" "nvim = false"
-        printf "\t%s\n" "fzf = false"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
@@ -393,8 +390,8 @@ function get_download_tool {
 # Set global variables
 ###
 function set_globals {
-    if [[ -n "$INSTALL_BRANCH" ]]; then
-        APPLY_DOTFILES_CMD+=(--branch "$INSTALL_BRANCH")
+    if [[ -n "$INSTALL_REF" ]]; then
+        APPLY_DOTFILES_CMD+=(--branch "$INSTALL_REF")
     fi
 
     # Can't prefer to install with brew if brew should not even be installed
@@ -439,7 +436,7 @@ function parse_arguments {
 
     local short_options=hv
     local long_options=help,verbose
-    long_options+=,branch:
+    long_options+=,ref:
     long_options+=,work-env,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
@@ -468,8 +465,8 @@ function parse_arguments {
             VERBOSE=true
             shift
             ;;
-        --branch)
-            INSTALL_BRANCH="${2:-main}"
+        --ref)
+            INSTALL_REF="${2:-main}"
             shift 2
             ;;
         --work-env)
@@ -514,6 +511,12 @@ function parse_arguments {
     return 0
 }
 
+function _set_work_info_defaults () {
+    WORK_DOTFILES_DIR="$HOME/.sedg"
+    WORK_DOTFILES_PROFILE="$WORK_DOTFILES_DIR/profile"
+}
+
+
 function _set_package_management_defaults {
     PACKAGE_MANAGER=""
     INSTALL_BREW=true
@@ -551,7 +554,7 @@ function _set_personal_info_defaults {
 ###
 function set_defaults {
     VERBOSE=false
-    INSTALL_BRANCH=main
+    INSTALL_REF=main
     WORK_ENVIRONMENT=false
     ROOT_USER=false
 
@@ -559,6 +562,7 @@ function set_defaults {
     _set_dotfiles_manager_defaults
     _set_shell_defaults
     _set_package_management_defaults
+    _set_work_info_defaults
 }
 
 ###
@@ -580,6 +584,7 @@ function main {
         return 1
     fi
 
+    info "Installing dotfiles"
     if ! install_dotfiles; then
         error "Failed installing dotfiles"
         return 3

@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+
+# saner programming env: these switches turn some bugs into errors
+set -o pipefail -o nounset
+
+function show_usage {
+    cat <<CONFIGURE_VPN_FIXES_USAGE
+Usage: $PROGRAM_NAME [OPTION]... 
+
+Configures vpn fixing tool for further usage
+
+Example: $PROGRAM_NAME
+
+Options:
+  -h, --help        Show this message and exit
+-----------------------------------------------------"
+CONFIGURE_VPN_FIXES_USAGE
+}
+
+###
+# Set default color codes for colorful prints.
+###
+RED_COLOR="\033[0;31m"
+GREEN_COLOR="\033[0;32m"
+YELLOW_COLOR="\033[1;33m"
+BLUE_COLOR="\033[0;34m"
+NEUTRAL_COLOR="\033[0m"
+
+###
+# Prints all given strings with the given color, appending a newline in the end.
+# One should not use this function directly, but rather use "log-level" functions
+# such as "info", "error", "success", etc.
+# Arguments:
+#       $1: Color to print in. Expected to be bash-supported color code
+#       $2..N: Strings to print.
+###
+function cecho {
+    local string_placeholders=""
+    for ((i = 1; i < $#; i++)); do
+        string_placeholders+="%s"
+    done
+
+    # shellcheck disable=SC2059
+    printf "${1}${string_placeholders}${NEUTRAL_COLOR}\n" "${@:2}"
+}
+
+function error {
+    cecho "$RED_COLOR" "$@" >&2
+}
+
+function warning {
+    cecho "$YELLOW_COLOR" "$@"
+}
+
+function success {
+    cecho "$GREEN_COLOR" "$@"
+}
+
+function info {
+    cecho "$BLUE_COLOR" "$@"
+}
+
+function _enable_sudo_access {
+    sudo tee "$FIX_TOOL_SUDOERS_FILE" <<VPN_FIX_TOOL_SUDO_CONTENT >/dev/null
+$USER ALL = NOPASSWD: $FIX_TOOL_LINK_TARGET
+VPN_FIX_TOOL_SUDO_CONTENT
+}
+
+function _link_system_files {
+    sudo ln -s "$SEDG_FIX_VPN_EXECUTABLE_PATH" "$FIX_TOOL_LINK_TARGET"
+}
+
+###
+# Configures vpn fix-tool
+###
+function configure_vpn_fix_tool {
+    info "Linking vpn fix-tool to system dirs"
+    if ! _link_system_files; then
+        error "Failed linking vpn fix-tool to system dirs"
+        return 1
+    fi
+    success "Successfully linked vpn fix-tool"
+
+    info "Enabling sudo access for the vpn fix-tool"
+    if ! _enable_sudo_access; then
+        error "Failed enabling sudo access for the vpn fix-tool"
+        return 2
+    fi
+    success "Successfully enabled sudo access for the vpn fix-tool"
+    return 0
+}
+
+###
+# Checks whether the vpn fix-tool has already been configured
+###
+function vpn_fix_tool_already_configured {
+    [[ -f "$FIX_TOOL_LINK_TARGET" ]] || return 1
+    [[ -f "$FIX_TOOL_SUDOERS_FILE" ]] || return 1
+    return 0
+}
+
+###
+# Set global variables
+###
+function set_globals {
+    # Get general work-profile's vars
+    source {{ .system.work_dotfiles_profile }}
+
+    FIX_TOOL_LINK_TARGET="${FIX_TOOL_LINK_TARGET_DIR}/${SEDG_FIX_VPN_EXECUTABLE_NAME}"
+}
+
+###
+# Set default values to be used throughout the script (global variables).
+###
+function set_defaults {
+    FIX_TOOL_LINK_TARGET_DIR="/usr/local/bin"
+    SUDOERS_DIR="/etc/sudoers.d"
+    FIX_TOOL_SUDOERS_FILE="$SUDOERS_DIR/vpn-fix-tool"
+}
+
+###
+# This is the script's entry point, just like in any other programming language.
+###
+function main {
+    local PROGRAM_PATH
+    local PROGRAM_NAME
+    local PROGRAM_DIR
+
+    local executing_shell
+    executing_shell="$(ps -p $$ -ocomm=)"
+    if [[ "$executing_shell" != "$(basename "$0")" && "$executing_shell" != "bash" ]]; then
+        error "Please execute me directly, or at least via bash!"
+        return 1
+    else
+        case "$(uname -s)" in
+        Linux*) READLINK_PROGRAM="readlink" ;;
+        Darwin*) READLINK_PROGRAM="greadlink" ;;
+        esac
+
+        PROGRAM_PATH="$($READLINK_PROGRAM -f "${BASH_SOURCE[0]}")"
+    fi
+    PROGRAM_NAME="$(basename "$PROGRAM_PATH")"
+    PROGRAM_DIR="$(dirname "$PROGRAM_PATH")"
+
+    if ! set_defaults; then
+        error "Failed setting default values, aborting"
+        return 1
+    fi
+
+    if ! set_globals; then
+        error "Failed setting global variables, aborting"
+        return 2
+    fi
+
+    if vpn_fix_tool_already_configured; then
+        # Do nothing and exit silently
+        return 0
+    fi
+
+    info "Configuring vpn fix-tool"
+    if ! configure_vpn_fix_tool; then
+        error "Failed configuring vpn fix-tool"
+        return 3
+    fi
+
+    success "Successfully configured vpn fix-tool"
+    return 0
+}
+
+# Call main and don't do anything else
+# It will pass the correct exit code to the OS
+main "$@"
