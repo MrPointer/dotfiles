@@ -246,6 +246,7 @@ main() {
         return 4
     fi
 
+    info "Running real bootstrap installation (bash script)"
     if ! invoke_actual_installation "$@"; then
         error "Failed to install dotfiles"
         return 5

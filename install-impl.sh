@@ -589,6 +589,7 @@ function main {
         return 1
     fi
 
+    info "Installing dotfiles"
     if ! install_dotfiles; then
         error "Failed installing dotfiles"
         return 3
