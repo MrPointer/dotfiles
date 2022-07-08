@@ -1,5 +1,10 @@
-. "$HOME/.zprofile"
+export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
+
+{{ if .tools.brew -}}
+# Load (home)brew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+{{- end }}
 
 {{ if .personal.work_env -}}
-source "$HOME"/dev-env.sh
+source {{ .system.work_dotfiles_zsh_dir }}/.zshenv
 {{- end }}

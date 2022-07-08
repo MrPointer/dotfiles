@@ -1,0 +1,9 @@
+# Load sedg specifics
+source {{ .system.work_dotfiles_profile }}
+
+# Add sedg executables-dir to $PATH as well
+export PATH="$SEDG_EXECUTABLES_DIR:$PATH"
+
+if [[ -d "$SEDG_IOE_DEV_ENV_FRAMEWORK_DIR" && -f "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT ]]; then
+    source "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT"
+fi

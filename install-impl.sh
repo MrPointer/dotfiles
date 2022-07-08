@@ -237,8 +237,9 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
-        printf "\t%s\n" "work_dotfiles_dir = \"$WORK_DOTFILES_DIR\""
-        printf "\t%s\n" "work_dotfiles_profile = \"$WORK_DOTFILES_PROFILE\""
+        printf "\t%s\n" "work_dotfiles_dir = \"${WORK_DOTFILES_DIR}\""
+        printf "\t%s\n" "work_dotfiles_zsh_dir = \"${WORK_DOTFILES_DIR}/zsh\""
+        printf "\t%s\n" "work_dotfiles_profile = \"${WORK_DOTFILES_PROFILE}\""
 
         printf "%s\n" "[data.tools_preferences]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"

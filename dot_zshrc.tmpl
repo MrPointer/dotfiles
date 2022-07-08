@@ -149,8 +149,5 @@ eval "$(register-python-argcomplete pipx)"
 {{- end }}
 
 {{ if .personal.work_env -}}
-if [ -d "SEDG_ZSH_DIR" ]; then
-  [ -f "$SEDG_ZSH_RC_EXTENSION" ] && source "$SEDG_ZSH_RC_EXTENSION"
-fi
-
+source "$SEDG_ZSH_RC_EXTENSION"
 {{- end }}
