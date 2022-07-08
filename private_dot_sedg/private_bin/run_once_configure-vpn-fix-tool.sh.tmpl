@@ -7,7 +7,7 @@ function show_usage {
     cat <<CONFIGURE_VPN_FIXES_USAGE
 Usage: $PROGRAM_NAME [OPTION]... 
 
-Configures VPN fixing tool for further usage
+Configures vpn fixing tool for further usage
 
 Example: $PROGRAM_NAME
 
@@ -71,7 +71,7 @@ function _link_system_files {
 }
 
 ###
-# Configures VPN fix tool
+# Configures vpn fix tool
 ###
 function configure_vpn_fix_tool {
     # Get general work-profile's vars
@@ -87,9 +87,10 @@ function configure_vpn_fix_tool {
     info "Enabling sudo access for the vpn fix-tool"
     if ! _enable_sudo_access; then
         error "Failed enabling sudo access for the vpn fix-tool"
-        return 1
+        return 2
     fi
     success "Successfully enabled sudo access for the vpn fix-tool"
+    return 0
 }
 
 ###
@@ -196,12 +197,13 @@ function main {
         return 3
     fi
 
+    info "Configuring vpn fix tool"
     if ! configure_vpn_fix_tool; then
-        error "Failed configuring VPN fix tool"
+        error "Failed configuring vpn fix tool"
         return 4
     fi
 
-    success "Successfully configured VPN fix tool"
+    success "Successfully configured vpn fix tool"
     return 0
 }
 
