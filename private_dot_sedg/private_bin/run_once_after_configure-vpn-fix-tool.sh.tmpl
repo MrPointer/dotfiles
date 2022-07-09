@@ -67,35 +67,38 @@ VPN_FIX_TOOL_SUDO_CONTENT
 }
 
 function _link_system_files {
-    sudo ln -s "$SEDG_FIX_VPN_EXECUTABLE_PATH" "$FIX_TOOL_LINK_TARGET"
+    sudo ln -sf "$SEDG_FIX_VPN_EXECUTABLE_PATH" "$FIX_TOOL_LINK_TARGET"
+}
+
+function _migrate_old_config {
+    sudo rm -rf "$OLD_FIX_TOOL_SUDOERS_FILE"
+    sudo rm -rf "${OLD_FIX_TOOL_LINK_TARGETS[@]}"
 }
 
 ###
 # Configures vpn fix-tool
 ###
 function configure_vpn_fix_tool {
+    info "Migrating old config (if any)"
+    if ! _migrate_old_config; then
+        error "Failed migrating old config"
+        return 1
+    fi
+    success "Successfully migrated old config"
+
     info "Linking vpn fix-tool to system dirs"
     if ! _link_system_files; then
         error "Failed linking vpn fix-tool to system dirs"
-        return 1
+        return 2
     fi
     success "Successfully linked vpn fix-tool"
 
     info "Enabling sudo access for the vpn fix-tool"
     if ! _enable_sudo_access; then
         error "Failed enabling sudo access for the vpn fix-tool"
-        return 2
+        return 3
     fi
     success "Successfully enabled sudo access for the vpn fix-tool"
-    return 0
-}
-
-###
-# Checks whether the vpn fix-tool has already been configured
-###
-function vpn_fix_tool_already_configured {
-    [[ -f "$FIX_TOOL_LINK_TARGET" ]] || return 1
-    [[ -f "$FIX_TOOL_SUDOERS_FILE" ]] || return 1
     return 0
 }
 
@@ -114,8 +117,11 @@ function set_globals {
 ###
 function set_defaults {
     FIX_TOOL_LINK_TARGET_DIR="/usr/local/bin"
+    OLD_FIX_TOOL_LINK_TARGETS=("$FIX_TOOL_LINK_TARGET_DIR/vpn-up" "$FIX_TOOL_LINK_TARGET_DIR/vpn-down")
+
     SUDOERS_DIR="/etc/sudoers.d"
     FIX_TOOL_SUDOERS_FILE="$SUDOERS_DIR/vpn-fix-tool"
+    OLD_FIX_TOOL_SUDOERS_FILE="$SUDOERS_DIR/vpn-mtu"
 }
 
 ###
@@ -150,11 +156,6 @@ function main {
     if ! set_globals; then
         error "Failed setting global variables, aborting"
         return 2
-    fi
-
-    if vpn_fix_tool_already_configured; then
-        # Do nothing and exit silently
-        return 0
     fi
 
     info "Configuring vpn fix-tool"

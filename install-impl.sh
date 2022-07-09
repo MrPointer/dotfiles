@@ -250,7 +250,7 @@ function _create_new_gpg_key {
     declare -n created_key="${1:?}"
 
     gpg --expert --full-gen-key || return 1
-    created_key="$(gpg --list-secret-keys --keyid-format LONG | tr -s " " | awk -F"[ /]" '/^sec/ { print $3 }')" || return 2
+    created_key="$(gpg --list-secret-keys --keyid-format LONG | tr -s " " | awk -F"[ /]" '/^sec/ { print $3 }' | tail -n1)" || return 2
     return 0
 }
 
@@ -289,7 +289,9 @@ function _install_gpg_client {
 
 ###
 # Ensures a GPG key exist in order to be able to sign git commits in the future (and maybe do other stuff).
-# If the "default" key is not available, a new one is created instead and will be used in all managed dotfiles.
+# If a key is not already available, a new one is created instead and will be used in all managed dotfiles.
+# Otherwise, the user is asked whether to reuse an existing key, and if so which one.
+# The user can also decide to create a new one nevertheless.
 # The script requires some interactivity.
 ###
 function ensure_gpg_key_exist {
@@ -300,13 +302,32 @@ function ensure_gpg_key_exist {
     fi
     success "Successfully installed gpg client"
 
-    info "Checking whether expected GPG key ($ACTIVE_GPG_SIGNING_KEY) is already available"
-    if gpg --list-secret-keys --keyid-format LONG | grep -q "$ACTIVE_GPG_SIGNING_KEY"; then
-        info "Expected GPG key is already available!"
-        return 0
-    fi
+    if gpg --list-secret-keys --keyid-format LONG | grep -q "sec"; then
+        info "GPG keys already available"
 
-    warning "Expected GPG key ($ACTIVE_GPG_SIGNING_KEY) is not available, creating a new one"
+        info "Would you like to reuse one of the available keys?"
+        local answer
+        select answer in "Yes" "No"; do
+            case $answer in
+            [Yy]*)
+                local available_keys
+                mapfile -t available_keys < <(gpg --list-secret-keys --keyid-format LONG | tr -s " " | awk -F"[ /]" '/^sec/ { print $3 }')
+
+                info "Select the key to reuse:"
+                local selected_key
+                select selected_key in "${available_keys[@]}"; do
+                    warning "Using $selected_key as the GPG key"
+                    ACTIVE_GPG_SIGNING_KEY="$selected_key"
+                    return 0
+                done
+                ;;
+            [Nn]*)
+                warning "Creating a new GPG key"
+                break
+                ;;
+            esac
+        done
+    fi
 
     local new_gpg_key
     if ! _create_new_gpg_key new_gpg_key; then
@@ -315,7 +336,7 @@ function ensure_gpg_key_exist {
     fi
     success "Successfully created a new GPG key"
 
-    ACTIVE_GPG_SIGNING_KEY="${new_gpg_key}"
+    ACTIVE_GPG_SIGNING_KEY="$new_gpg_key"
     return 0
 }
 
@@ -497,10 +518,8 @@ function set_globals {
 
     if [[ "$WORK_ENVIRONMENT" == true ]]; then
         ACTIVE_EMAIL="$WORK_EMAIL"
-        ACTIVE_GPG_SIGNING_KEY="$WORK_GPG_SIGNING_KEY"
     else
         ACTIVE_EMAIL="$PERSONAL_EMAIL"
-        ACTIVE_GPG_SIGNING_KEY="$PERSONAL_GPG_SIGNING_KEY"
     fi
 }
 
@@ -623,9 +642,7 @@ function _set_personal_info_defaults {
     GITHUB_USERNAME="MrPointer"
     FULL_NAME="Timor Gruber"
     PERSONAL_EMAIL="timor.gruber@gmail.com"
-    PERSONAL_GPG_SIGNING_KEY=D8B3170598131C15
     WORK_EMAIL="timor.gruber@solaredge.com"
-    WORK_GPG_SIGNING_KEY=90BBCCC1DDED66C4
 }
 
 ###

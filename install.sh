@@ -101,7 +101,7 @@ install_bash() {
 }
 
 ###
-# Parse arguments/options using getopt, the almighty C-based parser.
+# Parse special arguments/options, and "swallow" the rest as they're intended for the implementation script.
 ###
 parse_arguments() {
     while [ "$#" -gt 0 ]; do
@@ -116,6 +116,24 @@ parse_arguments() {
             ;;
         esac
     done
+}
+
+supported_system() {
+    v_system="${1:?}"
+    v_distro="${2:?}"
+    v_pkg_manager="${3:?}"
+
+    v_supported_distros_file="$(mktemp)" || return 1
+    echo "$SUPPORTED_LINUX_DISTROS" >"$v_supported_distros_file"
+
+    if ! grep -q "$v_distro" "$v_supported_distros_file"; then
+        error "$v_distro is not yet supported, currently supported are: $SUPPORTED_LINUX_DISTROS"
+        unset v_supported_distros_file
+        return 3
+    fi
+    unset v_supported_distros_file
+
+    unset v_system v_distro v_pkg_manager
 }
 
 _get_default_system_package_manager() {
@@ -184,8 +202,8 @@ detect_system() {
     linux)
         DISTRO_NAME="$(_get_linux_distro_name)"
         if [ -z "$DISTRO_NAME" ]; then
-            error "Failed detecting linux distribution, or distro not supported: $DISTRO_NAME"
-            return 1
+            error "Failed detecting linux distribution"
+            return 2
         fi
         ;;
     mac)
@@ -193,21 +211,23 @@ detect_system() {
         ;;
     *)
         error "Unsupported system type: $SYSTEM_TYPE"
-        return 1
+        return 3
         ;;
     esac
 
     PKG_MANAGER="$(_get_default_system_package_manager "$DISTRO_NAME")"
     if [ -z "$PKG_MANAGER" ]; then
         error "Failed determining package manager for distro: $DISTRO_NAME"
-        return 3
+        return 2
     fi
     if ! hash "$PKG_MANAGER" 2>/dev/null; then
         error "Package manager '$PKG_MANAGER' couldn't be found for distro: $DISTRO_NAME, maybe you need to install it manually?"
         return 4
     fi
 
-    info "Determined system:"
+    printf "\n" # Print an empty line
+    info "Detected system:"
+    info "----------------"
     info "Type: $SYSTEM_TYPE"
     info "Distro: $DISTRO_NAME"
     info "Package manager: $PKG_MANAGER"
@@ -216,6 +236,7 @@ detect_system() {
 
 set_defaults() {
     INSTALL_REF="main"
+    SUPPORTED_LINUX_DISTROS="ubuntu debian"
 }
 
 main() {
@@ -223,7 +244,13 @@ main() {
 
     set_defaults # Should never fail
 
+    info "Detecting system"
     if ! detect_system; then
+        error "Detected system is not supported, sorry"
+        return 1
+    fi
+
+    if ! supported_system "$SYSTEM_TYPE" "$DISTRO_NAME" "$PKG_MANAGER"; then
         error "Detected system is not supported, sorry"
         return 1
     fi
