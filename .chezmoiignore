@@ -5,5 +5,5 @@ install-impl.sh
 .vscode/
 
 {{- if not .personal.work_env }}
-.sedg/ # only manage .sedg on work-laptop
+.work/ # only manage work state on work machines
 {{- end }}
