@@ -390,7 +390,7 @@ function install_shell {
 # The script requires some interactivity.
 ###
 function install_brew {
-    if hash brew &>/dev/null; then
+    if hash brew &>/dev/null || [[ -f "$DEFAULT_BREW_PATH" ]]; then
         return 0
     fi
 
@@ -646,7 +646,8 @@ function _set_package_management_defaults {
     PACKAGE_MANAGER=""
     INSTALL_BREW=true
     PREFER_BREW_FOR_ALL_TOOLS=true
-    BREW_LOCATION_RESOLVING_CMD="/home/linuxbrew/.linuxbrew/bin/brew shellenv"
+    DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
+    BREW_LOCATION_RESOLVING_CMD="$DEFAULT_BREW_PATH shellenv"
 }
 
 function _set_shell_defaults {
