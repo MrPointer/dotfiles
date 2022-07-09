@@ -300,20 +300,20 @@ function ensure_gpg_key_exist {
     fi
     success "Successfully installed gpg client"
 
-    info "Checking whether 'default' GPG key is already available"
+    info "Checking whether expected GPG key ($ACTIVE_GPG_SIGNING_KEY) is already available"
     if gpg --list-secret-keys --keyid-format LONG | grep -q "$ACTIVE_GPG_SIGNING_KEY"; then
-        info "'default' GPG key is already available"
+        info "Expected GPG key is already available!"
         return 0
     fi
 
-    warning "'default' GPG key is not available, creating new one"
+    warning "Expected GPG key ($ACTIVE_GPG_SIGNING_KEY) is not available, creating a new one"
 
     local new_gpg_key
     if ! _create_new_gpg_key new_gpg_key; then
-        error "Failed creating new GPG key"
+        error "Failed creating a new GPG key"
         return 2
     fi
-    success "Successfully created new GPG key"
+    success "Successfully created a new GPG key"
 
     ACTIVE_GPG_SIGNING_KEY="${new_gpg_key}"
     return 0

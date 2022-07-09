@@ -68,7 +68,57 @@ invoke_actual_installation() {
     return 0
 }
 
-get_default_system_package_manager() {
+install_bash_with_package_manager() {
+    case "$1" in
+    apt)
+        sudo apt install -y bash
+        ;;
+    dnf)
+        sudo dnf install -y bash
+        ;;
+    *) ;;
+
+    esac
+}
+
+bash_exists() {
+    hash bash >/dev/null 2>&1
+}
+
+install_bash() {
+    if bash_exists; then
+        info "Bash exists!"
+        return 0
+    fi
+
+    warning "bash does not exist, trying to install it"
+    if ! install_bash_with_package_manager "$1"; then
+        error "Failed installing bash using $1"
+        return 5
+    fi
+
+    return 0
+}
+
+###
+# Parse arguments/options using getopt, the almighty C-based parser.
+###
+parse_arguments() {
+    while [ "$#" -gt 0 ]; do
+        case $1 in
+        --ref)
+            [ -n "$2" ] && INSTALL_REF="${2}"
+            shift 2
+            ;;
+        *)
+            # Probably options to the real installer (implementation), simply shift past them
+            shift
+            ;;
+        esac
+    done
+}
+
+_get_default_system_package_manager() {
     case "$1" in
     mac | darwin)
         echo "brew"
@@ -85,7 +135,7 @@ get_default_system_package_manager() {
     esac
 }
 
-get_linux_distro_name() {
+_get_linux_distro_name() {
     distro=""
 
     if [ -f /etc/os-release ]; then
@@ -113,7 +163,7 @@ get_linux_distro_name() {
     echo "$distro" | tr '[:upper:]' '[:lower:]'
 }
 
-get_system_type() {
+_get_system_type() {
     case "$(uname -s)" in
     Darwin)
         echo "mac"
@@ -127,65 +177,14 @@ get_system_type() {
     esac
 }
 
-install_bash_with_package_manager() {
-    case "$1" in
-    apt)
-        sudo apt install -y bash
-        ;;
-    dnf)
-        sudo dnf install -y bash
-        ;;
-    *) ;;
-
-    esac
-}
-
-bash_exists() {
-    hash bash >/dev/null 2>&1
-}
-
-install_bash() {
-    info "Checking if bash exists"
-    if bash_exists; then
-        info "Bash exists!"
-        return 0
-    fi
-
-    info "bash does not exist, trying to install it"
-    if ! install_bash_with_package_manager "$1"; then
-        error "Failed installing bash using $1"
-        return 5
-    fi
-
-    return 0
-}
-
-###
-# Parse arguments/options using getopt, the almighty C-based parser.
-###
-parse_arguments() {
-    while [ "$#" -gt 0 ]; do
-        case $1 in
-        --ref)
-            [ -n "$2" ] && INSTALL_REF="${2}"
-            shift 2
-            ;;
-        *)
-            # Probably options to the real installer (implementation), simply shift past them
-            shift
-            ;;
-        esac
-    done
-}
-
 detect_system() {
-    SYSTEM_TYPE="$(get_system_type)"
+    SYSTEM_TYPE="$(_get_system_type)"
 
     case "$SYSTEM_TYPE" in
     linux)
-        DISTRO_NAME="$(get_linux_distro_name)"
+        DISTRO_NAME="$(_get_linux_distro_name)"
         if [ -z "$DISTRO_NAME" ]; then
-            echo "Failed detecting linux distribution, or distro not supported: $DISTRO_NAME"
+            error "Failed detecting linux distribution, or distro not supported: $DISTRO_NAME"
             return 1
         fi
         ;;
@@ -193,12 +192,12 @@ detect_system() {
         DISTRO_NAME="mac"
         ;;
     *)
-        echo "Unsupported system type: $SYSTEM_TYPE"
+        error "Unsupported system type: $SYSTEM_TYPE"
         return 1
         ;;
     esac
 
-    PKG_MANAGER="$(get_default_system_package_manager "$DISTRO_NAME")"
+    PKG_MANAGER="$(_get_default_system_package_manager "$DISTRO_NAME")"
     if [ -z "$PKG_MANAGER" ]; then
         error "Failed determining package manager for distro: $DISTRO_NAME"
         return 3
