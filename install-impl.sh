@@ -246,6 +246,79 @@ function prepare_dotfiles_environment {
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 }
 
+function _create_new_gpg_key {
+    declare -n created_key="${1:?}"
+
+    gpg --expert --full-gen-key || return 1
+    created_key="$(gpg --list-secret-keys --keyid-format LONG | tr -s " " | awk -F"[ /]" '/^sec/ { print $3 }')" || return 2
+    return 0
+}
+
+function _verify_gpg_client_installation {
+    ! hash gpg &>/dev/null && return 1
+
+    local gpg_version
+    gpg_version="$(gpg --version | head -n1 | cut -d' ' -f3)"
+    if ! grep -q "^2\.[^0-1]\." <<<"$gpg_version"; then
+        # gpg 2.2 or higher is NOT installed
+        warning "Installed gpg version ($gpg_version) is less than 2.2"
+        return 2
+    fi
+
+    return 0
+}
+
+function _install_gpg_client {
+    local rc
+    _verify_gpg_client_installation
+    rc=$?
+
+    ((rc == 0)) && return 0
+
+    # Version is too low, nothing we can do for now
+    ((rc == 2)) && return 1
+
+    info "Installing gpg"
+    if ! sudo apt-get update && sudo apt-get install -y --no-install-recommends gpg; then
+        error "Failed installing gpg using apt"
+        return 2
+    fi
+
+    _verify_gpg_client_installation
+}
+
+###
+# Ensures a GPG key exist in order to be able to sign git commits in the future (and maybe do other stuff).
+# If the "default" key is not available, a new one is created instead and will be used in all managed dotfiles.
+# The script requires some interactivity.
+###
+function ensure_gpg_key_exist {
+    info "Installing gpg client (if required)"
+    if ! _install_gpg_client; then
+        error "Failed installing gpg client"
+        return 1
+    fi
+    success "Successfully installed gpg client"
+
+    info "Checking whether expected GPG key ($ACTIVE_GPG_SIGNING_KEY) is already available"
+    if gpg --list-secret-keys --keyid-format LONG | grep -q "$ACTIVE_GPG_SIGNING_KEY"; then
+        info "Expected GPG key is already available!"
+        return 0
+    fi
+
+    warning "Expected GPG key ($ACTIVE_GPG_SIGNING_KEY) is not available, creating a new one"
+
+    local new_gpg_key
+    if ! _create_new_gpg_key new_gpg_key; then
+        error "Failed creating a new GPG key"
+        return 2
+    fi
+    success "Successfully created a new GPG key"
+
+    ACTIVE_GPG_SIGNING_KEY="${new_gpg_key}"
+    return 0
+}
+
 ###
 # Install selected shell using either system's package manager or homebrew, depending on the passed options.
 # If selected shell is already installed, do nothing.
@@ -341,24 +414,31 @@ function install_dotfiles {
     fi
     success "Successfully installed $SHELL_TO_INSTALL"
 
+    info "Ensuring a GPG key exists"
+    if ! ensure_gpg_key_exist; then
+        error "Failed ensuring a GPG key exists"
+        return 3
+    fi
+    success "Successfully ensured a GPG key exists"
+
     info "Preparing dotfiles environment"
     if ! prepare_dotfiles_environment; then
         error "Failed preparing dotfiles environment"
-        return 3
+        return 4
     fi
     success "Successfully prepared dotfiles environment"
 
     info "Applying dotfiles"
     if ! apply_dotfiles; then
         error "Failed applying dotfiles"
-        return 4
+        return 5
     fi
     success "Successfully applied dotfiles"
 
     info "Finalizing installation"
     if ! post_install; then
         error "Failed finalizing installation"
-        return 5
+        return 6
     fi
     success "Successfully finalized installation"
 
@@ -511,11 +591,10 @@ function parse_arguments {
     return 0
 }
 
-function _set_work_info_defaults () {
+function _set_work_info_defaults() {
     WORK_DOTFILES_DIR="$HOME/.sedg"
     WORK_DOTFILES_PROFILE="$WORK_DOTFILES_DIR/profile"
 }
-
 
 function _set_package_management_defaults {
     PACKAGE_MANAGER=""
