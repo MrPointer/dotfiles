@@ -1,5 +1,5 @@
 " Load vim-plug
-call plug#begin(stdpath('data') . '/autoload')
+call plug#begin(stdpath('data') . '/plugged')
 
 " Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
 Plug 'junegunn/vim-easy-align'
