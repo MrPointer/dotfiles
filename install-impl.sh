@@ -209,6 +209,9 @@ function post_install {
 # Apply dotfiles, optionally by using a dotfiles manager.
 ###
 function apply_dotfiles {
+    # Always remove old dotfiles, if any, just in case
+    rm -rf "$DOTFILES_CLONE_PATH" || return 1
+
     "${APPLY_DOTFILES_CMD[@]}"
 }
 
@@ -404,7 +407,7 @@ function install_brew {
 # To avoid any errors and complicated checks, just install the latest binary at this stage.
 ###
 function install_dotfiles_manager {
-    if hash "$DOTFILES_MANAGER" 2>/dev/null; then
+    if hash "$DOTFILES_MANAGER" &>/dev/null || [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed, skipping"
         return 0
     fi
@@ -658,6 +661,7 @@ function _set_dotfiles_manager_defaults {
     APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
         init --apply "$GITHUB_USERNAME"
     )
+    DOTFILES_CLONE_PATH="${HOME}/.local/share/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_FILE_PATH="${ENVIRONMENT_TEMPLATE_CONFIG_DIR}/${DOTFILES_MANAGER}.toml"
 }
