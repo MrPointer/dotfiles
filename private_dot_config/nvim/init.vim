@@ -16,6 +16,19 @@ syntax on
 colorscheme onedark
 let g:airline_theme='onedark'
 
+" Configure coc plugins
+let g:coc_global_extensions = [
+    \'coc-clangd',
+    \'coc-cmake',
+    \'coc-git',
+    \'coc-highlight',
+    \'coc-json',
+    \'coc-markdownlint',
+    \'coc-pyright',
+    \'coc-sh',
+    \'coc-yaml',
+\]
+
 set expandtab
 filetype plugin indent on
 " show existing tab with 4 spaces width
