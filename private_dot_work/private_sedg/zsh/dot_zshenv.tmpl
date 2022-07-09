@@ -1,0 +1,10 @@
+source {{ .system.work_specific_dotfiles_profile }}
+
+if [[ -d "/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot" ]]; then
+    # Add Portia's cross-toolchain to enable native cross-compilation
+    export PATH="$PATH:/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+fi
+
+if [[ -d "$SEDG_IOE_DEV_ENV_FRAMEWORK_DIR" && -f "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT" ]]; then
+    source "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT"
+fi
