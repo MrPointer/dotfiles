@@ -250,7 +250,7 @@ function _create_new_gpg_key {
     declare -n created_key="${1:?}"
 
     gpg --expert --full-gen-key || return 1
-    created_key="$(gpg --list-secret-keys --keyid-format LONG | tr -s " " | awk -F"[ /]" '/^sec/ { print $3 }')" || return 2
+    created_key="$(gpg --list-secret-keys --keyid-format LONG | tr -s " " | awk -F"[ /]" '/^sec/ { print $3 }' | tail -n1)" || return 2
     return 0
 }
 
