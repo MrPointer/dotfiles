@@ -106,8 +106,8 @@ function configure_vpn_fix_tool {
 # Set global variables
 ###
 function set_globals {
-    # Get general work-profile's vars
-    source {{ .system.work_dotfiles_profile }}
+    # Get sedg profile's vars
+    source {{ .system.work_specific_dotfiles_profile }}
 
     FIX_TOOL_LINK_TARGET="${FIX_TOOL_LINK_TARGET_DIR}/${SEDG_FIX_VPN_EXECUTABLE_NAME}"
 }
