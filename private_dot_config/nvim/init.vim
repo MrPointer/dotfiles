@@ -1,5 +1,5 @@
 " Load vim-plug
-call plug#begin(stdpath('data'), '/plugged')
+call plug#begin(stdpath('data') . '/autoload')
 
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'joshdick/onedark.vim'
