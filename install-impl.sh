@@ -237,7 +237,7 @@ function prepare_dotfiles_environment {
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 
     if [[ "$WORK_ENVIRONMENT" == true ]]; then
-        printf "\t%s\n" "work_name = $WORK_NAME" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
+        printf "\t%s\n" "work_name = \"$WORK_NAME\"" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
     fi
 
     {
