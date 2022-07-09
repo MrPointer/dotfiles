@@ -176,7 +176,7 @@ function _reinstall_chezmoi_as_package {
     fi
 
     [ "$VERBOSE" == true ] && info "Removing standalone $DOTFILES_MANAGER binary"
-    if ! rm "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"; then
+    if ! rm -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"; then
         warning "Failed removing standalone chezmoi binary (downloaded at first) at $DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
     else
         success "Successfully removed standalone chezmoi binary"
