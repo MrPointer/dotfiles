@@ -16,6 +16,7 @@ Options:
   -v, --verbose                     Enable verbose output
   --ref=[git-ref]                   Reference the given git-ref for installation (can be any git ref - commit, branch, tag). Defaults to 'main'
   --work-env                        Treat this installation as a work environment
+  --work-name                       Use the given work-name as the work environment. Defaults to 'sedg' (current workplace)
   --work-email=[email]              Use given email address as work's email address. Defaults to 'timor.gruber@solaredge.com'
   --shell=[shell]                   Install given shell if required and set it as user's default. Defaults to zsh
   --brew-shell                      Install shell using brew. By default it's installed with system's package manager
@@ -229,18 +230,32 @@ function prepare_dotfiles_environment {
 
     {
         printf "%s\n" "[data.personal]"
-        printf "\t%s\n" "work_env = $WORK_ENVIRONMENT"
         printf "\t%s\n" "full_name = \"$FULL_NAME\""
         printf "\t%s\n" "email = \"$ACTIVE_EMAIL\""
         printf "\t%s\n" "signing_key = \"$ACTIVE_GPG_SIGNING_KEY\""
+        printf "\t%s\n" "work_env = $WORK_ENVIRONMENT"
+    } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 
+    if [[ "$WORK_ENVIRONMENT" == true ]]; then
+        printf "\t%s\n" "work_name = \"$WORK_NAME\"" >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
+    fi
+
+    {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
-        printf "\t%s\n" "work_dotfiles_dir = \"${WORK_DOTFILES_DIR}\""
-        printf "\t%s\n" "work_dotfiles_zsh_dir = \"${WORK_DOTFILES_DIR}/zsh\""
-        printf "\t%s\n" "work_dotfiles_profile = \"${WORK_DOTFILES_PROFILE}\""
+    } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 
+    if [[ "$WORK_ENVIRONMENT" == true ]]; then
+        {
+            printf "\t%s\n" "work_generic_dotfiles_dir = \"${WORK_GENERIC_DOTFILES_DIR}\""
+            printf "\t%s\n" "work_specific_dotfiles_dir = \"${WORK_SPECIFIC_DOTFILES_DIR}\""
+            printf "\t%s\n" "work_generic_dotfiles_profile = \"${WORK_GENERIC_DOTFILES_PROFILE}\""
+            printf "\t%s\n" "work_specific_dotfiles_profile = \"${WORK_SPECIFIC_DOTFILES_PROFILE}\""
+        } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
+    fi
+
+    {
         printf "%s\n" "[data.tools_preferences]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
@@ -518,6 +533,8 @@ function set_globals {
 
     if [[ "$WORK_ENVIRONMENT" == true ]]; then
         ACTIVE_EMAIL="$WORK_EMAIL"
+        WORK_SPECIFIC_DOTFILES_DIR="${WORK_GENERIC_DOTFILES_DIR}/${WORK_NAME}"
+        WORK_SPECIFIC_DOTFILES_PROFILE="${WORK_SPECIFIC_DOTFILES_DIR}/profile"
     else
         ACTIVE_EMAIL="$PERSONAL_EMAIL"
     fi
@@ -536,7 +553,7 @@ function parse_arguments {
     local short_options=hv
     local long_options=help,verbose
     long_options+=,ref:
-    long_options+=,work-env,work-email:
+    long_options+=,work-env,work-name:,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
 
@@ -572,8 +589,14 @@ function parse_arguments {
             WORK_ENVIRONMENT=true
             shift
             ;;
+        --work-name)
+            WORK_ENVIRONMENT=true
+            [ -n "$2" ] && WORK_NAME="${2}"
+            shift 2
+            ;;
         --work-email)
-            WORK_EMAIL="${2:-}"
+            [ -n "$2" ] && WORK_EMAIL="${2}"
+            WORK_ENVIRONMENT=true
             shift 2
             ;;
         --shell)
@@ -611,8 +634,9 @@ function parse_arguments {
 }
 
 function _set_work_info_defaults() {
-    WORK_DOTFILES_DIR="$HOME/.sedg"
-    WORK_DOTFILES_PROFILE="$WORK_DOTFILES_DIR/profile"
+    WORK_NAME="sedg"
+    WORK_GENERIC_DOTFILES_DIR="${HOME}/.work"
+    WORK_GENERIC_DOTFILES_PROFILE="${WORK_GENERIC_DOTFILES_DIR}/profile"
 }
 
 function _set_package_management_defaults {

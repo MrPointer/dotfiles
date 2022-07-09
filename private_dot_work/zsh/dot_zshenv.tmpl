@@ -1,0 +1,8 @@
+# Add work executables-dir to $PATH as well
+export PATH="$WORK_EXECUTABLES_DIR:$PATH"
+
+# Load work-specific env file if exists
+if [[ -v "{{ (upper .personal.work_name) }}_ZSH_ENV_EXTENSION" 
+    && -f "${{ (upper .personal.work_name) }}_ZSH_ENV_EXTENSION" ]]; then
+    source "${{ (upper .personal.work_name) }}_ZSH_ENV_EXTENSION"
+fi

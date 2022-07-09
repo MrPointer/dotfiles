@@ -1,0 +1,5 @@
+# Load work-specific rc file if exists
+if [[ -v "{{ (upper .personal.work_name) -}}_ZSH_RC_EXTENSION" 
+    && -f "${{ (upper .personal.work_name) -}}_ZSH_RC_EXTENSION" ]]; then
+    source "${{ (upper .personal.work_name) -}}_ZSH_RC_EXTENSION"
+fi
