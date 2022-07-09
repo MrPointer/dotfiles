@@ -1,4 +1,5 @@
-source {{ .system.work_specific_dotfiles_profile }}
+# Add work executables-dir to $PATH as well
+export PATH="$SEDG_EXECUTABLES_DIR:$PATH"
 
 if [[ -d "/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot" ]]; then
     # Add Portia's cross-toolchain to enable native cross-compilation

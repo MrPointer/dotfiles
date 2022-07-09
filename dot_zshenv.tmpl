@@ -20,7 +20,10 @@ if [[ -d "/home/linuxbrew/.linuxbrew/lib/ruby" ]]; then
 fi
 
 {{ if .personal.work_env -}}
+# Load work-generic profile
 source {{ .system.work_generic_dotfiles_profile }}
+
+# Load work-generic env file if exists
 if [[ -v "WORK_ZSH_ENV_EXTENSION" && -f "$WORK_ZSH_ENV_EXTENSION" ]]; then
   source "$WORK_ZSH_ENV_EXTENSION"
 fi

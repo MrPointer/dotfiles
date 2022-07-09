@@ -7,3 +7,6 @@ WORK_EXECUTABLES_DIR="$WORK_DIR/bin"
 WORK_ZSH_DIR="$WORK_DIR/zsh"
 WORK_ZSH_RC_EXTENSION="$WORK_ZSH_DIR/.zshrc"
 WORK_ZSH_ENV_EXTENSION="$WORK_ZSH_DIR/.zshenv"
+
+# Load work-specific profile
+source {{ .system.work_specific_dotfiles_profile }}
