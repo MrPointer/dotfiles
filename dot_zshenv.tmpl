@@ -1,5 +1,8 @@
 export PATH=$HOME/.local/bin:$HOME/bin:$HOME/.bin:$HOME/bin:/usr/local/bin:$PATH
 
+# Ensure gpg can prompt input from an available tty
+export GPG_TTY=$(tty)
+
 if [[ -d /home/linuxbrew/ && -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
     # Load (home)brew
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
