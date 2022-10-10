@@ -89,6 +89,7 @@ if hash fzf &>/dev/null; then
 fi
 
 zstyle ':completion:*' menu select
+mkdir -p ~/.zfunc &>/dev/null
 fpath+=~/.zfunc
 
 autoload -U +X compinit && compinit
