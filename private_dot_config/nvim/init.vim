@@ -29,7 +29,6 @@ let g:coc_global_extensions = [
     \'coc-yaml',
 \]
 
-set expandtab
 filetype plugin indent on
 " show existing tab with 4 spaces width
 set tabstop=4
