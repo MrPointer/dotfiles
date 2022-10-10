@@ -8,4 +8,8 @@ fi
 
 if [[ -d "$SEDG_IOE_DEV_ENV_FRAMEWORK_DIR" && -f "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT" ]]; then
     source "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT"
+
+    # devbox API, will be deprecated
+    source "$DEV_ENV_DIR/common/global-config.sh" "$DEV_ENV_DIR/common/global-env-config.sh"
+    source "$DEV_ENV_DIR/devbox/devbox-functions.sh"
 fi
