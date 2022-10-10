@@ -88,6 +88,9 @@ if hash fzf &>/dev/null; then
   [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 fi
 
+zstyle ':completion:*' menu select
+fpath+=~/.zfunc
+
 autoload -U +X compinit && compinit
 autoload -U +X bashcompinit && bashcompinit
 
@@ -96,8 +99,10 @@ if hash pipx &>/dev/null; then
   eval "$(register-python-argcomplete pipx)"
 fi
 
-zstyle ':completion:*' menu select
-fpath+=~/.zfunc
+if hash poetry &>/dev/null; then
+  # Register poetry completions
+  poetry completions zsh > ~/.zfunc/_poetry
+fi
 
 if hash jfrog &>/dev/null; then
   # Register jfrog-cli completions
