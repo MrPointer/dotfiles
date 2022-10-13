@@ -1,3 +1,5 @@
+{{ if eq .chezmoi.os "linux" }}
+{{   if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
 #!/usr/bin/env bash
 
 # saner programming env: these switches turn some bugs into errors
@@ -171,3 +173,5 @@ function main {
 # Call main and don't do anything else
 # It will pass the correct exit code to the OS
 main "$@"
+{{   end }}
+{{ end }}
