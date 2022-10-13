@@ -267,6 +267,15 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.tools_preferences]"
         printf "\t%s\n" "prefer_brew = $PREFER_BREW_FOR_ALL_TOOLS"
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
+
+    for mandatory_dir in "${MANDATORY_DIRECTORIES_BEFORE_APPLYING_DOTFILES[@]}"; do
+        if ! mkdir -p "${mandatory_dir}"; then
+            error "Failed creating directory ${mandatory_dir} - It must exist before applying dotfiles!"
+            return 3
+        fi
+    done
+
+    return 0
 }
 
 function _create_new_gpg_key {
@@ -664,7 +673,7 @@ function _set_shell_defaults {
 function _set_dotfiles_manager_defaults {
     DOTFILES_MANAGER=chezmoi
     DOTFILES_MANAGER_STANDALONE_BINARY_PATH="${HOME}/bin/${DOTFILES_MANAGER}"
-    
+
     if hash "$DOTFILES_MANAGER" &>/dev/null; then
         APPLY_DOTFILES_CMD=("$(which "$DOTFILES_MANAGER")")
     else
@@ -676,6 +685,10 @@ function _set_dotfiles_manager_defaults {
     DOTFILES_CLONE_PATH="${HOME}/.local/share/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_FILE_PATH="${ENVIRONMENT_TEMPLATE_CONFIG_DIR}/${DOTFILES_MANAGER}.toml"
+
+    MANDATORY_DIRECTORIES_BEFORE_APPLYING_DOTFILES=(
+        "${HOME}/.oh-my-zsh/cache/"
+    )
 }
 
 function _set_personal_info_defaults {
