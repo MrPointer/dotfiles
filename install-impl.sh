@@ -157,7 +157,12 @@ function _reload_shell_user_profile {
 }
 
 function _reinstall_chezmoi_as_package {
-    [ "$INSTALL_BREW" == false ] && return 0
+    [[ "$INSTALL_BREW" == false ]] && return 0
+
+    if ! hash brew &>/dev/null; then
+        warning "Brew is not available, deferring chezmoi installation as a brew package"
+        return 0
+    fi
 
     local brew_chezmoi_installed=false
 
