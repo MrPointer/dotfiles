@@ -6,6 +6,8 @@ if [[ -d "/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot" ]]; then
     export PATH="$PATH:/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
 fi
 
+export LIBSUITE_DIR="$HOME/projects/sources/libsuite"
+
 if [[ -d "$SEDG_IOE_DEV_ENV_FRAMEWORK_DIR" && -f "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT" ]]; then
     source "$SEDG_IOE_DEV_ENV_FRAMEWORK_ENTRY_POINT"
 
