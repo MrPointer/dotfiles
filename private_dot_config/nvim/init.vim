@@ -38,3 +38,6 @@ set shiftwidth=4
 set expandtab
 " Show line numbers
 set number
+
+inoremap <expr> <cr> coc#pum#visible() ? coc#pum#confirm() : "\<CR>"
+
