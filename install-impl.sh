@@ -680,7 +680,7 @@ function _set_dotfiles_manager_defaults {
         APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER_STANDALONE_BINARY_PATH")
     fi
 
-    APPLY_DOTFILES_CMD+=(init --apply "$GITHUB_USERNAME")
+    APPLY_DOTFILES_CMD+=(init --apply --ssh "$GITHUB_USERNAME")
 
     DOTFILES_CLONE_PATH="${HOME}/.local/share/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/${DOTFILES_MANAGER}"
