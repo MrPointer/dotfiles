@@ -1,8 +1,8 @@
 {{- if eq .chezmoi.os "linux" -}}
 {{-   if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
-#!/bin/sh
+#!/bin/bash
 
-show_usage {
+function show_usage {
     cat <<CONFIGURE_VPN_FIXES_USAGE
 Usage: $PROGRAM_NAME [OPTION]... 
 
@@ -25,33 +25,33 @@ v_YELLOW_COLOR="\033[1;33m"
 v_BLUE_COLOR="\033[0;34m"
 v_NEUTRAL_COLOR="\033[0m"
 
-error {
+function error {
     printf "${v_RED_COLOR}%s${v_NEUTRAL_COLOR}\n" "$@"
 }
 
-warning {
+function warning {
     printf "${v_YELLOW_COLOR}%s${v_NEUTRAL_COLOR}\n" "$@"
 }
 
-success {
+function success {
     printf "${v_GREEN_COLOR}%s${v_NEUTRAL_COLOR}\n" "$@"
 }
 
-info {
+function info {
     printf "${v_BLUE_COLOR}%s${v_NEUTRAL_COLOR}\n" "$@"
 }
 
-_enable_sudo_access {
+function _enable_sudo_access {
     sudo tee "$FIX_TOOL_SUDOERS_FILE" <<VPN_FIX_TOOL_SUDO_CONTENT >/dev/null
 $USER ALL = NOPASSWD: $FIX_TOOL_LINK_TARGET
 VPN_FIX_TOOL_SUDO_CONTENT
 }
 
-_link_system_files {
+function _link_system_files {
     sudo ln -sf "$SEDG_FIX_VPN_EXECUTABLE_PATH" "$FIX_TOOL_LINK_TARGET"
 }
 
-_migrate_old_config {
+function _migrate_old_config {
     sudo rm -rf "$OLD_FIX_TOOL_SUDOERS_FILE"
     sudo rm -rf "${OLD_FIX_TOOL_LINK_TARGETS[@]}"
 }
@@ -59,7 +59,7 @@ _migrate_old_config {
 ###
 # Configures vpn fix-tool
 ###
-configure_vpn_fix_tool {
+function configure_vpn_fix_tool {
     info "Migrating old config (if any)"
     if ! _migrate_old_config; then
         error "Failed migrating old config"
@@ -86,7 +86,7 @@ configure_vpn_fix_tool {
 ###
 # Set global variables
 ###
-set_globals {
+function set_globals {
     # Get sedg profile's vars
     source {{ .system.work_generic_dotfiles_profile }}
 
@@ -96,7 +96,7 @@ set_globals {
 ###
 # Set default values to be used throughout the script (global variables).
 ###
-set_defaults {
+function set_defaults {
     FIX_TOOL_LINK_TARGET_DIR="/usr/local/bin"
     OLD_FIX_TOOL_LINK_TARGETS=("$FIX_TOOL_LINK_TARGET_DIR/vpn-up" "$FIX_TOOL_LINK_TARGET_DIR/vpn-down")
 
@@ -105,7 +105,7 @@ set_defaults {
     OLD_FIX_TOOL_SUDOERS_FILE="$SUDOERS_DIR/vpn-mtu"
 }
 
-main {
+function main {
     case "$(uname -s)" in
     Linux*) v_READLINK_PROGRAM="readlink" ;;
     Darwin*) v_READLINK_PROGRAM="greadlink" ;;
