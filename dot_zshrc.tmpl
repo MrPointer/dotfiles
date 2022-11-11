@@ -105,6 +105,11 @@ if hash poetry &>/dev/null; then
   poetry completions zsh > ~/.zfunc/_poetry
 fi
 
+if hash chezmoi &>/dev/null; then
+  # Register chezmoi completions
+  chezmoi completion --output ~/.zfunc/_chezmoi
+fi
+
 if hash jfrog &>/dev/null; then
   # Register jfrog-cli completions
   source $HOME/.jfrog/jfrog_zsh_completion
