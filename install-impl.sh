@@ -680,6 +680,10 @@ function _set_dotfiles_manager_defaults {
         APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER_STANDALONE_BINARY_PATH")
     fi
 
+    if [[ "$VERBOSE" == true ]]; then
+        APPLY_DOTFILES_CMD+=("--verbose")
+    fi
+
     APPLY_DOTFILES_CMD+=(init --apply --ssh "$GITHUB_USERNAME")
 
     DOTFILES_CLONE_PATH="${HOME}/.local/share/${DOTFILES_MANAGER}"
