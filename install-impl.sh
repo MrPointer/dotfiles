@@ -431,17 +431,15 @@ function install_dotfiles_manager {
     if hash "$DOTFILES_MANAGER" &>/dev/null || [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed, skipping"
         dotfiles_manager_bin="$(which "$DOTFILES_MANAGER")"
-    elif [[ "$BREW_AVAILABLE" == true ]]; then
-        local dotfiles_manager_brew_bin
-        if eval dotfiles_manager_brew_bin="$("$DEFAULT_BREW_PATH --prefix $DOTFILES_MANAGER")"; then
-            info "$DOTFILES_MANAGER already installed with brew, skipping"
-            BREW_INSTALLED_DOTFILES_MANAGER=true
-            dotfiles_manager_bin="$dotfiles_manager_brew_bin"
-        fi
+    elif [[ "$BREW_AVAILABLE" == true && -e "$DOTFILES_MANAGER_BREW_BINARY_PATH" ]]; then
+        info "$DOTFILES_MANAGER already installed with brew, skipping"
+        BREW_INSTALLED_DOTFILES_MANAGER=true
+        dotfiles_manager_bin="$DOTFILES_MANAGER_BREW_BINARY_PATH"
     fi
 
     if [[ -n "$dotfiles_manager_bin" ]]; then
         APPLY_DOTFILES_CMD=("$dotfiles_manager_bin")
+        return 0
     else
         APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER_STANDALONE_BINARY_PATH")
     fi
@@ -701,6 +699,7 @@ function _set_shell_defaults {
 function _set_dotfiles_manager_defaults {
     DOTFILES_MANAGER=chezmoi
     DOTFILES_MANAGER_STANDALONE_BINARY_PATH="${HOME}/bin/${DOTFILES_MANAGER}"
+    DOTFILES_MANAGER_BREW_BINARY_PATH="/home/linuxbrew/.linuxbrew/opt/${DOTFILES_MANAGER}"
 
     DOTFILES_CLONE_PATH="${HOME}/.local/share/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/${DOTFILES_MANAGER}"
