@@ -110,6 +110,11 @@ if hash chezmoi &>/dev/null; then
   chezmoi completion zsh --output ~/.zfunc/_chezmoi
 fi
 
+if hash npm &>/dev/null; then
+  # Register npm completions
+  npm completion > ~/.zfunc/_npm
+fi
+
 if hash jfrog &>/dev/null; then
   # Register jfrog-cli completions
   source $HOME/.jfrog/jfrog_zsh_completion
