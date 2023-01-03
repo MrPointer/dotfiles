@@ -434,7 +434,7 @@ function install_dotfiles_manager {
     elif [[ "$BREW_AVAILABLE" == true && -e "$DOTFILES_MANAGER_BREW_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed with brew, skipping"
         BREW_INSTALLED_DOTFILES_MANAGER=true
-        dotfiles_manager_bin="$DOTFILES_MANAGER_BREW_BINARY_PATH"
+        dotfiles_manager_bin="$DOTFILES_MANAGER_BREW_BINARY_PATH/bin/${DOTFILES_MANAGER}"
     fi
 
     if [[ -n "$dotfiles_manager_bin" ]]; then
