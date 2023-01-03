@@ -157,7 +157,7 @@ function _reload_shell_user_profile {
 }
 
 function _reinstall_chezmoi_as_package {
-    [[ "$INSTALL_BREW" == false ]] && return 0
+    [[ "$INSTALL_BREW" == false || "$BREW_INSTALLED_DOTFILES_MANAGER" == true ]] && return 0
 
     if ! hash brew &>/dev/null; then
         warning "Brew is not available, deferring chezmoi installation as a brew package"
@@ -216,6 +216,12 @@ function post_install {
 function apply_dotfiles {
     # Always remove old dotfiles, if any, just in case
     rm -rf "$DOTFILES_CLONE_PATH" || return 1
+
+    if [[ "$VERBOSE" == true ]]; then
+        APPLY_DOTFILES_CMD+=("--verbose")
+    fi
+
+    APPLY_DOTFILES_CMD+=(init --apply --ssh "$GITHUB_USERNAME")
 
     "${APPLY_DOTFILES_CMD[@]}"
 }
@@ -404,7 +410,7 @@ function install_shell {
 # The script requires some interactivity.
 ###
 function install_brew {
-    if hash brew &>/dev/null || [[ -f "$DEFAULT_BREW_PATH" ]]; then
+    if [[ "$BREW_AVAILABLE" == true ]]; then
         return 0
     fi
 
@@ -421,9 +427,23 @@ function install_brew {
 # To avoid any errors and complicated checks, just install the latest binary at this stage.
 ###
 function install_dotfiles_manager {
+    local dotfiles_manager_bin=""
     if hash "$DOTFILES_MANAGER" &>/dev/null || [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed, skipping"
-        return 0
+        dotfiles_manager_bin="$(which "$DOTFILES_MANAGER")"
+    elif [[ "$BREW_AVAILABLE" == true ]]; then
+        local dotfiles_manager_brew_bin
+        if dotfiles_manager_brew_bin="$("$DEFAULT_BREW_PATH --prefix $DOTFILES_MANAGER")"; then
+            info "$DOTFILES_MANAGER already installed with brew, skipping"
+            BREW_INSTALLED_DOTFILES_MANAGER=true
+            dotfiles_manager_bin="$dotfiles_manager_brew_bin"
+        fi
+    fi
+
+    if [[ -n "$dotfiles_manager_bin" ]]; then
+        APPLY_DOTFILES_CMD=("$dotfiles_manager_bin")
+    else
+        APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER_STANDALONE_BINARY_PATH")
     fi
 
     local installation_failed=false
@@ -498,6 +518,10 @@ function install_dotfiles {
     return 0
 }
 
+function brew_available {
+    [[ -d /home/linuxbrew/ && -f "$DEFAULT_BREW_PATH" ]]
+}
+
 ###
 # Checks which download tool is locally available from a preset list
 # and outputs the first that has been found.
@@ -530,6 +554,8 @@ function set_globals {
     # Can't prefer to install with brew if brew should not even be installed
     if [[ "$INSTALL_BREW" == false ]]; then
         PREFER_BREW_FOR_ALL_TOOLS=false
+    else
+        brew_available && BREW_AVAILABLE=true
     fi
 
     if ! DOWNLOAD_TOOL="$(get_download_tool)"; then
@@ -662,6 +688,8 @@ function _set_package_management_defaults {
     PREFER_BREW_FOR_ALL_TOOLS=true
     DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
     BREW_LOCATION_RESOLVING_CMD="$DEFAULT_BREW_PATH shellenv"
+    BREW_AVAILABLE=false
+    BREW_INSTALLED_DOTFILES_MANAGER=false
 }
 
 function _set_shell_defaults {
@@ -673,18 +701,6 @@ function _set_shell_defaults {
 function _set_dotfiles_manager_defaults {
     DOTFILES_MANAGER=chezmoi
     DOTFILES_MANAGER_STANDALONE_BINARY_PATH="${HOME}/bin/${DOTFILES_MANAGER}"
-
-    if hash "$DOTFILES_MANAGER" &>/dev/null; then
-        APPLY_DOTFILES_CMD=("$(which "$DOTFILES_MANAGER")")
-    else
-        APPLY_DOTFILES_CMD=("$DOTFILES_MANAGER_STANDALONE_BINARY_PATH")
-    fi
-
-    if [[ "$VERBOSE" == true ]]; then
-        APPLY_DOTFILES_CMD+=("--verbose")
-    fi
-
-    APPLY_DOTFILES_CMD+=(init --apply --ssh "$GITHUB_USERNAME")
 
     DOTFILES_CLONE_PATH="${HOME}/.local/share/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/${DOTFILES_MANAGER}"
