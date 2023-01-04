@@ -11,7 +11,7 @@ fi
 
 if [[ -n "$portia_4_sdk" ]]; then
     # Add Portia's cross-toolchain to enable native cross-compilation
-    export PATH="$PATH:/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+    export PATH="$PATH:$portia_4_sdk"
 fi
 
 export LIBSUITE_DIR="$HOME/projects/sources/libsuite"
