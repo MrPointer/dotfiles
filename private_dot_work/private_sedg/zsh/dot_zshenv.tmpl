@@ -1,7 +1,15 @@
 # Add work executables-dir to $PATH as well
 export PATH="$SEDG_EXECUTABLES_DIR:$PATH"
 
+local portia_4_sdk=""
 if [[ -d "/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot" ]]; then
+    # Add Portia's cross-toolchain to enable native cross-compilation
+    portia_4_sdk="/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+elif [[ -d "/usr/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin" ]]; then
+    portia_4_sdk="/usr/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+fi
+
+if [[ -n "$portia_4_sdk" ]]; then
     # Add Portia's cross-toolchain to enable native cross-compilation
     export PATH="$PATH:/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
 fi
