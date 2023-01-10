@@ -726,6 +726,7 @@ function _set_personal_info_defaults {
 ###
 function set_defaults {
     VERBOSE=false
+    DEBUG=false
     INSTALL_REF=main
     WORK_ENVIRONMENT=false
     ROOT_USER=false
