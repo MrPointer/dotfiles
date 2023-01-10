@@ -244,7 +244,6 @@ main() {
 
     set_defaults # Should never fail
 
-    info "Detecting system"
     if ! detect_system; then
         error "Detected system is not supported, sorry"
         return 1

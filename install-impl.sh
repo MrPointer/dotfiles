@@ -217,7 +217,7 @@ function apply_dotfiles {
     # Always remove old dotfiles, if any, just in case
     rm -rf "$DOTFILES_CLONE_PATH" || return 1
 
-    if [[ "$VERBOSE" == true ]]; then
+    if [[ "$DEBUG" == true ]]; then
         APPLY_DOTFILES_CMD+=("--verbose")
     fi
 
@@ -591,8 +591,8 @@ function parse_arguments {
         return 1
     fi
 
-    local short_options=hv
-    local long_options=help,verbose
+    local short_options=hvd
+    local long_options=help,verbose,debug
     long_options+=,ref:
     long_options+=,work-env,work-name:,work-email:
     long_options+=,shell:,brew-shell
@@ -620,6 +620,10 @@ function parse_arguments {
             ;;
         -v | --verbose)
             VERBOSE=true
+            shift
+            ;;
+        -d | --debug)
+            DEBUG=true
             shift
             ;;
         --ref)
@@ -674,7 +678,7 @@ function parse_arguments {
     return 0
 }
 
-function _set_work_info_defaults() {
+function _set_work_info_defaults {
     WORK_NAME="sedg"
     WORK_GENERIC_DOTFILES_DIR="${HOME}/.work"
     WORK_GENERIC_DOTFILES_PROFILE="${WORK_GENERIC_DOTFILES_DIR}/profile"
