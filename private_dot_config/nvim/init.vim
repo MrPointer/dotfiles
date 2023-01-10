@@ -42,4 +42,6 @@ set number
 inoremap <expr> <cr> coc#pum#visible() ? coc#pum#confirm() : "\<CR>"
 nnoremap <A-Left> :tabprevious<CR>
 nnoremap <A-Right> :tabnext<CR>
+vnoremap <C-r> "hy:%s/<C-r>h//gc<left><left><left>
+vnoremap <C-f> y<ESC>/<c-r>"<CR>
 
