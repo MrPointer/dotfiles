@@ -8,7 +8,7 @@ BREW_HOME="/home/linuxbrew/.linuxbrew"
 if [[ -d /home/linuxbrew/ && -f "$BREW_HOME"/bin/brew ]]; then
     {{ if (eq .chezmoi.group "ioe") -}}
     export PATH="$PATH:"$BREW_HOME"/bin:"$BREW_HOME"/sbin"
-    {{ else -}}
+    {{- else -}}
     # Load (home)brew
     eval "$("$BREW_HOME"/bin/brew shellenv)"
     {{- end }}
@@ -34,8 +34,8 @@ if [[ -d ""$BREW_HOME"/opt/clang-format" ]]; then
     export PATH=""$BREW_HOME"/opt/clang-format/bin:$PATH"
 fi
 
-{{- if (eq .chezmoi.os "linux") -}}
-{{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
+{{ if (eq .chezmoi.os "linux") -}}
+{{- if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
 if [[ -d "/mnt/c/Users/timor.g/AppData/Local/Programs/Microsoft VS Code/bin/" ]]; then
     export PATH="$PATH:/mnt/c/Users/timor.g/AppData/Local/Programs/Microsoft VS Code/bin/"
