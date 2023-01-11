@@ -3,9 +3,15 @@ export PATH=$HOME/.local/bin:$HOME/bin:$HOME/.bin:$HOME/bin:/usr/local/bin:$PATH
 # Ensure gpg can prompt input from an available tty
 export GPG_TTY=$(tty)
 
-if [[ -d /home/linuxbrew/ && -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+BREW_HOME="/home/linuxbrew/.linuxbrew"
+
+if [[ -d /home/linuxbrew/ && -f "$BREW_HOME"/bin/brew ]]; then
+    {{ if (eq .chezmoi.group "ioe") -}}
+    export PATH="$PATH:"$BREW_HOME"/bin:"$BREW_HOME"/sbin"
+    {{ else -}}
     # Load (home)brew
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    eval "$("$BREW_HOME"/bin/brew shellenv)"
+    {{- end }}
 fi
 
 if [[ -d "$HOME/.pyenv" ]]; then
@@ -19,23 +25,23 @@ fi
 
 export PIPX_DEFAULT_PYTHON=python3
 
-if [[ -d "/home/linuxbrew/.linuxbrew/lib/ruby" ]]; then
+if [[ -d ""$BREW_HOME"/lib/ruby" ]]; then
     # Add Ruby's exec dir to make Ruby execs available
-    export PATH="$PATH:/home/linuxbrew/.linuxbrew/lib/ruby/gems/3.1.0/bin"
+    export PATH="$PATH:"$BREW_HOME"/lib/ruby/gems/3.1.0/bin"
 fi
 
-if [[ -d "/home/linuxbrew/.linuxbrew/opt/clang-format" ]]; then
-    export PATH="/home/linuxbrew/.linuxbrew/opt/clang-format/bin:$PATH"
+if [[ -d ""$BREW_HOME"/opt/clang-format" ]]; then
+    export PATH=""$BREW_HOME"/opt/clang-format/bin:$PATH"
 fi
 
-{{ if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.os "linux") -}}
 {{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
 if [[ -d "/mnt/c/Users/timor.g/AppData/Local/Programs/Microsoft VS Code/bin/" ]]; then
     export PATH="$PATH:/mnt/c/Users/timor.g/AppData/Local/Programs/Microsoft VS Code/bin/"
 fi
 {{- end }}
-{{- end }}
+{{- end -}}
 
 {{ if .personal.work_env -}}
 # Load work-generic profile
@@ -46,4 +52,3 @@ if [[ -v "WORK_ZSH_ENV_EXTENSION" && -f "$WORK_ZSH_ENV_EXTENSION" ]]; then
   source "$WORK_ZSH_ENV_EXTENSION"
 fi
 {{- end }}
-
