@@ -23,3 +23,9 @@ if [[ -d "$SEDG_IOE_DEV_ENV_FRAMEWORK_DIR" && -f "$SEDG_IOE_DEV_ENV_FRAMEWORK_EN
     source "$DEV_ENV_DIR/common/global-config.sh" "$DEV_ENV_DIR/common/global-env-config.sh"
     source "$DEV_ENV_DIR/devbox/devbox-functions.sh"
 fi
+
+{{ if (eq .chezmoi.group "devbox") -}}
+while IFS='' read -r -d '' file; do
+    source "$file"
+done< <(find "$HOME" -maxdepth 1 -iname "*.env" -type f -print0)
+{{- end }}
