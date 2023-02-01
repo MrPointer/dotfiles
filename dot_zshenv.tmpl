@@ -6,7 +6,7 @@ export GPG_TTY=$(tty)
 BREW_HOME="/home/linuxbrew/.linuxbrew"
 
 if [[ -d /home/linuxbrew/ && -f "$BREW_HOME"/bin/brew ]]; then
-    {{ if (eq .chezmoi.group "ioe") -}}
+    {{ if (eq .chezmoi.group "devbox") -}}
     export PATH="$PATH:"$BREW_HOME"/bin:"$BREW_HOME"/sbin"
     {{- else -}}
     # Load (home)brew
