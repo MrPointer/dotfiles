@@ -322,8 +322,6 @@ function _install_gpg_client {
         error "Failed installing gpg tools using apt"
         return 2
     fi
-
-    _verify_gpg_client_installation
 }
 
 ###
