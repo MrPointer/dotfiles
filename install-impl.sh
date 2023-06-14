@@ -318,7 +318,8 @@ function _install_gpg_client {
     ((rc == 2)) && return 1
 
     info "Installing gpg"
-    if ! sudo apt-get update && sudo apt-get install -y --no-install-recommends gpg gpg-agent; then
+    sudo apt-get update
+    if ! sudo apt-get install -y --no-install-recommends gpg gpg-agent; then
         error "Failed installing gpg tools using apt"
         return 2
     fi
