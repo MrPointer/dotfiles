@@ -159,7 +159,7 @@ function _reload_shell_user_profile {
 function _reinstall_chezmoi_as_package {
     [[ "$INSTALL_BREW" == false || "$BREW_INSTALLED_DOTFILES_MANAGER" == true ]] && return 0
 
-    if ! hash brew &>/dev/null; then
+    if ! command -v brew &>/dev/null; then
         warning "Brew is not available, deferring chezmoi installation as a brew package"
         return 0
     fi
@@ -293,7 +293,8 @@ function _create_new_gpg_key {
 }
 
 function _verify_gpg_client_installation {
-    ! hash gpg &>/dev/null && return 1
+    ! command -v gpg &>/dev/null && return 1
+    ! command -v gpg-agent &>/dev/null && return 1
 
     local gpg_version
     gpg_version="$(gpg --version | head -n1 | cut -d' ' -f3)"
@@ -384,7 +385,7 @@ function ensure_gpg_key_exist {
 # Otherwise, also configure it as user's default shell.
 ###
 function install_shell {
-    if hash "$SHELL_TO_INSTALL" &>/dev/null; then
+    if command -v "$SHELL_TO_INSTALL" &>/dev/null; then
         return 0
     fi
 
@@ -428,7 +429,7 @@ function install_brew {
 ###
 function install_dotfiles_manager {
     local dotfiles_manager_bin=""
-    if hash "$DOTFILES_MANAGER" &>/dev/null || [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
+    if command -v "$DOTFILES_MANAGER" &>/dev/null || [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed, skipping"
         dotfiles_manager_bin="$(which "$DOTFILES_MANAGER")"
     elif [[ "$BREW_AVAILABLE" == true && -e "$DOTFILES_MANAGER_BREW_BINARY_PATH" ]]; then
@@ -531,7 +532,7 @@ function get_download_tool {
     )
 
     for download_tool in "${optional_download_tools[@]}"; do
-        if hash "${download_tool}" 2>/dev/null; then
+        if command -v "${download_tool}" 2>/dev/null; then
             echo "${download_tool}"
             return 0
         fi
