@@ -84,7 +84,14 @@ if hash nvim &>/dev/null; then
   alias vim="nvim"
 fi
 
-if hash fzf &>/dev/null; then
+local find_command
+if command -v ag &>/dev/null; then
+  find_command='ag -l --nocolor --hidden --ignore .git -g ""'
+else
+  find_command="find -L"
+fi
+
+if command -v fzf &>/dev/null; then
   if [[ ! -f ~/.fzf.zsh ]]; then
     # fzf completions are missing, generate them
     if which fzf | grep -q "brew"; then
@@ -92,6 +99,8 @@ if hash fzf &>/dev/null; then
       "$(brew --prefix fzf)/install"
     fi
   fi
+  export FZF_DEFAULT_COMMAND="$find_command"
+  export FZF_CTRL_T_COMMAND="$find_command"
   source ~/.fzf.zsh
 fi
 
