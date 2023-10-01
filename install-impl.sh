@@ -23,6 +23,7 @@ Options:
   --no-brew                         Don't install brew (Homebrew)
   --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
   --package-manager=[manager]       Package manager to use for installing prerequisites
+  --multi-user-system               Take into account that the system is used by multiple users
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
 }
@@ -106,6 +107,16 @@ function root_user {
     current_uid=$(id -u)
 
     ((current_uid == 0))
+}
+
+function brew {
+    if [[ "$MULTI_USER_SYSTEM" == "false" ]]; then
+        brew "$@"
+        return $?
+    else
+        sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" "$DEFAULT_BREW_PATH" "$@"
+        return $?
+    fi
 }
 
 function _install_packages_with_brew {
@@ -258,6 +269,8 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
+        printf "\t%s\n" "multi_user_system = $MULTI_USER_SYSTEM"
+        printf "\t%s\n" "brew_multi_user = \"$BREW_USER_ON_MULTI_USER_SYSTEM\""
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 
     if [[ "$WORK_ENVIRONMENT" == true ]]; then
@@ -414,8 +427,59 @@ function install_brew {
         return 0
     fi
 
-    if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-        return 1
+    if [[ "$MULTI_USER_SYSTEM" == true ]]; then
+        if ! id "$BREW_USER_ON_MULTI_USER_SYSTEM" &>/dev/null; then
+            info "Creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
+            local create_brew_user_cmd=(useradd -m -p "" "$BREW_USER_ON_MULTI_USER_SYSTEM")
+            if [[ "$ROOT_USER" == false ]]; then
+                create_brew_user_cmd=(sudo "${create_brew_user_cmd[@]}")
+                if ! "${create_brew_user_cmd[@]}"; then
+                    error "Failed creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
+                    return 1
+                fi
+                if ! sudo usermod -aG sudo "$BREW_USER_ON_MULTI_USER_SYSTEM"; then
+                    error "Failed adding user '$BREW_USER_ON_MULTI_USER_SYSTEM' to sudo group"
+                    return 2
+                fi
+                if ! echo "$BREW_USER_ON_MULTI_USER_SYSTEM ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers >/dev/null; then
+                    error "Failed adding user '$BREW_USER_ON_MULTI_USER_SYSTEM' to passwordless-sudoers"
+                    return 3
+                fi
+            else
+                if ! "${create_brew_user_cmd[@]}"; then
+                    error "Failed creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
+                    return 1
+                fi
+            fi
+        fi
+
+        local brew_user_home_dir="/home/linuxbrew"
+        if [[ "$ROOT_USER" == false ]]; then
+            if ! sudo chown -R "$BREW_USER_ON_MULTI_USER_SYSTEM:$BREW_USER_ON_MULTI_USER_SYSTEM" "$brew_user_home_dir"; then
+                error "Failed changing ownership of $brew_user_home_dir to $BREW_USER_ON_MULTI_USER_SYSTEM"
+                return 4
+            fi
+        else
+            if ! chown -R "$BREW_USER_ON_MULTI_USER_SYSTEM:$BREW_USER_ON_MULTI_USER_SYSTEM" "$brew_user_home_dir"; then
+                error "Failed changing ownership of $brew_user_home_dir to $BREW_USER_ON_MULTI_USER_SYSTEM"
+                return 4
+            fi
+        fi
+
+        if ! sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" \
+            bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+            return 5
+        fi
+
+        local brew_user_profile_file="/home/$BREW_USER_ON_MULTI_USER_SYSTEM/.profile"
+        {
+            # Load (home)brew
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        } | sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" tee -a "$brew_user_profile_file"
+    else
+        if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+            return 5
+        fi
     fi
 
     # Eval brew for current session to be able to use it later, if needed
@@ -428,13 +492,18 @@ function install_brew {
 ###
 function install_dotfiles_manager {
     local dotfiles_manager_bin=""
-    if command -v "$DOTFILES_MANAGER" &>/dev/null || [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
-        info "$DOTFILES_MANAGER already installed, skipping"
-        dotfiles_manager_bin="$(which "$DOTFILES_MANAGER")"
+    if dotfiles_manager_bin="$(command -v "$DOTFILES_MANAGER" 2>/dev/null)"; then
+        info "$DOTFILES_MANAGER already installed at '$dotfiles_manager_bin', skipping"
     elif [[ "$BREW_AVAILABLE" == true && -e "$DOTFILES_MANAGER_BREW_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed with brew, skipping"
         BREW_INSTALLED_DOTFILES_MANAGER=true
         dotfiles_manager_bin="$DOTFILES_MANAGER_BREW_BINARY_PATH/bin/${DOTFILES_MANAGER}"
+    elif [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" && -x "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
+        info "$DOTFILES_MANAGER already installed at '$DOTFILES_MANAGER_STANDALONE_BINARY_PATH', skipping"
+        dotfiles_manager_bin="$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
+    else
+        info "$DOTFILES_MANAGER not found on the system, installing it via the standalone installer"
+        dotfiles_manager_bin=""
     fi
 
     if [[ -n "$dotfiles_manager_bin" ]]; then
@@ -446,10 +515,27 @@ function install_dotfiles_manager {
 
     local installation_failed=false
 
+    local install_dir
+    if ! install_dir="$(dirname "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH")"; then
+        error "Failed determining installation directory for $DOTFILES_MANAGER"
+        return 1
+    fi
+
     if [[ "$DOWNLOAD_TOOL" == "curl" ]]; then
-        ! sh -c "$(curl -fsLS git.io/chezmoi)" && installation_failed=true
+        info "Installing $DOTFILES_MANAGER using curl"
+        if ! sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$install_dir"; then
+            error "Failed installing $DOTFILES_MANAGER using curl"
+            installation_failed=true
+        fi
     elif [[ "$DOWNLOAD_TOOL" == "wget" ]]; then
-        ! sh -c "$(wget -qO- git.io/chezmoi)" && installation_failed=true
+        info "Installing $DOTFILES_MANAGER using wget"
+        if ! sh -c "$(wget -qO- get.chezmoi.io)" -- -b "$install_dir"; then
+            error "Failed installing $DOTFILES_MANAGER using wget"
+            installation_failed=true
+        fi
+    else
+        error "Download tool not set, something went wrong, aborting"
+        return 1
     fi
 
     if [[ "$installation_failed" == true ]]; then
@@ -462,13 +548,6 @@ function install_dotfiles_manager {
 # Install dotfiles. This is the main "driver" function.
 ###
 function install_dotfiles {
-    info "Installing dotfiles manager ($DOTFILES_MANAGER)"
-    if ! install_dotfiles_manager; then
-        error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
-        return 1
-    fi
-    success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
-
     if [[ "$INSTALL_BREW" == true ]]; then
         info "Installing brew"
         if ! install_brew; then
@@ -491,6 +570,13 @@ function install_dotfiles {
         return 3
     fi
     success "Successfully ensured a GPG key exists"
+
+    info "Installing dotfiles manager ($DOTFILES_MANAGER)"
+    if ! install_dotfiles_manager; then
+        error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
+        return 1
+    fi
+    success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
 
     info "Preparing dotfiles environment"
     if ! prepare_dotfiles_environment; then
@@ -517,7 +603,9 @@ function install_dotfiles {
 }
 
 function brew_available {
-    [[ -d /home/linuxbrew/ && -f "$DEFAULT_BREW_PATH" ]]
+    [[ -f "$DEFAULT_BREW_PATH" ]] || return 1
+    [[ "$MULTI_USER_SYSTEM" == false ]] && return 0
+    stat -c "%U" "$DEFAULT_BREW_PATH" | grep -q "$BREW_USER_ON_MULTI_USER_SYSTEM" || return 1
 }
 
 ###
@@ -531,7 +619,7 @@ function get_download_tool {
     )
 
     for download_tool in "${optional_download_tools[@]}"; do
-        if command -v "${download_tool}" 2>/dev/null; then
+        if command -v "${download_tool}" &>/dev/null; then
             echo "${download_tool}"
             return 0
         fi
@@ -559,6 +647,8 @@ function set_globals {
     if ! DOWNLOAD_TOOL="$(get_download_tool)"; then
         error "Couldn't determine download tool, aborting"
         return 1
+    else
+        info "$DOWNLOAD_TOOL available, using it for downloading files"
     fi
 
     CURRENT_USER_NAME="$(id -u -n)"
@@ -597,6 +687,7 @@ function parse_arguments {
     long_options+=,work-env,work-name:,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
+    long_options+=,multi-user-system
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -644,6 +735,10 @@ function parse_arguments {
             WORK_ENVIRONMENT=true
             shift 2
             ;;
+        --multi-user-system)
+            MULTI_USER_SYSTEM=true
+            shift
+            ;;
         --shell)
             SHELL_TO_INSTALL="${2:-}"
             shift 2
@@ -686,12 +781,14 @@ function _set_work_info_defaults {
 
 function _set_package_management_defaults {
     PACKAGE_MANAGER=""
+
     INSTALL_BREW=true
     PREFER_BREW_FOR_ALL_TOOLS=true
     DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
     BREW_LOCATION_RESOLVING_CMD="$DEFAULT_BREW_PATH shellenv"
     BREW_AVAILABLE=false
     BREW_INSTALLED_DOTFILES_MANAGER=false
+    BREW_USER_ON_MULTI_USER_SYSTEM="linuxbrew-manager"
 }
 
 function _set_shell_defaults {
@@ -730,6 +827,7 @@ function set_defaults {
     INSTALL_REF=main
     WORK_ENVIRONMENT=false
     ROOT_USER=false
+    MULTI_USER_SYSTEM=false
 
     _set_personal_info_defaults
     _set_dotfiles_manager_defaults

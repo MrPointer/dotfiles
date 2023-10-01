@@ -4,13 +4,18 @@ export PATH=$HOME/.local/bin:$HOME/bin:$HOME/.bin:$HOME/bin:/usr/local/bin:$PATH
 export GPG_TTY=$(tty)
 
 BREW_HOME="/home/linuxbrew/.linuxbrew"
+BREW_BINARY="$BREW_HOME"/bin/brew
 
-if [[ -d /home/linuxbrew/ && -f "$BREW_HOME"/bin/brew ]]; then
+if [[ -d /home/linuxbrew/ && -f "$BREW_BINARY" ]]; then
     {{ if (eq .chezmoi.group "devbox") -}}
     export PATH="$PATH:"$BREW_HOME"/bin:"$BREW_HOME"/sbin"
-    {{- else -}}
+    {{- else }}
     # Load (home)brew
-    eval "$("$BREW_HOME"/bin/brew shellenv)"
+    eval "$("$BREW_BINARY" shellenv)"
+    {{- end }}
+    {{- if .system.multi_user_system -}}
+    # Impersonate brew management user
+    alias brew="sudo -Hu {{ .system.brew_multi_user }} $BREW_BINARY"
     {{- end }}
 fi
 
