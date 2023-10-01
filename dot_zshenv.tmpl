@@ -48,6 +48,10 @@ fi
 {{- end }}
 {{- end -}}
 
+{{ if .data.system.multi_user_system -}}
+alias brew='sudo -Hu {{ .data.system.brew_multi_user }} brew'
+{{- end }}
+
 {{ if .personal.work_env -}}
 # Load work-generic profile
 source {{ .system.work_generic_dotfiles_profile }}

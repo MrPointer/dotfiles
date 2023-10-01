@@ -36,6 +36,7 @@ The following options can be passed to the command above to customize the instal
 | `--brew-shell`                | Install shell using `brew`. By default it's installed with system's package manager                         |
 | `--prefer-package-manager`    | Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)              |
 | `--package-manager=[manager]` | Package manager to use for installing prerequisites                                                         |
+| `--multi-user-system`         | Take into account that the system is used by multiple users                                                 |
 
 To add options to the install command above, append it after the last closing parentheses `)`, like so:  
 `bash -c "$(curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install.sh) --verbose"`
@@ -57,7 +58,7 @@ by making sure everything is available, and only then proceed with the actual in
 
 The main installation driver script is written in "Pure" shell,
 guaranteed to work on almost all systems, even the strangest ones.  
-It checks whether `bash` is available, trying to install it if not. 
+It checks whether `bash` is available, trying to install it if not.
 The installation utilizes the guessed system package manager, e.g. `apt` for `Debian` systems.  
 If the installation fails for some reason, then the user is prompted to manually install `bash`.  
 After `bash` is properly installed, it's used to execute the actual installation script, written in `bash`.  

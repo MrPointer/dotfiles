@@ -258,6 +258,8 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
+        printf "\t%s\n" "multi_user_system = \"$MULTI_USER_SYSTEM\""
+        printf "\t%s\n" "brew_multi_user = \"$BREW_USER_ON_MULTI_USER_SYSTEM\""
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 
     if [[ "$WORK_ENVIRONMENT" == true ]]; then
@@ -414,8 +416,29 @@ function install_brew {
         return 0
     fi
 
-    if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-        return 1
+    if [[ "$MULTI_USER_SYSTEM" == true ]]; then
+        if ! id "$BREW_USER_ON_MULTI_USER_SYSTEM" &>/dev/null; then
+            info "Creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
+            local create_brew_user_cmd=(useradd -m "$BREW_USER_ON_MULTI_USER_SYSTEM")
+            if [[ "$ROOT_USER" == false ]]; then
+                create_brew_user_cmd=(sudo "${create_brew_user_cmd[@]}")
+            fi
+            if ! "${create_brew_user_cmd[@]}"; then
+                error "Failed creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
+                return 1
+            fi
+        fi
+
+        if ! sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" \
+            bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+            error "Failed installing brew"
+            return 2
+        fi
+    else
+        if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+            error "Failed installing brew"
+            return 2
+        fi
     fi
 
     # Eval brew for current session to be able to use it later, if needed
@@ -519,7 +542,9 @@ function install_dotfiles {
 }
 
 function brew_available {
-    [[ -d /home/linuxbrew/ && -f "$DEFAULT_BREW_PATH" ]]
+    [[ -f "$DEFAULT_BREW_PATH" ]] || return 1
+    [[ "$MULTI_USER_SYSTEM" == false ]] && return 0
+    stat -c "%U" "$DEFAULT_BREW_PATH" | grep -q "$BREW_USER_ON_MULTI_USER_SYSTEM" || return 1
 }
 
 ###
@@ -599,6 +624,7 @@ function parse_arguments {
     long_options+=,work-env,work-name:,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
+    long_options+=,multi-user-system
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -646,6 +672,10 @@ function parse_arguments {
             WORK_ENVIRONMENT=true
             shift 2
             ;;
+        --multi-user-system)
+            MULTI_USER_SYSTEM=true
+            shift
+            ;;
         --shell)
             SHELL_TO_INSTALL="${2:-}"
             shift 2
@@ -688,12 +718,14 @@ function _set_work_info_defaults {
 
 function _set_package_management_defaults {
     PACKAGE_MANAGER=""
+
     INSTALL_BREW=true
     PREFER_BREW_FOR_ALL_TOOLS=true
     DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
     BREW_LOCATION_RESOLVING_CMD="$DEFAULT_BREW_PATH shellenv"
     BREW_AVAILABLE=false
     BREW_INSTALLED_DOTFILES_MANAGER=false
+    BREW_USER_ON_MULTI_USER_SYSTEM="linuxbrew"
 }
 
 function _set_shell_defaults {
@@ -732,6 +764,7 @@ function set_defaults {
     INSTALL_REF=main
     WORK_ENVIRONMENT=false
     ROOT_USER=false
+    MULTI_USER_SYSTEM=false
 
     _set_personal_info_defaults
     _set_dotfiles_manager_defaults
