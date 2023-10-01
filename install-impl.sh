@@ -422,21 +422,28 @@ function install_brew {
             local create_brew_user_cmd=(useradd -m "$BREW_USER_ON_MULTI_USER_SYSTEM")
             if [[ "$ROOT_USER" == false ]]; then
                 create_brew_user_cmd=(sudo "${create_brew_user_cmd[@]}")
-            fi
-            if ! "${create_brew_user_cmd[@]}"; then
-                error "Failed creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
-                return 1
+                if ! "${create_brew_user_cmd[@]}"; then
+                    error "Failed creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
+                    return 1
+                fi
+                if ! sudo usermod -aG sudo "$BREW_USER_ON_MULTI_USER_SYSTEM"; then
+                    error "Failed adding user '$BREW_USER_ON_MULTI_USER_SYSTEM' to sudo group"
+                    return 1
+                fi
+            else
+                if ! "${create_brew_user_cmd[@]}"; then
+                    error "Failed creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
+                    return 1
+                fi
             fi
         fi
 
         if ! sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" \
             bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-            error "Failed installing brew"
             return 2
         fi
     else
         if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-            error "Failed installing brew"
             return 2
         fi
     fi
@@ -725,7 +732,7 @@ function _set_package_management_defaults {
     BREW_LOCATION_RESOLVING_CMD="$DEFAULT_BREW_PATH shellenv"
     BREW_AVAILABLE=false
     BREW_INSTALLED_DOTFILES_MANAGER=false
-    BREW_USER_ON_MULTI_USER_SYSTEM="linuxbrew"
+    BREW_USER_ON_MULTI_USER_SYSTEM="linuxbrew-manager"
 }
 
 function _set_shell_defaults {
