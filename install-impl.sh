@@ -447,9 +447,9 @@ function install_dotfiles_manager {
     local installation_failed=false
 
     if [[ "$DOWNLOAD_TOOL" == "curl" ]]; then
-        ! sh -c "$(curl -fsLS git.io/chezmoi)" && installation_failed=true
+        ! sh -c "$(curl -fsLS get.chezmoi.io)" && installation_failed=true
     elif [[ "$DOWNLOAD_TOOL" == "wget" ]]; then
-        ! sh -c "$(wget -qO- git.io/chezmoi)" && installation_failed=true
+        ! sh -c "$(wget -qO- get.chezmoi.io)" && installation_failed=true
     fi
 
     if [[ "$installation_failed" == true ]]; then
