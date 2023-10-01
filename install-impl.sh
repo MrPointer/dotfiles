@@ -462,7 +462,7 @@ function install_brew {
 ###
 function install_dotfiles_manager {
     local dotfiles_manager_bin=""
-    if dotfiles_manager_bin="$(command -v "$DOTFILES_MANAGER" &>/dev/null)" && [[ -n "$dotfiles_manager_bin" ]]; then
+    if dotfiles_manager_bin="$(command -v "$DOTFILES_MANAGER" &>/dev/null)"; then
         info "$DOTFILES_MANAGER already installed at '$dotfiles_manager_bin', skipping"
     elif [[ "$BREW_AVAILABLE" == true && -e "$DOTFILES_MANAGER_BREW_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed with brew, skipping"
@@ -471,9 +471,13 @@ function install_dotfiles_manager {
     elif [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" && -x "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed at '$DOTFILES_MANAGER_STANDALONE_BINARY_PATH', skipping"
         dotfiles_manager_bin="$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
+    else
+        info "$DOTFILES_MANAGER not found on the system, installing it via the standalone installer"
+        dotfiles_manager_bin=""
     fi
 
     if [[ -n "$dotfiles_manager_bin" ]]; then
+        warning "WTF?"
         APPLY_DOTFILES_CMD=("$dotfiles_manager_bin")
         return 0
     else
@@ -482,10 +486,27 @@ function install_dotfiles_manager {
 
     local installation_failed=false
 
+    local install_dir
+    if ! install_dir="$(dirname "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH")"; then
+        error "Failed determining installation directory for $DOTFILES_MANAGER"
+        return 1
+    fi
+
     if [[ "$DOWNLOAD_TOOL" == "curl" ]]; then
-        ! sh -c "$(curl -fsLS get.chezmoi.io)" && installation_failed=true
+        info "Installing $DOTFILES_MANAGER using curl"
+        if ! sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$install_dir"; then
+            error "Failed installing $DOTFILES_MANAGER using curl"
+            installation_failed=true
+        fi
     elif [[ "$DOWNLOAD_TOOL" == "wget" ]]; then
-        ! sh -c "$(wget -qO- get.chezmoi.io)" && installation_failed=true
+        info "Installing $DOTFILES_MANAGER using wget"
+        if ! sh -c "$(wget -qO- get.chezmoi.io)" -- -b "$install_dir"; then
+            error "Failed installing $DOTFILES_MANAGER using wget"
+            installation_failed=true
+        fi
+    else
+        error "Download tool not set, something went wrong, aborting"
+        return 1
     fi
 
     if [[ "$installation_failed" == true ]]; then
@@ -569,7 +590,7 @@ function get_download_tool {
     )
 
     for download_tool in "${optional_download_tools[@]}"; do
-        if command -v "${download_tool}" 2>/dev/null; then
+        if command -v "${download_tool}" &>/dev/null; then
             echo "${download_tool}"
             return 0
         fi
@@ -597,6 +618,8 @@ function set_globals {
     if ! DOWNLOAD_TOOL="$(get_download_tool)"; then
         error "Couldn't determine download tool, aborting"
         return 1
+    else
+        info "$DOWNLOAD_TOOL available, using it for downloading files"
     fi
 
     CURRENT_USER_NAME="$(id -u -n)"
