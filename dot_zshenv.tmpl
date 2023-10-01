@@ -13,7 +13,7 @@ if [[ -d /home/linuxbrew/ && -f "$BREW_BINARY" ]]; then
     # Load (home)brew
     eval "$("$BREW_BINARY" shellenv)"
     {{- end }}
-    {{- if .system.multi_user_system -}}
+    {{ if .system.multi_user_system -}}
     # Impersonate brew management user
     alias brew="sudo -Hu {{ .system.brew_multi_user }} $BREW_BINARY"
     {{- end }}
