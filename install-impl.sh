@@ -428,13 +428,15 @@ function install_brew {
 ###
 function install_dotfiles_manager {
     local dotfiles_manager_bin=""
-    if command -v "$DOTFILES_MANAGER" &>/dev/null || [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
-        info "$DOTFILES_MANAGER already installed, skipping"
-        dotfiles_manager_bin="$(which "$DOTFILES_MANAGER")"
+    if dotfiles_manager_bin="$(command -v "$DOTFILES_MANAGER" &>/dev/null)" && [[ -n "$dotfiles_manager_bin" ]]; then
+        info "$DOTFILES_MANAGER already installed at '$dotfiles_manager_bin', skipping"
     elif [[ "$BREW_AVAILABLE" == true && -e "$DOTFILES_MANAGER_BREW_BINARY_PATH" ]]; then
         info "$DOTFILES_MANAGER already installed with brew, skipping"
         BREW_INSTALLED_DOTFILES_MANAGER=true
         dotfiles_manager_bin="$DOTFILES_MANAGER_BREW_BINARY_PATH/bin/${DOTFILES_MANAGER}"
+    elif [[ -f "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" && -x "$DOTFILES_MANAGER_STANDALONE_BINARY_PATH" ]]; then
+        info "$DOTFILES_MANAGER already installed at '$DOTFILES_MANAGER_STANDALONE_BINARY_PATH', skipping"
+        dotfiles_manager_bin="$DOTFILES_MANAGER_STANDALONE_BINARY_PATH"
     fi
 
     if [[ -n "$dotfiles_manager_bin" ]]; then
