@@ -456,6 +456,12 @@ function install_brew {
             bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
             return 2
         fi
+
+        local brew_user_profile_file="/home/$BREW_USER_ON_MULTI_USER_SYSTEM/.profile"
+        {
+            # Load (home)brew
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        } | sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" tee -a "$brew_user_profile_file"
     else
         if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
             return 2
