@@ -23,6 +23,7 @@ Options:
   --no-brew                         Don't install brew (Homebrew)
   --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
   --package-manager=[manager]       Package manager to use for installing prerequisites
+  --multi-user-system               Take into account that the system is used by multiple users
 -----------------------------------------------------"
 DOTFILES_INSTALL_IMPL_USAGE
 }
