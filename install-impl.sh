@@ -419,7 +419,7 @@ function install_brew {
     if [[ "$MULTI_USER_SYSTEM" == true ]]; then
         if ! id "$BREW_USER_ON_MULTI_USER_SYSTEM" &>/dev/null; then
             info "Creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
-            local create_brew_user_cmd=(useradd -m "$BREW_USER_ON_MULTI_USER_SYSTEM")
+            local create_brew_user_cmd=(useradd -m -p "" "$BREW_USER_ON_MULTI_USER_SYSTEM")
             if [[ "$ROOT_USER" == false ]]; then
                 create_brew_user_cmd=(sudo "${create_brew_user_cmd[@]}")
                 if ! "${create_brew_user_cmd[@]}"; then
