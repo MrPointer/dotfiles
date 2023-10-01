@@ -268,7 +268,7 @@ function prepare_dotfiles_environment {
         printf "%s\n" "[data.system]"
         printf "\t%s\n" "shell = \"$SHELL_TO_INSTALL\""
         printf "\t%s\n" "user = \"$CURRENT_USER_NAME\""
-        printf "\t%s\n" "multi_user_system = \"$MULTI_USER_SYSTEM\""
+        printf "\t%s\n" "multi_user_system = $MULTI_USER_SYSTEM"
         printf "\t%s\n" "brew_multi_user = \"$BREW_USER_ON_MULTI_USER_SYSTEM\""
     } >>"$ENVIRONMENT_TEMPLATE_FILE_PATH"
 
