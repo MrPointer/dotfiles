@@ -438,11 +438,11 @@ function install_brew {
                 fi
                 if ! sudo usermod -aG sudo "$BREW_USER_ON_MULTI_USER_SYSTEM"; then
                     error "Failed adding user '$BREW_USER_ON_MULTI_USER_SYSTEM' to sudo group"
-                    return 1
+                    return 2
                 fi
                 if ! echo "$BREW_USER_ON_MULTI_USER_SYSTEM ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers >/dev/null; then
                     error "Failed adding user '$BREW_USER_ON_MULTI_USER_SYSTEM' to passwordless-sudoers"
-                    return 1
+                    return 3
                 fi
             else
                 if ! "${create_brew_user_cmd[@]}"; then
@@ -452,9 +452,22 @@ function install_brew {
             fi
         fi
 
+        local brew_user_home_dir="/home/linuxbrew"
+        if [[ "$ROOT_USER" == false ]]; then
+            if ! sudo chown -R "$BREW_USER_ON_MULTI_USER_SYSTEM:$BREW_USER_ON_MULTI_USER_SYSTEM" "$brew_user_home_dir"; then
+                error "Failed changing ownership of $brew_user_home_dir to $BREW_USER_ON_MULTI_USER_SYSTEM"
+                return 4
+            fi
+        else
+            if ! chown -R "$BREW_USER_ON_MULTI_USER_SYSTEM:$BREW_USER_ON_MULTI_USER_SYSTEM" "$brew_user_home_dir"; then
+                error "Failed changing ownership of $brew_user_home_dir to $BREW_USER_ON_MULTI_USER_SYSTEM"
+                return 4
+            fi
+        fi
+
         if ! sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" \
             bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-            return 2
+            return 5
         fi
 
         local brew_user_profile_file="/home/$BREW_USER_ON_MULTI_USER_SYSTEM/.profile"
@@ -464,7 +477,7 @@ function install_brew {
         } | sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" tee -a "$brew_user_profile_file"
     else
         if ! bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-            return 2
+            return 5
         fi
     fi
 
