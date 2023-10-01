@@ -108,6 +108,11 @@ function root_user {
     ((current_uid == 0))
 }
 
+function set_brew_alias {
+    [[ "$MULTI_USER_SYSTEM" == "false" ]] && return 0
+    alias brew="sudo -Hu $BREW_USER_ON_MULTI_USER_SYSTEM brew"
+}
+
 function _install_packages_with_brew {
     local packages=("$@")
 
@@ -541,6 +546,8 @@ function install_dotfiles {
         return 3
     fi
     success "Successfully ensured a GPG key exists"
+
+    set_brew_alias
 
     info "Installing dotfiles manager ($DOTFILES_MANAGER)"
     if ! install_dotfiles_manager; then
