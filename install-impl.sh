@@ -487,13 +487,6 @@ function install_dotfiles_manager {
 # Install dotfiles. This is the main "driver" function.
 ###
 function install_dotfiles {
-    info "Installing dotfiles manager ($DOTFILES_MANAGER)"
-    if ! install_dotfiles_manager; then
-        error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
-        return 1
-    fi
-    success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
-
     if [[ "$INSTALL_BREW" == true ]]; then
         info "Installing brew"
         if ! install_brew; then
@@ -516,6 +509,13 @@ function install_dotfiles {
         return 3
     fi
     success "Successfully ensured a GPG key exists"
+
+    info "Installing dotfiles manager ($DOTFILES_MANAGER)"
+    if ! install_dotfiles_manager; then
+        error "Failed installing dotfiles manager ($DOTFILES_MANAGER)"
+        return 1
+    fi
+    success "Successfully installed dotfiles manager, $DOTFILES_MANAGER"
 
     info "Preparing dotfiles environment"
     if ! prepare_dotfiles_environment; then
