@@ -430,6 +430,10 @@ function install_brew {
                     error "Failed adding user '$BREW_USER_ON_MULTI_USER_SYSTEM' to sudo group"
                     return 1
                 fi
+                if ! echo "$BREW_USER_ON_MULTI_USER_SYSTEM ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers >/dev/null; then
+                    error "Failed adding user '$BREW_USER_ON_MULTI_USER_SYSTEM' to passwordless-sudoers"
+                    return 1
+                fi
             else
                 if ! "${create_brew_user_cmd[@]}"; then
                     error "Failed creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
