@@ -48,8 +48,8 @@ fi
 {{- end }}
 {{- end -}}
 
-{{ if .data.system.multi_user_system -}}
-alias brew='sudo -Hu {{ .data.system.brew_multi_user }} brew'
+{{ if .system.multi_user_system -}}
+alias brew='sudo -Hu {{ .system.brew_multi_user }} brew'
 {{- end }}
 
 {{ if .personal.work_env -}}
