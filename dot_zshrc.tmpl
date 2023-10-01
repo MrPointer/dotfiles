@@ -108,7 +108,11 @@ zstyle ':completion:*' menu select
 mkdir -p ~/.zfunc &>/dev/null
 fpath+=~/.zfunc
 
+{{ if .system.multi_user_system -}}
+autoload -U +X compinit && compinit -u
+{{- else -}}
 autoload -U +X compinit && compinit
+{{- end }}
 autoload -U +X bashcompinit && bashcompinit
 
 if hash pipx &>/dev/null; then
