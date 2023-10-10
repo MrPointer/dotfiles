@@ -86,6 +86,13 @@ fi
 
 local find_command
 if command -v ag &>/dev/null; then
+  if ag --help | grep -q "asyncapi"; then
+    # We have the wrong ag installed
+    if which ag | grep -q "brew"; then
+      # ag is installed with brew
+      ln -s "$(brew --prefix the_silver_searcher)/bin/ag" ${HOME}/.local/bin/ag
+    fi
+  fi
   find_command='ag -l --nocolor --hidden --ignore .git -g ""'
 else
   find_command="find -L"
