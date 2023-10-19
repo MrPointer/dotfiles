@@ -29,6 +29,10 @@ if command -v jenv &> /dev/null; then
     eval "$(jenv init -)"
 fi
 
+if [[ -d "$(pwd)/builds/x86/Debug/so_conan" ]]; then
+    export LD_LIBRARY_PATH="$(pwd)/builds/x86/Debug/so_conan:$LD_LIBRARY_PATH"
+fi
+
 {{- if (eq .chezmoi.group "devbox") }}
 while IFS='' read -r -d '' file; do
     source "$file"
