@@ -1,17 +1,36 @@
 # Add work executables-dir to $PATH as well
 export PATH="$SEDG_EXECUTABLES_DIR:$PATH"
 
-local portia_4_sdk=""
-if [[ -d "/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot" ]]; then
+local expected_portia_sdk_paths=(
+    "/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+    "/usr/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+)
+
+local portia_sdk_path=""
+for expected_portia_sdk_path in "${expected_portia_sdk_paths[@]}"; do
+    if [[ -d "$expected_portia_sdk_path" ]]; then
+        portia_sdk_path="$expected_portia_sdk_path"
+        break
+    fi
+done
+
+if [[ -n "$portia_sdk_path" ]]; then
+    # We're in a Portia 4 environment
+    export PORTIA_ENV=1
+    export PORTIA_ENV_VERSION=4
+
     # Add Portia's cross-toolchain to enable native cross-compilation
-    portia_4_sdk="/usr/local/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
-elif [[ -d "/usr/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin" ]]; then
-    portia_4_sdk="/usr/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin"
+    export PATH="$PATH:$portia_sdk_path"
+else
+    export PORTIA_ENV=0
+    export PORTIA_ENV_VERSION=0
 fi
 
-if [[ -n "$portia_4_sdk" ]]; then
-    # Add Portia's cross-toolchain to enable native cross-compilation
-    export PATH="$PATH:$portia_4_sdk"
+if [[ "$PORTIA_ENV" == "1" ]]; then
+    # I prefer using my own node if available
+    if brew list node &> /dev/null; then
+        ln -sf "$(brew --prefix node)/bin/node" "$HOME/.local/bin/node"
+    fi
 fi
 
 export LIBSUITE_DIR="$HOME/projects/sources/libsuite"
