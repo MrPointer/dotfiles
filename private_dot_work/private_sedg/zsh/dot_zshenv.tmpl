@@ -52,6 +52,10 @@ if [[ -d "$(pwd)/builds/x86/Debug/so_conan" ]]; then
     export LD_LIBRARY_PATH="$(pwd)/builds/x86/Debug/so_conan:$LD_LIBRARY_PATH"
 fi
 
+if [[ -d "$HOME/.cargo" ]]; then
+    source "$HOME/.cargo/env"
+fi
+
 {{- if (eq .chezmoi.group "devbox") }}
 while IFS='' read -r -d '' file; do
     source "$file"
