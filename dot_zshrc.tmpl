@@ -72,11 +72,9 @@ antigen theme af-magic
 # Tell Antigen that you're done
 antigen apply
 
-if hash brew &>/dev/null; then
-  # Enable homebrew completions
-  if type brew &>/dev/null; then
-    FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
-  fi
+# Enable homebrew completions
+if command -v brew &>/dev/null; then
+  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
 fi
 
 # Custom git aliases
