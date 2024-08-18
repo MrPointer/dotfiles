@@ -154,6 +154,11 @@ if hash jfrog &>/dev/null; then
   source ~/.jfrog/jfrog_zsh_completion
 fi
 
+if command -v az &>/dev/null; then
+  # Register Azure-DevOps completions
+  source $(brew --prefix)/etc/bash_completion.d/az
+fi
+
 {{ if .personal.work_env -}}
 source "$WORK_ZSH_RC_EXTENSION"
 {{- end }}
