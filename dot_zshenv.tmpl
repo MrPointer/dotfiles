@@ -28,17 +28,21 @@ if [[ -d "$HOME/.pyenv" ]]; then
     eval "$(pyenv virtualenv-init -)"
 fi
 
+if [[ -f $(brew --prefix nvm)/nvm.sh ]]; then
+    source $(brew --prefix nvm)/nvm.sh
+fi
+
 if command -v cargo &>/dev/null; then
     # Add Cargo's bin dir to make cargo (rust) execs available
     export PATH="$PATH:$HOME/.cargo/bin"
 fi
 
-if [[ -d ""$BREW_HOME"/lib/ruby" ]]; then
+if [[ -d "$BREW_HOME"/lib/ruby" ]]; then
     # Add Ruby's exec dir to make Ruby execs available
     export PATH="$PATH:"$BREW_HOME"/lib/ruby/gems/3.1.0/bin"
 fi
 
-if [[ -d ""$BREW_HOME"/opt/clang-format" ]]; then
+if [[ -d "$BREW_HOME"/opt/clang-format" ]]; then
     export PATH=""$BREW_HOME"/opt/clang-format/bin:$PATH"
 fi
 
