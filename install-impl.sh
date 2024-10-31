@@ -24,7 +24,8 @@ Options:
   --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
   --package-manager=[manager]       Package manager to use for installing prerequisites
   --multi-user-system               Take into account that the system is used by multiple users
------------------------------------------------------"
+  --git-via-https                   Use HTTPS for cloning dotfiles repository
+  --git-via-ssh                     Use SSH for cloning dotfiles repository (default)
 DOTFILES_INSTALL_IMPL_USAGE
 }
 
@@ -232,7 +233,13 @@ function apply_dotfiles {
         APPLY_DOTFILES_CMD+=("--verbose")
     fi
 
-    APPLY_DOTFILES_CMD+=(init --apply --ssh "$GITHUB_USERNAME")
+    APPLY_DOTFILES_CMD+=(init --apply)
+
+    if [[ "$DOTFILES_CLONING_PROTOCOL" == "ssh" ]]; then
+        APPLY_DOTFILES_CMD+=(--ssh)
+    fi
+
+    APPLY_DOTFILES_CMD+=("$GITHUB_USERNAME")
 
     "${APPLY_DOTFILES_CMD[@]}"
 }
@@ -688,6 +695,7 @@ function parse_arguments {
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
     long_options+=,multi-user-system
+    long_options+=,git-via-https,git-via-ssh
 
     # -temporarily store output to be able to check for errors
     # -activate quoting/enhanced mode (e.g. by writing out “--options”)
@@ -759,6 +767,14 @@ function parse_arguments {
             PACKAGE_MANAGER="${2:-}"
             shift 2
             ;;
+        --git-via-https)
+            DOTFILES_CLONING_PROTOCOL="https"
+            shift
+            ;;
+        --git-via-ssh)
+            DOTFILES_CLONING_PROTOCOL="ssh"
+            shift
+            ;;
         --)
             shift
             break
@@ -801,6 +817,8 @@ function _set_dotfiles_manager_defaults {
     DOTFILES_MANAGER=chezmoi
     DOTFILES_MANAGER_STANDALONE_BINARY_PATH="${HOME}/bin/${DOTFILES_MANAGER}"
     DOTFILES_MANAGER_BREW_BINARY_PATH="/home/linuxbrew/.linuxbrew/opt/${DOTFILES_MANAGER}"
+
+    DOTFILES_CLONING_PROTOCOL="ssh"
 
     DOTFILES_CLONE_PATH="${HOME}/.local/share/${DOTFILES_MANAGER}"
     ENVIRONMENT_TEMPLATE_CONFIG_DIR="$HOME/.config/${DOTFILES_MANAGER}"

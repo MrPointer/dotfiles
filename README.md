@@ -37,6 +37,8 @@ The following options can be passed to the command above to customize the instal
 | `--prefer-package-manager`    | Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)              |
 | `--package-manager=[manager]` | Package manager to use for installing prerequisites                                                         |
 | `--multi-user-system`         | Take into account that the system is used by multiple users                                                 |
+| `--git-via-https`             | Use HTTPS for git operations instead of SSH                                                                 |
+| `--git-via-ssh`               | Use SSH for git operations instead of HTTPS (default)                                                       |
 
 To add options to the install command above, append it after the last closing parentheses `)`, like so:  
 `bash -c "$(curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/install.sh) --verbose"`
