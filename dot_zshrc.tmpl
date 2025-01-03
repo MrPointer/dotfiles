@@ -87,21 +87,6 @@ if hash nvim &>/dev/null; then
   alias vim="nvim"
 fi
 
-local find_command="find -L"
-
-if command -v ag &>/dev/null; then
-  if ag --help | grep -q "asyncapi"; then
-    # We have the wrong ag installed
-    if brew list ag &>/dev/null; then
-      # ag is installed with brew
-      ln -s "$(brew --prefix the_silver_searcher)/bin/ag" ${HOME}/.local/bin/ag
-      find_command='ag -l --nocolor --hidden --ignore .git -g ""'
-    fi
-  else  
-    find_command='ag -l --nocolor --hidden --ignore .git -g ""'
-  fi
-fi
-
 if command -v fzf &>/dev/null; then
   if [[ ! -f ~/.fzf.zsh ]]; then
     # fzf completions are missing, generate them
@@ -110,9 +95,14 @@ if command -v fzf &>/dev/null; then
       "$(brew --prefix fzf)/install"
     fi
   fi
-  export FZF_DEFAULT_COMMAND="$find_command"
-  export FZF_CTRL_T_COMMAND="$find_command"
-  source ~/.fzf.zsh
+
+  if command -v fd &>/dev/null; then
+    export FZF_DEFAULT_COMMAND="fd --type f --color=never"
+  fi
+  
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  source <(fzf --zsh)
+  
 fi
 
 zstyle ':completion:*' menu select
