@@ -150,12 +150,6 @@ if command -v az &>/dev/null; then
   source $(brew --prefix)/etc/bash_completion.d/az
 fi
 
-if command -v lla >& /dev/null; then
-  # Register lla alias
-  alias ls="lla"
-  alias ll="lla -l"
-fi
-
 {{ if .personal.work_env -}}
 source "$WORK_ZSH_RC_EXTENSION"
 {{- end }}
