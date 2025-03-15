@@ -83,7 +83,7 @@ invoke_actual_installation() {
     fi
 
     # For macOS, find GNU getopt path
-    if [ "$SYSTEM_TYPE" = "mac" ]; then
+    if [ "$SYSTEM_TYPE" = "darwin" ]; then
         # Determine where GNU getopt is installed
         v_apple_silicon_path="/opt/homebrew/opt/gnu-getopt/bin"
         v_intel_path="/usr/local/opt/gnu-getopt/bin"
@@ -299,7 +299,7 @@ _get_linux_distro_name() {
 _get_system_type() {
     case "$(uname -s)" in
     Darwin)
-        echo "mac"
+        echo "darwin"
         ;;
     Linux)
         echo "linux"
@@ -321,7 +321,7 @@ detect_system() {
             return 2
         fi
         ;;
-    mac)
+    darwin)
         DISTRO_NAME="mac"
         ;;
     *)

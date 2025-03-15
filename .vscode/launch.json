@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "bashdb",
+            "request": "launch",
+            "name": "Bash-Debug (install-impl.sh)",
+            "program": "${workspaceFolder}/install-impl.sh",
+            "env": {
+                "PATH": "/opt/homebrew/opt/gnu-getopt/bin:${env:PATH}",
+            },
+            "args": [
+                "--system",
+                "darwin",
+                "--package-manager",
+                "brew",
+            ],
+        }
+    ]
+}
