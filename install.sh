@@ -26,9 +26,9 @@ success() {
 }
 
 get_download_tool() {
-    if command -v curl 2>/dev/null; then
+    if command -v curl >/dev/null 2>&1; then
         echo "curl"
-    elif command -v wget 2>/dev/null; then
+    elif command -v wget >/dev/null 2>&1; then
         echo "wget"
     else
         echo ""
@@ -60,26 +60,27 @@ invoke_actual_installation() {
         # Create temporary executable file to hold the contents
         # of the downloaded implementation script
         TMP_IMPL_INSTALL_PATH="$(mktemp)"
-        chmod +x "$TMP_IMPL_INSTALL_PATH"
 
         # Execute manually for every type of download tool to get exit code, it's impossible otherwise...
         # Shell commands executed with "-c" must be in single-quotes to catch their exit codes correctly
         IMPL_DOWNLOAD_RESULT=0
         case "$v_DOWNLOAD_TOOL" in
         curl)
-            curl -fsSL "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -o "$TMP_IMPL_INSTALL_PATH"
+            curl -fsSL -o "$TMP_IMPL_INSTALL_PATH" "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh"
             IMPL_DOWNLOAD_RESULT=$?
             ;;
         wget)
-            wget -q "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -O "$TMP_IMPL_INSTALL_PATH"
+            wget -q -O "$TMP_IMPL_INSTALL_PATH" "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh"
             IMPL_DOWNLOAD_RESULT=$?
             ;;
         esac
 
-        if [ $IMPL_DOWNLOAD_RESULT -ne 0 ]; then
+        if [ $IMPL_DOWNLOAD_RESULT -ne 0 ] || [ ! -s "$TMP_IMPL_INSTALL_PATH" ]; then
             error "Failed downloading implementation script!"
             return 2
         fi
+
+        chmod +x "$TMP_IMPL_INSTALL_PATH"
     fi
 
     # For macOS, find GNU getopt path
@@ -101,10 +102,12 @@ invoke_actual_installation() {
         fi
 
         # Execute with modified PATH environment
+        info "Executing: env PATH=\"$v_getopt_path:\$PATH\" $TMP_IMPL_INSTALL_PATH --package-manager $PKG_MANAGER --system $SYSTEM_TYPE $*"
         env PATH="$v_getopt_path:$PATH" "$TMP_IMPL_INSTALL_PATH" --package-manager "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"
         v_result=$?
     else
         # Execute normally on other systems
+        info "Executing: $TMP_IMPL_INSTALL_PATH --package-manager $PKG_MANAGER --system $SYSTEM_TYPE $*"
         "$TMP_IMPL_INSTALL_PATH" --package-manager "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"
         v_result=$?
     fi
