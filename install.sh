@@ -68,6 +68,22 @@ invoke_actual_installation() {
     return 0
 }
 
+install_getopt() {
+    v_distro="$1"
+    v_pkg_manager="$2"
+
+    if [ "$v_distro" = "mac" ] && [ "$v_pkg_manager" = "brew" ]; then
+        if brew list | grep -q gnu-getopt; then
+            info "gnu-getopt already installed"
+            return 0
+        fi
+
+        brew install gnu-getopt
+    fi
+
+    return 0
+}
+
 install_bash_with_package_manager() {
     case "$1" in
     apt)
@@ -77,7 +93,7 @@ install_bash_with_package_manager() {
         sudo dnf install -y bash
         ;;
     brew)
-        sudo brew install bash
+        brew install bash
         ;;
     *) ;;
 
@@ -265,6 +281,12 @@ main() {
     info "Installing bash (if required)"
     if ! install_bash "$PKG_MANAGER"; then
         error "Failed installing bash!"
+        return 3
+    fi
+
+    info "Installing getopt (if required)"
+    if ! install_getopt "$DISTRO_NAME" "$PKG_MANAGER"; then
+        error "Failed installing getopt!"
         return 3
     fi
 
