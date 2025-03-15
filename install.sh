@@ -78,9 +78,12 @@ install_getopt() {
             return 0
         fi
 
-        brew install gnu-getopt
+        brew install gnu-getopt || return 1
+        unset v_distro v_pkg_manager
+        return 0
     fi
 
+    unset v_distro v_pkg_manager
     return 0
 }
 
@@ -147,12 +150,12 @@ supported_system() {
 
     if ! grep -q "$v_distro" "$v_supported_distros_file"; then
         error "$v_distro is not yet supported, currently supported are: $SUPPORTED_DISTROS"
-        unset v_supported_distros_file
+        unset v_supported_distros_file v_system v_distro v_pkg_manager
         return 3
     fi
-    unset v_supported_distros_file
 
-    unset v_system v_distro v_pkg_manager
+    unset v_supported_distros_file v_system v_distro v_pkg_manager
+    return 0
 }
 
 _get_default_system_package_manager() {
@@ -173,31 +176,33 @@ _get_default_system_package_manager() {
 }
 
 _get_linux_distro_name() {
-    distro=""
+    v_distro=""
 
     if [ -f /etc/os-release ]; then
         # freedesktop.org and systemd
         . /etc/os-release
-        distro=$NAME
+        v_distro=$NAME
     elif [ -f /etc/lsb-release ]; then
         # For some versions of Debian/Ubuntu without lsb_release command
         . /etc/lsb-release
-        distro=$DISTRIB_ID
+        v_distro=$DISTRIB_ID
     elif [ -f /etc/debian_version ]; then
         # Older Debian/Ubuntu/etc.
-        distro=Debian
+        v_distro=Debian
     elif [ -f /etc/SuSe-release ]; then
         # Older SuSE/etc.
-        distro=SuSE
+        v_distro=SuSE
     elif [ -f /etc/redhat-release ]; then
         # Older Red Hat, CentOS, etc.
-        distro=RedHat
+        v_distro=RedHat
     else
         # Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
-        distro="$(uname -s)"
+        v_distro="$(uname -s)"
     fi
 
-    echo "$distro" | tr '[:upper:]' '[:lower:]'
+    echo "$v_distro" | tr '[:upper:]' '[:lower:]'
+    unset v_distro
+    return 0
 }
 
 _get_system_type() {
