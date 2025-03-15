@@ -46,11 +46,11 @@ invoke_actual_installation() {
     IMPL_DOWNLOAD_RESULT=0
     case "$v_DOWNLOAD_TOOL" in
     curl)
-        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_REF"/install-impl.sh -o "$TMP_IMPL_INSTALL_PATH"
+        curl -fsSL "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -o "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     wget)
-        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_REF"/install-impl.sh -O "$TMP_IMPL_INSTALL_PATH"
+        wget -q "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -O "$TMP_IMPL_INSTALL_PATH"
         IMPL_DOWNLOAD_RESULT=$?
         ;;
     esac
@@ -59,12 +59,39 @@ invoke_actual_installation() {
         error "Failed downloading implementation script!"
         return 2
     fi
+    # For macOS, find GNU getopt path
+    if [ "$SYSTEM_TYPE" = "mac" ]; then
+        # Determine where GNU getopt is installed
+        v_apple_silicon_path="/opt/homebrew/opt/gnu-getopt/bin"
+        v_intel_path="/usr/local/opt/gnu-getopt/bin"
 
-    if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"; then
+        if [ -d "$v_apple_silicon_path" ]; then
+            # Apple Silicon Mac
+            v_getopt_path="$v_apple_silicon_path"
+        elif [ -d "$v_intel_path" ]; then
+            # Intel Mac
+            v_getopt_path="$v_intel_path"
+        else
+            error "GNU getopt not found on macOS, please install it manually OR open a new shell and run the script again"
+            unset v_apple_silicon_path v_intel_path
+            return 4
+        fi
+
+        # Execute with modified PATH environment
+        env PATH="$v_getopt_path:$PATH" "$TMP_IMPL_INSTALL_PATH" --package-manager "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"
+        v_result=$?
+    else
+        # Execute normally on other systems
+        "$TMP_IMPL_INSTALL_PATH" --package-manager "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"
+        v_result=$?
+    fi
+
+    if [ $v_result -ne 0 ]; then
         error "Real installer failed, sorry..."
         return 3
     fi
 
+    unset v_run_cmd
     return 0
 }
 
