@@ -36,29 +36,52 @@ get_download_tool() {
 }
 
 invoke_actual_installation() {
-    # Create temporary executable file to hold the contents
-    # of the downloaded implementation script
-    TMP_IMPL_INSTALL_PATH="$(mktemp)"
-    chmod +x "$TMP_IMPL_INSTALL_PATH"
+    if [ "$INVOKE_LOCAL_INSTALL" = true ]; then
+        # Get the path to the local implementation script
+        v_script_base_dir="$(dirname "$(readlink -f "$0")")"
+        v_local_install_script="${v_script_base_dir}/install-impl.sh"
 
-    # Execute manually for every type of download tool to get exit code, it's impossible otherwise...
-    # Shell commands executed with "-c" must be in single-quotes to catch their exit codes correctly
-    IMPL_DOWNLOAD_RESULT=0
-    case "$v_DOWNLOAD_TOOL" in
-    curl)
-        curl -fsSL "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -o "$TMP_IMPL_INSTALL_PATH"
-        IMPL_DOWNLOAD_RESULT=$?
-        ;;
-    wget)
-        wget -q "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -O "$TMP_IMPL_INSTALL_PATH"
-        IMPL_DOWNLOAD_RESULT=$?
-        ;;
-    esac
+        # Check if the file exists
+        if [ ! -f "$v_local_install_script" ]; then
+            error "Failed to find local implementation script!"
+            unset v_local_install_script v_script_base_dir
+            return 1
+        fi
+        # Check if the file is executable
+        if [ ! -x "$v_local_install_script" ]; then
+            error "Local implementation script is not executable!"
+            unset v_local_install_script v_script_base_dir
+            return 2
+        fi
 
-    if [ $IMPL_DOWNLOAD_RESULT -ne 0 ]; then
-        error "Failed downloading implementation script!"
-        return 2
+        TMP_IMPL_INSTALL_PATH="$v_local_install_script"
+        unset v_local_install_script v_script_base_dir
+    else
+        # Create temporary executable file to hold the contents
+        # of the downloaded implementation script
+        TMP_IMPL_INSTALL_PATH="$(mktemp)"
+        chmod +x "$TMP_IMPL_INSTALL_PATH"
+
+        # Execute manually for every type of download tool to get exit code, it's impossible otherwise...
+        # Shell commands executed with "-c" must be in single-quotes to catch their exit codes correctly
+        IMPL_DOWNLOAD_RESULT=0
+        case "$v_DOWNLOAD_TOOL" in
+        curl)
+            curl -fsSL "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -o "$TMP_IMPL_INSTALL_PATH"
+            IMPL_DOWNLOAD_RESULT=$?
+            ;;
+        wget)
+            wget -q "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh" -O "$TMP_IMPL_INSTALL_PATH"
+            IMPL_DOWNLOAD_RESULT=$?
+            ;;
+        esac
+
+        if [ $IMPL_DOWNLOAD_RESULT -ne 0 ]; then
+            error "Failed downloading implementation script!"
+            return 2
+        fi
     fi
+
     # For macOS, find GNU getopt path
     if [ "$SYSTEM_TYPE" = "mac" ]; then
         # Determine where GNU getopt is installed
@@ -91,7 +114,7 @@ invoke_actual_installation() {
         return 3
     fi
 
-    unset v_run_cmd
+    unset v_local_install_script
     return 0
 }
 
@@ -195,6 +218,10 @@ parse_arguments() {
         --ref)
             [ -n "$2" ] && INSTALL_REF="${2}"
             shift 2
+            ;;
+        --local)
+            INVOKE_LOCAL_INSTALL=true
+            shift
             ;;
         *)
             # Probably options to the real installer (implementation), simply shift past them
@@ -324,6 +351,7 @@ detect_system() {
 
 set_defaults() {
     INSTALL_REF="main"
+    INVOKE_LOCAL_INSTALL=false
     SUPPORTED_DISTROS="ubuntu debian mac"
 }
 

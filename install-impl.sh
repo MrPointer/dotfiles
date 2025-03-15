@@ -15,6 +15,7 @@ Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
   --ref=[git-ref]                   Reference the given git-ref for installation (can be any git ref - commit, branch, tag). Defaults to 'main'
+  --local                           Option of the wrapper script to install from a local directory. Not used here, but must be parsed to avoid errors
   --work-env                        Treat this installation as a work environment
   --work-name                       Use the given work-name as the work environment. Defaults to 'sedg' (current workplace)
   --work-email=[email]              Use given email address as work's email address. Defaults to 'timor.gruber@solaredge.com'
@@ -705,7 +706,7 @@ function parse_arguments {
 
     local short_options=hvd
     local long_options=help,verbose,debug
-    long_options+=,ref:
+    long_options+=,ref:,local
     long_options+=,work-env,work-name:,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
@@ -744,6 +745,10 @@ function parse_arguments {
         --ref)
             INSTALL_REF="${2:-main}"
             shift 2
+            ;;
+        --local)
+            # This is a wrapper script option, not used here
+            shift
             ;;
         --work-env)
             WORK_ENVIRONMENT=true
