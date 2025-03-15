@@ -338,7 +338,7 @@ detect_system() {
         error "Failed determining package manager for distro: $DISTRO_NAME"
         return 2
     fi
-    if ! command -v "$PKG_MANAGER" 2>/dev/null; then
+    if ! command -v "$PKG_MANAGER" >/dev/null 2>&1; then
         error "Detected '$PKG_MANAGER' as package-manager for '$DISTRO_NAME' but it's not available, maybe you need to install it manually first?"
         return 4
     fi
@@ -349,6 +349,7 @@ detect_system() {
     info "Type: $SYSTEM_TYPE"
     info "Distro: $DISTRO_NAME"
     info "Package manager: $PKG_MANAGER"
+    info "----------------"
     printf "\n" # Print an empty line
 }
 
