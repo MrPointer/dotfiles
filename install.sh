@@ -26,9 +26,9 @@ success() {
 }
 
 get_download_tool() {
-    if hash curl 2>/dev/null; then
+    if command -v curl 2>/dev/null; then
         echo "curl"
-    elif hash wget 2>/dev/null; then
+    elif command -v wget 2>/dev/null; then
         echo "wget"
     else
         echo ""
