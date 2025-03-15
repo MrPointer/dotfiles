@@ -341,7 +341,7 @@ function _install_gpg_client {
 
     info "Installing gpg"
 
-    if [[ "$SYSTEM_TYPE" == "Darwin" ]]; then
+    if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
         if ! brew install gnupg; then
             error "Failed installing gpg tools using brew"
             return 2
@@ -623,6 +623,15 @@ function install_dotfiles {
 }
 
 function brew_available {
+    # Brew is installed at a different location on MacOS and Linux, we need to account for that
+    if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
+        if [[ "$(uname -m)" == "arm64" ]]; then
+            DEFAULT_BREW_PATH="/opt/homebrew/bin/brew"
+        else
+            DEFAULT_BREW_PATH="/usr/local/bin/brew"
+        fi
+    fi
+
     if [[ "$MULTI_USER_SYSTEM" == true ]]; then
         stat -c "%U" "$DEFAULT_BREW_PATH" | grep -q "$BREW_USER_ON_MULTI_USER_SYSTEM" || return 1
         return 0
@@ -825,17 +834,7 @@ function _set_package_management_defaults {
 
     INSTALL_BREW=true
     PREFER_BREW_FOR_ALL_TOOLS=true
-
-    if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
-        if [[ "$(uname -m)" == "arm64" ]]; then
-            DEFAULT_BREW_PATH="/opt/homebrew/bin/brew"
-        else
-            DEFAULT_BREW_PATH="/usr/local/bin/brew"
-        fi
-    else
-        DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
-    fi
-
+    DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
     BREW_LOCATION_RESOLVING_CMD="$DEFAULT_BREW_PATH shellenv"
     BREW_AVAILABLE=false
     BREW_INSTALLED_DOTFILES_MANAGER=false
