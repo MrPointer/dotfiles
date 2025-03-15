@@ -222,6 +222,10 @@ parse_arguments() {
             [ -n "$2" ] && INSTALL_REF="${2}"
             shift 2
             ;;
+        --ref=*)
+            INSTALL_REF="$(echo "$1" | cut -d '=' -f 2)"
+            shift
+            ;;
         --local)
             INVOKE_LOCAL_INSTALL=true
             shift
