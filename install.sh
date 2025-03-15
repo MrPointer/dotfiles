@@ -60,7 +60,7 @@ invoke_actual_installation() {
         return 2
     fi
 
-    if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" "$@"; then
+    if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"; then
         error "Real installer failed, sorry..."
         return 3
     fi
@@ -76,13 +76,16 @@ install_bash_with_package_manager() {
     dnf)
         sudo dnf install -y bash
         ;;
+    brew)
+        sudo brew install bash
+        ;;
     *) ;;
 
     esac
 }
 
 bash_exists() {
-    hash bash >/dev/null 2>&1
+    command -v bash >/dev/null 2>&1
 }
 
 install_bash() {
@@ -124,10 +127,10 @@ supported_system() {
     v_pkg_manager="${3:?}"
 
     v_supported_distros_file="$(mktemp)" || return 1
-    echo "$SUPPORTED_LINUX_DISTROS" >"$v_supported_distros_file"
+    echo "$SUPPORTED_DISTROS" >"$v_supported_distros_file"
 
     if ! grep -q "$v_distro" "$v_supported_distros_file"; then
-        error "$v_distro is not yet supported, currently supported are: $SUPPORTED_LINUX_DISTROS"
+        error "$v_distro is not yet supported, currently supported are: $SUPPORTED_DISTROS"
         unset v_supported_distros_file
         return 3
     fi
@@ -220,8 +223,8 @@ detect_system() {
         error "Failed determining package manager for distro: $DISTRO_NAME"
         return 2
     fi
-    if ! hash "$PKG_MANAGER" 2>/dev/null; then
-        error "Package manager '$PKG_MANAGER' couldn't be found for distro: $DISTRO_NAME, maybe you need to install it manually?"
+    if ! command -v "$PKG_MANAGER" 2>/dev/null; then
+        error "Detected '$PKG_MANAGER' as package-manager for '$DISTRO_NAME' but it's not available, maybe you need to install it manually first?"
         return 4
     fi
 
@@ -236,7 +239,7 @@ detect_system() {
 
 set_defaults() {
     INSTALL_REF="main"
-    SUPPORTED_LINUX_DISTROS="ubuntu debian"
+    SUPPORTED_DISTROS="ubuntu debian mac"
 }
 
 main() {
