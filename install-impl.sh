@@ -114,7 +114,7 @@ function root_user {
 
 function brew {
     if [[ "$MULTI_USER_SYSTEM" == "false" ]]; then
-        brew "$@"
+        command brew "$@"
         return $?
     else
         sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" "$DEFAULT_BREW_PATH" "$@"
@@ -123,11 +123,7 @@ function brew {
 }
 
 function _install_packages_with_brew {
-    local packages=("$@")
-
-    install_package_cmd=(brew install --force-bottle "${packages[@]}")
-
-    "${install_package_cmd[@]}"
+    brew install "$@"
 }
 
 function _install_packages_with_package_manager {
