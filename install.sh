@@ -87,6 +87,26 @@ install_getopt() {
     return 0
 }
 
+verify_bash_version() {
+    v_bash_version="$(bash --version | head -n 1 | grep -o 'version [0-9]\.[0-9]\.[0-9]' | cut -d ' ' -f 2)"
+    if [ -z "$v_bash_version" ]; then
+        error "Failed detecting bash version"
+        unset v_bash_version
+        return 2
+    fi
+
+    # Check if bash version is at least 4.4.0
+    v_expected_bash_version="4.4.0"
+    if [ "$(printf '%s\n' "$v_bash_version" "$v_expected_bash_version" | sort -V | head -n1)" = "$v_expected_bash_version" ]; then
+        info "Bash exists!"
+        unset v_bash_version
+        return 0
+    fi
+
+    unset v_bash_version
+    return 1
+}
+
 install_bash_with_package_manager() {
     case "$1" in
     apt)
@@ -103,22 +123,39 @@ install_bash_with_package_manager() {
     esac
 }
 
-bash_exists() {
-    command -v bash >/dev/null 2>&1
-}
-
 install_bash() {
-    if bash_exists; then
-        info "Bash exists!"
-        return 0
+    if command -v bash >/dev/null 2>&1; then
+        verify_bash_version
+        v_exit_code=$?
+        if [ $v_exit_code -eq 0 ]; then
+            return 0
+        fi
+        if [ $v_exit_code -eq 1 ]; then
+            warning "Bash version is too old, trying to install a newer version using detected package manager"
+        fi
+        if [ $v_exit_code -eq 2 ]; then
+            return 1
+        fi
+        unset v_exit_code
+    else
+        warning "bash does not exist, trying to install it"
     fi
 
-    warning "bash does not exist, trying to install it"
     if ! install_bash_with_package_manager "$1"; then
         error "Failed installing bash using $1"
         return 5
     fi
 
+    # Verify version again to ensure it's installed correctly
+    verify_bash_version
+    v_exit_code=$?
+    if [ $v_exit_code -eq 1 ]; then
+        warning "Bash version is still too old, please install a newer version manually OR open a new shell and run the script again"
+        unset v_exit_code
+        return 6
+    fi
+
+    unset v_exit_code
     return 0
 }
 
