@@ -23,6 +23,7 @@ Options:
   --no-brew                         Don't install brew (Homebrew)
   --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
   --package-manager=[manager]       Package manager to use for installing prerequisites
+  --system=[system]                 Type of system to install on (e.g. linux, mac). Expected to be set by the wrapper script
   --multi-user-system               Take into account that the system is used by multiple users
   --git-via-https                   Use HTTPS for cloning dotfiles repository
   --git-via-ssh                     Use SSH for cloning dotfiles repository (default)
@@ -338,11 +339,21 @@ function _install_gpg_client {
     ((rc == 2)) && return 1
 
     info "Installing gpg"
-    sudo apt-get update
-    if ! sudo apt-get install -y --no-install-recommends gpg gpg-agent; then
-        error "Failed installing gpg tools using apt"
-        return 2
+
+    if [[ "$SYSTEM_TYPE" == "Darwin" ]]; then
+        if ! brew install gnupg; then
+            error "Failed installing gpg tools using brew"
+            return 2
+        fi
+    else
+        sudo apt-get update
+        if ! sudo apt-get install -y --no-install-recommends gpg gpg-agent; then
+            error "Failed installing gpg tools using apt"
+            return 2
+        fi
     fi
+
+    return 0
 }
 
 ###
@@ -435,6 +446,11 @@ function install_brew {
     fi
 
     if [[ "$MULTI_USER_SYSTEM" == true ]]; then
+        if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
+            error "We don't support multi-user systems on MacOS, please install brew manually"
+            return 1
+        fi
+
         if ! id "$BREW_USER_ON_MULTI_USER_SYSTEM" &>/dev/null; then
             info "Creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
             local create_brew_user_cmd=(useradd -m -p "" "$BREW_USER_ON_MULTI_USER_SYSTEM")
@@ -694,6 +710,7 @@ function parse_arguments {
     long_options+=,work-env,work-name:,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
+    long_options+=,system:
     long_options+=,multi-user-system
     long_options+=,git-via-https,git-via-ssh
 
@@ -767,6 +784,10 @@ function parse_arguments {
             PACKAGE_MANAGER="${2:-}"
             shift 2
             ;;
+        --system)
+            SYSTEM_TYPE="${2:-}"
+            shift 2
+            ;;
         --git-via-https)
             DOTFILES_CLONING_PROTOCOL="https"
             shift
@@ -800,7 +821,17 @@ function _set_package_management_defaults {
 
     INSTALL_BREW=true
     PREFER_BREW_FOR_ALL_TOOLS=true
-    DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
+
+    if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
+        if [[ "$(uname -m)" == "arm64" ]]; then
+            DEFAULT_BREW_PATH="/opt/homebrew/bin/brew"
+        else
+            DEFAULT_BREW_PATH="/usr/local/bin/brew"
+        fi
+    else
+        DEFAULT_BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
+    fi
+
     BREW_LOCATION_RESOLVING_CMD="$DEFAULT_BREW_PATH shellenv"
     BREW_AVAILABLE=false
     BREW_INSTALLED_DOTFILES_MANAGER=false
@@ -811,6 +842,7 @@ function _set_shell_defaults {
     INSTALL_SHELL_WITH_BREW=false
     SHELL_TO_INSTALL=zsh
     SHELL_USER_PROFILE=""
+    SYSTEM_TYPE=""
 }
 
 function _set_dotfiles_manager_defaults {
