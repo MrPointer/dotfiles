@@ -441,10 +441,6 @@ function install_shell {
 # The script requires some interactivity.
 ###
 function install_brew {
-    if [[ "$BREW_AVAILABLE" == true ]]; then
-        return 0
-    fi
-
     if [[ "$MULTI_USER_SYSTEM" == true ]]; then
         if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
             error "We don't support multi-user systems on MacOS, please install brew manually"
@@ -571,7 +567,7 @@ function install_dotfiles_manager {
 # Install dotfiles. This is the main "driver" function.
 ###
 function install_dotfiles {
-    if [[ "$INSTALL_BREW" == true ]]; then
+    if [[ "$INSTALL_BREW" == true && "$BREW_AVAILABLE" == false ]]; then
         info "Installing brew"
         if ! install_brew; then
             error "Failed installing brew"
@@ -626,9 +622,12 @@ function install_dotfiles {
 }
 
 function brew_available {
-    [[ -f "$DEFAULT_BREW_PATH" ]] || return 1
-    [[ "$MULTI_USER_SYSTEM" == false ]] && return 0
-    stat -c "%U" "$DEFAULT_BREW_PATH" | grep -q "$BREW_USER_ON_MULTI_USER_SYSTEM" || return 1
+    if [[ "$MULTI_USER_SYSTEM" == true ]]; then
+        stat -c "%U" "$DEFAULT_BREW_PATH" | grep -q "$BREW_USER_ON_MULTI_USER_SYSTEM" || return 1
+        return 0
+    else
+        [[ -f "$DEFAULT_BREW_PATH" ]] && return 0
+    fi
 }
 
 ###
