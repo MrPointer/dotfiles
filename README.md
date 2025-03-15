@@ -28,6 +28,7 @@ The following options can be passed to the command above to customize the instal
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `-v` or `--verbose`           | Enable verbose output                                                                                       |
 | `--ref=[git-ref]`             | Reference the given git-ref for installation (can be any git ref - commit, branch, tag). Defaults to `main` |
+| `--local`                     | Use local installation instead of remote. This is useful for testing purposes.                              |
 | `--work-env`                  | Treat this installation as a work environment                                                               |
 | `--work-name`                 | Use the given work-name as the work environment. Defaults to `sedg` (current workplace)                     |
 | `--work-email=[email]`        | Use given email address as work's email address. Defaults to `timor.gruber@solaredge.com`                   |
