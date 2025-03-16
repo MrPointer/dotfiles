@@ -26,9 +26,9 @@ success() {
 }
 
 get_download_tool() {
-    if hash curl 2>/dev/null; then
+    if command -v curl >/dev/null 2>&1; then
         echo "curl"
-    elif hash wget 2>/dev/null; then
+    elif command -v wget >/dev/null 2>&1; then
         echo "wget"
     else
         echo ""
@@ -36,36 +36,128 @@ get_download_tool() {
 }
 
 invoke_actual_installation() {
-    # Create temporary executable file to hold the contents
-    # of the downloaded implementation script
-    TMP_IMPL_INSTALL_PATH="$(mktemp)"
-    chmod +x "$TMP_IMPL_INSTALL_PATH"
+    if [ "$INVOKE_LOCAL_INSTALL" = true ]; then
+        # Get the path to the local implementation script
+        v_script_base_dir="$(dirname "$(readlink -f "$0")")"
+        v_local_install_script="${v_script_base_dir}/install-impl.sh"
 
-    # Execute manually for every type of download tool to get exit code, it's impossible otherwise...
-    # Shell commands executed with "-c" must be in single-quotes to catch their exit codes correctly
-    IMPL_DOWNLOAD_RESULT=0
-    case "$v_DOWNLOAD_TOOL" in
-    curl)
-        curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_REF"/install-impl.sh -o "$TMP_IMPL_INSTALL_PATH"
-        IMPL_DOWNLOAD_RESULT=$?
-        ;;
-    wget)
-        wget -q https://raw.githubusercontent.com/MrPointer/dotfiles/"$INSTALL_REF"/install-impl.sh -O "$TMP_IMPL_INSTALL_PATH"
-        IMPL_DOWNLOAD_RESULT=$?
-        ;;
-    esac
+        # Check if the file exists
+        if [ ! -f "$v_local_install_script" ]; then
+            error "Failed to find local implementation script!"
+            unset v_local_install_script v_script_base_dir
+            return 1
+        fi
+        # Check if the file is executable
+        if [ ! -x "$v_local_install_script" ]; then
+            error "Local implementation script is not executable!"
+            unset v_local_install_script v_script_base_dir
+            return 2
+        fi
 
-    if [ $IMPL_DOWNLOAD_RESULT -ne 0 ]; then
-        error "Failed downloading implementation script!"
-        return 2
+        TMP_IMPL_INSTALL_PATH="$v_local_install_script"
+        unset v_local_install_script v_script_base_dir
+    else
+        # Create temporary executable file to hold the contents
+        # of the downloaded implementation script
+        TMP_IMPL_INSTALL_PATH="$(mktemp)"
+
+        # Execute manually for every type of download tool to get exit code, it's impossible otherwise...
+        # Shell commands executed with "-c" must be in single-quotes to catch their exit codes correctly
+        IMPL_DOWNLOAD_RESULT=0
+        case "$v_DOWNLOAD_TOOL" in
+        curl)
+            curl -fsSL -o "$TMP_IMPL_INSTALL_PATH" "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh"
+            IMPL_DOWNLOAD_RESULT=$?
+            ;;
+        wget)
+            wget -q -O "$TMP_IMPL_INSTALL_PATH" "https://raw.githubusercontent.com/MrPointer/dotfiles/$INSTALL_REF/install-impl.sh"
+            IMPL_DOWNLOAD_RESULT=$?
+            ;;
+        esac
+
+        if [ $IMPL_DOWNLOAD_RESULT -ne 0 ] || [ ! -s "$TMP_IMPL_INSTALL_PATH" ]; then
+            error "Failed downloading implementation script!"
+            return 2
+        fi
+
+        chmod +x "$TMP_IMPL_INSTALL_PATH"
     fi
 
-    if ! "$TMP_IMPL_INSTALL_PATH" "--package-manager" "$PKG_MANAGER" "$@"; then
+    # For macOS, find GNU getopt path
+    if [ "$SYSTEM_TYPE" = "darwin" ]; then
+        # Determine where GNU getopt is installed
+        v_apple_silicon_path="/opt/homebrew/opt/gnu-getopt/bin"
+        v_intel_path="/usr/local/opt/gnu-getopt/bin"
+
+        if [ -d "$v_apple_silicon_path" ]; then
+            # Apple Silicon Mac
+            v_getopt_path="$v_apple_silicon_path"
+        elif [ -d "$v_intel_path" ]; then
+            # Intel Mac
+            v_getopt_path="$v_intel_path"
+        else
+            error "GNU getopt not found on macOS, please install it manually OR open a new shell and run the script again"
+            unset v_apple_silicon_path v_intel_path
+            return 4
+        fi
+
+        # Execute with modified PATH environment
+        info "Executing: env PATH=\"$v_getopt_path:\$PATH\" $TMP_IMPL_INSTALL_PATH --package-manager $PKG_MANAGER --system $SYSTEM_TYPE $*"
+        env PATH="$v_getopt_path:$PATH" "$TMP_IMPL_INSTALL_PATH" --package-manager "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"
+        v_result=$?
+    else
+        # Execute normally on other systems
+        info "Executing: $TMP_IMPL_INSTALL_PATH --package-manager $PKG_MANAGER --system $SYSTEM_TYPE $*"
+        "$TMP_IMPL_INSTALL_PATH" --package-manager "$PKG_MANAGER" --system "$SYSTEM_TYPE" "$@"
+        v_result=$?
+    fi
+
+    if [ $v_result -ne 0 ]; then
         error "Real installer failed, sorry..."
         return 3
     fi
 
+    unset v_local_install_script
     return 0
+}
+
+install_getopt() {
+    v_distro="$1"
+    v_pkg_manager="$2"
+
+    if [ "$v_distro" = "mac" ] && [ "$v_pkg_manager" = "brew" ]; then
+        if brew list | grep -q gnu-getopt; then
+            info "gnu-getopt already installed"
+            return 0
+        fi
+
+        brew install gnu-getopt || return 1
+        unset v_distro v_pkg_manager
+        return 0
+    fi
+
+    unset v_distro v_pkg_manager
+    return 0
+}
+
+verify_bash_version() {
+    v_bash_version="$(bash --version | head -n 1 | grep -o 'version [0-9]\.[0-9]\.[0-9]' | cut -d ' ' -f 2)"
+    if [ -z "$v_bash_version" ]; then
+        error "Failed detecting bash version"
+        unset v_bash_version
+        return 2
+    fi
+
+    # Check if bash version is at least 4.4.0
+    v_expected_bash_version="4.4.0"
+    if [ "$(printf '%s\n' "$v_bash_version" "$v_expected_bash_version" | sort -V | head -n1)" = "$v_expected_bash_version" ]; then
+        info "Bash exists!"
+        unset v_bash_version
+        return 0
+    fi
+
+    unset v_bash_version
+    return 1
 }
 
 install_bash_with_package_manager() {
@@ -76,27 +168,47 @@ install_bash_with_package_manager() {
     dnf)
         sudo dnf install -y bash
         ;;
+    brew)
+        brew install bash
+        ;;
     *) ;;
 
     esac
 }
 
-bash_exists() {
-    hash bash >/dev/null 2>&1
-}
-
 install_bash() {
-    if bash_exists; then
-        info "Bash exists!"
-        return 0
+    if command -v bash >/dev/null 2>&1; then
+        verify_bash_version
+        v_exit_code=$?
+        if [ $v_exit_code -eq 0 ]; then
+            return 0
+        fi
+        if [ $v_exit_code -eq 1 ]; then
+            warning "Bash version is too old, trying to install a newer version using detected package manager"
+        fi
+        if [ $v_exit_code -eq 2 ]; then
+            return 1
+        fi
+        unset v_exit_code
+    else
+        warning "bash does not exist, trying to install it"
     fi
 
-    warning "bash does not exist, trying to install it"
     if ! install_bash_with_package_manager "$1"; then
         error "Failed installing bash using $1"
         return 5
     fi
 
+    # Verify version again to ensure it's installed correctly
+    verify_bash_version
+    v_exit_code=$?
+    if [ $v_exit_code -eq 1 ]; then
+        warning "Bash version is still too old, please install a newer version manually OR open a new shell and run the script again"
+        unset v_exit_code
+        return 6
+    fi
+
+    unset v_exit_code
     return 0
 }
 
@@ -109,6 +221,14 @@ parse_arguments() {
         --ref)
             [ -n "$2" ] && INSTALL_REF="${2}"
             shift 2
+            ;;
+        --ref=*)
+            INSTALL_REF="$(echo "$1" | cut -d '=' -f 2)"
+            shift
+            ;;
+        --local)
+            INVOKE_LOCAL_INSTALL=true
+            shift
             ;;
         *)
             # Probably options to the real installer (implementation), simply shift past them
@@ -124,16 +244,16 @@ supported_system() {
     v_pkg_manager="${3:?}"
 
     v_supported_distros_file="$(mktemp)" || return 1
-    echo "$SUPPORTED_LINUX_DISTROS" >"$v_supported_distros_file"
+    echo "$SUPPORTED_DISTROS" >"$v_supported_distros_file"
 
     if ! grep -q "$v_distro" "$v_supported_distros_file"; then
-        error "$v_distro is not yet supported, currently supported are: $SUPPORTED_LINUX_DISTROS"
-        unset v_supported_distros_file
+        error "$v_distro is not yet supported, currently supported are: $SUPPORTED_DISTROS"
+        unset v_supported_distros_file v_system v_distro v_pkg_manager
         return 3
     fi
-    unset v_supported_distros_file
 
-    unset v_system v_distro v_pkg_manager
+    unset v_supported_distros_file v_system v_distro v_pkg_manager
+    return 0
 }
 
 _get_default_system_package_manager() {
@@ -154,37 +274,39 @@ _get_default_system_package_manager() {
 }
 
 _get_linux_distro_name() {
-    distro=""
+    v_distro=""
 
     if [ -f /etc/os-release ]; then
         # freedesktop.org and systemd
         . /etc/os-release
-        distro=$NAME
+        v_distro=$NAME
     elif [ -f /etc/lsb-release ]; then
         # For some versions of Debian/Ubuntu without lsb_release command
         . /etc/lsb-release
-        distro=$DISTRIB_ID
+        v_distro=$DISTRIB_ID
     elif [ -f /etc/debian_version ]; then
         # Older Debian/Ubuntu/etc.
-        distro=Debian
+        v_distro=Debian
     elif [ -f /etc/SuSe-release ]; then
         # Older SuSE/etc.
-        distro=SuSE
+        v_distro=SuSE
     elif [ -f /etc/redhat-release ]; then
         # Older Red Hat, CentOS, etc.
-        distro=RedHat
+        v_distro=RedHat
     else
         # Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
-        distro="$(uname -s)"
+        v_distro="$(uname -s)"
     fi
 
-    echo "$distro" | tr '[:upper:]' '[:lower:]'
+    echo "$v_distro" | tr '[:upper:]' '[:lower:]'
+    unset v_distro
+    return 0
 }
 
 _get_system_type() {
     case "$(uname -s)" in
     Darwin)
-        echo "mac"
+        echo "darwin"
         ;;
     Linux)
         echo "linux"
@@ -206,7 +328,7 @@ detect_system() {
             return 2
         fi
         ;;
-    mac)
+    darwin)
         DISTRO_NAME="mac"
         ;;
     *)
@@ -220,8 +342,8 @@ detect_system() {
         error "Failed determining package manager for distro: $DISTRO_NAME"
         return 2
     fi
-    if ! hash "$PKG_MANAGER" 2>/dev/null; then
-        error "Package manager '$PKG_MANAGER' couldn't be found for distro: $DISTRO_NAME, maybe you need to install it manually?"
+    if ! command -v "$PKG_MANAGER" >/dev/null 2>&1; then
+        error "Detected '$PKG_MANAGER' as package-manager for '$DISTRO_NAME' but it's not available, maybe you need to install it manually first?"
         return 4
     fi
 
@@ -231,12 +353,14 @@ detect_system() {
     info "Type: $SYSTEM_TYPE"
     info "Distro: $DISTRO_NAME"
     info "Package manager: $PKG_MANAGER"
+    info "----------------"
     printf "\n" # Print an empty line
 }
 
 set_defaults() {
     INSTALL_REF="main"
-    SUPPORTED_LINUX_DISTROS="ubuntu debian"
+    INVOKE_LOCAL_INSTALL=false
+    SUPPORTED_DISTROS="ubuntu debian mac"
 }
 
 main() {
@@ -262,6 +386,12 @@ main() {
     info "Installing bash (if required)"
     if ! install_bash "$PKG_MANAGER"; then
         error "Failed installing bash!"
+        return 3
+    fi
+
+    info "Installing getopt (if required)"
+    if ! install_getopt "$DISTRO_NAME" "$PKG_MANAGER"; then
+        error "Failed installing getopt!"
         return 3
     fi
 

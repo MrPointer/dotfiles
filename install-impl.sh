@@ -15,6 +15,7 @@ Options:
   -h, --help                        Show this message and exit
   -v, --verbose                     Enable verbose output
   --ref=[git-ref]                   Reference the given git-ref for installation (can be any git ref - commit, branch, tag). Defaults to 'main'
+  --local                           Option of the wrapper script to install from a local directory. Not used here, but must be parsed to avoid errors
   --work-env                        Treat this installation as a work environment
   --work-name                       Use the given work-name as the work environment. Defaults to 'sedg' (current workplace)
   --work-email=[email]              Use given email address as work's email address. Defaults to 'timor.gruber@solaredge.com'
@@ -23,6 +24,7 @@ Options:
   --no-brew                         Don't install brew (Homebrew)
   --prefer-package-manager          Prefer installing tools with system's package manager rather than brew (Doesn't apply for Mac)
   --package-manager=[manager]       Package manager to use for installing prerequisites
+  --system=[system]                 Type of system to install on (e.g. linux, mac). Expected to be set by the wrapper script
   --multi-user-system               Take into account that the system is used by multiple users
   --git-via-https                   Use HTTPS for cloning dotfiles repository
   --git-via-ssh                     Use SSH for cloning dotfiles repository (default)
@@ -112,7 +114,7 @@ function root_user {
 
 function brew {
     if [[ "$MULTI_USER_SYSTEM" == "false" ]]; then
-        brew "$@"
+        command brew "$@"
         return $?
     else
         sudo -Hu "$BREW_USER_ON_MULTI_USER_SYSTEM" "$DEFAULT_BREW_PATH" "$@"
@@ -121,11 +123,7 @@ function brew {
 }
 
 function _install_packages_with_brew {
-    local packages=("$@")
-
-    install_package_cmd=(brew install --force-bottle "${packages[@]}")
-
-    "${install_package_cmd[@]}"
+    brew install "$@"
 }
 
 function _install_packages_with_package_manager {
@@ -338,11 +336,21 @@ function _install_gpg_client {
     ((rc == 2)) && return 1
 
     info "Installing gpg"
-    sudo apt-get update
-    if ! sudo apt-get install -y --no-install-recommends gpg gpg-agent; then
-        error "Failed installing gpg tools using apt"
-        return 2
+
+    if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
+        if ! brew install gnupg; then
+            error "Failed installing gpg tools using brew"
+            return 2
+        fi
+    else
+        sudo apt-get update
+        if ! sudo apt-get install -y --no-install-recommends gpg gpg-agent; then
+            error "Failed installing gpg tools using apt"
+            return 2
+        fi
     fi
+
+    return 0
 }
 
 ###
@@ -430,11 +438,12 @@ function install_shell {
 # The script requires some interactivity.
 ###
 function install_brew {
-    if [[ "$BREW_AVAILABLE" == true ]]; then
-        return 0
-    fi
-
     if [[ "$MULTI_USER_SYSTEM" == true ]]; then
+        if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
+            error "We don't support multi-user systems on MacOS, please install brew manually"
+            return 1
+        fi
+
         if ! id "$BREW_USER_ON_MULTI_USER_SYSTEM" &>/dev/null; then
             info "Creating user '$BREW_USER_ON_MULTI_USER_SYSTEM' for brew"
             local create_brew_user_cmd=(useradd -m -p "" "$BREW_USER_ON_MULTI_USER_SYSTEM")
@@ -555,7 +564,7 @@ function install_dotfiles_manager {
 # Install dotfiles. This is the main "driver" function.
 ###
 function install_dotfiles {
-    if [[ "$INSTALL_BREW" == true ]]; then
+    if [[ "$INSTALL_BREW" == true && "$BREW_AVAILABLE" == false ]]; then
         info "Installing brew"
         if ! install_brew; then
             error "Failed installing brew"
@@ -610,9 +619,21 @@ function install_dotfiles {
 }
 
 function brew_available {
-    [[ -f "$DEFAULT_BREW_PATH" ]] || return 1
-    [[ "$MULTI_USER_SYSTEM" == false ]] && return 0
-    stat -c "%U" "$DEFAULT_BREW_PATH" | grep -q "$BREW_USER_ON_MULTI_USER_SYSTEM" || return 1
+    # Brew is installed at a different location on MacOS and Linux, we need to account for that
+    if [[ "$SYSTEM_TYPE" == "darwin" ]]; then
+        if [[ "$(uname -m)" == "arm64" ]]; then
+            DEFAULT_BREW_PATH="/opt/homebrew/bin/brew"
+        else
+            DEFAULT_BREW_PATH="/usr/local/bin/brew"
+        fi
+    fi
+
+    if [[ "$MULTI_USER_SYSTEM" == true ]]; then
+        stat -c "%U" "$DEFAULT_BREW_PATH" | grep -q "$BREW_USER_ON_MULTI_USER_SYSTEM" || return 1
+        return 0
+    else
+        [[ -f "$DEFAULT_BREW_PATH" ]] && return 0
+    fi
 }
 
 ###
@@ -690,10 +711,11 @@ function parse_arguments {
 
     local short_options=hvd
     local long_options=help,verbose,debug
-    long_options+=,ref:
+    long_options+=,ref:,local
     long_options+=,work-env,work-name:,work-email:
     long_options+=,shell:,brew-shell
     long_options+=,no-brew,prefer-package-manager,package-manager:
+    long_options+=,system:
     long_options+=,multi-user-system
     long_options+=,git-via-https,git-via-ssh
 
@@ -728,6 +750,10 @@ function parse_arguments {
         --ref)
             INSTALL_REF="${2:-main}"
             shift 2
+            ;;
+        --local)
+            # This is a wrapper script option, not used here
+            shift
             ;;
         --work-env)
             WORK_ENVIRONMENT=true
@@ -765,6 +791,10 @@ function parse_arguments {
             ;;
         --package-manager)
             PACKAGE_MANAGER="${2:-}"
+            shift 2
+            ;;
+        --system)
+            SYSTEM_TYPE="${2:-}"
             shift 2
             ;;
         --git-via-https)
@@ -811,6 +841,7 @@ function _set_shell_defaults {
     INSTALL_SHELL_WITH_BREW=false
     SHELL_TO_INSTALL=zsh
     SHELL_USER_PROFILE=""
+    SYSTEM_TYPE=""
 }
 
 function _set_dotfiles_manager_defaults {
