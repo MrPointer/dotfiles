@@ -3,16 +3,24 @@ export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
 # Ensure gpg can prompt input from an available tty
 export GPG_TTY=$(tty)
 
+{{ if (eq .chezmoi.os "linux") -}}
 BREW_HOME="/home/linuxbrew/.linuxbrew"
+{{- else if (eq .chezmoi.os "darwin") -}}
+{{ if (eq .chezmoi.arch "arm64") -}}
+BREW_HOME="/opt/homebrew"
+{{- else }}
+BREW_HOME="/usr/local"
+{{- end}}
+{{- end}}
 BREW_BINARY="$BREW_HOME"/bin/brew
 
-if [[ -d /home/linuxbrew/ && -f "$BREW_BINARY" ]]; then
-    {{ if (eq .chezmoi.group "devbox") -}}
+if [[ -f "$BREW_BINARY" ]]; then
+    {{- if (eq .chezmoi.group "devbox") -}}
     export PATH="$PATH:"$BREW_HOME"/bin:"$BREW_HOME"/sbin"
     {{- else }}
     # Load (home)brew
     eval "$("$BREW_BINARY" shellenv)"
-    {{- end }}
+    {{- end -}}
     {{ if .system.multi_user_system -}}
     # Impersonate brew management user
     alias brew="sudo -Hu {{ .system.brew_multi_user }} $BREW_BINARY"
@@ -36,9 +44,9 @@ function nvm_auto_use() {
         local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
 
         if [ "$nvmrc_node_version" = "N/A" ]; then
-        nvm install
+            nvm install
         elif [ "$nvmrc_node_version" != "$node_version" ]; then
-        nvm use
+            nvm use
         fi
     elif [ "$node_version" != "$(nvm version default)" ]; then
         echo "Reverting to nvm default version"
