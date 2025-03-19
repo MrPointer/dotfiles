@@ -81,6 +81,11 @@ if [[ -d "$BREW_HOME"/opt/clang-format" ]]; then
     export PATH=""$BREW_HOME"/opt/clang-format/bin:$PATH"
 fi
 
+{{ if (eq .chezmoi.os "darwin") -}}
+# I don't use Docker Desktop due to its license, so replace it with Podman
+alias docker="podman"
+{{- end}}
+
 {{ if (eq .chezmoi.os "linux") -}}
 {{- if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
