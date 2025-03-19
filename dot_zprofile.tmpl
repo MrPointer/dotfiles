@@ -1,4 +1,4 @@
-if hash pip &>/dev/null; then
+if command -v pip &>/dev/null; then
   # pip zsh completion start
   function _pip_completion {
     local words cword

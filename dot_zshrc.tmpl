@@ -94,7 +94,7 @@ fi
 # Custom git aliases
 alias gmv="git mv"
 
-if hash nvim &>/dev/null; then
+if command -v nvim &>/dev/null; then
   alias vi="nvim"
   alias vim="nvim"
 fi
@@ -114,7 +114,6 @@ if command -v fzf &>/dev/null; then
   
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   source <(fzf --zsh)
-  
 fi
 
 zstyle ':completion:*' menu select
@@ -128,27 +127,27 @@ autoload -U +X compinit && compinit
 {{- end }}
 autoload -U +X bashcompinit && bashcompinit
 
-if hash pipx &>/dev/null; then
+if command -v pipx &>/dev/null; then
   # Register pipx completions
   eval "$(register-python-argcomplete pipx)"
 fi
 
-if hash poetry &>/dev/null; then
+if command -v poetry &>/dev/null; then
   # Register poetry completions
   poetry completions zsh > ~/.zfunc/_poetry
 fi
 
-if hash chezmoi &>/dev/null; then
+if command -v chezmoi &>/dev/null; then
   # Register chezmoi completions
   chezmoi completion zsh --output ~/.zfunc/_chezmoi
 fi
 
-if hash npm &>/dev/null; then
+if command -v npm &>/dev/null; then
   # Register npm completions
   npm completion > ~/.zfunc/_npm
 fi
 
-if hash jfrog &>/dev/null; then
+if command -v jfrog &>/dev/null; then
   # Register jfrog-cli completions
   local jfrog_completions="~/.jfrog/jfrog_zsh_completions"
   if [[ ! -f "${jfrog_completions}" ]]; then
