@@ -357,6 +357,9 @@ keys = [
     # Map Cmd+Delete to delete the line until the end
     # Sends "\x0b" (Ctrl+K)
     { key = "delete", with = "super", bytes = [11] },
+
+    # Map Option+Delete to forward delete a word
+    { key = "delete", with = "alt", bytes = [27, 100] },
 ]
 {{- end }}
 
