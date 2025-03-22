@@ -40,12 +40,13 @@ if command -v nvim &>/dev/null; then
   alias vim="nvim"
 fi
 
-if command -v fzf &>/dev/null; then
+local fzf_path
+if fzf_path="$(command -v fzf)"; then
   if [[ ! -f ~/.fzf.zsh ]]; then
     # fzf completions are missing, generate them
-    if which fzf | grep -q "brew"; then
+    if [[ "$fzf_path" =~ brew ]]; then
       # fzf is installed with brew
-      "$(brew --prefix fzf)/install"
+      "$BREW_HOME/opt/fzf/install"
     fi
   fi
 
@@ -56,6 +57,7 @@ if command -v fzf &>/dev/null; then
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   source <(fzf --zsh)
 fi
+unset fzf_path
 
 if [[ -d "$HOME/.pyenv" ]]; then
     # Enable pyenv
