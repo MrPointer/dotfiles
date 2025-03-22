@@ -1,121 +1,20 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 # Use VIM as default editor
 export VISUAL=vim
 export EDITOR="$VISUAL"
-
-# Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
-
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="af-magic"
-
-# Uncomment the following line to disable bi-weekly auto-update checks.
-DISABLE_AUTO_UPDATE="true"
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Load ohmyzsh
-source $ZSH/oh-my-zsh.sh
-
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
-
-# Load antigen
-source ~/antigen.zsh
-
-# Load oh-my-zsh's library
-antigen use oh-my-zsh
-
-# Bundles from the default repo (robbyrussell's oh-my-zsh)
-antigen bundle git
-antigen bundle docker
-antigen bundle sudo
-antigen bundle screen
-antigen bundle dotenv 
-
-# Syntax highlighting bundle.
-antigen bundle zsh-users/zsh-syntax-highlighting
-antigen bundle zsh-users/zsh-autosuggestions
-antigen bundle zsh-users/zsh-completions
-
-# Load the theme
-antigen theme af-magic
-
-# Tell Antigen that you're done
-antigen apply
-
-{{ if (eq .chezmoi.os "darwin" ) -}}
-# Manually map home and end keys - macOS terminal compatibility
-# Different terminals send different escape sequences
-bindkey "^[[H" beginning-of-line      # Home key (standard)
-bindkey "^[OH" beginning-of-line      # Home key (alternate)
-bindkey "^[[1~" beginning-of-line     # Home key (another variant)
-
-bindkey "^[[F" end-of-line            # End key (standard)
-bindkey "^[OF" end-of-line            # End key (alternate)
-bindkey "^[[4~" end-of-line           # End key (another variant)
-{{- end }}
-
-# Enable homebrew completions
-if command -v brew &>/dev/null; then
-  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
-fi
-
-# Custom git aliases
-alias gmv="git mv"
-
-if command -v nvim &>/dev/null; then
-  alias vi="nvim"
-  alias vim="nvim"
-fi
-
-if command -v fzf &>/dev/null; then
-  if [[ ! -f ~/.fzf.zsh ]]; then
-    # fzf completions are missing, generate them
-    if which fzf | grep -q "brew"; then
-      # fzf is installed with brew
-      "$(brew --prefix fzf)/install"
-    fi
-  fi
-
-  if command -v fd &>/dev/null; then
-    export FZF_DEFAULT_COMMAND="fd --type f --color=never"
-  fi
-  
-  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-  source <(fzf --zsh)
-fi
+# Setup some stuff for oh-my-zsh plugins
+export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/"
 
 zstyle ':completion:*' menu select
 mkdir -p ~/.zfunc &>/dev/null
@@ -127,6 +26,97 @@ autoload -U +X compinit && compinit -u
 autoload -U +X compinit && compinit
 {{- end }}
 autoload -U +X bashcompinit && bashcompinit
+
+# Enable homebrew completions
+if command -v brew &>/dev/null; then
+  FPATH="$BREW_HOME/share/zsh/site-functions:$FPATH"
+fi
+
+# Custom git aliases
+alias gmv="git mv"
+
+if command -v nvim &>/dev/null; then
+  alias vi="nvim"
+  alias vim="nvim"
+fi
+
+local fzf_path
+if fzf_path="$(command -v fzf)"; then
+  if [[ ! -f ~/.fzf.zsh ]]; then
+    # fzf completions are missing, generate them
+    if [[ "$fzf_path" =~ brew ]]; then
+      # fzf is installed with brew
+      "$BREW_HOME/opt/fzf/install"
+    fi
+  fi
+
+  if command -v fd &>/dev/null; then
+    export FZF_DEFAULT_COMMAND="fd --type f --color=never --hidden --follow --exclude .git"
+  fi
+  
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  source <(fzf --zsh)
+fi
+unset fzf_path
+
+if [[ -d "$HOME/.pyenv" ]]; then
+    # Enable pyenv
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+fi
+
+function nvm_auto_use() {
+    local node_version="$(nvm version)"
+    local nvmrc_path="$(nvm_find_nvmrc)"
+
+    if [ -n "$nvmrc_path" ]; then
+        local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+
+        if [ "$nvmrc_node_version" = "N/A" ]; then
+            nvm install
+        elif [ "$nvmrc_node_version" != "$node_version" ]; then
+            nvm use
+        fi
+    elif [ "$node_version" != "$(nvm version default)" ]; then
+        echo "Reverting to nvm default version"
+        nvm use default
+    fi
+}
+
+if [[ -f "$BREW_HOME/opt/nvm/nvm.sh" ]]; then
+    source "$BREW_HOME/opt/nvm/nvm.sh"
+
+    autoload -U add-zsh-hook
+    add-zsh-hook chpwd nvm_auto_use
+    nvm_auto_use
+fi
+
+if command -v cargo &>/dev/null; then
+    # Add Cargo's bin dir to make cargo (rust) execs available
+    export PATH="$PATH:$HOME/.cargo/bin"
+fi
+
+if command -v go &>/dev/null; then
+    # Add Go's bin dir to make go execs available
+    export PATH="$PATH:$HOME/go/bin"
+fi
+
+if [[ -d "$BREW_HOME/lib/ruby" ]]; then
+    # Add Ruby's exec dir to make Ruby execs available
+    export PATH="$PATH:$BREW_HOME/lib/ruby/gems/3.1.0/bin"
+fi
+
+if [[ -d "$BREW_HOME/opt/clang-format" ]]; then
+    export PATH="$BREW_HOME/opt/clang-format/bin:$PATH"
+fi
+
+{{ if (eq .chezmoi.os "darwin") -}}
+# I don't use Docker Desktop due to its license, so replace it with Podman
+alias docker="podman"
+{{- end}}
 
 if command -v pipx &>/dev/null; then
   # Register pipx completions
@@ -170,3 +160,61 @@ fi
 {{ if .personal.work_env -}}
 source "$WORK_ZSH_RC_EXTENSION"
 {{- end }}
+
+# Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
+eval "$(sheldon source)"
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+function load_zsh_function {
+  local func_name="$1"
+  local func_path="$HOME/.local/share/zsh/functions/${func_name}.zsh"
+  if [[ -f "${func_path}" ]]; then
+    source "${func_path}"
+  fi
+}
+
+function load_custom_plugin {
+  local plugin_name="$1"
+  local plugin_path="$HOME/.local/share/zsh/plugins/${plugin_name}"
+  if [[ -d "${plugin_path}" ]]; then
+    source "${plugin_path}/${plugin_name}.plugin.zsh"
+  fi
+}
+
+# Load some oh-my-zsh functions
+load_zsh_function "git"
+
+# Load some oh-my-zsh plugins
+load_custom_plugin "key-bindings"
+load_custom_plugin "git"
+load_custom_plugin "dotenv"
+
+# Don't pollute the global namespace with a function that isn't necessary anymore
+unfunction load_custom_plugin
+unfunction load_zsh_function
+
+# Configure fzf-tab
+
+# disable sort when completing `git checkout`
+zstyle ':completion:*:git-checkout:*' sort false
+# set descriptions format to enable group support
+# NOTE: don't use escape sequences (like '%F{red}%d%f') here, fzf-tab will ignore them
+zstyle ':completion:*:descriptions' format '[%d]'
+# set list-colors to enable filename colorizing
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+# force zsh not to show completion menu, which allows fzf-tab to capture the unambiguous prefix
+zstyle ':completion:*' menu no
+# preview directory's content with eza when completing cd
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+# custom fzf flags
+# NOTE: fzf-tab does not follow FZF_DEFAULT_OPTS by default
+zstyle ':fzf-tab:*' fzf-flags --color=fg:1,fg+:2 --bind=tab:accept
+# To make fzf-tab follow FZF_DEFAULT_OPTS.
+# NOTE: This may lead to unexpected behavior since some flags break this plugin. See Aloxaf/fzf-tab#455.
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
+# switch group using `<` and `>`
+zstyle ':fzf-tab:*' switch-group '<' '>'
+# Disable continuous completion
+zstyle ':fzf-tab:*' continuous-trigger ''

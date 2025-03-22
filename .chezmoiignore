@@ -3,7 +3,6 @@ install.sh
 install-impl.sh
 *.code-workspace
 .vscode/
-.oh-my-zsh/cache/
 
 {{- if not .personal.work_env }}
 .work/ # only manage work state on work machines

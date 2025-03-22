@@ -1,15 +1,24 @@
-[".oh-my-zsh"]
-    type = "archive"
-    url = "https://github.com/ohmyzsh/ohmyzsh/archive/master.tar.gz"
-    exact = true
-    stripComponents = 1
-    refreshPeriod = "168h"
-["antigen.zsh"]
-    type = "file"
-    url = "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh"
-    executable = true
-    refreshPeriod = "168h"
 [".local/share/nvim/site/autoload/plug.vim"]
-    type = "file"
-    url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
-    refreshPeriod = "168h"
+type = "file"
+url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+refreshPeriod = "168h"
+
+[".local/share/zsh/functions/git.zsh"]
+type = "file"
+url = "https://github.com/ohmyzsh/ohmyzsh/raw/refs/heads/master/lib/git.zsh"
+refreshPeriod = "168h"
+
+[".local/share/zsh/plugins/git/git.plugin.zsh"]
+type = "file"
+url = "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/refs/heads/master/plugins/git/git.plugin.zsh"
+refreshPeriod = "168h"
+
+[".local/share/zsh/plugins/dotenv/dotenv.plugin.zsh"]
+type = "file"
+url = "https://github.com/ohmyzsh/ohmyzsh/raw/refs/heads/master/plugins/dotenv/dotenv.plugin.zsh"
+refreshPeriod = "168h"
+
+[".local/share/zsh/plugins/key-bindings/key-bindings.plugin.zsh"]
+type = "file"
+url = "https://github.com/ohmyzsh/ohmyzsh/raw/refs/heads/master/lib/key-bindings.zsh"
+refreshPeriod = "168h"
