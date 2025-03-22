@@ -12,3 +12,8 @@ refreshPeriod = "168h"
 type = "file"
 url = "https://github.com/ohmyzsh/ohmyzsh/raw/refs/heads/master/plugins/dotenv/dotenv.plugin.zsh"
 refreshPeriod = "168h"
+
+[".local/share/zsh/plugins/key-bindings/key-bindings.plugin.zsh"]
+type = "file"
+url = "https://github.com/ohmyzsh/ohmyzsh/raw/refs/heads/master/lib/key-bindings.zsh"
+refreshPeriod = "168h"

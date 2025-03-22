@@ -13,18 +13,6 @@ export EDITOR="$VISUAL"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
-{{ if (eq .chezmoi.os "darwin" ) -}}
-# Manually map home and end keys - macOS terminal compatibility
-# Different terminals send different escape sequences
-bindkey "^[[H" beginning-of-line      # Home key (standard)
-bindkey "^[OH" beginning-of-line      # Home key (alternate)
-bindkey "^[[1~" beginning-of-line     # Home key (another variant)
-
-bindkey "^[[F" end-of-line            # End key (standard)
-bindkey "^[OF" end-of-line            # End key (alternate)
-bindkey "^[[4~" end-of-line           # End key (another variant)
-{{- end }}
-
 # Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
 eval "$(sheldon source)"
 
@@ -51,6 +39,7 @@ function load_custom_plugin {
 }
 
 # Load some oh-my-zsh plugins
+load_custom_plugin "key-bindings"
 load_custom_plugin "git"
 load_custom_plugin "dotenv"
 
