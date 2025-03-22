@@ -43,5 +43,8 @@ apply = ["defer"]
 [plugins.zsh-sudo]
 github = "none9632/zsh-sudo"
 
+[plugins.zsh-eza-ls]
+github = "birdhackor/zsh-eza-ls-plugin"
+
 [templates]
 defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
