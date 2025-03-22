@@ -40,25 +40,6 @@ if command -v nvim &>/dev/null; then
   alias vim="nvim"
 fi
 
-local fzf_path
-if fzf_path="$(command -v fzf)"; then
-  if [[ ! -f ~/.fzf.zsh ]]; then
-    # fzf completions are missing, generate them
-    if [[ "$fzf_path" =~ brew ]]; then
-      # fzf is installed with brew
-      "$BREW_HOME/opt/fzf/install"
-    fi
-  fi
-
-  if command -v fd &>/dev/null; then
-    export FZF_DEFAULT_COMMAND="fd --type f --color=never --hidden --follow --exclude .git"
-  fi
-  
-  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-  source <(fzf --zsh)
-fi
-unset fzf_path
-
 if [[ -d "$HOME/.pyenv" ]]; then
     # Enable pyenv
     export PYENV_ROOT="$HOME/.pyenv"
@@ -195,7 +176,26 @@ load_custom_plugin "dotenv"
 unfunction load_custom_plugin
 unfunction load_zsh_function
 
-# Configure fzf-tab
+# Configure fzf stuff, including fzf-tab
+local fzf_path
+fzf_path="$(command -v fzf)"
+if [[ -n "$fzf_path" ]]; then
+  if [[ ! -f ~/.fzf.zsh ]]; then
+    # fzf completions are missing, generate them
+    if [[ "$fzf_path" =~ brew ]]; then
+      # fzf is installed with brew
+      "$BREW_HOME/opt/fzf/install"
+    fi
+  fi
+
+  if command -v fd &>/dev/null; then
+    export FZF_DEFAULT_COMMAND="fd --type f --color=never --hidden --follow --exclude .git"
+  fi
+  
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  source <(fzf --zsh)
+fi
+unset fzf_path
 
 # disable sort when completing `git checkout`
 zstyle ':completion:*:git-checkout:*' sort false
