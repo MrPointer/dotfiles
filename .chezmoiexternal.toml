@@ -1,15 +1,4 @@
-[".oh-my-zsh"]
-    type = "archive"
-    url = "https://github.com/ohmyzsh/ohmyzsh/archive/master.tar.gz"
-    exact = true
-    stripComponents = 1
-    refreshPeriod = "168h"
-["antigen.zsh"]
-    type = "file"
-    url = "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh"
-    executable = true
-    refreshPeriod = "168h"
 [".local/share/nvim/site/autoload/plug.vim"]
-    type = "file"
-    url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
-    refreshPeriod = "168h"
+type = "file"
+url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+refreshPeriod = "168h"
