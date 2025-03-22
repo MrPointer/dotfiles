@@ -18,6 +18,9 @@ bindkey "^[OF" end-of-line            # End key (alternate)
 bindkey "^[[4~" end-of-line           # End key (another variant)
 {{- end }}
 
+# Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
+eval "$(sheldon source)"
+
 # Enable homebrew completions
 if command -v brew &>/dev/null; then
   FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
