@@ -5,6 +5,7 @@ call plug#begin(stdpath('data') . '/plugged')
 Plug 'junegunn/vim-easy-align'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'joshdick/onedark.vim'
+Plug 'ayu-theme/ayu-vim'
 Plug 'sheerun/vim-polyglot'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -13,8 +14,9 @@ Plug 'vim-airline/vim-airline-themes'
 call plug#end()
 
 syntax on
-colorscheme onedark
-let g:airline_theme='onedark'
+let ayucolor="dark"
+colorscheme ayu
+let g:airline_theme='ayu_dark'
 
 " Configure coc plugins
 let g:coc_global_extensions = [
