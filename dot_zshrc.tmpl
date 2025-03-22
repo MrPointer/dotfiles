@@ -13,6 +13,9 @@ export EDITOR="$VISUAL"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
+# Setup some stuff for oh-my-zsh plugins
+export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/"
+
 # Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
 eval "$(sheldon source)"
 
