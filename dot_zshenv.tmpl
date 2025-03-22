@@ -27,65 +27,6 @@ if [[ -f "$BREW_BINARY" ]]; then
     {{- end }}
 fi
 
-if [[ -d "$HOME/.pyenv" ]]; then
-    # Enable pyenv
-    export PYENV_ROOT="$HOME/.pyenv"
-    export PATH="$PYENV_ROOT/bin:$PATH"
-    eval "$(pyenv init --path)"
-    eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
-fi
-
-function nvm_auto_use() {
-    local node_version="$(nvm version)"
-    local nvmrc_path="$(nvm_find_nvmrc)"
-
-    if [ -n "$nvmrc_path" ]; then
-        local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
-
-        if [ "$nvmrc_node_version" = "N/A" ]; then
-            nvm install
-        elif [ "$nvmrc_node_version" != "$node_version" ]; then
-            nvm use
-        fi
-    elif [ "$node_version" != "$(nvm version default)" ]; then
-        echo "Reverting to nvm default version"
-        nvm use default
-    fi
-}
-
-if [[ -f $(brew --prefix nvm)/nvm.sh ]]; then
-    source $(brew --prefix nvm)/nvm.sh
-
-    autoload -U add-zsh-hook
-    add-zsh-hook chpwd nvm_auto_use
-    nvm_auto_use
-fi
-
-if command -v cargo &>/dev/null; then
-    # Add Cargo's bin dir to make cargo (rust) execs available
-    export PATH="$PATH:$HOME/.cargo/bin"
-fi
-
-if command -v go &>/dev/null; then
-    # Add Go's bin dir to make go execs available
-    export PATH="$PATH:$HOME/go/bin"
-fi
-
-if [[ -d "$BREW_HOME"/lib/ruby" ]]; then
-    # Add Ruby's exec dir to make Ruby execs available
-    export PATH="$PATH:"$BREW_HOME"/lib/ruby/gems/3.1.0/bin"
-fi
-
-if [[ -d "$BREW_HOME"/opt/clang-format" ]]; then
-    export PATH=""$BREW_HOME"/opt/clang-format/bin:$PATH"
-fi
-
-{{ if (eq .chezmoi.os "darwin") -}}
-# I don't use Docker Desktop due to its license, so replace it with Podman
-alias docker="podman"
-{{- end}}
-
 {{ if (eq .chezmoi.os "linux") -}}
 {{- if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
