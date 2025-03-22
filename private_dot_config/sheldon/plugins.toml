@@ -46,5 +46,8 @@ github = "none9632/zsh-sudo"
 [plugins.zsh-eza-ls]
 github = "birdhackor/zsh-eza-ls-plugin"
 
+[plugins.fzf-tab]
+github = "Aloxaf/fzf-tab"
+
 [templates]
 defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
