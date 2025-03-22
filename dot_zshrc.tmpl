@@ -42,9 +42,24 @@ autoload -U +X compinit && compinit
 {{- end }}
 autoload -U +X bashcompinit && bashcompinit
 
+function load_custom_plugin {
+  local plugin_name="$1"
+  local plugin_path="$HOME/.local/share/zsh/plugins/${plugin_name}"
+  if [[ -d "${plugin_path}" ]]; then
+    source "${plugin_path}/${plugin_name}.plugin.zsh"
+  fi
+}
+
+# Load some oh-my-zsh plugins
+load_custom_plugin "git"
+load_custom_plugin "dotenv"
+
+# Don't pollute the global namespace with a function that isn't necessary anymore
+unfunction load_custom_plugin
+
 # Enable homebrew completions
 if command -v brew &>/dev/null; then
-  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+  FPATH="$BREW_HOME/share/zsh/site-functions:$FPATH"
 fi
 
 # Custom git aliases

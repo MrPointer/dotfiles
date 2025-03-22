@@ -2,3 +2,13 @@
 type = "file"
 url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
 refreshPeriod = "168h"
+
+[".local/share/zsh/plugins/git/git.plugin.zsh"]
+type = "file"
+url = "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/refs/heads/master/plugins/git/git.plugin.zsh"
+refreshPeriod = "168h"
+
+[".local/share/zsh/plugins/dotenv/dotenv.plugin.zsh"]
+type = "file"
+url = "https://github.com/ohmyzsh/ohmyzsh/raw/refs/heads/master/plugins/dotenv/dotenv.plugin.zsh"
+refreshPeriod = "168h"
