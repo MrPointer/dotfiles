@@ -32,9 +32,6 @@ apply = ["defer"]
 github = "zsh-users/zsh-completions"
 apply = ["defer"]
 
-[plugins.git]
-github = "davidde/git"
-
 [plugins.git-clean-branch]
 github = "gobriansteele/git-clean-branch"
 apply = ["defer"]
@@ -45,12 +42,6 @@ apply = ["defer"]
 
 [plugins.zsh-sudo]
 github = "none9632/zsh-sudo"
-
-[plugins.zsh-direnv]
-github = "ptavares/zsh-direnv"
-
-[plugins.ssh-connect]
-github = "gko/ssh-connect"
 
 [templates]
 defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
