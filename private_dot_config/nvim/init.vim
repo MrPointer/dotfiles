@@ -23,10 +23,12 @@ let g:coc_global_extensions = [
     \'coc-clangd',
     \'coc-cmake',
     \'coc-git',
+    \'coc-go',
     \'coc-highlight',
     \'coc-json',
     \'coc-markdownlint',
     \'coc-pyright',
+    \'coc-rust-analyzer',
     \'coc-sh',
     \'coc-yaml',
 \]
