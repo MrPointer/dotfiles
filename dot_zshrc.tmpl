@@ -33,6 +33,9 @@ autoload -U +X compinit && compinit
 {{- end }}
 autoload -U +X bashcompinit && bashcompinit
 
+autoload -U select-word-style
+select-word-style bash
+
 # Enable homebrew completions
 if command -v brew &>/dev/null; then
   FPATH="$BREW_HOME/share/zsh/site-functions:$FPATH"
@@ -148,12 +151,6 @@ fi
 source "$WORK_ZSH_RC_EXTENSION"
 {{- end }}
 
-# Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
-eval "$(sheldon source)"
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
 function load_zsh_function {
   local func_name="$1"
   local func_path="$HOME/.local/share/zsh/functions/${func_name}.zsh"
@@ -181,6 +178,12 @@ load_custom_plugin "dotenv"
 # Don't pollute the global namespace with a function that isn't necessary anymore
 unfunction load_custom_plugin
 unfunction load_zsh_function
+
+# Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
+eval "$(sheldon source)"
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # Configure fzf stuff, including fzf-tab
 local fzf_path
