@@ -1,0 +1,36 @@
+# Compatibility configuration for the installer
+# This file defines which operating systems and distributions are supported
+
+# Operating system compatibility matrix
+operatingSystems:
+  linux:
+    supported: true
+    distributions:
+      ubuntu:
+        supported: true
+        version_constraint: ">= 20.04"
+        notes: "Ubuntu 20.04 LTS or newer"
+      debian:
+        supported: true
+        version_constraint: ">= 10"
+        notes: "Debian 10 (Buster) or newer"
+      fedora:
+        supported: false
+        notes: "Support planned for future release"
+      centos:
+        supported: false
+        notes: "Support planned for future release"
+      redhat:
+        supported: false
+        notes: "Support planned for future release"
+      suse:
+        supported: false
+        notes: "No current plans for support"
+      # Add more Linux distributions here as needed
+  darwin:
+    supported: true
+    notes: "macOS 10.15 or newer recommended"
+  windows:
+    supported: false
+    notes: "Windows is not supported"
+  # Add more operating systems here as needed
