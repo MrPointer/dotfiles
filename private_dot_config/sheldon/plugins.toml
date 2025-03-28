@@ -30,7 +30,6 @@ apply = ["defer"]
 
 [plugins.zsh-completions]
 github = "zsh-users/zsh-completions"
-apply = ["defer"]
 
 [plugins.git-clean-branch]
 github = "gobriansteele/git-clean-branch"
