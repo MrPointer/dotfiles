@@ -1,9 +1,7 @@
 package main
 
-import (
-	"fmt"
-)
+import "github.com/MrPointer/dotfiles/installer/cmd"
 
 func main() {
-	fmt.Println("The bigger the interface, the weaker the abstraction.")
+	cmd.Execute()
 }
