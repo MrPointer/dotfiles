@@ -16,7 +16,7 @@ BREW_BINARY="$BREW_HOME"/bin/brew
 
 if [[ -f "$BREW_BINARY" ]]; then
     {{- if (eq .chezmoi.group "devbox") -}}
-    export PATH="$PATH:"$BREW_HOME"/bin:"$BREW_HOME"/sbin"
+    export PATH="$PATH:$BREW_HOME/bin:$BREW_HOME/sbin"
     {{- else }}
     # Load (home)brew
     eval "$("$BREW_BINARY" shellenv)"
