@@ -202,6 +202,19 @@ zstyle ':fzf-tab:*' switch-group '<' '>'
 # Disable continuous completion
 zstyle ':fzf-tab:*' continuous-trigger ''
 
+# Enable rich shell integration for VSCode
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+  # Enable suggestions
+  export VSCODE_SUGGEST=1
+  {{ if (eq .chezmoi.os "darwin") -}}
+  . "/Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-rc.zsh"
+  {{- else -}}
+  if command -v code &>/dev/null; then
+    . "$(code --locate-shell-integration-path zsh)"
+  fi
+  {{- end }}
+fi
+
 # Reload zsh completions
 compinit
 
