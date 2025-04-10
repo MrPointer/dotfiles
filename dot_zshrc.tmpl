@@ -61,6 +61,11 @@ fi
 if command -v cargo &>/dev/null; then
     # Add Cargo's bin dir to make cargo (rust) execs available
     export PATH="$PATH:$HOME/.cargo/bin"
+    
+    # Register cargo completions via rustup (if available)
+    if command -v rustup &>/dev/null; then
+        rustup completions zsh cargo > ~/.zfunc/_cargo
+    fi
 fi
 
 if command -v go &>/dev/null; then
