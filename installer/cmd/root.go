@@ -35,7 +35,7 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig, initCompatibilityConfig)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -70,7 +70,9 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+}
 
+func initCompatibilityConfig() {
 	// Initialize compatibility configuration
 	compatibilityConfig, err := compatibility.LoadCompatibilityConfig(viper.New(), compatibilityConfigFile)
 	if err != nil {
