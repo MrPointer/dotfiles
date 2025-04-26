@@ -8,10 +8,18 @@ import (
 	"strings"
 )
 
+// SystemInfo contains information about the detected system
+type SystemInfo struct {
+	OSName     string // Operating system name (e.g., "linux", "darwin")
+	DistroName string // Linux distribution name (e.g., "ubuntu", "debian")
+	Arch       string // Architecture (e.g., "amd64", "arm64")
+}
+
 // OSDetector provides operating system detection capabilities
 type OSDetector interface {
 	GetOSName() string
 	GetDistroName() string
+	DetectSystem() (SystemInfo, error)
 }
 
 // DefaultOSDetector uses runtime and file system to detect OS information
@@ -25,6 +33,23 @@ func (d *DefaultOSDetector) GetOSName() string {
 // GetDistroName returns the current Linux distribution name
 func (d *DefaultOSDetector) GetDistroName() string {
 	return getLinuxDistro()
+}
+
+// DetectSystem detects the current system information
+func (d *DefaultOSDetector) DetectSystem() (SystemInfo, error) {
+	osName := d.GetOSName()
+	var distroName string
+	if osName == "linux" {
+		distroName = d.GetDistroName()
+	} else if osName == "darwin" {
+		distroName = "mac"
+	}
+
+	return SystemInfo{
+		OSName:     osName,
+		DistroName: distroName,
+		Arch:       runtime.GOARCH,
+	}, nil
 }
 
 // CompatibilityConfig represents the structure of the compatibility.yaml file
@@ -46,10 +71,10 @@ type DistroConfig struct {
 	Notes             string `yaml:"notes,omitempty"`
 }
 
-// CheckCompatibility checks if the current system is compatible based on provided config
-func CheckCompatibility(config *CompatibilityConfig) error {
+// CheckCompatibility checks if the current system is compatible
+func CheckCompatibility(config *CompatibilityConfig) (SystemInfo, error) {
 	if config == nil {
-		return fmt.Errorf("compatibility configuration is nil")
+		return SystemInfo{}, fmt.Errorf("compatibility configuration is nil")
 	}
 
 	detector := &DefaultOSDetector{}
@@ -57,39 +82,44 @@ func CheckCompatibility(config *CompatibilityConfig) error {
 }
 
 // CheckCompatibilityWithDetector checks compatibility using the provided detector
-func CheckCompatibilityWithDetector(config *CompatibilityConfig, detector OSDetector) error {
+func CheckCompatibilityWithDetector(config *CompatibilityConfig, detector OSDetector) (SystemInfo, error) {
 	if config == nil {
-		return fmt.Errorf("compatibility configuration is nil")
+		return SystemInfo{}, fmt.Errorf("compatibility configuration is nil")
 	}
 
-	osName := detector.GetOSName()
+	// Detect system information
+	sysInfo, err := detector.DetectSystem()
+	if err != nil {
+		return SystemInfo{}, fmt.Errorf("failed to detect system: %w", err)
+	}
 
-	osConfig, exists := config.OperatingSystems[osName]
+	// Check if the operating system is supported
+	osConfig, exists := config.OperatingSystems[sysInfo.OSName]
 	if !exists {
-		return fmt.Errorf("unsupported operating system: %s", osName)
+		return sysInfo, fmt.Errorf("unsupported operating system: %s", sysInfo.OSName)
 	}
 
 	if !osConfig.Supported {
-		return fmt.Errorf("unsupported operating system: %s - %s", osName, osConfig.Notes)
+		return sysInfo, fmt.Errorf("unsupported operating system: %s - %s", sysInfo.OSName, osConfig.Notes)
 	}
 
 	// If Linux, check distribution compatibility
-	if osName == "linux" {
-		distroName := detector.GetDistroName()
-		distroConfig, exists := osConfig.Distributions[distroName]
+	if sysInfo.OSName == "linux" {
+		distroConfig, exists := osConfig.Distributions[sysInfo.DistroName]
 
 		if !exists {
-			return fmt.Errorf("unsupported Linux distribution: %s", distroName)
+			return sysInfo, fmt.Errorf("unsupported Linux distribution: %s", sysInfo.DistroName)
 		}
 
 		if !distroConfig.Supported {
-			return fmt.Errorf("unsupported Linux distribution: %s - %s", distroName, distroConfig.Notes)
+			return sysInfo, fmt.Errorf("unsupported Linux distribution: %s - %s", sysInfo.DistroName, distroConfig.Notes)
 		}
 
 		// TODO: If needed, add version constraint checking here
 	}
 
-	return nil
+	// System is compatible
+	return sysInfo, nil
 }
 
 func getLinuxDistro() string {
