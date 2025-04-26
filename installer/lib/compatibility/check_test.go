@@ -22,6 +22,15 @@ func (m *MockOSDetector) GetDistroName() string {
 	return m.distroName
 }
 
+// DetectSystem implements the OSDetector interface for the mock
+func (m *MockOSDetector) DetectSystem() (SystemInfo, error) {
+	return SystemInfo{
+		OSName:     m.osName,
+		DistroName: m.distroName,
+		Arch:       "amd64", // Mock architecture
+	}, nil
+}
+
 // createMockConfig creates a mock compatibility configuration for testing
 func createMockConfig() *CompatibilityConfig {
 	return &CompatibilityConfig{
@@ -123,7 +132,7 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndMockConfig(t *testing.T) {
 				distroName: tc.distroName,
 			}
 
-			err := CheckCompatibilityWithDetector(config, detector)
+			sysInfo, err := CheckCompatibilityWithDetector(config, detector)
 
 			if tc.expectError {
 				if err == nil {
@@ -132,9 +141,28 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndMockConfig(t *testing.T) {
 				if err.Error() != tc.errorMsg {
 					t.Fatalf("Expected error message '%s', got '%s'", tc.errorMsg, err.Error())
 				}
+
+				// Even when there's an error, sysInfo should contain the detected system information
+				if tc.osName != sysInfo.OSName {
+					t.Fatalf("Expected OS name '%s', got '%s'", tc.osName, sysInfo.OSName)
+				}
+				if tc.distroName != sysInfo.DistroName && tc.osName == "linux" {
+					t.Fatalf("Expected distro name '%s', got '%s'", tc.distroName, sysInfo.DistroName)
+				}
 			} else {
 				if err != nil {
 					t.Fatalf("Expected no error, got %v", err)
+				}
+
+				// For successful compatibility checks, verify the system info is correct
+				if tc.osName != sysInfo.OSName {
+					t.Fatalf("Expected OS name '%s', got '%s'", tc.osName, sysInfo.OSName)
+				}
+				if tc.osName == "linux" && tc.distroName != sysInfo.DistroName {
+					t.Fatalf("Expected distro name '%s', got '%s'", tc.distroName, sysInfo.DistroName)
+				}
+				if sysInfo.Arch == "" {
+					t.Fatalf("Expected non-empty architecture")
 				}
 			}
 		})
@@ -149,15 +177,23 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndEmbeddedConfig(t *testing.T
 		t.Fatalf("Expected no error when loading embedded compatibility config, got: %v", err)
 	}
 
-	err = CheckCompatibilityWithDetector(compatibilityConfig, detector)
+	sysInfo, err := CheckCompatibilityWithDetector(compatibilityConfig, detector)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Verify the system info is correct
+	if sysInfo.OSName != "linux" {
+		t.Fatalf("Expected OS name 'linux', got '%s'", sysInfo.OSName)
+	}
+	if sysInfo.DistroName != "ubuntu" {
+		t.Fatalf("Expected distro name 'ubuntu', got '%s'", sysInfo.DistroName)
 	}
 }
 
 func TestCompatibilityCheckRejectsNilConfig(t *testing.T) {
 	detector := &MockOSDetector{osName: "linux", distroName: "ubuntu"}
-	err := CheckCompatibilityWithDetector(nil, detector)
+	sysInfo, err := CheckCompatibilityWithDetector(nil, detector)
 
 	if err == nil {
 		t.Fatal("Expected error with nil config, got nil")
@@ -166,5 +202,10 @@ func TestCompatibilityCheckRejectsNilConfig(t *testing.T) {
 	expectedMsg := "compatibility configuration is nil"
 	if err.Error() != expectedMsg {
 		t.Fatalf("Expected error message '%s', got '%s'", expectedMsg, err.Error())
+	}
+
+	// When config is nil, sysInfo should be empty
+	if sysInfo.OSName != "" || sysInfo.DistroName != "" || sysInfo.Arch != "" {
+		t.Fatalf("Expected empty system info, got %+v", sysInfo)
 	}
 }
