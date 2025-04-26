@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -22,22 +22,33 @@ provide a report on the compatibility status.
 
 It's recommended to run this command before attempting to install the dotfiles.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Create a CLI logger for output
+		log := logger.NewCliLogger()
+
 		// Get the globally loaded compatibility config
 		config := GetCompatibilityConfig()
 
 		// Check system compatibility
-		if err := compatibility.CheckCompatibility(config); err != nil {
-			style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#c71a3a"))
-
-			fmt.Fprint(os.Stderr, style.Render("✘"))
-			fmt.Fprintf(os.Stderr, " Your system isn't compatible with these dotfiles: %v\n", err)
+		sysInfo, err := compatibility.CheckCompatibility(config)
+		if err != nil {
+			// Print the error symbol and message
+			fmt.Fprint(os.Stderr, "✘ ")
+			log.Error("Your system isn't compatible with these dotfiles: %v", err)
 			os.Exit(1)
 		}
 
-		style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#2cb851"))
+		// Print the success symbol and message
+		fmt.Print("✔︎ ")
+		log.Success("Your system is compatible with these dotfiles!")
 
-		fmt.Print(style.Render("✔︎"))
-		fmt.Println(" Your system is compatible with these dotfiles!")
+		// Print detected system information if verbose flag is set
+		if verbose {
+			fmt.Println() // Add an empty line for better spacing
+			log.Info("Detected system information:")
+			fmt.Printf("OS: %s\n", sysInfo.OSName)
+			fmt.Printf("Distribution: %s\n", sysInfo.DistroName)
+			fmt.Printf("Architecture: %s\n", sysInfo.Arch)
+		}
 	},
 }
 
