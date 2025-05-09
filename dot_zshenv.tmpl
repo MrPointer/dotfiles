@@ -31,11 +31,6 @@ if [[ ! -v BREW_LOADED || "$BREW_LOADED" == "false" ]]; then
     BREW_LOADED=true
 fi
 
-# Add Go's root path to help vscode find the Go installation
-if command -v go &>/dev/null; then
-    export GOROOT="$(go env GOROOT)"
-fi
-
 {{ if (eq .chezmoi.os "linux") -}}
 if command -v cargo &>/dev/null; then
     if command -v mold &>/dev/null; then
