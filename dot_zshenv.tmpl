@@ -37,6 +37,15 @@ if command -v go &>/dev/null; then
 fi
 
 {{ if (eq .chezmoi.os "linux") -}}
+if command -v cargo &>/dev/null; then
+    if command -v mold &>/dev/null; then
+        # Always prefer to use mold as the linker on Linux
+        export RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold"
+    fi
+fi
+{{- end }}
+
+{{ if (eq .chezmoi.os "linux") -}}
 {{- if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
 if [[ -d "/mnt/c/Users/timor.g/AppData/Local/Programs/Microsoft VS Code/bin/" ]]; then
