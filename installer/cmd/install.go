@@ -76,7 +76,11 @@ func installHomebrew(log logger.Logger, sysInfo *compatibility.SystemInfo) error
 		WithSystemInfo(sysInfo)
 
 	// Check if Homebrew is already available
-	if brew.IsAvailable(brewOpts) {
+	isAvailable, err := brew.IsAvailable(brewOpts)
+	if err != nil {
+		return fmt.Errorf("failed checking Homebrew availability: %w", err)
+	}
+	if isAvailable {
 		log.Success("Homebrew is already installed")
 		return nil
 	}

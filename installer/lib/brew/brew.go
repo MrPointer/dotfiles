@@ -5,13 +5,13 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/user"
 	"runtime"
 	"strconv"
 	"syscall"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
@@ -34,6 +34,7 @@ type Options struct {
 	MultiUserSystem bool
 	Logger          logger.Logger
 	SystemInfo      *compatibility.SystemInfo
+	Commander       utils.Commander
 }
 
 // DefaultOptions returns the default options
@@ -42,6 +43,7 @@ func DefaultOptions() Options {
 		MultiUserSystem: false,
 		Logger:          logger.DefaultLogger,
 		SystemInfo:      nil,
+		Commander:       utils.NewDefaultCommander(),
 	}
 }
 
@@ -63,44 +65,44 @@ func (o Options) WithSystemInfo(sysInfo *compatibility.SystemInfo) Options {
 	return o
 }
 
+// WithCommander sets a custom Commander for Homebrew operations
+func (o Options) WithCommander(cmdr utils.Commander) Options {
+	o.Commander = cmdr
+	return o
+}
+
 // DetectBrewPath returns the appropriate brew binary path based on the system information
-func DetectBrewPath(opts Options) string {
+func DetectBrewPath(opts Options) (string, error) {
 	// If system info is provided, use it to determine the brew path
 	if opts.SystemInfo != nil {
 		switch opts.SystemInfo.OSName {
 		case "darwin":
 			if opts.SystemInfo.Arch == "arm64" {
-				return MacOSARMBrewPath
+				return MacOSARMBrewPath, nil
 			}
-			return MacOSIntelBrewPath
+			return MacOSIntelBrewPath, nil
 		case "linux":
-			return LinuxBrewPath
+			return LinuxBrewPath, nil
 		default:
-			// Fallback to runtime detection
+			return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 		}
 	}
 
-	// Fallback to runtime-based detection if no system info or unsupported OS
-	switch runtime.GOOS {
-	case "darwin":
-		if runtime.GOARCH == "arm64" {
-			return MacOSARMBrewPath
-		}
-		return MacOSIntelBrewPath
-	default:
-		return LinuxBrewPath
-	}
+	return "", fmt.Errorf("system information is not provided")
 }
 
 // IsAvailable checks if Homebrew is already installed and available
-func IsAvailable(opts Options) bool {
-	brewPath := DetectBrewPath(opts)
+func IsAvailable(opts Options) (bool, error) {
+	brewPath, err := DetectBrewPath(opts)
+	if err != nil {
+		return false, err
+	}
 
 	if opts.MultiUserSystem {
 		// For multi-user systems, check if the brew binary exists and is owned by the correct user
 		fileInfo, err := os.Stat(brewPath)
 		if err != nil {
-			return false
+			return false, err
 		}
 
 		// On Linux, check the ownership of the brew binary
@@ -108,53 +110,60 @@ func IsAvailable(opts Options) bool {
 			opts.SystemInfo == nil && runtime.GOOS == "linux" {
 			stat, ok := fileInfo.Sys().(*syscall.Stat_t)
 			if !ok {
-				return false
+				return false, fmt.Errorf("failed to get file info: %w", err)
 			}
 
 			brewUser, err := user.LookupId(strconv.FormatUint(uint64(stat.Uid), 10))
 			if err != nil {
-				return false
+				return false, fmt.Errorf("failed to lookup user: %w", err)
 			}
 
-			return brewUser.Username == BrewUserOnMultiUserSystem
+			return brewUser.Username == BrewUserOnMultiUserSystem, nil
 		}
 
 		// We don't officially support multi-user on macOS, but at least check if brew exists
-		return true
+		return true, nil
 	}
 
 	// For single-user systems, just check if the file exists
-	_, err := os.Stat(brewPath)
-	return err == nil
+	_, err = os.Stat(brewPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 // RunBrewCommand runs a brew command with appropriate user permissions
 func RunBrewCommand(opts Options, args ...string) error {
-	brewPath := DetectBrewPath(opts)
+	brewPath, err := DetectBrewPath(opts)
+	if err != nil {
+		return err
+	}
 
 	if opts.MultiUserSystem && (opts.SystemInfo == nil || opts.SystemInfo.OSName == "linux") {
 		// On multi-user Linux systems, run brew as the brew user
 		sudoArgs := []string{"-Hu", BrewUserOnMultiUserSystem, brewPath}
 		sudoArgs = append(sudoArgs, args...)
 
-		cmd := exec.Command("sudo", sudoArgs...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		return cmd.Run()
+		return opts.Commander.Run("sudo", sudoArgs...)
 	}
 
 	// Regular brew command for single-user systems
-	cmd := exec.Command(brewPath, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
+	return opts.Commander.Run(brewPath, args...)
 }
 
 // Install installs Homebrew if not already installed
 func Install(opts Options) error {
-	if IsAvailable(opts) {
+	isAvailable, err := IsAvailable(opts)
+	if err != nil {
+		return fmt.Errorf("failed checking Homebrew availability: %w", err)
+	}
+
+	if isAvailable {
 		opts.Logger.Success("Homebrew is already installed")
 		return nil
 	}
@@ -181,24 +190,21 @@ func installMultiUserLinux(opts Options) error {
 		// Create the brew user
 		opts.Logger.Info("Creating user '%s' for Homebrew", BrewUserOnMultiUserSystem)
 
-		cmd := exec.Command("sudo", "useradd", "-m", "-p", "", BrewUserOnMultiUserSystem)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Run(); err != nil {
+		err := opts.Commander.Run("sudo", "useradd", "-m", "-p", "", BrewUserOnMultiUserSystem)
+		if err != nil {
 			return fmt.Errorf("failed creating user '%s' for Homebrew: %w", BrewUserOnMultiUserSystem, err)
 		}
 
 		// Add user to sudo group
-		cmd = exec.Command("sudo", "usermod", "-aG", "sudo", BrewUserOnMultiUserSystem)
-		if err := cmd.Run(); err != nil {
+		err = opts.Commander.Run("sudo", "usermod", "-aG", "sudo", BrewUserOnMultiUserSystem)
+		if err != nil {
 			return fmt.Errorf("failed adding user '%s' to sudo group: %w", BrewUserOnMultiUserSystem, err)
 		}
 
 		// Add user to passwordless sudo
 		sudoersLine := fmt.Sprintf("%s ALL=(ALL) NOPASSWD:ALL", BrewUserOnMultiUserSystem)
-		cmd = exec.Command("sudo", "bash", "-c", fmt.Sprintf("echo '%s' | sudo tee -a /etc/sudoers", sudoersLine))
-		if err := cmd.Run(); err != nil {
+		err = opts.Commander.Run("sudo", "bash", "-c", fmt.Sprintf("echo '%s' | sudo tee -a /etc/sudoers", sudoersLine))
+		if err != nil {
 			return fmt.Errorf("failed adding user '%s' to passwordless-sudoers: %w", BrewUserOnMultiUserSystem, err)
 		}
 
@@ -208,11 +214,11 @@ func installMultiUserLinux(opts Options) error {
 	// Set proper ownership of the brew user home directory
 	opts.Logger.Info("Setting ownership of Homebrew directories")
 	brewUserHomeDir := "/home/linuxbrew"
-	cmd := exec.Command("sudo", "chown", "-R",
+	err = opts.Commander.Run("sudo", "chown", "-R",
 		fmt.Sprintf("%s:%s", BrewUserOnMultiUserSystem, BrewUserOnMultiUserSystem),
 		brewUserHomeDir)
 
-	if err := cmd.Run(); err != nil {
+	if err != nil {
 		return fmt.Errorf("failed changing ownership of %s to %s: %w",
 			brewUserHomeDir, BrewUserOnMultiUserSystem, err)
 	}
@@ -230,6 +236,12 @@ func installHomebrew(opts Options, asUser bool, username string) error {
 	}
 	defer cleanup() // Ensure the temporary script is removed after execution
 
+	if _, err := os.Stat(installScriptPath); err == nil {
+		opts.Logger.Debug("Homebrew install script downloaded to %s", installScriptPath)
+	} else {
+		return fmt.Errorf("failed to download Homebrew install script: %w", err)
+	}
+
 	// Execute the downloaded install script, optionally as a different user
 	if asUser {
 		if username == "" {
@@ -237,23 +249,17 @@ func installHomebrew(opts Options, asUser bool, username string) error {
 		}
 
 		opts.Logger.Info("Running Homebrew install script as %s", username)
-		cmd := exec.Command("sudo", "-Hu", username, "bash", installScriptPath)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Run(); err != nil {
+		err := opts.Commander.Run("sudo", "-Hu", username, "bash", installScriptPath)
+		if err != nil {
 			return fmt.Errorf("failed running Homebrew install script as %s: %w", username, err)
 		}
 
 		opts.Logger.Success("Successfully installed Homebrew for user %s", username)
 	} else {
 		opts.Logger.Info("Running Homebrew install script")
-		cmd := exec.Command("bash", installScriptPath)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed installing Homebrew: %w", err)
+		err := opts.Commander.RunWithEnv(map[string]string{"NONINTERACTIVE": "1"}, "/bin/bash", installScriptPath)
+		if err != nil {
+			return err
 		}
 
 		opts.Logger.Success("Homebrew installed successfully")
@@ -278,6 +284,7 @@ func downloadAndPrepareInstallScript(logger logger.Logger) (string, func(), erro
 	}
 
 	// Create a temporary file for the install script
+	logger.Debug("Creating temporary file for Homebrew install script")
 	tempFile, err := os.CreateTemp("", "brew-install-*.sh")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temporary file for Homebrew install script: %w", err)
@@ -289,23 +296,49 @@ func downloadAndPrepareInstallScript(logger logger.Logger) (string, func(), erro
 	}
 
 	// Copy the script to the temp file
-	_, err = io.Copy(tempFile, resp.Body)
+	logger.Debug("Writing Homebrew install script to temporary file")
+	bytesWritten, err := io.Copy(tempFile, resp.Body)
 	if err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("failed to write Homebrew install script to temporary file: %w", err)
 	}
+	if bytesWritten == 0 {
+		cleanup()
+		return "", nil, fmt.Errorf("failed to write Homebrew install script: no bytes written")
+	}
+	logger.Debug("Homebrew install script downloaded successfully")
+	logger.Debug("First line of script: %s", readFirstLine(tempFile.Name()))
 
 	// Close the file to ensure all data is written
+	logger.Debug("Closing temporary file for Homebrew install script")
 	if err = tempFile.Close(); err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("failed to close temporary file: %w", err)
 	}
 
 	// Make the script executable
-	if err = os.Chmod(tempFile.Name(), 0755); err != nil {
+	logger.Debug("Making Homebrew install script executable")
+	if err = os.Chmod(tempFile.Name(), 0777); err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("failed to make Homebrew install script executable: %w", err)
 	}
 
 	return tempFile.Name(), cleanup, nil
+}
+
+// readFirstLine reads the first line of a file
+func readFirstLine(filePath string) string {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	var firstLine string
+	_, err = fmt.Fscanln(file, &firstLine)
+	if err != nil {
+		return ""
+	}
+
+	return firstLine
 }
