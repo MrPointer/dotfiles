@@ -9,6 +9,7 @@ import (
 
 // Styles for different types of messages using lipgloss
 var (
+	debugStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#7f8c8d")).Bold(true) // Gray
 	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#3498db")).Bold(true) // Blue
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#2ecc71")).Bold(true) // Green
 	warningStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#f39c12")).Bold(true) // Yellow/Orange
@@ -21,6 +22,11 @@ type CliLogger struct{}
 // NewCliLogger creates a new CLI logger that uses lipgloss styling
 func NewCliLogger() *CliLogger {
 	return &CliLogger{}
+}
+
+// Debug logs a debug message with gray styling
+func (l *CliLogger) Debug(format string, args ...any) {
+	printStyled(os.Stdout, debugStyle, format, args...)
 }
 
 // Info logs an informational message with blue styling
