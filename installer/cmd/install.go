@@ -69,14 +69,17 @@ making it easier to get started with a new system.`,
 
 // installHomebrew installs Homebrew if not already installed
 func installHomebrew(log logger.Logger, sysInfo *compatibility.SystemInfo) error {
-	// Create brew options with our logger, multi-user setting, and system info
-	brewOpts := brew.DefaultOptions().
-		WithLogger(log).
-		WithMultiUserSystem(multiUserSystem).
-		WithSystemInfo(sysInfo)
+	// Create BrewInstaller using the new API
+	installer := brew.NewBrewInstaller(
+		brew.Options{
+			MultiUserSystem: multiUserSystem,
+			Logger:          log,
+			SystemInfo:      sysInfo,
+			Commander:       nil, // Use default if needed, or expose as param
+		},
+	)
 
-	// Check if Homebrew is already available
-	isAvailable, err := brew.IsAvailable(brewOpts)
+	isAvailable, err := installer.IsAvailable()
 	if err != nil {
 		return fmt.Errorf("failed checking Homebrew availability: %w", err)
 	}
@@ -85,8 +88,7 @@ func installHomebrew(log logger.Logger, sysInfo *compatibility.SystemInfo) error
 		return nil
 	}
 
-	// Install Homebrew - detailed logging will be handled by the logger
-	if err := brew.Install(brewOpts); err != nil {
+	if err := installer.Install(); err != nil {
 		return fmt.Errorf("failed installing Homebrew: %w", err)
 	}
 
