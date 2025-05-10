@@ -40,6 +40,12 @@ if command -v cargo &>/dev/null; then
 fi
 {{- end }}
 
+{{ if (eq .chezmoi.os "darwin") -}}
+# On macOS, to make testcontainers work with Colima, we need to manually set some env vars
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+export DOCKER_HOST="unix://${HOME}/.colima/docker.sock"
+{{- end }}
+
 {{ if (eq .chezmoi.os "linux") -}}
 {{- if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
