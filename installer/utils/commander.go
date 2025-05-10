@@ -9,6 +9,8 @@ import (
 // Commander defines an interface for running system commands
 // This allows us to proxy commands into a container for testing
 // or use the real exec.Command in production.
+//
+//go:generate moq -out commander_mock.go . Commander
 type Commander interface {
 	// Run executes a command with the given name and arguments
 	// It returns an error if the command fails.
