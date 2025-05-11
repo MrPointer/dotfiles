@@ -43,13 +43,9 @@ to run the dotfiles. This includes installing [chezmoi][chezmoi], setting up the
 configuring the shell. The installer should be easy to use and should work on multiple platforms (Linux, macOS, etc.).
 The installer should also be able to detect the platform and install the necessary dependencies accordingly.
 
-### Tech Stack of the Go Installer
+## What should you do?
 
-- **Go**: The Go programming language is used to write the installer.
-- **Lipgloss**: A Go library for creating beautiful command-line applications. It is used to create the CLI for the installer.
-- **Cobra**: A Go library for creating powerful command-line applications. It is used to create the CLI for the installer.
-- **Viper**: A Go library for reading configuration files. It is used to read the configuration files for the installer.
-- **GoReleaser**: A Go library for building and releasing Go applications. It is used to build the installer and create releases.
-- **GitHub Actions**: A CI/CD tool used to automate the build and release process. It is used to build the installer and create releases.
+Analyze the current state of the installer to understand how much of it has been ported to Go.
+Then, ask me what I want to do next.
 
 [chezmoi]: https://chezmoi.io/
