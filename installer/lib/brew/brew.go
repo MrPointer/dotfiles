@@ -62,9 +62,10 @@ var _ BrewInstaller = (*MultiUserBrewInstaller)(nil)
 // NewBrewInstaller creates a new BrewInstaller with the given options
 func NewBrewInstaller(opts Options) BrewInstaller {
 	base := &brewInstaller{
-		logger:     opts.Logger,
-		systemInfo: opts.SystemInfo,
-		commander:  opts.Commander,
+		logger:           opts.Logger,
+		systemInfo:       opts.SystemInfo,
+		commander:        opts.Commander,
+		brewPathOverride: opts.BrewPathOverride,
 	}
 
 	if opts.MultiUserSystem {
@@ -334,19 +335,21 @@ func (b *brewInstaller) readFirstLine(filePath string) string {
 
 // Options holds configuration options for Homebrew operations
 type Options struct {
-	MultiUserSystem bool
-	Logger          logger.Logger
-	SystemInfo      *compatibility.SystemInfo
-	Commander       utils.Commander
+	MultiUserSystem  bool
+	Logger           logger.Logger
+	SystemInfo       *compatibility.SystemInfo
+	Commander        utils.Commander
+	BrewPathOverride string // for testing/integration
 }
 
 // DefaultOptions returns the default options
 func DefaultOptions() Options {
 	return Options{
-		MultiUserSystem: false,
-		Logger:          logger.DefaultLogger,
-		SystemInfo:      nil,
-		Commander:       utils.NewDefaultCommander(),
+		MultiUserSystem:  false,
+		Logger:           logger.DefaultLogger,
+		SystemInfo:       nil,
+		Commander:        utils.NewDefaultCommander(),
+		BrewPathOverride: "",
 	}
 }
 
