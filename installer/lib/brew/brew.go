@@ -121,12 +121,80 @@ func (b *brewInstaller) Install() error {
 	if err != nil {
 		return fmt.Errorf("failed checking Homebrew availability: %w", err)
 	}
+
 	if isAvailable {
 		b.logger.Success("Homebrew is already installed")
 		return nil
 	}
+
 	b.logger.Info("Installing Homebrew")
-	return b.installHomebrew("")
+	err = b.installHomebrew("")
+	if err != nil {
+		return err
+	}
+
+	// Self-validation: check that brew is available and works
+	if err := b.validateInstall(); err != nil {
+		return fmt.Errorf("brew self-validation failed: %w", err)
+	}
+
+	return nil
+}
+
+// validateInstall checks that the brew binary exists and is functional
+func (b *brewInstaller) validateInstall() error {
+	brewPath, err := b.DetectBrewPath()
+	if err != nil {
+		return fmt.Errorf("could not detect brew path: %w", err)
+	}
+
+	info, err := os.Stat(brewPath)
+	if err != nil {
+		return fmt.Errorf("brew binary not found at %s: %w", brewPath, err)
+	}
+	if info.Mode()&0111 == 0 {
+		return fmt.Errorf("brew binary at %s is not executable", brewPath)
+	}
+
+	// Try running 'brew --version' to verify it works
+	if b.commander != nil {
+		err = b.commander.Run(brewPath, "--version")
+		if err != nil {
+			return fmt.Errorf("brew --version failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// Install installs Homebrew if not already installed (multi-user)
+func (m *MultiUserBrewInstaller) Install() error {
+	isAvailable, err := m.IsAvailable()
+	if err != nil {
+		return fmt.Errorf("failed checking Homebrew availability: %w", err)
+	}
+
+	if isAvailable {
+		m.logger.Success("Homebrew is already installed (multi-user)")
+		return nil
+	}
+
+	m.logger.Info("Installing Homebrew (multi-user)")
+	if m.systemInfo.OSName == "darwin" {
+		return fmt.Errorf("multi-user Homebrew installation is not supported on macOS, please install manually")
+	}
+
+	err = m.installMultiUserLinux()
+	if err != nil {
+		return err
+	}
+
+	// Self-validation: check that brew is available and works
+	if err := m.validateInstall(); err != nil {
+		return fmt.Errorf("brew self-validation failed: %w", err)
+	}
+
+	return nil
 }
 
 // Multi-user overrides
@@ -153,26 +221,6 @@ func (m *MultiUserBrewInstaller) IsAvailable() (bool, error) {
 		return brewUser.Username == m.brewUser, nil
 	}
 	return true, nil
-}
-
-// Install installs Homebrew if not already installed (multi-user)
-func (m *MultiUserBrewInstaller) Install() error {
-	isAvailable, err := m.IsAvailable()
-	if err != nil {
-		return fmt.Errorf("failed checking Homebrew availability: %w", err)
-	}
-
-	if isAvailable {
-		m.logger.Success("Homebrew is already installed (multi-user)")
-		return nil
-	}
-
-	m.logger.Info("Installing Homebrew (multi-user)")
-	if runtime.GOOS == "darwin" {
-		return fmt.Errorf("multi-user Homebrew installation is not supported on macOS, please install manually")
-	}
-
-	return m.installMultiUserLinux()
 }
 
 // installMultiUserLinux installs Homebrew in a multi-user configuration on Linux
@@ -296,8 +344,6 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 		cleanup()
 		return "", nil, fmt.Errorf("failed to write Homebrew install script: no bytes written")
 	}
-	b.logger.Debug("Homebrew install script downloaded successfully")
-	b.logger.Debug("First line of script: %s", b.readFirstLine(tempFile.Name()))
 
 	// Close the file to ensure all data is written
 	b.logger.Debug("Closing temporary file for Homebrew install script")
@@ -314,23 +360,6 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 	}
 
 	return tempFile.Name(), cleanup, nil
-}
-
-// readFirstLine reads the first line of a file
-func (b *brewInstaller) readFirstLine(filePath string) string {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return ""
-	}
-	defer file.Close()
-
-	var firstLine string
-	_, err = fmt.Fscanln(file, &firstLine)
-	if err != nil {
-		return ""
-	}
-
-	return firstLine
 }
 
 // Options holds configuration options for Homebrew operations
