@@ -83,19 +83,24 @@ func (b *brewInstaller) DetectBrewPath() (string, error) {
 	if b.brewPathOverride != "" {
 		return b.brewPathOverride, nil
 	}
+
 	if b.systemInfo != nil {
 		switch b.systemInfo.OSName {
 		case "darwin":
 			if b.systemInfo.Arch == "arm64" {
 				return MacOSARMBrewPath, nil
 			}
+
 			return MacOSIntelBrewPath, nil
+
 		case "linux":
 			return LinuxBrewPath, nil
+
 		default:
 			return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 		}
 	}
+
 	return "", fmt.Errorf("system information is not provided")
 }
 
@@ -105,6 +110,7 @@ func (b *brewInstaller) IsAvailable() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	_, err = os.Stat(brewPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -112,6 +118,7 @@ func (b *brewInstaller) IsAvailable() (bool, error) {
 		}
 		return false, err
 	}
+
 	return true, nil
 }
 
@@ -204,22 +211,26 @@ func (m *MultiUserBrewInstaller) IsAvailable() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	fileInfo, err := os.Stat(brewPath)
 	if err != nil {
 		return false, err
 	}
+
 	if m.systemInfo != nil && m.systemInfo.OSName == "linux" ||
 		m.systemInfo == nil && runtime.GOOS == "linux" {
 		stat, ok := fileInfo.Sys().(*syscall.Stat_t)
 		if !ok {
 			return false, fmt.Errorf("failed to get file info: %w", err)
 		}
+
 		brewUser, err := user.LookupId(strconv.FormatUint(uint64(stat.Uid), 10))
 		if err != nil {
 			return false, fmt.Errorf("failed to lookup user: %w", err)
 		}
 		return brewUser.Username == m.brewUser, nil
 	}
+
 	return true, nil
 }
 
