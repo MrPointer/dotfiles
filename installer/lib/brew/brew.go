@@ -225,48 +225,78 @@ func (m *MultiUserBrewInstaller) IsAvailable() (bool, error) {
 
 // installMultiUserLinux installs Homebrew in a multi-user configuration on Linux
 func (m *MultiUserBrewInstaller) installMultiUserLinux() error {
-	// Check if the brew user already exists
-	_, err := user.Lookup(BrewUserOnMultiUserSystem)
+	brewUser := BrewUserOnMultiUserSystem
+	brewHome := "/home/linuxbrew"
+
+	// 1. Check if user exists
+	_, err := user.Lookup(brewUser)
 	if err != nil {
-		// Create the brew user
-		m.logger.Info("Creating user '%s' for Homebrew", BrewUserOnMultiUserSystem)
+		m.logger.Info("User '%s' does not exist, creating...", brewUser)
 
-		err := m.commander.Run("sudo", "useradd", "-m", "-p", "", BrewUserOnMultiUserSystem)
-		if err != nil {
-			return fmt.Errorf("failed creating user '%s' for Homebrew: %w", BrewUserOnMultiUserSystem, err)
+		// Try useradd, fallback to adduser
+		useraddCmd := []string{"useradd", "-m", "-s", "/bin/bash", brewUser}
+		if !isRoot() {
+			useraddCmd = append([]string{"sudo"}, useraddCmd...)
 		}
 
-		// Add user to sudo group
-		err = m.commander.Run("sudo", "usermod", "-aG", "sudo", BrewUserOnMultiUserSystem)
+		err = m.commander.Run(useraddCmd[0], useraddCmd[1:]...)
 		if err != nil {
-			return fmt.Errorf("failed adding user '%s' to sudo group: %w", BrewUserOnMultiUserSystem, err)
-		}
+			// Try adduser as fallback
+			adduserCmd := []string{"adduser", "--disabled-password", "--gecos", "''", brewUser}
+			if !isRoot() {
+				adduserCmd = append([]string{"sudo"}, adduserCmd...)
+			}
 
-		// Add user to passwordless sudo
-		sudoersLine := fmt.Sprintf("%s ALL=(ALL) NOPASSWD:ALL", BrewUserOnMultiUserSystem)
-		err = m.commander.Run("sudo", "bash", "-c", fmt.Sprintf("echo '%s' | sudo tee -a /etc/sudoers", sudoersLine))
-		if err != nil {
-			return fmt.Errorf("failed adding user '%s' to passwordless-sudoers: %w", BrewUserOnMultiUserSystem, err)
+			err = m.commander.Run(adduserCmd[0], adduserCmd[1:]...)
+			if err != nil {
+				return fmt.Errorf("failed to create user '%s' with useradd/adduser: %w", brewUser, err)
+			}
 		}
-
-		m.logger.Success("Successfully created Homebrew user '%s'", BrewUserOnMultiUserSystem)
 	}
 
-	// Set proper ownership of the brew user home directory
-	m.logger.Info("Setting ownership of Homebrew directories")
-	brewUserHomeDir := "/home/linuxbrew"
+	// 2. Add user to sudo group (if not already)
+	m.logger.Info("Adding '%s' to sudo group", brewUser)
+	usermodCmd := []string{"usermod", "-aG", "sudo", brewUser}
+	if !isRoot() {
+		usermodCmd = append([]string{"sudo"}, usermodCmd...)
+	}
+	_ = m.commander.Run(usermodCmd[0], usermodCmd[1:]...) // ignore error if already in group
 
-	err = m.commander.Run("sudo", "chown", "-R",
-		fmt.Sprintf("%s:%s", BrewUserOnMultiUserSystem, BrewUserOnMultiUserSystem),
-		brewUserHomeDir)
+	// 3. Add passwordless sudo for brew user
+	sudoersFile := fmt.Sprintf("/etc/sudoers.d/%s", brewUser)
+	sudoersLine := fmt.Sprintf("%s ALL=(ALL) NOPASSWD:ALL", brewUser)
 
-	if err != nil {
-		return fmt.Errorf("failed changing ownership of %s to %s: %w",
-			brewUserHomeDir, BrewUserOnMultiUserSystem, err)
+	var sudoPrefix string
+	if !isRoot() {
+		sudoPrefix = "sudo "
 	}
 
-	// Install Homebrew as the brew user
-	return m.installHomebrew(BrewUserOnMultiUserSystem)
+	// Use shell to echo and tee the line into the sudoers file
+	shCmd := []string{"sh", "-c", fmt.Sprintf("echo '%s' | %stee %s", sudoersLine, sudoPrefix, sudoersFile)}
+	err = m.commander.Run(shCmd[0], shCmd[1:]...)
+	if err != nil {
+		return fmt.Errorf("failed to add passwordless sudo for '%s': %w", brewUser, err)
+	}
+
+	// 4. Set ownership of homebrew directory
+	m.logger.Info("Setting ownership of %s to %s", brewHome, brewUser)
+	chownCmd := []string{"chown", "-R", fmt.Sprintf("%s:%s", brewUser, brewUser), brewHome}
+	if !isRoot() {
+		chownCmd = append([]string{"sudo"}, chownCmd...)
+	}
+
+	err = m.commander.Run(chownCmd[0], chownCmd[1:]...)
+	if err != nil {
+		return fmt.Errorf("failed to chown %s: %w", brewHome, err)
+	}
+
+	// 5. Install Homebrew as the brew user
+	return m.installHomebrew(brewUser)
+}
+
+// isRoot returns true if the current user is root
+func isRoot() bool {
+	return os.Geteuid() == 0
 }
 
 // installHomebrew handles both regular and multi-user Homebrew installations
