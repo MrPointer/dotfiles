@@ -6,7 +6,8 @@ applyTo: "**/*_test.go"
 
 ## General Guidelines
 
-- Don't use `testify` for testing. Use the standard library `testing` package instead.
+- Use `testify` for testing.
+  - Always use `require` when checking the `error` type.
 - Always test a single thing in a test. Don't test multiple things in a single test.
 - Name tests based on their behavior, expressed in natural language.
   For example, `TestCompatibilityConfigCanBeLoadedFromFile`, which checks if the `CompatibilityConfig`
@@ -40,6 +41,12 @@ applyTo: "**/*_test.go"
   Use it for any test that requires a specific environment or setup, or one that could ruin
   the host system if it were to run on it. For example, a test to check that homebrew can be installed
   should run in a container, as it could modify the host system if it were to run on it.
+
+## Testing Tech Stack
+
+- **testify**: A Go library for testing. It is used to write tests and assertions.
+- **Moq**: A Go library for generating mocks. It is used to generate mocks for testing.
+- **Testcontainers**: A Go library for running tests in containers. It is used to run system tests in a container.
 
 [moq]: https://github.com/matryer/moq
 [testcontainers-go]: https://golang.testcontainers.org/
