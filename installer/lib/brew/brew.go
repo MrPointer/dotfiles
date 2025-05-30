@@ -2,8 +2,7 @@ package brew
 
 import (
 	"fmt"
-	"io"
-	"net/http"
+	"net/http" // Keep for http.StatusOK and potentially other http constants if needed by other functions
 	"os"
 	"os/user"
 	"runtime"
@@ -12,7 +11,9 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
 const (
@@ -25,8 +26,8 @@ const (
 	// MacOSIntelBrewPath is the default installation path for Homebrew on Intel macOS
 	MacOSIntelBrewPath = "/usr/local/bin/brew"
 
-	// MacOSARMBrewPath is the default installation path for Homebrew on ARM macOS
-	MacOSARMBrewPath = "/opt/homebrew/bin/brew"
+	// MacOSArmBrewPath is the default installation path for Homebrew on ARM macOS
+	MacOSArmBrewPath = "/opt/homebrew/bin/brew"
 )
 
 // BrewInstaller defines the interface for Homebrew operations
@@ -45,6 +46,9 @@ type brewInstaller struct {
 	logger           logger.Logger
 	systemInfo       *compatibility.SystemInfo
 	commander        utils.Commander
+	httpClient       httpclient.HTTPClient
+	osManager        osmanager.OsManager
+	fs               utils.FileSystem
 	brewPathOverride string // for testing only
 }
 
@@ -65,6 +69,9 @@ func NewBrewInstaller(opts Options) BrewInstaller {
 		logger:           opts.Logger,
 		systemInfo:       opts.SystemInfo,
 		commander:        opts.Commander,
+		httpClient:       opts.HTTPClient,
+		osManager:        opts.OsManager,
+		fs:               opts.Fs,
 		brewPathOverride: opts.BrewPathOverride,
 	}
 
@@ -88,7 +95,7 @@ func (b *brewInstaller) DetectBrewPath() (string, error) {
 		switch b.systemInfo.OSName {
 		case "darwin":
 			if b.systemInfo.Arch == "arm64" {
-				return MacOSARMBrewPath, nil
+				return MacOSArmBrewPath, nil
 			}
 
 			return MacOSIntelBrewPath, nil
@@ -239,66 +246,31 @@ func (m *MultiUserBrewInstaller) installMultiUserLinux() error {
 	brewUser := BrewUserOnMultiUserSystem
 	brewHome := "/home/linuxbrew"
 
-	// 1. Check if user exists
-	_, err := user.Lookup(brewUser)
+	// 1. Check if user exists and create if needed
+	exists, err := m.osManager.UserExists(brewUser)
 	if err != nil {
-		m.logger.Info("User '%s' does not exist, creating...", brewUser)
+		return fmt.Errorf("error checking if user '%s' exists: %w", brewUser, err)
+	}
 
-		// Try useradd, fallback to adduser
-		useraddCmd := []string{"useradd", "-m", "-s", "/bin/bash", brewUser}
-		if !isRoot() {
-			useraddCmd = append([]string{"sudo"}, useraddCmd...)
-		}
-
-		err = m.commander.Run(useraddCmd[0], useraddCmd[1:]...)
-		if err != nil {
-			// Try adduser as fallback
-			adduserCmd := []string{"adduser", "--disabled-password", "--gecos", "''", brewUser}
-			if !isRoot() {
-				adduserCmd = append([]string{"sudo"}, adduserCmd...)
-			}
-
-			err = m.commander.Run(adduserCmd[0], adduserCmd[1:]...)
-			if err != nil {
-				return fmt.Errorf("failed to create user '%s' with useradd/adduser: %w", brewUser, err)
-			}
+	if !exists {
+		if err := m.osManager.AddUser(brewUser); err != nil {
+			return fmt.Errorf("error creating user '%s': %w", brewUser, err)
 		}
 	}
 
-	// 2. Add user to sudo group (if not already)
-	m.logger.Info("Adding '%s' to sudo group", brewUser)
-	usermodCmd := []string{"usermod", "-aG", "sudo", brewUser}
-	if !isRoot() {
-		usermodCmd = append([]string{"sudo"}, usermodCmd...)
+	// 2. Add user to sudo group
+	if err := m.osManager.AddUserToGroup(brewUser, "sudo"); err != nil {
+		m.logger.Debug("Note: Failed to add user to sudo group, continuing anyway")
 	}
-	_ = m.commander.Run(usermodCmd[0], usermodCmd[1:]...) // ignore error if already in group
 
 	// 3. Add passwordless sudo for brew user
-	sudoersFile := fmt.Sprintf("/etc/sudoers.d/%s", brewUser)
-	sudoersLine := fmt.Sprintf("%s ALL=(ALL) NOPASSWD:ALL", brewUser)
-
-	var sudoPrefix string
-	if !isRoot() {
-		sudoPrefix = "sudo "
-	}
-
-	// Use shell to echo and tee the line into the sudoers file
-	shCmd := []string{"sh", "-c", fmt.Sprintf("echo '%s' | %stee %s", sudoersLine, sudoPrefix, sudoersFile)}
-	err = m.commander.Run(shCmd[0], shCmd[1:]...)
-	if err != nil {
-		return fmt.Errorf("failed to add passwordless sudo for '%s': %w", brewUser, err)
+	if err := m.osManager.AddSudoAccess(brewUser); err != nil {
+		return fmt.Errorf("failed to add sudo access for user '%s': %w", brewUser, err)
 	}
 
 	// 4. Set ownership of homebrew directory
-	m.logger.Info("Setting ownership of %s to %s", brewHome, brewUser)
-	chownCmd := []string{"chown", "-R", fmt.Sprintf("%s:%s", brewUser, brewUser), brewHome}
-	if !isRoot() {
-		chownCmd = append([]string{"sudo"}, chownCmd...)
-	}
-
-	err = m.commander.Run(chownCmd[0], chownCmd[1:]...)
-	if err != nil {
-		return fmt.Errorf("failed to chown %s: %w", brewHome, err)
+	if err := m.osManager.SetOwnership(brewHome, brewUser); err != nil {
+		return fmt.Errorf("failed to set ownership of '%s' to '%s': %w", brewHome, brewUser, err)
 	}
 
 	// 5. Install Homebrew as the brew user
@@ -319,11 +291,14 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 	}
 	defer cleanup() // Ensure the temporary script is removed after execution
 
-	if _, err := os.Stat(installScriptPath); err == nil {
-		b.logger.Debug("Homebrew install script downloaded to %s", installScriptPath)
-	} else {
-		return fmt.Errorf("failed to download Homebrew install script: %w", err)
+	exists, err := b.fs.PathExists(installScriptPath)
+	if err != nil {
+		return fmt.Errorf("failed checking if install script exists: %w", err)
 	}
+	if !exists {
+		return fmt.Errorf("install script does not exist at %s", installScriptPath)
+	}
+	b.logger.Debug("Homebrew install script downloaded to %s", installScriptPath)
 
 	// Execute the downloaded install script, optionally as a different user
 	if asUser != "" {
@@ -352,7 +327,7 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 	b.logger.Info("Downloading Homebrew install script")
 	installScriptURL := "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
 
-	resp, err := http.Get(installScriptURL)
+	resp, err := b.httpClient.Get(installScriptURL) // Changed to use httpClient
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to download Homebrew install script: %w", err)
 	}
@@ -364,19 +339,23 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 
 	// Create a temporary file for the install script
 	b.logger.Debug("Creating temporary file for Homebrew install script")
-	tempFile, err := os.CreateTemp("", "brew-install-*.sh")
+	tempFilePath, err := b.fs.CreateTemporaryFile("", "brew-install-*.sh")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temporary file for Homebrew install script: %w", err)
 	}
 
 	// Create a cleanup function to remove the temp file
 	cleanup := func() {
-		os.Remove(tempFile.Name())
+		b.logger.Debug("Cleaning up temporary file for Homebrew install script")
+		err := b.fs.RemovePath(tempFilePath)
+		if err != nil {
+			b.logger.Warning("Failed to remove temporary file: %w", err)
+		}
 	}
 
 	// Copy the script to the temp file
 	b.logger.Debug("Writing Homebrew install script to temporary file")
-	bytesWritten, err := io.Copy(tempFile, resp.Body)
+	bytesWritten, err := b.fs.WriteFile(tempFilePath, resp.Body)
 	if err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("failed to write Homebrew install script to temporary file: %w", err)
@@ -386,30 +365,26 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 		return "", nil, fmt.Errorf("failed to write Homebrew install script: no bytes written")
 	}
 
-	// Close the file to ensure all data is written
-	b.logger.Debug("Closing temporary file for Homebrew install script")
-	if err = tempFile.Close(); err != nil {
-		cleanup()
-		return "", nil, fmt.Errorf("failed to close temporary file: %w", err)
-	}
-
 	// Make the script executable
 	b.logger.Debug("Making Homebrew install script executable")
-	if err = os.Chmod(tempFile.Name(), 0777); err != nil {
+	if err = os.Chmod(tempFilePath, 0777); err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("failed to make Homebrew install script executable: %w", err)
 	}
 
-	return tempFile.Name(), cleanup, nil
+	return tempFilePath, cleanup, nil
 }
 
 // Options holds configuration options for Homebrew operations
 type Options struct {
-	MultiUserSystem  bool
 	Logger           logger.Logger
+	MultiUserSystem  bool
 	SystemInfo       *compatibility.SystemInfo
 	Commander        utils.Commander
-	BrewPathOverride string // for testing/integration
+	HTTPClient       httpclient.HTTPClient
+	OsManager        osmanager.OsManager
+	Fs               utils.FileSystem
+	BrewPathOverride string
 }
 
 // DefaultOptions returns the default options
@@ -419,30 +394,51 @@ func DefaultOptions() Options {
 		Logger:           logger.DefaultLogger,
 		SystemInfo:       nil,
 		Commander:        utils.NewDefaultCommander(),
+		HTTPClient:       httpclient.NewDefaultHTTPClient(),
+		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, utils.NewDefaultCommander(), isRoot()),
+		Fs:               utils.NewDefaultFileSystem(),
 		BrewPathOverride: "",
 	}
 }
 
 // WithLogger sets a custom logger for the brew operations
-func (o Options) WithLogger(log logger.Logger) Options {
+func (o *Options) WithLogger(log logger.Logger) *Options {
 	o.Logger = log
 	return o
 }
 
 // WithMultiUserSystem configures for multi-user system operation
-func (o Options) WithMultiUserSystem(multiUser bool) Options {
+func (o *Options) WithMultiUserSystem(multiUser bool) *Options {
 	o.MultiUserSystem = multiUser
 	return o
 }
 
 // WithSystemInfo sets system information for brew operations
-func (o Options) WithSystemInfo(sysInfo *compatibility.SystemInfo) Options {
+func (o *Options) WithSystemInfo(sysInfo *compatibility.SystemInfo) *Options {
 	o.SystemInfo = sysInfo
 	return o
 }
 
 // WithCommander sets a custom Commander for Homebrew operations
-func (o Options) WithCommander(cmdr utils.Commander) Options {
+func (o *Options) WithCommander(cmdr utils.Commander) *Options {
 	o.Commander = cmdr
+	return o
+}
+
+// WithHTTPClient sets a custom HTTP client for Homebrew operations
+func (o *Options) WithHTTPClient(client httpclient.HTTPClient) *Options {
+	o.HTTPClient = client
+	return o
+}
+
+// WithOsManager sets a custom OS manager for Homebrew operations
+func (o *Options) WithOsManager(osMgr osmanager.OsManager) *Options {
+	o.OsManager = osMgr
+	return o
+}
+
+// WithFileSystem sets a custom FileSystem for Homebrew operations
+func (o *Options) WithFileSystem(fs utils.FileSystem) *Options {
+	o.Fs = fs
 	return o
 }
