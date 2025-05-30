@@ -15,7 +15,7 @@ func TestDetectBrewPathReturnsExpectedPath(t *testing.T) {
 		expectedPath  string
 		errorExpected bool
 	}{
-		{"darwin/arm64", &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"}, brew.MacOSARMBrewPath, false},
+		{"darwin/arm64", &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"}, brew.MacOSArmBrewPath, false},
 		{"darwin/amd64", &compatibility.SystemInfo{OSName: "darwin", Arch: "amd64"}, brew.MacOSIntelBrewPath, false},
 		{"linux/amd64", &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}, brew.LinuxBrewPath, false},
 		{"unsupported", &compatibility.SystemInfo{OSName: "plan9", Arch: "amd64"}, "", true},
