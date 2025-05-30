@@ -2,6 +2,7 @@ package osmanager
 
 import (
 	"fmt"
+	"os"
 	"os/user"
 
 	"github.com/MrPointer/dotfiles/installer/utils"
@@ -36,6 +37,9 @@ type SudoManager interface {
 type FilePermissionManager interface {
 	// SetOwnership sets ownership of a directory to a user
 	SetOwnership(path, username string) error
+
+	// SetPermissions sets permissions for a file or directory
+	SetPermissions(path string, mode os.FileMode) error
 }
 
 // OsManager combines all system operation interfaces
@@ -65,7 +69,6 @@ func NewUnixOsManager(logger logger.Logger, commander utils.Commander, isRoot bo
 	}
 }
 
-// UserExists checks if a user exists in the system
 func (u *UnixOsManager) UserExists(username string) (bool, error) {
 	_, err := user.Lookup(username)
 	if err != nil {
@@ -74,7 +77,6 @@ func (u *UnixOsManager) UserExists(username string) (bool, error) {
 	return true, nil
 }
 
-// AddUser creates a new user in the system
 func (u *UnixOsManager) AddUser(username string) error {
 	u.logger.Info("User '%s' does not exist, creating...", username)
 
@@ -101,7 +103,6 @@ func (u *UnixOsManager) AddUser(username string) error {
 	return nil
 }
 
-// AddUserToGroup adds a user to a specified group
 func (u *UnixOsManager) AddUserToGroup(username, group string) error {
 	u.logger.Info("Adding '%s' to %s group", username, group)
 	usermodCmd := []string{"usermod", "-aG", group, username}
@@ -118,7 +119,6 @@ func (u *UnixOsManager) AddUserToGroup(username, group string) error {
 	return nil
 }
 
-// AddSudoAccess grants password-less sudo access to a user
 func (u *UnixOsManager) AddSudoAccess(username string) error {
 	sudoersFile := fmt.Sprintf("/etc/sudoers.d/%s", username)
 	sudoersLine := fmt.Sprintf("%s ALL=(ALL) NOPASSWD:ALL", username)
@@ -138,7 +138,6 @@ func (u *UnixOsManager) AddSudoAccess(username string) error {
 	return nil
 }
 
-// SetOwnership sets ownership of a directory to a user
 func (u *UnixOsManager) SetOwnership(path, username string) error {
 	u.logger.Info("Setting ownership of %s to %s", path, username)
 	chownCmd := []string{"chown", "-R", fmt.Sprintf("%s:%s", username, username), path}
@@ -149,6 +148,21 @@ func (u *UnixOsManager) SetOwnership(path, username string) error {
 	err := u.commander.Run(chownCmd[0], chownCmd[1:]...)
 	if err != nil {
 		return fmt.Errorf("failed to chown %s: %w", path, err)
+	}
+
+	return nil
+}
+
+func (u *UnixOsManager) SetPermissions(path string, mode os.FileMode) error {
+	u.logger.Info("Setting permissions of %s to %o", path, mode)
+	chmodCmd := []string{"chmod", fmt.Sprintf("%o", mode), path}
+	if !u.isRoot {
+		chmodCmd = append([]string{"sudo"}, chmodCmd...)
+	}
+
+	err := u.commander.Run(chmodCmd[0], chmodCmd[1:]...)
+	if err != nil {
+		return fmt.Errorf("failed to chmod %s: %w", path, err)
 	}
 
 	return nil

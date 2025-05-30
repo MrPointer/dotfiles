@@ -5,6 +5,7 @@
 package osmanager
 
 import (
+	"os"
 	"sync"
 )
 
@@ -21,6 +22,9 @@ var _ FilePermissionManager = &MoqFilePermissionManager{}
 //			SetOwnershipFunc: func(path string, username string) error {
 //				panic("mock out the SetOwnership method")
 //			},
+//			SetPermissionsFunc: func(path string, mode os.FileMode) error {
+//				panic("mock out the SetPermissions method")
+//			},
 //		}
 //
 //		// use mockedFilePermissionManager in code that requires FilePermissionManager
@@ -31,6 +35,9 @@ type MoqFilePermissionManager struct {
 	// SetOwnershipFunc mocks the SetOwnership method.
 	SetOwnershipFunc func(path string, username string) error
 
+	// SetPermissionsFunc mocks the SetPermissions method.
+	SetPermissionsFunc func(path string, mode os.FileMode) error
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// SetOwnership holds details about calls to the SetOwnership method.
@@ -40,8 +47,16 @@ type MoqFilePermissionManager struct {
 			// Username is the username argument value.
 			Username string
 		}
+		// SetPermissions holds details about calls to the SetPermissions method.
+		SetPermissions []struct {
+			// Path is the path argument value.
+			Path string
+			// Mode is the mode argument value.
+			Mode os.FileMode
+		}
 	}
-	lockSetOwnership sync.RWMutex
+	lockSetOwnership   sync.RWMutex
+	lockSetPermissions sync.RWMutex
 }
 
 // SetOwnership calls SetOwnershipFunc.
@@ -77,5 +92,41 @@ func (mock *MoqFilePermissionManager) SetOwnershipCalls() []struct {
 	mock.lockSetOwnership.RLock()
 	calls = mock.calls.SetOwnership
 	mock.lockSetOwnership.RUnlock()
+	return calls
+}
+
+// SetPermissions calls SetPermissionsFunc.
+func (mock *MoqFilePermissionManager) SetPermissions(path string, mode os.FileMode) error {
+	if mock.SetPermissionsFunc == nil {
+		panic("MoqFilePermissionManager.SetPermissionsFunc: method is nil but FilePermissionManager.SetPermissions was just called")
+	}
+	callInfo := struct {
+		Path string
+		Mode os.FileMode
+	}{
+		Path: path,
+		Mode: mode,
+	}
+	mock.lockSetPermissions.Lock()
+	mock.calls.SetPermissions = append(mock.calls.SetPermissions, callInfo)
+	mock.lockSetPermissions.Unlock()
+	return mock.SetPermissionsFunc(path, mode)
+}
+
+// SetPermissionsCalls gets all the calls that were made to SetPermissions.
+// Check the length with:
+//
+//	len(mockedFilePermissionManager.SetPermissionsCalls())
+func (mock *MoqFilePermissionManager) SetPermissionsCalls() []struct {
+	Path string
+	Mode os.FileMode
+} {
+	var calls []struct {
+		Path string
+		Mode os.FileMode
+	}
+	mock.lockSetPermissions.RLock()
+	calls = mock.calls.SetPermissions
+	mock.lockSetPermissions.RUnlock()
 	return calls
 }
