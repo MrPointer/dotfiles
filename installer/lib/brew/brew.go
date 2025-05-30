@@ -367,7 +367,7 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 
 	// Make the script executable
 	b.logger.Debug("Making Homebrew install script executable")
-	if err = os.Chmod(tempFilePath, 0777); err != nil {
+	if err = b.osManager.SetPermissions(tempFilePath, 0777); err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("failed to make Homebrew install script executable: %w", err)
 	}
