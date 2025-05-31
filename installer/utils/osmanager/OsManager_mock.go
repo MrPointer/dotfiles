@@ -28,6 +28,9 @@ var _ OsManager = &MoqOsManager{}
 //			AddUserToGroupFunc: func(username string, group string) error {
 //				panic("mock out the AddUserToGroup method")
 //			},
+//			GetFileOwnerFunc: func(path string) (string, error) {
+//				panic("mock out the GetFileOwner method")
+//			},
 //			SetOwnershipFunc: func(path string, username string) error {
 //				panic("mock out the SetOwnership method")
 //			},
@@ -52,6 +55,9 @@ type MoqOsManager struct {
 
 	// AddUserToGroupFunc mocks the AddUserToGroup method.
 	AddUserToGroupFunc func(username string, group string) error
+
+	// GetFileOwnerFunc mocks the GetFileOwner method.
+	GetFileOwnerFunc func(path string) (string, error)
 
 	// SetOwnershipFunc mocks the SetOwnership method.
 	SetOwnershipFunc func(path string, username string) error
@@ -81,6 +87,11 @@ type MoqOsManager struct {
 			// Group is the group argument value.
 			Group string
 		}
+		// GetFileOwner holds details about calls to the GetFileOwner method.
+		GetFileOwner []struct {
+			// Path is the path argument value.
+			Path string
+		}
 		// SetOwnership holds details about calls to the SetOwnership method.
 		SetOwnership []struct {
 			// Path is the path argument value.
@@ -104,6 +115,7 @@ type MoqOsManager struct {
 	lockAddSudoAccess  sync.RWMutex
 	lockAddUser        sync.RWMutex
 	lockAddUserToGroup sync.RWMutex
+	lockGetFileOwner   sync.RWMutex
 	lockSetOwnership   sync.RWMutex
 	lockSetPermissions sync.RWMutex
 	lockUserExists     sync.RWMutex
@@ -206,6 +218,38 @@ func (mock *MoqOsManager) AddUserToGroupCalls() []struct {
 	mock.lockAddUserToGroup.RLock()
 	calls = mock.calls.AddUserToGroup
 	mock.lockAddUserToGroup.RUnlock()
+	return calls
+}
+
+// GetFileOwner calls GetFileOwnerFunc.
+func (mock *MoqOsManager) GetFileOwner(path string) (string, error) {
+	if mock.GetFileOwnerFunc == nil {
+		panic("MoqOsManager.GetFileOwnerFunc: method is nil but OsManager.GetFileOwner was just called")
+	}
+	callInfo := struct {
+		Path string
+	}{
+		Path: path,
+	}
+	mock.lockGetFileOwner.Lock()
+	mock.calls.GetFileOwner = append(mock.calls.GetFileOwner, callInfo)
+	mock.lockGetFileOwner.Unlock()
+	return mock.GetFileOwnerFunc(path)
+}
+
+// GetFileOwnerCalls gets all the calls that were made to GetFileOwner.
+// Check the length with:
+//
+//	len(mockedOsManager.GetFileOwnerCalls())
+func (mock *MoqOsManager) GetFileOwnerCalls() []struct {
+	Path string
+} {
+	var calls []struct {
+		Path string
+	}
+	mock.lockGetFileOwner.RLock()
+	calls = mock.calls.GetFileOwner
+	mock.lockGetFileOwner.RUnlock()
 	return calls
 }
 
