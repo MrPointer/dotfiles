@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"net/http" // Keep for http.StatusOK and potentially other http constants if needed by other functions
 	"os"
-	"os/user"
 	"runtime"
-	"strconv"
-	"syscall"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/utils"
@@ -118,15 +115,12 @@ func (b *brewInstaller) IsAvailable() (bool, error) {
 		return false, err
 	}
 
-	_, err = os.Stat(brewPath)
+	exists, err := b.fs.PathExists(brewPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
 		return false, err
 	}
 
-	return true, nil
+	return exists, nil
 }
 
 // Install installs Homebrew if not already installed (single-user)
@@ -162,12 +156,12 @@ func (b *brewInstaller) validateInstall() error {
 		return fmt.Errorf("could not detect brew path: %w", err)
 	}
 
-	info, err := os.Stat(brewPath)
+	exists, err := b.fs.PathExists(brewPath)
 	if err != nil {
-		return fmt.Errorf("brew binary not found at %s: %w", brewPath, err)
+		return fmt.Errorf("failed to check if brew binary exists: %w", err)
 	}
-	if info.Mode()&0111 == 0 {
-		return fmt.Errorf("brew binary at %s is not executable", brewPath)
+	if !exists {
+		return fmt.Errorf("brew binary not found at %s", brewPath)
 	}
 
 	// Try running 'brew --version' to verify it works
@@ -219,23 +213,22 @@ func (m *MultiUserBrewInstaller) IsAvailable() (bool, error) {
 		return false, err
 	}
 
-	fileInfo, err := os.Stat(brewPath)
+	exists, err := m.fs.PathExists(brewPath)
 	if err != nil {
 		return false, err
 	}
+	if !exists {
+		return false, nil
+	}
 
-	if m.systemInfo != nil && m.systemInfo.OSName == "linux" ||
-		m.systemInfo == nil && runtime.GOOS == "linux" {
-		stat, ok := fileInfo.Sys().(*syscall.Stat_t)
-		if !ok {
-			return false, fmt.Errorf("failed to get file info: %w", err)
-		}
-
-		brewUser, err := user.LookupId(strconv.FormatUint(uint64(stat.Uid), 10))
+	// For Linux multi-user systems, check file ownership
+	if m.systemInfo.OSName == "linux" {
+		brewPathOwner, err := m.osManager.GetFileOwner(brewPath)
 		if err != nil {
-			return false, fmt.Errorf("failed to lookup user: %w", err)
+			return false, fmt.Errorf("failed to get owner of brew binary: %w", err)
 		}
-		return brewUser.Username == m.brewUser, nil
+
+		return brewPathOwner == m.brewUser, nil
 	}
 
 	return true, nil
@@ -388,8 +381,8 @@ type Options struct {
 }
 
 // DefaultOptions returns the default options
-func DefaultOptions() Options {
-	return Options{
+func DefaultOptions() *Options {
+	return &Options{
 		MultiUserSystem:  false,
 		Logger:           logger.DefaultLogger,
 		SystemInfo:       nil,

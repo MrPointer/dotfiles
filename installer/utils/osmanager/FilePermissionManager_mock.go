@@ -19,6 +19,9 @@ var _ FilePermissionManager = &MoqFilePermissionManager{}
 //
 //		// make and configure a mocked FilePermissionManager
 //		mockedFilePermissionManager := &MoqFilePermissionManager{
+//			GetFileOwnerFunc: func(path string) (string, error) {
+//				panic("mock out the GetFileOwner method")
+//			},
 //			SetOwnershipFunc: func(path string, username string) error {
 //				panic("mock out the SetOwnership method")
 //			},
@@ -32,6 +35,9 @@ var _ FilePermissionManager = &MoqFilePermissionManager{}
 //
 //	}
 type MoqFilePermissionManager struct {
+	// GetFileOwnerFunc mocks the GetFileOwner method.
+	GetFileOwnerFunc func(path string) (string, error)
+
 	// SetOwnershipFunc mocks the SetOwnership method.
 	SetOwnershipFunc func(path string, username string) error
 
@@ -40,6 +46,11 @@ type MoqFilePermissionManager struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetFileOwner holds details about calls to the GetFileOwner method.
+		GetFileOwner []struct {
+			// Path is the path argument value.
+			Path string
+		}
 		// SetOwnership holds details about calls to the SetOwnership method.
 		SetOwnership []struct {
 			// Path is the path argument value.
@@ -55,8 +66,41 @@ type MoqFilePermissionManager struct {
 			Mode os.FileMode
 		}
 	}
+	lockGetFileOwner   sync.RWMutex
 	lockSetOwnership   sync.RWMutex
 	lockSetPermissions sync.RWMutex
+}
+
+// GetFileOwner calls GetFileOwnerFunc.
+func (mock *MoqFilePermissionManager) GetFileOwner(path string) (string, error) {
+	if mock.GetFileOwnerFunc == nil {
+		panic("MoqFilePermissionManager.GetFileOwnerFunc: method is nil but FilePermissionManager.GetFileOwner was just called")
+	}
+	callInfo := struct {
+		Path string
+	}{
+		Path: path,
+	}
+	mock.lockGetFileOwner.Lock()
+	mock.calls.GetFileOwner = append(mock.calls.GetFileOwner, callInfo)
+	mock.lockGetFileOwner.Unlock()
+	return mock.GetFileOwnerFunc(path)
+}
+
+// GetFileOwnerCalls gets all the calls that were made to GetFileOwner.
+// Check the length with:
+//
+//	len(mockedFilePermissionManager.GetFileOwnerCalls())
+func (mock *MoqFilePermissionManager) GetFileOwnerCalls() []struct {
+	Path string
+} {
+	var calls []struct {
+		Path string
+	}
+	mock.lockGetFileOwner.RLock()
+	calls = mock.calls.GetFileOwner
+	mock.lockGetFileOwner.RUnlock()
+	return calls
 }
 
 // SetOwnership calls SetOwnershipFunc.
