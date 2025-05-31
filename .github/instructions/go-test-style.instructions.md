@@ -12,8 +12,12 @@ applyTo: "**/*.go"
   - Always use the `require` package from `testify` when checking the `error` type.
 - Each test should verify a single behavior or property. Do not test multiple behaviors in a single test.
 - Name tests based on their behavior, using descriptive and natural language.
-  - Example: `TestCompatibilityConfigCanBeLoadedFromFile` checks if the `CompatibilityConfig` struct can be loaded from a file.
+  - Example: `Test_CompatibilityConfigCanBeLoadedFromFile` checks if the `CompatibilityConfig` struct can be loaded from a file.
   - Test names should describe what the test does and what it verifies, not implementation details.
+  - Use the `Test_` prefix for test functions.
+  - If a condition is crucial to the test, include it in the test name.
+    - Example: `Test_CompatibilityConfigCanBeLoadedFromFile_WhenFileExists` indicates that the test checks loading from an existing file.
+    - Separate different conditions with underscores.
 - Use table-driven tests when appropriate. Table-driven tests define a set of inputs and expected outputs in a table, and iterate over the table to run the tests. This pattern makes it easy to add new test cases and keeps the code clean and maintainable.
 
 ## Types of Tests
