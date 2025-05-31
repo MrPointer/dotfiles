@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strconv"
+	"syscall"
 
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
 // UserManager defines operations for managing system users
-//
-//go:generate moq -out user_manager_moq.go . UserManager
 type UserManager interface {
 	// AddUser creates a new user in the system
 	AddUser(username string) error
@@ -24,27 +24,24 @@ type UserManager interface {
 }
 
 // SudoManager defines operations for managing sudo permissions
-//
-//go:generate moq -out sudo_manager_moq.go . SudoManager
 type SudoManager interface {
 	// AddSudoAccess grants password-less sudo access to a user
 	AddSudoAccess(username string) error
 }
 
 // FilePermissionManager defines operations for managing filesystem permissions
-//
-//go:generate moq -out filesystem_manager_moq.go . FileSystemManager
 type FilePermissionManager interface {
 	// SetOwnership sets ownership of a directory to a user
 	SetOwnership(path, username string) error
 
 	// SetPermissions sets permissions for a file or directory
 	SetPermissions(path string, mode os.FileMode) error
+
+	// GetFileOwner returns the username of the file owner
+	GetFileOwner(path string) (string, error)
 }
 
 // OsManager combines all system operation interfaces
-//
-//go:generate moq -out os_manager_moq.go . OsManager
 type OsManager interface {
 	UserManager
 	SudoManager
@@ -166,4 +163,23 @@ func (u *UnixOsManager) SetPermissions(path string, mode os.FileMode) error {
 	}
 
 	return nil
+}
+
+func (u *UnixOsManager) GetFileOwner(path string) (string, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to get file info for %s: %w", path, err)
+	}
+
+	stat, ok := fileInfo.Sys().(*syscall.Stat_t)
+	if !ok {
+		return "", fmt.Errorf("failed to get file info")
+	}
+
+	owner, err := user.LookupId(strconv.FormatUint(uint64(stat.Uid), 10))
+	if err != nil {
+		return "", fmt.Errorf("failed to lookup owner for %s: %w", path, err)
+	}
+
+	return owner.Username, nil
 }
