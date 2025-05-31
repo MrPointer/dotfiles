@@ -1,52 +1,47 @@
 ---
-applyTo: "**/*_test.go"
+applyTo: "**/*.go"
 ---
 
 # Go Test Style
 
 ## General Guidelines
 
-- Use `testify` for testing.
-  - Always use `require` when checking the `error` type.
-- Always test a single thing in a test. Don't test multiple things in a single test.
-- Name tests based on their behavior, expressed in natural language.
-  For example, `TestCompatibilityConfigCanBeLoadedFromFile`, which checks if the `CompatibilityConfig`
-  struct can be loaded from a file, is a good name for a test.
-  It describes what the test does and what it tests, but doesn't necessarily focus on the implementation
-  or technical details.
-- Use table-driven tests where appropriate. Table-driven tests are a common pattern in Go testing.
-  They allow you to define a set of inputs and expected outputs in a table, and then iterate over
-  the table to run the tests. This makes it easy to add new test cases and keeps the code clean.
+- Place tests in the test package of the package being tested.
+  - For example, if the package is `lib`, the test package should be named `lib_test`.
+- Use the `testify` library for all testing in Go.
+  - Always use the `require` package from `testify` when checking the `error` type.
+- Each test should verify a single behavior or property. Do not test multiple behaviors in a single test.
+- Name tests based on their behavior, using descriptive and natural language.
+  - Example: `TestCompatibilityConfigCanBeLoadedFromFile` checks if the `CompatibilityConfig` struct can be loaded from a file.
+  - Test names should describe what the test does and what it verifies, not implementation details.
+- Use table-driven tests when appropriate. Table-driven tests define a set of inputs and expected outputs in a table, and iterate over the table to run the tests. This pattern makes it easy to add new test cases and keeps the code clean and maintainable.
 
-## Different Types of Tests
+## Types of Tests
 
 ### Unit Tests
 
-- Unit tests are tests that test a single function or method in isolation.
+- Unit tests verify a single function or method in isolation.
 - Use mocks to isolate the function or method being tested.
-  Use the [moq][moq] package to generate mocks.
+  - Use the [moq](https://github.com/matryer/moq) package to generate mocks.
 
 ### Integration Tests
 
-- Integration tests are tests that test multiple functions or methods together.
-  Integration tests also test OS-dependent interactions, which is anything but CPU and memory.
-- For every integration test, make it possible to opt-out of the test by using `testing.Short()`.
-  This is useful for running tests in CI/CD pipelines where you want to run only unit tests.
-
-### System Tests
-
-- System tests are tests that test the entire system, or that test the system in a specific environment.
-- System tests are usually run in a separate environment, such as a Docker container or a virtual machine.
-- Such tests should use [testcontainers-go][testcontainers-go] to run the tests in a container.
-  Use it for any test that requires a specific environment or setup, or one that could ruin
-  the host system if it were to run on it. For example, a test to check that homebrew can be installed
-  should run in a container, as it could modify the host system if it were to run on it.
+- Integration tests verify the interaction between multiple functions or methods.
+- Integration tests also cover OS-dependent interactions (anything beyond CPU and memory).
+- For every integration test, allow opting out by using `testing.Short()`.
+  - This is useful for running only unit tests in CI/CD pipelines.
 
 ## Testing Tech Stack
 
-- **testify**: A Go library for testing. It is used to write tests and assertions.
-- **Moq**: A Go library for generating mocks. It is used to generate mocks for testing.
-- **Testcontainers**: A Go library for running tests in containers. It is used to run system tests in a container.
+- [testify]: A Go library for writing tests and assertions.
+- [moq]: A Go library for generating mocks for testing.
+- [mockery]: A Go library for generating mock objects. It is used to generate mock objects in the project.
 
+## Using Mocks
+
+- Use [mockery] to generate mocks for interfaces. Run the command `mockery` (with no arguments) in the root directory of the Go module (for example, the `go-port` directory).
+- In test code, use the generated mocks to test your code. The generated mocks are compatible with the `moq` library, so you can use `moq` features in your tests.
+
+[testify]: https://github.com/stretchr/testify
 [moq]: https://github.com/matryer/moq
-[testcontainers-go]: https://golang.testcontainers.org/
+[mockery]: https://github.com/vektra/mockery
