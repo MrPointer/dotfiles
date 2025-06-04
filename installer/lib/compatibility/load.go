@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// LoadCompatibilityConfig loads compatibility config from file or embedded source
+// LoadCompatibilityConfig loads compatibility config from file or embedded source.
 func LoadCompatibilityConfig(v *viper.Viper, compatibilityConfigFile string) (*CompatibilityConfig, error) {
 	// Create a separate viper instance for compatibility config
 	var compatibilityConfig CompatibilityConfig

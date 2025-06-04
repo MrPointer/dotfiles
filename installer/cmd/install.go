@@ -26,7 +26,7 @@ var (
 	verbose              bool
 )
 
-// installCmd represents the install command
+// installCmd represents the install command.
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install dotfiles",
@@ -36,10 +36,10 @@ install essential packages and tools that I use on a daily basis.
 It automates the process of setting up the dotfiles,
 making it easier to get started with a new system.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Create a CLI logger for installation output
+		// Create a CLI logger for installation output.
 		log := logger.NewCliLogger()
 
-		// Check system compatibility and get system info
+		// Check system compatibility and get system info.
 		config := GetCompatibilityConfig()
 		sysInfo, err := compatibility.CheckCompatibility(config)
 		if err != nil {
@@ -50,7 +50,7 @@ making it easier to get started with a new system.`,
 		log.Success("System compatibility check passed")
 		log.Info("Installing dotfiles...")
 
-		// Install Homebrew if specified and not already available
+		// Install Homebrew if specified and not already available.
 		if installBrew {
 			if err := installHomebrew(log, &sysInfo); err != nil {
 				log.Error("Failed to install Homebrew: %v", err)
@@ -67,15 +67,15 @@ making it easier to get started with a new system.`,
 	},
 }
 
-// installHomebrew installs Homebrew if not already installed
+// installHomebrew installs Homebrew if not already installed.
 func installHomebrew(log logger.Logger, sysInfo *compatibility.SystemInfo) error {
-	// Create BrewInstaller using the new API
+	// Create BrewInstaller using the new API.
 	installer := brew.NewBrewInstaller(
 		brew.Options{
 			MultiUserSystem: multiUserSystem,
 			Logger:          log,
 			SystemInfo:      sysInfo,
-			Commander:       nil, // Use default if needed, or expose as param
+			Commander:       nil, // Use default if needed, or expose as param.
 		},
 	)
 
@@ -96,6 +96,7 @@ func installHomebrew(log logger.Logger, sysInfo *compatibility.SystemInfo) error
 	return nil
 }
 
+//nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
 	rootCmd.AddCommand(installCmd)
 

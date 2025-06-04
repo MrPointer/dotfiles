@@ -1,44 +1,45 @@
-package compatibility
+package compatibility_test
 
 import (
 	"testing"
 
+	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/spf13/viper"
 )
 
-// MockOSDetector implements OSDetector for testing
+// MockOSDetector implements OSDetector for testing.
 type MockOSDetector struct {
 	osName     string
 	distroName string
 }
 
-// GetOSName returns the mocked OS name
+// GetOSName returns the mocked OS name.
 func (m *MockOSDetector) GetOSName() string {
 	return m.osName
 }
 
-// GetDistroName returns the mocked distro name
+// GetDistroName returns the mocked distro name.
 func (m *MockOSDetector) GetDistroName() string {
 	return m.distroName
 }
 
-// DetectSystem implements the OSDetector interface for the mock
-func (m *MockOSDetector) DetectSystem() (SystemInfo, error) {
-	return SystemInfo{
+// DetectSystem implements the OSDetector interface for the mock.
+func (m *MockOSDetector) DetectSystem() (compatibility.SystemInfo, error) {
+	return compatibility.SystemInfo{
 		OSName:     m.osName,
 		DistroName: m.distroName,
 		Arch:       "amd64", // Mock architecture
 	}, nil
 }
 
-// createMockConfig creates a mock compatibility configuration for testing
-func createMockConfig() *CompatibilityConfig {
-	return &CompatibilityConfig{
-		OperatingSystems: map[string]OSConfig{
+// createMockConfig creates a mock compatibility configuration for testing.
+func createMockConfig() *compatibility.CompatibilityConfig {
+	return &compatibility.CompatibilityConfig{
+		OperatingSystems: map[string]compatibility.OSConfig{
 			"linux": {
 				Supported: true,
 				Notes:     "Supported Linux",
-				Distributions: map[string]DistroConfig{
+				Distributions: map[string]compatibility.DistroConfig{
 					"ubuntu": {
 						Supported:         true,
 						VersionConstraint: ">= 20.04",
@@ -67,6 +68,7 @@ func createMockConfig() *CompatibilityConfig {
 	}
 }
 
+//gocognit:ignore
 func TestCompatibilityCanBeCheckedWithMockDetectorAndMockConfig(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -132,7 +134,7 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndMockConfig(t *testing.T) {
 				distroName: tc.distroName,
 			}
 
-			sysInfo, err := CheckCompatibilityWithDetector(config, detector)
+			sysInfo, err := compatibility.CheckCompatibilityWithDetector(config, detector)
 
 			if tc.expectError {
 				if err == nil {
@@ -172,12 +174,12 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndMockConfig(t *testing.T) {
 func TestCompatibilityCanBeCheckedWithMockDetectorAndEmbeddedConfig(t *testing.T) {
 	detector := &MockOSDetector{osName: "linux", distroName: "ubuntu"}
 
-	compatibilityConfig, err := LoadCompatibilityConfig(viper.New(), "")
+	compatibilityConfig, err := compatibility.LoadCompatibilityConfig(viper.New(), "")
 	if err != nil {
 		t.Fatalf("Expected no error when loading embedded compatibility config, got: %v", err)
 	}
 
-	sysInfo, err := CheckCompatibilityWithDetector(compatibilityConfig, detector)
+	sysInfo, err := compatibility.CheckCompatibilityWithDetector(compatibilityConfig, detector)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -193,7 +195,7 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndEmbeddedConfig(t *testing.T
 
 func TestCompatibilityCheckRejectsNilConfig(t *testing.T) {
 	detector := &MockOSDetector{osName: "linux", distroName: "ubuntu"}
-	sysInfo, err := CheckCompatibilityWithDetector(nil, detector)
+	sysInfo, err := compatibility.CheckCompatibilityWithDetector(nil, detector)
 
 	if err == nil {
 		t.Fatal("Expected error with nil config, got nil")
