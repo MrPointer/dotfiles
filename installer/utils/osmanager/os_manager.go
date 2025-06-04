@@ -3,6 +3,7 @@ package osmanager
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"strconv"
 	"syscall"
@@ -41,11 +42,27 @@ type FilePermissionManager interface {
 	GetFileOwner(path string) (string, error)
 }
 
-// OsManager combines all system operation interfaces
+type VersionExtractor func(string) (string, error)
+
+type ProgramQuery interface {
+	// GetProgramPath retrieves the full path of a program if it's available in one of the system's PATH directories.
+	// If the program is not found, it returns an error.
+	GetProgramPath(program string) (string, error)
+
+	// ProgramExists checks if a program exists in the system's PATH directories.
+	// It returns true if the program is found, false if not, and an error if there was an issue checking.
+	ProgramExists(program string) (bool, error)
+
+	// GetProgramVersion retrieves the version of a program by executing it with the provided query arguments.
+	GetProgramVersion(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error)
+}
+
+// OsManager combines all system operation interfaces.
 type OsManager interface {
 	UserManager
 	SudoManager
 	FilePermissionManager
+	ProgramQuery
 }
 
 // UnixOsManager implements OsManager for Unix-like systems.
@@ -182,4 +199,39 @@ func (u *UnixOsManager) GetFileOwner(path string) (string, error) {
 	}
 
 	return owner.Username, nil
+}
+
+func (u *UnixOsManager) GetProgramPath(program string) (string, error) {
+	return exec.LookPath(program)
+}
+
+func (u *UnixOsManager) ProgramExists(program string) (bool, error) {
+	_, err := u.GetProgramPath(program)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil // Program not found.
+		}
+		return false, fmt.Errorf("error checking program existence: %w", err)
+	}
+	return true, nil // Program found.
+}
+
+func (u *UnixOsManager) GetProgramVersion(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error) {
+	args := []string{"--version"} // Default argument for version query.
+	if len(queryArgs) > 0 {
+		args = queryArgs
+	}
+
+	cmd := exec.Command(program, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get version for %s: %w", program, err)
+	}
+
+	version, err := versionExtractor(string(output))
+	if err != nil {
+		return "", fmt.Errorf("failed to extract version from output: %w", err)
+	}
+
+	return version, nil
 }
