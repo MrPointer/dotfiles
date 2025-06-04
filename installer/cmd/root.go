@@ -15,7 +15,7 @@ var (
 	globalCompatibilityConfig *compatibility.CompatibilityConfig
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "dotfiles-installer",
 	Short: "A tool to install (bootstrap) my dotfiles on any system",
@@ -34,6 +34,7 @@ func Execute() {
 	}
 }
 
+//nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
 	cobra.OnInitialize(initConfig, initCompatibilityConfig)
 
@@ -41,9 +42,10 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dotfiles-installer.yaml)")
+	rootCmd.PersistentFlags().
+		StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dotfiles-installer.yaml)")
 
-	// Add compatibility config flag to root command so it's available globally
+	// Add compatibility config flag to root command so it's available globally.
 	rootCmd.PersistentFlags().StringVar(&compatibilityConfigFile, "compat-config", "",
 		"compatibility configuration file (uses embedded config by default)")
 }
@@ -64,7 +66,7 @@ func initConfig() {
 		viper.SetConfigName(".dotfiles-installer")
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv() // Read in environment variables that match.
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
@@ -73,7 +75,7 @@ func initConfig() {
 }
 
 func initCompatibilityConfig() {
-	// Initialize compatibility configuration
+	// Initialize compatibility configuration.
 	compatibilityConfig, err := compatibility.LoadCompatibilityConfig(viper.New(), compatibilityConfigFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading compatibility config: %v\n", err)
@@ -82,7 +84,7 @@ func initCompatibilityConfig() {
 	globalCompatibilityConfig = compatibilityConfig
 }
 
-// GetCompatibilityConfig returns the loaded compatibility configuration
+// GetCompatibilityConfig returns the loaded compatibility configuration.
 func GetCompatibilityConfig() *compatibility.CompatibilityConfig {
 	return globalCompatibilityConfig
 }

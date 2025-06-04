@@ -1,6 +1,10 @@
-package collections
+package collections_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MrPointer/dotfiles/installer/utils/collections"
+)
 
 func TestLast(t *testing.T) {
 	tests := []struct {
@@ -22,7 +26,7 @@ func TestLast(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := Last(test.input)
+			result, err := collections.Last(test.input)
 			if err != nil && len(test.input) > 0 {
 				t.Errorf("Expected true, got false")
 			}
