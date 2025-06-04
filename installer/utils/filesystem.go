@@ -29,7 +29,7 @@ type FileSystem interface {
 	// If dir is nil, the system's default temporary directory will be used.
 	//
 	// It returns the created file or an error if it fails.
-	CreateTemporaryFile(dir string, pattern string) (string, error)
+	CreateTemporaryFile(dir, pattern string) (string, error)
 
 	// CreateTemporaryDirectory creates a temporary directory in the optional specified directory.
 	// dir is the directory where the temporary directory will be created.
@@ -75,7 +75,8 @@ func (fs *DefaultFileSystem) CreateFile(path string) (string, error) {
 }
 
 func (fs *DefaultFileSystem) CreateDirectory(path string) error {
-	return os.MkdirAll(path, 0755) // Default permissions
+	const defaultPermissions = 0o755 // Default permissions for directories.
+	return os.MkdirAll(path, defaultPermissions)
 }
 
 func (fs *DefaultFileSystem) RemovePath(path string) error {
@@ -95,7 +96,7 @@ func (fs *DefaultFileSystem) PathExists(path string) (bool, error) {
 	return false, err
 }
 
-func (fs *DefaultFileSystem) CreateTemporaryFile(dir string, pattern string) (string, error) {
+func (fs *DefaultFileSystem) CreateTemporaryFile(dir, pattern string) (string, error) {
 	var tempDir string
 	if dir != "" {
 		tempDir = dir
