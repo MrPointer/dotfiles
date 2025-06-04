@@ -287,7 +287,7 @@ func Test_SingleUserBrew_InstallsSuccessfully_WhenNotAvailable(t *testing.T) {
 
 	mockOsManager := &osmanager.MoqOsManager{
 		SetPermissionsFunc: func(path string, perms os.FileMode) error {
-			if path == tempScriptPath && perms == 0777 {
+			if path == tempScriptPath && perms == 0o755 {
 				return nil
 			}
 			return fmt.Errorf("unexpected permission call: %s %o", path, perms)
@@ -440,12 +440,12 @@ func Test_SingleUserBrew_FailsInstallation_WhenFailingToCreateTempFileHoldingDow
 func Test_SingleUserBrew_FailsInstallation_WhenFailingToCopyDownloadedScriptFromHttpBodyToTempFile(t *testing.T) {
 	tests := []struct {
 		name            string
-		setupMockFS     func(tempScriptPath string, expectedBrewPath string, installScript string) *utils.MoqFileSystem
+		setupMockFS     func(tempScriptPath, expectedBrewPath, installScript string) *utils.MoqFileSystem
 		expectedErrText string
 	}{
 		{
 			name: "Write permissions error",
-			setupMockFS: func(tempScriptPath string, expectedBrewPath string, installScript string) *utils.MoqFileSystem {
+			setupMockFS: func(tempScriptPath, expectedBrewPath, installScript string) *utils.MoqFileSystem {
 				return &utils.MoqFileSystem{
 					PathExistsFunc: func(path string) (bool, error) {
 						// For this specific test case, brew is assumed to not exist initially to trigger download.
@@ -466,7 +466,7 @@ func Test_SingleUserBrew_FailsInstallation_WhenFailingToCopyDownloadedScriptFrom
 		},
 		{
 			name: "Zero bytes written",
-			setupMockFS: func(tempScriptPath string, expectedBrewPath string, installScript string) *utils.MoqFileSystem {
+			setupMockFS: func(tempScriptPath, expectedBrewPath, installScript string) *utils.MoqFileSystem {
 				return &utils.MoqFileSystem{
 					PathExistsFunc: func(path string) (bool, error) {
 						// Brew should not exist to trigger download and write attempt.
@@ -701,7 +701,7 @@ func Test_SingleUserBrew_CanHandleLargeInstallScript(t *testing.T) {
 
 	mockOsManager := &osmanager.MoqOsManager{
 		SetPermissionsFunc: func(path string, perms os.FileMode) error {
-			if path == tempScriptPath && perms == 0777 {
+			if path == tempScriptPath && perms == 0o755 {
 				return nil
 			}
 			return fmt.Errorf("unexpected permission call: %s %o", path, perms)
@@ -936,157 +936,262 @@ func Test_MultiUserBrew_DoesNotReinstall_WhenAlreadyAvailable(t *testing.T) {
 	require.Empty(t, mockOsManager.AddUserCalls())
 }
 
-func Test_MultiUserBrew_InstallsFromScratch_WhenNotAvailable(t *testing.T) {
-	tests := []struct {
-		name                string
-		userExistsInitially bool
-		expectAddUserCall   bool
-	}{
-		{
-			name:                "User does not exist initially",
-			userExistsInitially: false,
-			expectAddUserCall:   true,
-		},
-		{
-			name:                "User already exists",
-			userExistsInitially: true,
-			expectAddUserCall:   false,
+//gocognit:ignore
+//nolint:cyclop // This test is complex due to the multi-user setup and various checks involved.
+func Test_MultiUserBrew_InstallsFromScratch_WhenUserDoesNotExist(t *testing.T) {
+	expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
+	tempScriptPath := "/tmp/brew-install-12345.sh"
+	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
+
+	mockCommander := &utils.MoqCommander{
+		RunFunc: func(name string, args ...string) error {
+			if name == "sudo" && len(args) == 4 && args[0] == "-Hu" &&
+				args[1] == brew.BrewUserOnMultiUserSystem &&
+				args[2] == "bash" && args[3] == tempScriptPath {
+				return nil
+			}
+			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
+				return nil
+			}
+			return fmt.Errorf("unexpected command: %s %v", name, args)
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
-			mockLogger := &logger.NoopLogger{}
-			tempScriptPath := "/tmp/brew-install-12345.sh"
-			installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
-
-			mockCommander := &utils.MoqCommander{
-				RunFunc: func(name string, args ...string) error {
-					if name == "sudo" && len(args) == 4 && args[0] == "-Hu" && args[1] == brew.BrewUserOnMultiUserSystem && args[2] == "bash" && args[3] == tempScriptPath {
-						return nil // Installation successful
-					}
-					if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-						return nil // Validation successful
-					}
-					return fmt.Errorf("unexpected command: %s %v", name, args)
-				},
+	pathExistsCalls := 0
+	mockFS := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			pathExistsCalls++
+			if path == expectedBrewPath {
+				return pathExistsCalls > 1, nil
 			}
-
-			pathExistsCalls := 0
-			mockFS := &utils.MoqFileSystem{
-				PathExistsFunc: func(path string) (bool, error) {
-					pathExistsCalls++
-					if path == expectedBrewPath {
-						return pathExistsCalls > 1, nil // Brew exists after (simulated) install
-					}
-					if path == tempScriptPath {
-						return true, nil // Script exists after download
-					}
-					return false, nil // Brew doesn't exist initially
-				},
-				CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
-					return tempScriptPath, nil
-				},
-				WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
-					if path == tempScriptPath {
-						return int64(len(installScript)), nil
-					}
-					return 0, fmt.Errorf("unexpected path: %s", path)
-				},
-				RemovePathFunc: func(path string) error {
-					return nil // Cleanup successful
-				},
+			if path == tempScriptPath {
+				return true, nil
 			}
-
-			mockHTTP := &httpclient.MoqHTTPClient{
-				GetFunc: func(url string) (*http.Response, error) {
-					if url == "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" {
-						return &http.Response{
-							StatusCode: http.StatusOK,
-							Body:       io.NopCloser(bytes.NewBufferString(installScript)),
-						}, nil
-					}
-					return nil, fmt.Errorf("unexpected URL: %s", url)
-				},
+			return false, nil
+		},
+		CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
+			return tempScriptPath, nil
+		},
+		WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
+			if path == tempScriptPath {
+				return int64(len(installScript)), nil
 			}
-
-			mockOsManager := &osmanager.MoqOsManager{
-				UserExistsFunc: func(username string) (bool, error) {
-					if username == brew.BrewUserOnMultiUserSystem {
-						return tt.userExistsInitially, nil
-					}
-					return false, fmt.Errorf("unexpected user check: %s", username)
-				},
-				AddUserFunc: func(username string) error {
-					if username == brew.BrewUserOnMultiUserSystem {
-						return nil
-					}
-					return fmt.Errorf("unexpected user add: %s", username)
-				},
-				AddUserToGroupFunc: func(username, group string) error {
-					if username == brew.BrewUserOnMultiUserSystem && group == "sudo" {
-						return nil
-					}
-					return fmt.Errorf("unexpected user/group add: %s/%s", username, group)
-				},
-				AddSudoAccessFunc: func(username string) error {
-					if username == brew.BrewUserOnMultiUserSystem {
-						return nil
-					}
-					return fmt.Errorf("unexpected sudo access for: %s", username)
-				},
-				SetOwnershipFunc: func(path, username string) error {
-					if path == "/home/linuxbrew" && username == brew.BrewUserOnMultiUserSystem {
-						return nil
-					}
-					return fmt.Errorf("unexpected ownership set: %s for %s", path, username)
-				},
-				SetPermissionsFunc: func(path string, perms os.FileMode) error {
-					if path == tempScriptPath && perms == 0777 {
-						return nil
-					}
-					return fmt.Errorf("unexpected permission call: %s %o", path, perms)
-				},
-				GetFileOwnerFunc: func(path string) (string, error) {
-					if path == expectedBrewPath {
-						return brew.BrewUserOnMultiUserSystem, nil
-					}
-					return "", fmt.Errorf("unexpected get owner for: %s", path)
-				},
-			}
-
-			opts := brew.Options{
-				Logger:           mockLogger,
-				SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-				Commander:        mockCommander,
-				HTTPClient:       mockHTTP,
-				OsManager:        mockOsManager,
-				Fs:               mockFS,
-				MultiUserSystem:  true,
-				BrewPathOverride: expectedBrewPath,
-			}
-
-			installer := brew.NewBrewInstaller(opts)
-			err := installer.Install()
-
-			require.NoError(t, err)
-
-			require.Len(t, mockOsManager.UserExistsCalls(), 1)
-			if tt.expectAddUserCall {
-				require.Len(t, mockOsManager.AddUserCalls(), 1)
-			} else {
-				require.Empty(t, mockOsManager.AddUserCalls())
-			}
-			require.Len(t, mockOsManager.AddUserToGroupCalls(), 1)
-			require.Len(t, mockOsManager.AddSudoAccessCalls(), 1)
-			require.Len(t, mockOsManager.SetOwnershipCalls(), 1)
-			require.Len(t, mockHTTP.GetCalls(), 1)
-			require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
-			require.Len(t, mockFS.WriteFileCalls(), 1)
-			require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
-			require.Len(t, mockCommander.RunCalls(), 2) // Installation and validation calls
-			require.Len(t, mockFS.RemovePathCalls(), 1) // Cleanup call
-		})
+			return 0, fmt.Errorf("unexpected path: %s", path)
+		},
+		RemovePathFunc: func(path string) error {
+			return nil
+		},
 	}
+
+	mockHTTP := &httpclient.MoqHTTPClient{
+		GetFunc: func(url string) (*http.Response, error) {
+			if url == "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewBufferString(installScript)),
+				}, nil
+			}
+			return nil, fmt.Errorf("unexpected URL: %s", url)
+		},
+	}
+
+	mockOsManager := &osmanager.MoqOsManager{
+		UserExistsFunc: func(username string) (bool, error) {
+			if username == brew.BrewUserOnMultiUserSystem {
+				return false, nil // User does not exist
+			}
+			return false, fmt.Errorf("unexpected user check: %s", username)
+		},
+		AddUserFunc: func(username string) error {
+			if username == brew.BrewUserOnMultiUserSystem {
+				return nil
+			}
+			return fmt.Errorf("unexpected user add: %s", username)
+		},
+		AddUserToGroupFunc: func(username, group string) error {
+			if username == brew.BrewUserOnMultiUserSystem && group == "sudo" {
+				return nil
+			}
+			return fmt.Errorf("unexpected user/group add: %s/%s", username, group)
+		},
+		AddSudoAccessFunc: func(username string) error {
+			if username == brew.BrewUserOnMultiUserSystem {
+				return nil
+			}
+			return fmt.Errorf("unexpected sudo access for: %s", username)
+		},
+		SetOwnershipFunc: func(path, username string) error {
+			if path == "/home/linuxbrew" && username == brew.BrewUserOnMultiUserSystem {
+				return nil
+			}
+			return fmt.Errorf("unexpected ownership set: %s for %s", path, username)
+		},
+		SetPermissionsFunc: func(path string, perms os.FileMode) error {
+			if path == tempScriptPath && perms == 0o755 {
+				return nil
+			}
+			return fmt.Errorf("unexpected permission call: %s %o", path, perms)
+		},
+		GetFileOwnerFunc: func(path string) (string, error) {
+			if path == expectedBrewPath {
+				return brew.BrewUserOnMultiUserSystem, nil
+			}
+			return "", fmt.Errorf("unexpected get owner for: %s", path)
+		},
+	}
+
+	opts := brew.Options{
+		Logger:           &logger.NoopLogger{},
+		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
+		Commander:        mockCommander,
+		HTTPClient:       mockHTTP,
+		OsManager:        mockOsManager,
+		Fs:               mockFS,
+		MultiUserSystem:  true,
+		BrewPathOverride: expectedBrewPath,
+	}
+
+	installer := brew.NewBrewInstaller(opts)
+	err := installer.Install()
+
+	require.NoError(t, err)
+	require.Len(t, mockOsManager.UserExistsCalls(), 1)
+	require.Len(t, mockOsManager.AddUserCalls(), 1) // User should be added
+	require.Len(t, mockOsManager.AddUserToGroupCalls(), 1)
+	require.Len(t, mockOsManager.AddSudoAccessCalls(), 1)
+	require.Len(t, mockOsManager.SetOwnershipCalls(), 1)
+	require.Len(t, mockHTTP.GetCalls(), 1)
+	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
+	require.Len(t, mockFS.WriteFileCalls(), 1)
+	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
+	require.Len(t, mockCommander.RunCalls(), 2)
+	require.Len(t, mockFS.RemovePathCalls(), 1)
+}
+
+//nolint:cyclop // This test is complex due to the multi-user setup and various checks involved.
+func Test_MultiUserBrew_InstallsFromScratch_WhenUserAlreadyExists(t *testing.T) {
+	expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
+	tempScriptPath := "/tmp/brew-install-12345.sh"
+	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
+
+	mockCommander := &utils.MoqCommander{
+		RunFunc: func(name string, args ...string) error {
+			if name == "sudo" && len(args) == 4 && args[0] == "-Hu" &&
+				args[1] == brew.BrewUserOnMultiUserSystem &&
+				args[2] == "bash" && args[3] == tempScriptPath {
+				return nil
+			}
+			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
+				return nil
+			}
+			return fmt.Errorf("unexpected command: %s %v", name, args)
+		},
+	}
+
+	pathExistsCalls := 0
+	mockFS := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			pathExistsCalls++
+			if path == expectedBrewPath {
+				return pathExistsCalls > 1, nil
+			}
+			if path == tempScriptPath {
+				return true, nil
+			}
+			return false, nil
+		},
+		CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
+			return tempScriptPath, nil
+		},
+		WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
+			if path == tempScriptPath {
+				return int64(len(installScript)), nil
+			}
+			return 0, fmt.Errorf("unexpected path: %s", path)
+		},
+		RemovePathFunc: func(path string) error {
+			return nil
+		},
+	}
+
+	mockHTTP := &httpclient.MoqHTTPClient{
+		GetFunc: func(url string) (*http.Response, error) {
+			if url == "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewBufferString(installScript)),
+				}, nil
+			}
+			return nil, fmt.Errorf("unexpected URL: %s", url)
+		},
+	}
+
+	mockOsManager := &osmanager.MoqOsManager{
+		UserExistsFunc: func(username string) (bool, error) {
+			if username == brew.BrewUserOnMultiUserSystem {
+				return true, nil // User already exists
+			}
+			return false, fmt.Errorf("unexpected user check: %s", username)
+		},
+		AddUserFunc: func(username string) error {
+			return fmt.Errorf("unexpected user add: %s", username) // Should not be called
+		},
+		AddUserToGroupFunc: func(username, group string) error {
+			if username == brew.BrewUserOnMultiUserSystem && group == "sudo" {
+				return nil
+			}
+			return fmt.Errorf("unexpected user/group add: %s/%s", username, group)
+		},
+		AddSudoAccessFunc: func(username string) error {
+			if username == brew.BrewUserOnMultiUserSystem {
+				return nil
+			}
+			return fmt.Errorf("unexpected sudo access for: %s", username)
+		},
+		SetOwnershipFunc: func(path, username string) error {
+			if path == "/home/linuxbrew" && username == brew.BrewUserOnMultiUserSystem {
+				return nil
+			}
+			return fmt.Errorf("unexpected ownership set: %s for %s", path, username)
+		},
+		SetPermissionsFunc: func(path string, perms os.FileMode) error {
+			if path == tempScriptPath && perms == 0o755 {
+				return nil
+			}
+			return fmt.Errorf("unexpected permission call: %s %o", path, perms)
+		},
+		GetFileOwnerFunc: func(path string) (string, error) {
+			if path == expectedBrewPath {
+				return brew.BrewUserOnMultiUserSystem, nil
+			}
+			return "", fmt.Errorf("unexpected get owner for: %s", path)
+		},
+	}
+
+	opts := brew.Options{
+		Logger:           &logger.NoopLogger{},
+		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
+		Commander:        mockCommander,
+		HTTPClient:       mockHTTP,
+		OsManager:        mockOsManager,
+		Fs:               mockFS,
+		MultiUserSystem:  true,
+		BrewPathOverride: expectedBrewPath,
+	}
+
+	installer := brew.NewBrewInstaller(opts)
+	err := installer.Install()
+
+	require.NoError(t, err)
+	require.Len(t, mockOsManager.UserExistsCalls(), 1)
+	require.Empty(t, mockOsManager.AddUserCalls()) // User should not be added
+	require.Len(t, mockOsManager.AddUserToGroupCalls(), 1)
+	require.Len(t, mockOsManager.AddSudoAccessCalls(), 1)
+	require.Len(t, mockOsManager.SetOwnershipCalls(), 1)
+	require.Len(t, mockHTTP.GetCalls(), 1)
+	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
+	require.Len(t, mockFS.WriteFileCalls(), 1)
+	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
+	require.Len(t, mockCommander.RunCalls(), 2)
+	require.Len(t, mockFS.RemovePathCalls(), 1)
 }

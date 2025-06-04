@@ -1,15 +1,16 @@
-package current
+package current_test
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/MrPointer/dotfiles/installer/utils/collections"
+	"github.com/MrPointer/dotfiles/installer/utils/files/current"
 )
 
 func TestCurrentFileIsSelf(t *testing.T) {
 	// Get the current file path
-	currentFile, err := Filename()
+	currentFile, err := current.Filename()
 	if err != nil {
 		t.Fatalf("Failed to get current file: %v", err)
 	}
@@ -30,7 +31,7 @@ func TestCurrentFileIsSelf(t *testing.T) {
 
 func TestCurrentDirIsSelf(t *testing.T) {
 	// Get the current directory path
-	currentDir, err := Dirname()
+	currentDir, err := current.Dirname()
 	if err != nil {
 		t.Fatalf("Failed to get current directory: %v", err)
 	}

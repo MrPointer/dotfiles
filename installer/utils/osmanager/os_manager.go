@@ -11,33 +11,33 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
-// UserManager defines operations for managing system users
+// UserManager defines operations for managing system users.
 type UserManager interface {
-	// AddUser creates a new user in the system
+	// AddUser creates a new user in the system.
 	AddUser(username string) error
 
-	// AddUserToGroup adds a user to a specified group
+	// AddUserToGroup adds a user to a specified group.
 	AddUserToGroup(username, group string) error
 
-	// UserExists checks if a user exists in the system
+	// UserExists checks if a user exists in the system.
 	UserExists(username string) (bool, error)
 }
 
-// SudoManager defines operations for managing sudo permissions
+// SudoManager defines operations for managing sudo permissions.
 type SudoManager interface {
-	// AddSudoAccess grants password-less sudo access to a user
+	// AddSudoAccess grants password-less sudo access to a user.
 	AddSudoAccess(username string) error
 }
 
-// FilePermissionManager defines operations for managing filesystem permissions
+// FilePermissionManager defines operations for managing filesystem permissions.
 type FilePermissionManager interface {
-	// SetOwnership sets ownership of a directory to a user
+	// SetOwnership sets ownership of a directory to a user.
 	SetOwnership(path, username string) error
 
-	// SetPermissions sets permissions for a file or directory
+	// SetPermissions sets permissions for a file or directory.
 	SetPermissions(path string, mode os.FileMode) error
 
-	// GetFileOwner returns the username of the file owner
+	// GetFileOwner returns the username of the file owner.
 	GetFileOwner(path string) (string, error)
 }
 
@@ -48,7 +48,7 @@ type OsManager interface {
 	FilePermissionManager
 }
 
-// UnixOsManager implements OsManager for Unix-like systems
+// UnixOsManager implements OsManager for Unix-like systems.
 type UnixOsManager struct {
 	logger    logger.Logger
 	commander utils.Commander
@@ -57,7 +57,7 @@ type UnixOsManager struct {
 
 var _ OsManager = (*UnixOsManager)(nil)
 
-// NewUnixOsManager creates a new UnixOsManager
+// NewUnixOsManager creates a new UnixOsManager.
 func NewUnixOsManager(logger logger.Logger, commander utils.Commander, isRoot bool) *UnixOsManager {
 	return &UnixOsManager{
 		logger:    logger,
@@ -77,7 +77,7 @@ func (u *UnixOsManager) UserExists(username string) (bool, error) {
 func (u *UnixOsManager) AddUser(username string) error {
 	u.logger.Info("User '%s' does not exist, creating...", username)
 
-	// Try useradd, fallback to adduser
+	// Try useradd, fallback to adduser.
 	useraddCmd := []string{"useradd", "-m", "-s", "/bin/bash", username}
 	if !u.isRoot {
 		useraddCmd = append([]string{"sudo"}, useraddCmd...)
@@ -85,7 +85,7 @@ func (u *UnixOsManager) AddUser(username string) error {
 
 	err := u.commander.Run(useraddCmd[0], useraddCmd[1:]...)
 	if err != nil {
-		// Try adduser as fallback
+		// Try adduser as fallback.
 		adduserCmd := []string{"adduser", "--disabled-password", "--gecos", "''", username}
 		if !u.isRoot {
 			adduserCmd = append([]string{"sudo"}, adduserCmd...)
@@ -108,7 +108,7 @@ func (u *UnixOsManager) AddUserToGroup(username, group string) error {
 	}
 
 	err := u.commander.Run(usermodCmd[0], usermodCmd[1:]...)
-	// Often we don't care if the user is already in the group
+	// Often we don't care if the user is already in the group.
 	if err != nil {
 		u.logger.Debug("Note: User might already be in the %s group", group)
 	}
@@ -125,7 +125,7 @@ func (u *UnixOsManager) AddSudoAccess(username string) error {
 		sudoPrefix = "sudo "
 	}
 
-	// Use shell to echo and tee the line into the sudoers file
+	// Use shell to echo and tee the line into the sudoers file.
 	shCmd := []string{"sh", "-c", fmt.Sprintf("echo '%s' | %stee %s", sudoersLine, sudoPrefix, sudoersFile)}
 	err := u.commander.Run(shCmd[0], shCmd[1:]...)
 	if err != nil {
