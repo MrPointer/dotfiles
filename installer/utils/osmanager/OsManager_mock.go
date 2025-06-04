@@ -31,6 +31,15 @@ var _ OsManager = &MoqOsManager{}
 //			GetFileOwnerFunc: func(path string) (string, error) {
 //				panic("mock out the GetFileOwner method")
 //			},
+//			GetProgramPathFunc: func(program string) (string, error) {
+//				panic("mock out the GetProgramPath method")
+//			},
+//			GetProgramVersionFunc: func(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error) {
+//				panic("mock out the GetProgramVersion method")
+//			},
+//			ProgramExistsFunc: func(program string) (bool, error) {
+//				panic("mock out the ProgramExists method")
+//			},
 //			SetOwnershipFunc: func(path string, username string) error {
 //				panic("mock out the SetOwnership method")
 //			},
@@ -58,6 +67,15 @@ type MoqOsManager struct {
 
 	// GetFileOwnerFunc mocks the GetFileOwner method.
 	GetFileOwnerFunc func(path string) (string, error)
+
+	// GetProgramPathFunc mocks the GetProgramPath method.
+	GetProgramPathFunc func(program string) (string, error)
+
+	// GetProgramVersionFunc mocks the GetProgramVersion method.
+	GetProgramVersionFunc func(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error)
+
+	// ProgramExistsFunc mocks the ProgramExists method.
+	ProgramExistsFunc func(program string) (bool, error)
 
 	// SetOwnershipFunc mocks the SetOwnership method.
 	SetOwnershipFunc func(path string, username string) error
@@ -92,6 +110,25 @@ type MoqOsManager struct {
 			// Path is the path argument value.
 			Path string
 		}
+		// GetProgramPath holds details about calls to the GetProgramPath method.
+		GetProgramPath []struct {
+			// Program is the program argument value.
+			Program string
+		}
+		// GetProgramVersion holds details about calls to the GetProgramVersion method.
+		GetProgramVersion []struct {
+			// Program is the program argument value.
+			Program string
+			// VersionExtractor is the versionExtractor argument value.
+			VersionExtractor VersionExtractor
+			// QueryArgs is the queryArgs argument value.
+			QueryArgs []string
+		}
+		// ProgramExists holds details about calls to the ProgramExists method.
+		ProgramExists []struct {
+			// Program is the program argument value.
+			Program string
+		}
 		// SetOwnership holds details about calls to the SetOwnership method.
 		SetOwnership []struct {
 			// Path is the path argument value.
@@ -112,13 +149,16 @@ type MoqOsManager struct {
 			Username string
 		}
 	}
-	lockAddSudoAccess  sync.RWMutex
-	lockAddUser        sync.RWMutex
-	lockAddUserToGroup sync.RWMutex
-	lockGetFileOwner   sync.RWMutex
-	lockSetOwnership   sync.RWMutex
-	lockSetPermissions sync.RWMutex
-	lockUserExists     sync.RWMutex
+	lockAddSudoAccess     sync.RWMutex
+	lockAddUser           sync.RWMutex
+	lockAddUserToGroup    sync.RWMutex
+	lockGetFileOwner      sync.RWMutex
+	lockGetProgramPath    sync.RWMutex
+	lockGetProgramVersion sync.RWMutex
+	lockProgramExists     sync.RWMutex
+	lockSetOwnership      sync.RWMutex
+	lockSetPermissions    sync.RWMutex
+	lockUserExists        sync.RWMutex
 }
 
 // AddSudoAccess calls AddSudoAccessFunc.
@@ -250,6 +290,110 @@ func (mock *MoqOsManager) GetFileOwnerCalls() []struct {
 	mock.lockGetFileOwner.RLock()
 	calls = mock.calls.GetFileOwner
 	mock.lockGetFileOwner.RUnlock()
+	return calls
+}
+
+// GetProgramPath calls GetProgramPathFunc.
+func (mock *MoqOsManager) GetProgramPath(program string) (string, error) {
+	if mock.GetProgramPathFunc == nil {
+		panic("MoqOsManager.GetProgramPathFunc: method is nil but OsManager.GetProgramPath was just called")
+	}
+	callInfo := struct {
+		Program string
+	}{
+		Program: program,
+	}
+	mock.lockGetProgramPath.Lock()
+	mock.calls.GetProgramPath = append(mock.calls.GetProgramPath, callInfo)
+	mock.lockGetProgramPath.Unlock()
+	return mock.GetProgramPathFunc(program)
+}
+
+// GetProgramPathCalls gets all the calls that were made to GetProgramPath.
+// Check the length with:
+//
+//	len(mockedOsManager.GetProgramPathCalls())
+func (mock *MoqOsManager) GetProgramPathCalls() []struct {
+	Program string
+} {
+	var calls []struct {
+		Program string
+	}
+	mock.lockGetProgramPath.RLock()
+	calls = mock.calls.GetProgramPath
+	mock.lockGetProgramPath.RUnlock()
+	return calls
+}
+
+// GetProgramVersion calls GetProgramVersionFunc.
+func (mock *MoqOsManager) GetProgramVersion(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error) {
+	if mock.GetProgramVersionFunc == nil {
+		panic("MoqOsManager.GetProgramVersionFunc: method is nil but OsManager.GetProgramVersion was just called")
+	}
+	callInfo := struct {
+		Program          string
+		VersionExtractor VersionExtractor
+		QueryArgs        []string
+	}{
+		Program:          program,
+		VersionExtractor: versionExtractor,
+		QueryArgs:        queryArgs,
+	}
+	mock.lockGetProgramVersion.Lock()
+	mock.calls.GetProgramVersion = append(mock.calls.GetProgramVersion, callInfo)
+	mock.lockGetProgramVersion.Unlock()
+	return mock.GetProgramVersionFunc(program, versionExtractor, queryArgs...)
+}
+
+// GetProgramVersionCalls gets all the calls that were made to GetProgramVersion.
+// Check the length with:
+//
+//	len(mockedOsManager.GetProgramVersionCalls())
+func (mock *MoqOsManager) GetProgramVersionCalls() []struct {
+	Program          string
+	VersionExtractor VersionExtractor
+	QueryArgs        []string
+} {
+	var calls []struct {
+		Program          string
+		VersionExtractor VersionExtractor
+		QueryArgs        []string
+	}
+	mock.lockGetProgramVersion.RLock()
+	calls = mock.calls.GetProgramVersion
+	mock.lockGetProgramVersion.RUnlock()
+	return calls
+}
+
+// ProgramExists calls ProgramExistsFunc.
+func (mock *MoqOsManager) ProgramExists(program string) (bool, error) {
+	if mock.ProgramExistsFunc == nil {
+		panic("MoqOsManager.ProgramExistsFunc: method is nil but OsManager.ProgramExists was just called")
+	}
+	callInfo := struct {
+		Program string
+	}{
+		Program: program,
+	}
+	mock.lockProgramExists.Lock()
+	mock.calls.ProgramExists = append(mock.calls.ProgramExists, callInfo)
+	mock.lockProgramExists.Unlock()
+	return mock.ProgramExistsFunc(program)
+}
+
+// ProgramExistsCalls gets all the calls that were made to ProgramExists.
+// Check the length with:
+//
+//	len(mockedOsManager.ProgramExistsCalls())
+func (mock *MoqOsManager) ProgramExistsCalls() []struct {
+	Program string
+} {
+	var calls []struct {
+		Program string
+	}
+	mock.lockProgramExists.RLock()
+	calls = mock.calls.ProgramExists
+	mock.lockProgramExists.RUnlock()
 	return calls
 }
 
