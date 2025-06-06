@@ -40,6 +40,11 @@ if command -v cargo &>/dev/null; then
 fi
 {{- end }}
 
+if command -v bun &>/dev/null; then
+    # Ensure bun is in the PATH
+    export PATH="$HOME/.bun/bin:$PATH"
+fi
+
 {{ if (eq .chezmoi.os "linux") -}}
 {{- if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL-specific code
