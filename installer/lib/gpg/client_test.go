@@ -15,15 +15,15 @@ import (
 func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 	// Arrange
 	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-	
+
 	loggerMock := &logger.MoqLogger{
 		WarningFunc: func(format string, args ...any) {
 			assert.Equal(t, "GPG is not available. Required for GPG operations.", format)
 		},
 	}
-	
+
 	commanderMock := &utils.MoqCommander{}
-	
+
 	osManagerMock := &osmanager.MoqOsManager{
 		ProgramExistsFunc: func(program string) (bool, error) {
 			if program == "gpg" {
@@ -49,10 +49,10 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 	// Arrange
 	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-	
+
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
-	
+
 	osManagerMock := &osmanager.MoqOsManager{
 		ProgramExistsFunc: func(program string) (bool, error) {
 			return false, assert.AnError
@@ -74,15 +74,15 @@ func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) {
 	// Arrange
 	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-	
+
 	loggerMock := &logger.MoqLogger{
 		WarningFunc: func(format string, args ...any) {
 			assert.Equal(t, "GPG version is not compatible. Required version is >=2.2.0", format)
 		},
 	}
-	
+
 	commanderMock := &utils.MoqCommander{}
-	
+
 	osManagerMock := &osmanager.MoqOsManager{
 		ProgramExistsFunc: func(program string) (bool, error) {
 			return true, nil
@@ -109,10 +109,10 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) 
 func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 	// Arrange
 	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-	
+
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
-	
+
 	osManagerMock := &osmanager.MoqOsManager{
 		ProgramExistsFunc: func(program string) (bool, error) {
 			return true, nil
@@ -137,15 +137,15 @@ func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 	// Arrange
 	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-	
+
 	loggerMock := &logger.MoqLogger{
 		WarningFunc: func(format string, args ...any) {
 			assert.Equal(t, "GPG agent is not available. Required for GPG operations.", format)
 		},
 	}
-	
+
 	commanderMock := &utils.MoqCommander{}
-	
+
 	osManagerMock := &osmanager.MoqOsManager{
 		ProgramExistsFunc: func(program string) (bool, error) {
 			if program == "gpg-agent" {
@@ -174,10 +174,10 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T) {
 	// Arrange
 	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-	
+
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
-	
+
 	callCount := 0
 	osManagerMock := &osmanager.MoqOsManager{
 		ProgramExistsFunc: func(program string) (bool, error) {
@@ -208,10 +208,10 @@ func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T)
 func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
 	// Arrange
 	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-	
+
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
-	
+
 	osManagerMock := &osmanager.MoqOsManager{
 		ProgramExistsFunc: func(program string) (bool, error) {
 			return true, nil
