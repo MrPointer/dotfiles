@@ -18,11 +18,8 @@ var _ Commander = &MoqCommander{}
 //
 //		// make and configure a mocked Commander
 //		mockedCommander := &MoqCommander{
-//			RunFunc: func(name string, args ...string) error {
-//				panic("mock out the Run method")
-//			},
-//			RunWithEnvFunc: func(env map[string]string, name string, args ...string) error {
-//				panic("mock out the RunWithEnv method")
+//			RunCommandFunc: func(name string, args []string, opts ...Option) (*Result, error) {
+//				panic("mock out the RunCommand method")
 //			},
 //		}
 //
@@ -31,107 +28,60 @@ var _ Commander = &MoqCommander{}
 //
 //	}
 type MoqCommander struct {
-	// RunFunc mocks the Run method.
-	RunFunc func(name string, args ...string) error
-
-	// RunWithEnvFunc mocks the RunWithEnv method.
-	RunWithEnvFunc func(env map[string]string, name string, args ...string) error
+	// RunCommandFunc mocks the RunCommand method.
+	RunCommandFunc func(name string, args []string, opts ...Option) (*Result, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// Run holds details about calls to the Run method.
-		Run []struct {
+		// RunCommand holds details about calls to the RunCommand method.
+		RunCommand []struct {
 			// Name is the name argument value.
 			Name string
 			// Args is the args argument value.
 			Args []string
-		}
-		// RunWithEnv holds details about calls to the RunWithEnv method.
-		RunWithEnv []struct {
-			// Env is the env argument value.
-			Env map[string]string
-			// Name is the name argument value.
-			Name string
-			// Args is the args argument value.
-			Args []string
+			// Opts is the opts argument value.
+			Opts []Option
 		}
 	}
-	lockRun        sync.RWMutex
-	lockRunWithEnv sync.RWMutex
+	lockRunCommand sync.RWMutex
 }
 
-// Run calls RunFunc.
-func (mock *MoqCommander) Run(name string, args ...string) error {
-	if mock.RunFunc == nil {
-		panic("MoqCommander.RunFunc: method is nil but Commander.Run was just called")
+// RunCommand calls RunCommandFunc.
+func (mock *MoqCommander) RunCommand(name string, args []string, opts ...Option) (*Result, error) {
+	if mock.RunCommandFunc == nil {
+		panic("MoqCommander.RunCommandFunc: method is nil but Commander.RunCommand was just called")
 	}
 	callInfo := struct {
 		Name string
 		Args []string
+		Opts []Option
 	}{
 		Name: name,
 		Args: args,
+		Opts: opts,
 	}
-	mock.lockRun.Lock()
-	mock.calls.Run = append(mock.calls.Run, callInfo)
-	mock.lockRun.Unlock()
-	return mock.RunFunc(name, args...)
+	mock.lockRunCommand.Lock()
+	mock.calls.RunCommand = append(mock.calls.RunCommand, callInfo)
+	mock.lockRunCommand.Unlock()
+	return mock.RunCommandFunc(name, args, opts...)
 }
 
-// RunCalls gets all the calls that were made to Run.
+// RunCommandCalls gets all the calls that were made to RunCommand.
 // Check the length with:
 //
-//	len(mockedCommander.RunCalls())
-func (mock *MoqCommander) RunCalls() []struct {
+//	len(mockedCommander.RunCommandCalls())
+func (mock *MoqCommander) RunCommandCalls() []struct {
 	Name string
 	Args []string
+	Opts []Option
 } {
 	var calls []struct {
 		Name string
 		Args []string
+		Opts []Option
 	}
-	mock.lockRun.RLock()
-	calls = mock.calls.Run
-	mock.lockRun.RUnlock()
-	return calls
-}
-
-// RunWithEnv calls RunWithEnvFunc.
-func (mock *MoqCommander) RunWithEnv(env map[string]string, name string, args ...string) error {
-	if mock.RunWithEnvFunc == nil {
-		panic("MoqCommander.RunWithEnvFunc: method is nil but Commander.RunWithEnv was just called")
-	}
-	callInfo := struct {
-		Env  map[string]string
-		Name string
-		Args []string
-	}{
-		Env:  env,
-		Name: name,
-		Args: args,
-	}
-	mock.lockRunWithEnv.Lock()
-	mock.calls.RunWithEnv = append(mock.calls.RunWithEnv, callInfo)
-	mock.lockRunWithEnv.Unlock()
-	return mock.RunWithEnvFunc(env, name, args...)
-}
-
-// RunWithEnvCalls gets all the calls that were made to RunWithEnv.
-// Check the length with:
-//
-//	len(mockedCommander.RunWithEnvCalls())
-func (mock *MoqCommander) RunWithEnvCalls() []struct {
-	Env  map[string]string
-	Name string
-	Args []string
-} {
-	var calls []struct {
-		Env  map[string]string
-		Name string
-		Args []string
-	}
-	mock.lockRunWithEnv.RLock()
-	calls = mock.calls.RunWithEnv
-	mock.lockRunWithEnv.RUnlock()
+	mock.lockRunCommand.RLock()
+	calls = mock.calls.RunCommand
+	mock.lockRunCommand.RUnlock()
 	return calls
 }

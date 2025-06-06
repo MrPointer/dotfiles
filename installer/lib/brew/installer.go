@@ -164,7 +164,7 @@ func (b *brewInstaller) validateInstall() error {
 
 	// Try running 'brew --version' to verify it works
 	if b.commander != nil {
-		err = b.commander.Run(brewPath, "--version")
+		_, err = b.commander.RunCommand(brewPath, []string{"--version"})
 		if err != nil {
 			return fmt.Errorf("brew --version failed: %w", err)
 		}
@@ -294,7 +294,7 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 	// Execute the downloaded install script, optionally as a different user
 	if asUser != "" {
 		b.logger.Info("Running Homebrew install script as %s", asUser)
-		err := b.commander.Run("sudo", "-Hu", asUser, "bash", installScriptPath)
+		_, err := b.commander.RunCommand("sudo", []string{"-Hu", asUser, "bash", installScriptPath})
 		if err != nil {
 			return fmt.Errorf("failed running Homebrew install script as %s: %w", asUser, err)
 		}
@@ -302,7 +302,7 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 		b.logger.Success("Successfully installed Homebrew for user %s", asUser)
 	} else {
 		b.logger.Info("Running Homebrew install script")
-		err := b.commander.RunWithEnv(map[string]string{"NONINTERACTIVE": "1"}, "/bin/bash", installScriptPath)
+		_, err := b.commander.RunCommand("/bin/bash", []string{installScriptPath}, utils.WithEnv(map[string]string{"NONINTERACTIVE": "1"}))
 		if err != nil {
 			return err
 		}

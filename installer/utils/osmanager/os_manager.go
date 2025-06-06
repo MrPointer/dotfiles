@@ -100,7 +100,7 @@ func (u *UnixOsManager) AddUser(username string) error {
 		useraddCmd = append([]string{"sudo"}, useraddCmd...)
 	}
 
-	err := u.commander.Run(useraddCmd[0], useraddCmd[1:]...)
+	_, err := u.commander.RunCommand(useraddCmd[0], useraddCmd[1:])
 	if err != nil {
 		// Try adduser as fallback.
 		adduserCmd := []string{"adduser", "--disabled-password", "--gecos", "''", username}
@@ -108,7 +108,7 @@ func (u *UnixOsManager) AddUser(username string) error {
 			adduserCmd = append([]string{"sudo"}, adduserCmd...)
 		}
 
-		err = u.commander.Run(adduserCmd[0], adduserCmd[1:]...)
+		_, err = u.commander.RunCommand(adduserCmd[0], adduserCmd[1:])
 		if err != nil {
 			return fmt.Errorf("failed to create user '%s' with useradd/adduser: %w", username, err)
 		}
@@ -124,7 +124,7 @@ func (u *UnixOsManager) AddUserToGroup(username, group string) error {
 		usermodCmd = append([]string{"sudo"}, usermodCmd...)
 	}
 
-	err := u.commander.Run(usermodCmd[0], usermodCmd[1:]...)
+	_, err := u.commander.RunCommand(usermodCmd[0], usermodCmd[1:])
 	// Often we don't care if the user is already in the group.
 	if err != nil {
 		u.logger.Debug("Note: User might already be in the %s group", group)
@@ -144,7 +144,7 @@ func (u *UnixOsManager) AddSudoAccess(username string) error {
 
 	// Use shell to echo and tee the line into the sudoers file.
 	shCmd := []string{"sh", "-c", fmt.Sprintf("echo '%s' | %stee %s", sudoersLine, sudoPrefix, sudoersFile)}
-	err := u.commander.Run(shCmd[0], shCmd[1:]...)
+	_, err := u.commander.RunCommand(shCmd[0], shCmd[1:])
 	if err != nil {
 		return fmt.Errorf("failed to add passwordless sudo for '%s': %w", username, err)
 	}
@@ -159,7 +159,7 @@ func (u *UnixOsManager) SetOwnership(path, username string) error {
 		chownCmd = append([]string{"sudo"}, chownCmd...)
 	}
 
-	err := u.commander.Run(chownCmd[0], chownCmd[1:]...)
+	_, err := u.commander.RunCommand(chownCmd[0], chownCmd[1:])
 	if err != nil {
 		return fmt.Errorf("failed to chown %s: %w", path, err)
 	}
@@ -174,7 +174,7 @@ func (u *UnixOsManager) SetPermissions(path string, mode os.FileMode) error {
 		chmodCmd = append([]string{"sudo"}, chmodCmd...)
 	}
 
-	err := u.commander.Run(chmodCmd[0], chmodCmd[1:]...)
+	_, err := u.commander.RunCommand(chmodCmd[0], chmodCmd[1:])
 	if err != nil {
 		return fmt.Errorf("failed to chmod %s: %w", path, err)
 	}
