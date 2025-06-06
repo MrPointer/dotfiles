@@ -61,7 +61,7 @@ fi
 if command -v cargo &>/dev/null; then
     # Add Cargo's bin dir to make cargo (rust) execs available
     export PATH="$PATH:$HOME/.cargo/bin"
-    
+
     # Register cargo completions via rustup (if available)
     if command -v rustup &>/dev/null; then
         rustup completions zsh cargo > ~/.zfunc/_cargo
@@ -121,6 +121,9 @@ if command -v az &>/dev/null; then
   source $(brew --prefix)/etc/bash_completion.d/az
 fi
 
+# Setup custom aliases
+alias gpg-unlock='gpg --sign --local-user {{ .personal.signing_key }} --output /dev/null /dev/null'
+
 {{ if .personal.work_env -}}
 source "$WORK_ZSH_RC_EXTENSION"
 {{- end }}
@@ -174,7 +177,7 @@ if [[ -n "$fzf_path" ]]; then
   if command -v fd &>/dev/null; then
     export FZF_DEFAULT_COMMAND="fd --type f --color=never --hidden --follow --exclude .git"
   fi
-  
+
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   source <(fzf --zsh)
 fi
