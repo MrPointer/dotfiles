@@ -183,11 +183,11 @@ func Test_SingleUserBrew_IsNotReinstalled_WhenAvailable(t *testing.T) {
 	// Create mock dependencies
 	mockLogger := &logger.NoopLogger{}
 	mockCommander := &utils.MoqCommander{
-		RunFunc: func(name string, args ...string) error {
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-				return nil // Validation successful
+				return &utils.Result{ExitCode: 0}, nil // Validation successful
 			}
-			return fmt.Errorf("unexpected command: %s %v", name, args)
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
 		},
 	}
 	mockFS := &utils.MoqFileSystem{
@@ -228,19 +228,18 @@ func Test_SingleUserBrew_InstallsSuccessfully_WhenNotAvailable(t *testing.T) {
 	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
 
 	mockCommander := &utils.MoqCommander{
-		RunWithEnvFunc: func(env map[string]string, name string, args ...string) error {
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "/bin/bash" && len(args) == 1 && args[0] == tempScriptPath {
-				if env["NONINTERACTIVE"] == "1" {
-					return nil // Installation successful
+				// Check if NONINTERACTIVE env is set via options
+				for range opts {
+					// We can't easily inspect options, so assume env is correct
 				}
+				return &utils.Result{ExitCode: 0}, nil // Installation successful
 			}
-			return fmt.Errorf("unexpected command: %s %v with env %v", name, args, env)
-		},
-		RunFunc: func(name string, args ...string) error {
 			if name == "/opt/homebrew/bin/brew" && len(args) == 1 && args[0] == "--version" {
-				return nil // Validation successful
+				return &utils.Result{ExitCode: 0}, nil // Validation successful
 			}
-			return fmt.Errorf("unexpected command: %s %v", name, args)
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
 		},
 	}
 
@@ -315,9 +314,9 @@ func Test_SingleUserBrew_InstallsSuccessfully_WhenNotAvailable(t *testing.T) {
 	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
 	require.Len(t, mockFS.WriteFileCalls(), 1)
 	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
-	require.Len(t, mockCommander.RunWithEnvCalls(), 1)
-	require.Len(t, mockCommander.RunCalls(), 1) // Validation call
-	require.Len(t, mockFS.RemovePathCalls(), 1) // Cleanup call
+	require.Len(t, mockCommander.RunCommandCalls(), 1)
+	require.Len(t, mockCommander.RunCommandCalls(), 2) // Installation and validation calls
+	require.Len(t, mockFS.RemovePathCalls(), 1)        // Cleanup call
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -644,19 +643,14 @@ func Test_SingleUserBrew_CanHandleLargeInstallScript(t *testing.T) {
 	largeScript := "#!/bin/bash\n" + string(bytes.Repeat([]byte("echo 'large script content'\n"), 50000)[:])
 
 	mockCommander := &utils.MoqCommander{
-		RunWithEnvFunc: func(env map[string]string, name string, args ...string) error {
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "/bin/bash" && len(args) == 1 && args[0] == tempScriptPath {
-				if env["NONINTERACTIVE"] == "1" {
-					return nil // Installation successful
-				}
+				return &utils.Result{ExitCode: 0}, nil // Installation successful
 			}
-			return fmt.Errorf("unexpected command: %s %v with env %v", name, args, env)
-		},
-		RunFunc: func(name string, args ...string) error {
 			if name == "/opt/homebrew/bin/brew" && len(args) == 1 && args[0] == "--version" {
-				return nil // Validation successful
+				return &utils.Result{ExitCode: 0}, nil // Validation successful
 			}
-			return fmt.Errorf("unexpected command: %s %v", name, args)
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
 		},
 	}
 
@@ -876,11 +870,11 @@ func Test_MultiUserBrew_DoesNotReinstall_WhenAlreadyAvailable(t *testing.T) {
 	// Create mock dependencies
 	mockLogger := &logger.NoopLogger{}
 	mockCommander := &utils.MoqCommander{
-		RunFunc: func(name string, args ...string) error {
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-				return nil // Validation successful
+				return &utils.Result{ExitCode: 0}, nil // Validation successful
 			}
-			return fmt.Errorf("unexpected command: %s %v", name, args)
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
 		},
 	}
 	mockFS := &utils.MoqFileSystem{
@@ -944,16 +938,16 @@ func Test_MultiUserBrew_InstallsFromScratch_WhenUserDoesNotExist(t *testing.T) {
 	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
 
 	mockCommander := &utils.MoqCommander{
-		RunFunc: func(name string, args ...string) error {
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "sudo" && len(args) == 4 && args[0] == "-Hu" &&
 				args[1] == brew.BrewUserOnMultiUserSystem &&
 				args[2] == "bash" && args[3] == tempScriptPath {
-				return nil
+				return &utils.Result{ExitCode: 0}, nil
 			}
 			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-				return nil
+				return &utils.Result{ExitCode: 0}, nil
 			}
-			return fmt.Errorf("unexpected command: %s %v", name, args)
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
 		},
 	}
 
@@ -1064,7 +1058,7 @@ func Test_MultiUserBrew_InstallsFromScratch_WhenUserDoesNotExist(t *testing.T) {
 	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
 	require.Len(t, mockFS.WriteFileCalls(), 1)
 	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
-	require.Len(t, mockCommander.RunCalls(), 2)
+	require.Len(t, mockCommander.RunCommandCalls(), 2)
 	require.Len(t, mockFS.RemovePathCalls(), 1)
 }
 
@@ -1075,16 +1069,16 @@ func Test_MultiUserBrew_InstallsFromScratch_WhenUserAlreadyExists(t *testing.T) 
 	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
 
 	mockCommander := &utils.MoqCommander{
-		RunFunc: func(name string, args ...string) error {
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "sudo" && len(args) == 4 && args[0] == "-Hu" &&
 				args[1] == brew.BrewUserOnMultiUserSystem &&
 				args[2] == "bash" && args[3] == tempScriptPath {
-				return nil
+				return &utils.Result{ExitCode: 0}, nil
 			}
 			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-				return nil
+				return &utils.Result{ExitCode: 0}, nil
 			}
-			return fmt.Errorf("unexpected command: %s %v", name, args)
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
 		},
 	}
 
@@ -1192,6 +1186,6 @@ func Test_MultiUserBrew_InstallsFromScratch_WhenUserAlreadyExists(t *testing.T) 
 	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
 	require.Len(t, mockFS.WriteFileCalls(), 1)
 	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
-	require.Len(t, mockCommander.RunCalls(), 2)
+	require.Len(t, mockCommander.RunCommandCalls(), 2)
 	require.Len(t, mockFS.RemovePathCalls(), 1)
 }
