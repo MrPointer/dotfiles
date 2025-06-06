@@ -216,7 +216,11 @@ func (u *UnixOsManager) ProgramExists(program string) (bool, error) {
 	return true, nil // Program found.
 }
 
-func (u *UnixOsManager) GetProgramVersion(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error) {
+func (u *UnixOsManager) GetProgramVersion(
+	program string,
+	versionExtractor VersionExtractor,
+	queryArgs ...string,
+) (string, error) {
 	args := []string{"--version"} // Default argument for version query.
 	if len(queryArgs) > 0 {
 		args = queryArgs
