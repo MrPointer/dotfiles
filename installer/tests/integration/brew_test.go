@@ -10,14 +10,13 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
-func TestBrewReportedAsUnavailableWhenNotInstalled(t *testing.T) {
-	opts := brew.Options{
-		Logger:           logger.DefaultLogger,
-		SystemInfo:       &compatibility.SystemInfo{OSName: runtime.GOOS, Arch: runtime.GOARCH},
-		Commander:        nil,
-		BrewPathOverride: "/tmp/nonexistent-brew-binary",
-	}
-	installer := brew.NewBrewInstaller(opts)
+func Test_BrewReportedAsUnavailable_WhenNotInstalled(t *testing.T) {
+	opts := brew.DefaultOptions().
+		WithLogger(logger.DefaultLogger).
+		WithSystemInfo(&compatibility.SystemInfo{OSName: runtime.GOOS, Arch: runtime.GOARCH}).
+		WithBrewPathOverride("/tmp/nonexistent-brew-binary")
+
+	installer := brew.NewBrewInstaller(*opts)
 
 	available, err := installer.IsAvailable()
 	if err != nil {
@@ -28,20 +27,19 @@ func TestBrewReportedAsUnavailableWhenNotInstalled(t *testing.T) {
 	}
 }
 
-func TestBrewReportedAsAvailableWhenInstalled(t *testing.T) {
+func Test_BrewReportedAsAvailable_WhenInstalled(t *testing.T) {
 	tempFile, err := os.CreateTemp("", "brew-binary-*")
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
 	defer os.Remove(tempFile.Name())
 
-	opts := brew.Options{
-		Logger:           logger.DefaultLogger,
-		SystemInfo:       &compatibility.SystemInfo{OSName: runtime.GOOS, Arch: runtime.GOARCH},
-		Commander:        nil,
-		BrewPathOverride: tempFile.Name(),
-	}
-	installer := brew.NewBrewInstaller(opts)
+	opts := brew.DefaultOptions().
+		WithLogger(logger.DefaultLogger).
+		WithSystemInfo(&compatibility.SystemInfo{OSName: runtime.GOOS, Arch: runtime.GOARCH}).
+		WithBrewPathOverride(tempFile.Name())
+
+	installer := brew.NewBrewInstaller(*opts)
 
 	available, err := installer.IsAvailable()
 	if err != nil {
