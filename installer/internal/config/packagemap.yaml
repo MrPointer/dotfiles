@@ -1,0 +1,24 @@
+# Package mappings for the installer
+packages:
+  git:
+    apt:
+      name: git
+    brew:
+      name: git
+  gpg:
+    apt:
+      name: gnupg2 # Debian/Ubuntu often use gnupg2
+    brew:
+      name: gnupg
+    dnf:
+      name: gnupg2
+  neovim:
+    apt:
+      name: neovim
+    brew:
+      name: neovim
+  zsh:
+    apt:
+      name: zsh
+    brew:
+      name: zsh
