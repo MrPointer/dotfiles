@@ -39,3 +39,7 @@
 
 # ...even if they are in subdirectories
 !*/
+
+# Embedded config files
+!internal/config/*.yaml
+!internal/config/*.yml
