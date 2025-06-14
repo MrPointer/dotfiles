@@ -393,6 +393,11 @@ func DefaultOptions() *Options {
 	}
 }
 
+func (o *Options) WithBrewPathOverride(path string) *Options {
+	o.BrewPathOverride = path
+	return o
+}
+
 // WithLogger sets a custom logger for the brew operations.
 func (o *Options) WithLogger(log logger.Logger) *Options {
 	o.Logger = log

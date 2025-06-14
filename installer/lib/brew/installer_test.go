@@ -314,7 +314,6 @@ func Test_SingleUserBrew_InstallsSuccessfully_WhenNotAvailable(t *testing.T) {
 	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
 	require.Len(t, mockFS.WriteFileCalls(), 1)
 	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
-	require.Len(t, mockCommander.RunCommandCalls(), 1)
 	require.Len(t, mockCommander.RunCommandCalls(), 2) // Installation and validation calls
 	require.Len(t, mockFS.RemovePathCalls(), 1)        // Cleanup call
 }
