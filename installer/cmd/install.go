@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
@@ -96,7 +95,7 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 
 	isAvailable, err := installer.IsAvailable()
 	if err != nil {
-		return fmt.Errorf("failed checking Homebrew availability: %w", err)
+		return err
 	}
 	if isAvailable {
 		cliLogger.Success("Homebrew is already installed")
@@ -104,7 +103,7 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 	}
 
 	if err := installer.Install(); err != nil {
-		return fmt.Errorf("failed installing Homebrew: %w", err)
+		return err
 	}
 
 	cliLogger.Success("Homebrew installed successfully")
@@ -124,7 +123,7 @@ func installGpgClient(sysInfo *compatibility.SystemInfo) error {
 
 	isAvailable, err := installer.IsAvailable()
 	if err != nil {
-		return fmt.Errorf("failed checking GPG availability: %w", err)
+		return err
 	}
 	if isAvailable {
 		cliLogger.Success("GPG client is already installed")
@@ -132,7 +131,7 @@ func installGpgClient(sysInfo *compatibility.SystemInfo) error {
 	}
 
 	if err := installer.Install(nil); err != nil { // Pass context if needed.
-		return fmt.Errorf("failed installing GPG client: %w", err)
+		return err
 	}
 
 	cliLogger.Success("GPG client installed successfully")
