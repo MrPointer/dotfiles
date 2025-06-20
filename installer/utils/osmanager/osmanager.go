@@ -239,3 +239,8 @@ func (u *UnixOsManager) GetProgramVersion(
 
 	return version, nil
 }
+
+// IsRoot returns true if the current user is root.
+func IsRoot() bool {
+	return os.Geteuid() == 0
+}
