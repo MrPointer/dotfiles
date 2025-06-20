@@ -5,6 +5,10 @@ import (
 	"os"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -13,6 +17,12 @@ var (
 	cfgFile                   string
 	compatibilityConfigFile   string
 	globalCompatibilityConfig *compatibility.CompatibilityConfig
+
+	cliLogger                            = logger.NewCliLogger()
+	globalCommander                      = utils.NewDefaultCommander()
+	globalHttpClient                     = httpclient.NewDefaultHTTPClient()
+	globalFilesystem                     = utils.NewDefaultFileSystem()
+	globalOsManager  osmanager.OsManager = nil // Will be initialized in installer sub-command
 )
 
 // rootCmd represents the base command when called without any subcommands.

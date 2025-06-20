@@ -3,7 +3,6 @@ package brew
 import (
 	"fmt"
 	"net/http" // Keep for http.StatusOK and potentially other http constants if needed by other functions
-	"os"
 	"runtime"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
@@ -268,11 +267,6 @@ func (m *MultiUserBrewInstaller) installMultiUserLinux() error {
 	return m.installHomebrew(brewUser)
 }
 
-// isRoot returns true if the current user is root.
-func isRoot() bool {
-	return os.Geteuid() == 0
-}
-
 // installHomebrew handles both regular and multi-user Homebrew installations.
 func (b *brewInstaller) installHomebrew(asUser string) error {
 	// Download and prepare the installation script
@@ -387,7 +381,7 @@ func DefaultOptions() *Options {
 		SystemInfo:       nil,
 		Commander:        utils.NewDefaultCommander(),
 		HTTPClient:       httpclient.NewDefaultHTTPClient(),
-		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, utils.NewDefaultCommander(), isRoot()),
+		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, utils.NewDefaultCommander(), osmanager.IsRoot()),
 		Fs:               utils.NewDefaultFileSystem(),
 		BrewPathOverride: "",
 	}

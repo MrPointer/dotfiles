@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -9,7 +6,7 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
-	"github.com/MrPointer/dotfiles/installer/utils/logger"
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -36,24 +33,27 @@ install essential packages and tools that I use on a daily basis.
 It automates the process of setting up the dotfiles,
 making it easier to get started with a new system.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Create a CLI logger for installation output.
-		log := logger.NewCliLogger()
-
 		// Check system compatibility and get system info.
 		config := GetCompatibilityConfig()
 		sysInfo, err := compatibility.CheckCompatibility(config)
 		if err != nil {
-			log.Error("Your system isn't compatible with these dotfiles: %v", err)
+			cliLogger.Error("Your system isn't compatible with these dotfiles: %v", err)
 			os.Exit(1)
 		}
+		if sysInfo.OSName == "linux" || sysInfo.OSName == "darwin" {
+			globalOsManager = osmanager.NewUnixOsManager(cliLogger, globalCommander, osmanager.IsRoot())
+		} else {
+			cliLogger.Error("The system should be compatible, but we haven't implemented an OS manager for it yet. Please open an issue on GitHub to request support for this OS.")
+			os.Exit(1)
+		}
+		cliLogger.Success("System compatibility check passed")
 
-		log.Success("System compatibility check passed")
-		log.Info("Installing dotfiles...")
+		cliLogger.Info("Installing dotfiles...")
 
 		// Install Homebrew if specified and not already available.
 		if installBrew {
-			if err := installHomebrew(log, &sysInfo); err != nil {
-				log.Error("Failed to install Homebrew: %v", err)
+			if err := installHomebrew(&sysInfo); err != nil {
+				cliLogger.Error("Failed to install Homebrew: %v", err)
 				os.Exit(1)
 			}
 		}
@@ -68,23 +68,24 @@ making it easier to get started with a new system.`,
 }
 
 // installHomebrew installs Homebrew if not already installed.
-func installHomebrew(log logger.Logger, sysInfo *compatibility.SystemInfo) error {
+func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 	// Create BrewInstaller using the new API.
-	installer := brew.NewBrewInstaller(
-		brew.Options{
-			MultiUserSystem: multiUserSystem,
-			Logger:          log,
-			SystemInfo:      sysInfo,
-			Commander:       nil, // Use default if needed, or expose as param.
-		},
-	)
+	installer := brew.NewBrewInstaller(brew.Options{
+		SystemInfo:      sysInfo,
+		Logger:          cliLogger,
+		Commander:       globalCommander,
+		HTTPClient:      globalHttpClient,
+		OsManager:       globalOsManager,
+		Fs:              globalFilesystem,
+		MultiUserSystem: multiUserSystem,
+	})
 
 	isAvailable, err := installer.IsAvailable()
 	if err != nil {
 		return fmt.Errorf("failed checking Homebrew availability: %w", err)
 	}
 	if isAvailable {
-		log.Success("Homebrew is already installed")
+		cliLogger.Success("Homebrew is already installed")
 		return nil
 	}
 
@@ -92,7 +93,7 @@ func installHomebrew(log logger.Logger, sysInfo *compatibility.SystemInfo) error
 		return fmt.Errorf("failed installing Homebrew: %w", err)
 	}
 
-	log.Success("Homebrew installed successfully")
+	cliLogger.Success("Homebrew installed successfully")
 	return nil
 }
 
