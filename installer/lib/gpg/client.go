@@ -8,10 +8,13 @@ import (
 	"github.com/Masterminds/semver"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
+
+const supportedGpgVersionConstraintString = ">=2.2.0"
 
 type GpgClientInstaller interface {
 	IsAvailable() (bool, error)
@@ -19,10 +22,11 @@ type GpgClientInstaller interface {
 }
 
 type gpgInstaller struct {
-	systemInfo *compatibility.SystemInfo
-	logger     logger.Logger
-	commander  utils.Commander
-	osManager  osmanager.OsManager
+	systemInfo     *compatibility.SystemInfo
+	logger         logger.Logger
+	commander      utils.Commander
+	osManager      osmanager.OsManager
+	packageManager pkgmanager.PackageManager
 }
 
 func NewGpgInstaller(
@@ -30,12 +34,14 @@ func NewGpgInstaller(
 	logger logger.Logger,
 	commander utils.Commander,
 	osManager osmanager.OsManager,
+	packageManager pkgmanager.PackageManager,
 ) GpgClientInstaller {
 	return &gpgInstaller{
-		systemInfo: systemInfo,
-		logger:     logger,
-		commander:  commander,
-		osManager:  osManager,
+		systemInfo:     systemInfo,
+		logger:         logger,
+		commander:      commander,
+		osManager:      osManager,
+		packageManager: packageManager,
 	}
 }
 
@@ -77,14 +83,17 @@ func gpgVersionMatches(g *gpgInstaller) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	constraints, err := semver.NewConstraint(">=2.2.0")
+
+	constraints, err := semver.NewConstraint(supportedGpgVersionConstraintString)
 	if err != nil {
 		return false, err
 	}
+
 	version, err := semver.NewVersion(gpgVersion)
 	if err != nil {
 		return false, err
 	}
+
 	if !constraints.Check(version) {
 		return false, nil
 	}
@@ -110,6 +119,15 @@ func extractGpgVersion(rawVersion string) (string, error) {
 }
 
 func (g *gpgInstaller) Install(ctx context.Context) error {
-	// Implementation to install GPG
+	versionConstraints, err := semver.NewConstraint(supportedGpgVersionConstraintString)
+	if err != nil {
+		return errors.New("failed to create version constraints: " + err.Error())
+	}
+
+	err = g.packageManager.InstallPackage(pkgmanager.NewRequestedPackageInfo("gpg", versionConstraints))
+	if err != nil {
+		return errors.New("failed to install GPG client: " + err.Error())
+	}
+
 	return nil
 }
