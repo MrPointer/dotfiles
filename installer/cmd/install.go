@@ -6,11 +6,14 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/lib/gpg"
+	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+// Options and flags for the install command.
 var (
 	workEnvironment      bool
 	workName             string
@@ -21,6 +24,11 @@ var (
 	multiUserSystem      bool
 	gitCloneProtocol     string
 	verbose              bool
+)
+
+// global variables for the command execution context.
+var (
+	globalPackageManager pkgmanager.PackageManager = nil // set later based on passed flags
 )
 
 // installCmd represents the install command.
@@ -56,6 +64,12 @@ making it easier to get started with a new system.`,
 				cliLogger.Error("Failed to install Homebrew: %v", err)
 				os.Exit(1)
 			}
+			globalPackageManager = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager)
+		}
+
+		if err := installGpgClient(&sysInfo); err != nil {
+			cliLogger.Error("Failed to install GPG client: %v", err)
+			os.Exit(1)
 		}
 
 		// TODO: Continue with other installation steps
@@ -94,6 +108,34 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 	}
 
 	cliLogger.Success("Homebrew installed successfully")
+	return nil
+}
+
+// installGpgClient installs the GPG client if not already available.
+func installGpgClient(sysInfo *compatibility.SystemInfo) error {
+	// Create GpgClientInstaller using the new API.
+	installer := gpg.NewGpgInstaller(
+		sysInfo,
+		cliLogger,
+		globalCommander,
+		globalOsManager,
+		globalPackageManager,
+	)
+
+	isAvailable, err := installer.IsAvailable()
+	if err != nil {
+		return fmt.Errorf("failed checking GPG availability: %w", err)
+	}
+	if isAvailable {
+		cliLogger.Success("GPG client is already installed")
+		return nil
+	}
+
+	if err := installer.Install(nil); err != nil { // Pass context if needed.
+		return fmt.Errorf("failed installing GPG client: %w", err)
+	}
+
+	cliLogger.Success("GPG client installed successfully")
 	return nil
 }
 
