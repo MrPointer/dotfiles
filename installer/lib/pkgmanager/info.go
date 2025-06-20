@@ -10,6 +10,13 @@ type PackageManagerInfo struct {
 	Version string `json:"version"`
 }
 
+func NewPackageManagerInfo(name, version string) PackageManagerInfo {
+	return PackageManagerInfo{
+		Name:    name,
+		Version: version,
+	}
+}
+
 func DefaultPackageManagerInfo() PackageManagerInfo {
 	return PackageManagerInfo{
 		Name:    "Unknown",
@@ -25,6 +32,13 @@ type PackageInfo struct {
 	Version string `json:"version"`
 }
 
+func NewPackageInfo(name, version string) PackageInfo {
+	return PackageInfo{
+		Name:    name,
+		Version: version,
+	}
+}
+
 type RequestedPackageInfo struct {
 	// Name of the package.
 	Name string `json:"name"`
@@ -32,4 +46,11 @@ type RequestedPackageInfo struct {
 	// VersionConstraints defines the semver constraints for the requested package.
 	// It's a pointer to allow for nil (no constraints).
 	VersionConstraints *semver.Constraints `json:"version_constraint,omitempty"`
+}
+
+func NewRequestedPackageInfo(name string, versionConstraints *semver.Constraints) RequestedPackageInfo {
+	return RequestedPackageInfo{
+		Name:               name,
+		VersionConstraints: versionConstraints,
+	}
 }
