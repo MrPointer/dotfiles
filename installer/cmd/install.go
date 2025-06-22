@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/MrPointer/dotfiles/installer/cli"
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
@@ -28,6 +29,11 @@ var (
 // global variables for the command execution context.
 var (
 	globalPackageManager pkgmanager.PackageManager = nil // set later based on passed flags
+)
+
+// output variables stored in global context
+var (
+	selectedGpgKey string
 )
 
 // installCmd represents the install command.
@@ -66,8 +72,8 @@ making it easier to get started with a new system.`,
 			globalPackageManager = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager)
 		}
 
-		if err := installGpgClient(&sysInfo); err != nil {
-			cliLogger.Error("Failed to install GPG client: %v", err)
+		if err := setupGpgKeys(&sysInfo); err != nil {
+			cliLogger.Error("Failed to setup GPG keys: %v", err)
 			os.Exit(1)
 		}
 
@@ -107,6 +113,41 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 	}
 
 	cliLogger.Success("Homebrew installed successfully")
+	return nil
+}
+
+func setupGpgKeys(sysInfo *compatibility.SystemInfo) error {
+	err := installGpgClient(sysInfo)
+	if err != nil {
+		return err
+	}
+
+	gpgClient := gpg.NewDefaultGpgClient(
+		globalOsManager,
+		globalCommander,
+	)
+
+	existingKeys, err := gpgClient.ListAvailableKeys()
+	if err != nil {
+		return err
+	}
+
+	if len(existingKeys) == 0 {
+		keyId, err := gpgClient.CreateKeyPair()
+		if err != nil {
+			return err
+		}
+		selectedGpgKey = keyId
+	} else {
+		gpgSelector := cli.NewDefaultGpgKeySelector()
+		selectedKey, err := gpgSelector.SelectKey(existingKeys)
+		if err != nil {
+			return err
+		}
+		selectedGpgKey = selectedKey
+	}
+
+	cliLogger.Success("GPG keys set up successfully")
 	return nil
 }
 
