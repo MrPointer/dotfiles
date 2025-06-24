@@ -8,6 +8,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
+	"github.com/MrPointer/dotfiles/installer/lib/shell"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,7 +19,7 @@ var (
 	workEnvironment      bool
 	workName             string
 	workEmail            string
-	shell                string
+	shellName            string
 	installBrew          bool
 	installShellWithBrew bool
 	multiUserSystem      bool
@@ -73,14 +74,17 @@ making it easier to get started with a new system.`,
 			globalPackageManager = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager)
 		}
 
+		if err := installShell(); err != nil {
+			cliLogger.Error("Failed to install shell: %v", err)
+			os.Exit(1)
+		}
+
 		if err := setupGpgKeys(&sysInfo); err != nil {
 			cliLogger.Error("Failed to setup GPG keys: %v", err)
 			os.Exit(1)
 		}
 
 		// TODO: Continue with other installation steps
-		// - Install shell
-		// - Install GPG
 		// - Install chezmoi
 		// - Prepare environment
 		// - Apply dotfiles
@@ -185,6 +189,26 @@ func installGpgClient(sysInfo *compatibility.SystemInfo) error {
 	return nil
 }
 
+func installShell() error {
+	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager)
+
+	isAvailable, err := shellInstaller.IsAvailable()
+	if err != nil {
+		return err
+	}
+	if isAvailable {
+		cliLogger.Success("%s shell is already installed", shellName)
+		return nil
+	}
+
+	if err := shellInstaller.Install(nil); err != nil { // Pass context if needed.
+		return err
+	}
+
+	cliLogger.Success("%s shell installed successfully", shellName)
+	return nil
+}
+
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
 	rootCmd.AddCommand(installCmd)
@@ -195,7 +219,7 @@ func init() {
 		"Use the given name as the work's name")
 	installCmd.Flags().StringVar(&workEmail, "work-email", "",
 		"Use the given email address as work's email address")
-	installCmd.Flags().StringVar(&shell, "shell", "zsh",
+	installCmd.Flags().StringVar(&shellName, "shell", "zsh",
 		"Install given shell if required and set it as user's default")
 	installCmd.Flags().BoolVar(&installBrew, "install-brew", true,
 		"Install brew if not already installed")
