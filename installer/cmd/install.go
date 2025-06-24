@@ -24,6 +24,7 @@ var (
 	multiUserSystem      bool
 	gitCloneProtocol     string
 	verbose              bool
+	nonInteractive       bool
 )
 
 // global variables for the command execution context.
@@ -122,6 +123,11 @@ func setupGpgKeys(sysInfo *compatibility.SystemInfo) error {
 		return err
 	}
 
+	if nonInteractive {
+		cliLogger.Warning("Skipping GPG key setup in non-interactive mode - You will need to set them up manually")
+		return nil
+	}
+
 	gpgClient := gpg.NewDefaultGpgClient(
 		globalOsManager,
 		globalCommander,
@@ -201,6 +207,8 @@ func init() {
 		"Use the given git clone protocol (ssh or https) for git operations")
 	installCmd.Flags().BoolVarP(&verbose, "verbose", "v", false,
 		"Enable verbose output")
+	installCmd.Flags().BoolVar(&nonInteractive, "non-interactive", false,
+		"Disable interactive mode")
 
 	viper.BindPFlag("work-env", installCmd.Flags().Lookup("work-env"))
 	viper.BindPFlag("work-name", installCmd.Flags().Lookup("work-name"))
@@ -211,4 +219,5 @@ func init() {
 	viper.BindPFlag("multi-user-system", installCmd.Flags().Lookup("multi-user-system"))
 	viper.BindPFlag("git-clone-protocol", installCmd.Flags().Lookup("git-clone-protocol"))
 	viper.BindPFlag("verbose", installCmd.Flags().Lookup("verbose"))
+	viper.BindPFlag("interactive", installCmd.Flags().Lookup("interactive"))
 }
