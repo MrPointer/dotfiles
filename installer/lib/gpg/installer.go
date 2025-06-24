@@ -7,7 +7,6 @@ import (
 
 	"github.com/Masterminds/semver"
 
-	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
@@ -22,7 +21,6 @@ type GpgClientInstaller interface {
 }
 
 type gpgInstaller struct {
-	systemInfo     *compatibility.SystemInfo
 	logger         logger.Logger
 	commander      utils.Commander
 	osManager      osmanager.OsManager
@@ -30,14 +28,12 @@ type gpgInstaller struct {
 }
 
 func NewGpgInstaller(
-	systemInfo *compatibility.SystemInfo,
 	logger logger.Logger,
 	commander utils.Commander,
 	osManager osmanager.OsManager,
 	packageManager pkgmanager.PackageManager,
 ) GpgClientInstaller {
 	return &gpgInstaller{
-		systemInfo:     systemInfo,
 		logger:         logger,
 		commander:      commander,
 		osManager:      osManager,
