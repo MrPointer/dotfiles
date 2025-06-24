@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
@@ -16,8 +15,6 @@ import (
 
 func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{
 		WarningFunc: func(format string, args ...any) {
 			assert.Equal(t, "GPG is not available. Required for GPG operations.", format)
@@ -37,7 +34,7 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -52,8 +49,6 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 
 func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
@@ -64,7 +59,7 @@ func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -78,8 +73,6 @@ func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 
 func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{
 		WarningFunc: func(format string, args ...any) {
 			assert.Equal(t, "GPG version is not compatible. Required version is >=2.2.0", format)
@@ -99,7 +92,7 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) 
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -115,8 +108,6 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) 
 
 func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 
@@ -131,7 +122,7 @@ func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -145,8 +136,6 @@ func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 
 func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{
 		WarningFunc: func(format string, args ...any) {
 			assert.Equal(t, "GPG agent is not available. Required for GPG operations.", format)
@@ -169,7 +158,7 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -184,8 +173,6 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 
 func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
@@ -204,7 +191,7 @@ func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T)
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -219,8 +206,6 @@ func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T)
 
 func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 
@@ -235,7 +220,7 @@ func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -250,8 +235,6 @@ func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
 
 func Test_GpgInstallationFails_WhenPackageManagerFails(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	osManagerMock := &osmanager.MoqOsManager{}
@@ -262,7 +245,7 @@ func Test_GpgInstallationFails_WhenPackageManagerFails(t *testing.T) {
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	err := installer.Install(context.Background())
@@ -275,8 +258,6 @@ func Test_GpgInstallationFails_WhenPackageManagerFails(t *testing.T) {
 
 func Test_GpgIsInstalledSuccessfully_WhenAllRequirementsAreMet(t *testing.T) {
 	// Arrange
-	systemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
-
 	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	osManagerMock := &osmanager.MoqOsManager{}
@@ -287,7 +268,7 @@ func Test_GpgIsInstalledSuccessfully_WhenAllRequirementsAreMet(t *testing.T) {
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(systemInfo, loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	err := installer.Install(context.Background())

@@ -79,7 +79,7 @@ making it easier to get started with a new system.`,
 			os.Exit(1)
 		}
 
-		if err := setupGpgKeys(&sysInfo); err != nil {
+		if err := setupGpgKeys(); err != nil {
 			cliLogger.Error("Failed to setup GPG keys: %v", err)
 			os.Exit(1)
 		}
@@ -121,8 +121,8 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 	return nil
 }
 
-func setupGpgKeys(sysInfo *compatibility.SystemInfo) error {
-	err := installGpgClient(sysInfo)
+func setupGpgKeys() error {
+	err := installGpgClient()
 	if err != nil {
 		return err
 	}
@@ -162,10 +162,9 @@ func setupGpgKeys(sysInfo *compatibility.SystemInfo) error {
 }
 
 // installGpgClient installs the GPG client if not already available.
-func installGpgClient(sysInfo *compatibility.SystemInfo) error {
+func installGpgClient() error {
 	// Create GpgClientInstaller using the new API.
 	installer := gpg.NewGpgInstaller(
-		sysInfo,
 		cliLogger,
 		globalCommander,
 		globalOsManager,
