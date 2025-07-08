@@ -55,11 +55,11 @@ fi
 
 if [[ -d "$HOME/.pyenv" ]]; then
     # Enable pyenv
+    eval "$(pyenv init --path)"
     export PYENV_ROOT="$HOME/.pyenv"
     export PATH="$PYENV_ROOT/bin:$PATH"
-    eval "$(pyenv init --path)"
-    eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
+    eval "$(pyenv init - zsh)"
+    eval "$(pyenv virtualenv-init - zsh)"
 fi
 
 if command -v cargo &>/dev/null; then
@@ -104,6 +104,11 @@ fi
 if command -v npm &>/dev/null; then
   # Register npm completions
   npm completion > ~/.zfunc/_npm
+fi
+
+if command -v bun &>/dev/null; then
+    # Ensure bun is in the PATH
+    export PATH="$HOME/.bun/bin:$PATH"
 fi
 
 if command -v task &>/dev/null; then
