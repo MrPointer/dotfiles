@@ -36,6 +36,10 @@ autoload -U +X bashcompinit && bashcompinit
 autoload -U select-word-style
 select-word-style bash
 
+if [[ -v DEFER_BREW_LOAD && "$DEFER_BREW_LOAD" == "true" ]]; then
+  load_brew_env
+fi
+
 # Enable homebrew completions
 if command -v brew &>/dev/null; then
   FPATH="$BREW_HOME/share/zsh/site-functions:$FPATH"
