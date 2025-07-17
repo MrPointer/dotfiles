@@ -14,3 +14,6 @@ packages:
   github.com/MrPointer/dotfiles/installer:
     config:
       all: true
+  github.com/MrPointer/dotfiles/installer/cli:
+    config:
+      all: false
