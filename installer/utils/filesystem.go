@@ -15,6 +15,9 @@ type FileSystem interface {
 	// CreateDirectory creates a directory at the specified path.
 	CreateDirectory(path string) error
 
+	// CreateDirectoryWithPermissions creates a directory at the specified path with the specified permissions.
+	CreateDirectoryWithPermissions(path string, mode os.FileMode) error
+
 	// RemovePath removes a file or directory at the specified path.
 	// If the path is a directory, it will be removed recursively.
 	RemovePath(path string) error
@@ -77,6 +80,10 @@ func (fs *DefaultFileSystem) CreateFile(path string) (string, error) {
 func (fs *DefaultFileSystem) CreateDirectory(path string) error {
 	const defaultPermissions = 0o755 // Default permissions for directories.
 	return os.MkdirAll(path, defaultPermissions)
+}
+
+func (fs *DefaultFileSystem) CreateDirectoryWithPermissions(path string, permissions os.FileMode) error {
+	return os.MkdirAll(path, permissions)
 }
 
 func (fs *DefaultFileSystem) RemovePath(path string) error {

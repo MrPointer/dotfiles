@@ -6,6 +6,7 @@ package utils
 
 import (
 	"io"
+	"os"
 	"sync"
 )
 
@@ -21,6 +22,9 @@ var _ FileSystem = &MoqFileSystem{}
 //		mockedFileSystem := &MoqFileSystem{
 //			CreateDirectoryFunc: func(path string) error {
 //				panic("mock out the CreateDirectory method")
+//			},
+//			CreateDirectoryWithPermissionsFunc: func(path string, mode os.FileMode) error {
+//				panic("mock out the CreateDirectoryWithPermissions method")
 //			},
 //			CreateFileFunc: func(path string) (string, error) {
 //				panic("mock out the CreateFile method")
@@ -53,6 +57,9 @@ type MoqFileSystem struct {
 	// CreateDirectoryFunc mocks the CreateDirectory method.
 	CreateDirectoryFunc func(path string) error
 
+	// CreateDirectoryWithPermissionsFunc mocks the CreateDirectoryWithPermissions method.
+	CreateDirectoryWithPermissionsFunc func(path string, mode os.FileMode) error
+
 	// CreateFileFunc mocks the CreateFile method.
 	CreateFileFunc func(path string) (string, error)
 
@@ -80,6 +87,13 @@ type MoqFileSystem struct {
 		CreateDirectory []struct {
 			// Path is the path argument value.
 			Path string
+		}
+		// CreateDirectoryWithPermissions holds details about calls to the CreateDirectoryWithPermissions method.
+		CreateDirectoryWithPermissions []struct {
+			// Path is the path argument value.
+			Path string
+			// Mode is the mode argument value.
+			Mode os.FileMode
 		}
 		// CreateFile holds details about calls to the CreateFile method.
 		CreateFile []struct {
@@ -123,14 +137,15 @@ type MoqFileSystem struct {
 			Reader io.Reader
 		}
 	}
-	lockCreateDirectory          sync.RWMutex
-	lockCreateFile               sync.RWMutex
-	lockCreateTemporaryDirectory sync.RWMutex
-	lockCreateTemporaryFile      sync.RWMutex
-	lockPathExists               sync.RWMutex
-	lockReadFile                 sync.RWMutex
-	lockRemovePath               sync.RWMutex
-	lockWriteFile                sync.RWMutex
+	lockCreateDirectory                sync.RWMutex
+	lockCreateDirectoryWithPermissions sync.RWMutex
+	lockCreateFile                     sync.RWMutex
+	lockCreateTemporaryDirectory       sync.RWMutex
+	lockCreateTemporaryFile            sync.RWMutex
+	lockPathExists                     sync.RWMutex
+	lockReadFile                       sync.RWMutex
+	lockRemovePath                     sync.RWMutex
+	lockWriteFile                      sync.RWMutex
 }
 
 // CreateDirectory calls CreateDirectoryFunc.
@@ -162,6 +177,42 @@ func (mock *MoqFileSystem) CreateDirectoryCalls() []struct {
 	mock.lockCreateDirectory.RLock()
 	calls = mock.calls.CreateDirectory
 	mock.lockCreateDirectory.RUnlock()
+	return calls
+}
+
+// CreateDirectoryWithPermissions calls CreateDirectoryWithPermissionsFunc.
+func (mock *MoqFileSystem) CreateDirectoryWithPermissions(path string, mode os.FileMode) error {
+	if mock.CreateDirectoryWithPermissionsFunc == nil {
+		panic("MoqFileSystem.CreateDirectoryWithPermissionsFunc: method is nil but FileSystem.CreateDirectoryWithPermissions was just called")
+	}
+	callInfo := struct {
+		Path string
+		Mode os.FileMode
+	}{
+		Path: path,
+		Mode: mode,
+	}
+	mock.lockCreateDirectoryWithPermissions.Lock()
+	mock.calls.CreateDirectoryWithPermissions = append(mock.calls.CreateDirectoryWithPermissions, callInfo)
+	mock.lockCreateDirectoryWithPermissions.Unlock()
+	return mock.CreateDirectoryWithPermissionsFunc(path, mode)
+}
+
+// CreateDirectoryWithPermissionsCalls gets all the calls that were made to CreateDirectoryWithPermissions.
+// Check the length with:
+//
+//	len(mockedFileSystem.CreateDirectoryWithPermissionsCalls())
+func (mock *MoqFileSystem) CreateDirectoryWithPermissionsCalls() []struct {
+	Path string
+	Mode os.FileMode
+} {
+	var calls []struct {
+		Path string
+		Mode os.FileMode
+	}
+	mock.lockCreateDirectoryWithPermissions.RLock()
+	calls = mock.calls.CreateDirectoryWithPermissions
+	mock.lockCreateDirectoryWithPermissions.RUnlock()
 	return calls
 }
 
