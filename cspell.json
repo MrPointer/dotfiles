@@ -4,6 +4,7 @@
     "httpclient",
     "osmanager",
     "NONINTERACTIVE",
-    "linuxbrew"
+    "linuxbrew",
+    "chezmoi"
   ]
 }
