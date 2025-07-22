@@ -9,27 +9,41 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
-type ChezmoiManager struct {
+type ChezmoiConfig struct {
 	chezmoiConfigDir      string
 	chezmoiConfigFilePath string
 	chezmoiCloneDir       string
-	filesystem            utils.FileSystem
+	githubUsername        string
+	cloneViaSSH           bool
+}
+
+func DefaultChezmoiConfig(chezmoiConfigFilePath string, chezmoiCloneDir string) ChezmoiConfig {
+	return ChezmoiConfig{
+		chezmoiConfigDir:      filepath.Dir(chezmoiConfigFilePath),
+		chezmoiConfigFilePath: chezmoiConfigFilePath,
+		chezmoiCloneDir:       chezmoiCloneDir,
+		githubUsername:        "MrPointer",
+		cloneViaSSH:           false,
+	}
+}
+
+type ChezmoiManager struct {
+	chezmoiConfig ChezmoiConfig
+	filesystem    utils.FileSystem
+	commander     utils.Commander
 }
 
 var _ dotfilesmanager.DotfilesDataInitializer = (*ChezmoiManager)(nil)
 
-func NewChezmoiManager(chezmoiConfigFilePath string, chezmoiCloneDir string, filesystem utils.FileSystem) *ChezmoiManager {
-	configFileBasePath := filepath.Dir(chezmoiConfigFilePath)
-
+func NewChezmoiManager(filesystem utils.FileSystem, commander utils.Commander, chezmoiConfig ChezmoiConfig) *ChezmoiManager {
 	return &ChezmoiManager{
-		chezmoiConfigDir:      configFileBasePath,
-		chezmoiConfigFilePath: chezmoiConfigFilePath,
-		chezmoiCloneDir:       chezmoiCloneDir,
-		filesystem:            filesystem,
+		chezmoiConfig: chezmoiConfig,
+		filesystem:    filesystem,
+		commander:     commander,
 	}
 }
 
-func TryNewDefaultChezmoiManager(filesystem utils.FileSystem, userManager osmanager.UserManager) (*ChezmoiManager, error) {
+func TryStandardChezmoiManager(filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, githubUsername string, cloneViaSSH bool) (*ChezmoiManager, error) {
 	userConfigDir, err := userManager.GetConfigDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user config directory: %w", err)
@@ -45,5 +59,18 @@ func TryNewDefaultChezmoiManager(filesystem utils.FileSystem, userManager osmana
 
 	chezmoiCloneDir := fmt.Sprintf("%s/.local/share/chezmoi", userHomeDir)
 
-	return NewChezmoiManager(chezmoiConfigFilePath, chezmoiCloneDir, filesystem), nil
+	return NewChezmoiManager(
+		filesystem,
+		commander,
+		ChezmoiConfig{
+			chezmoiConfigDir:      chezmoiConfigDir,
+			chezmoiConfigFilePath: chezmoiConfigFilePath,
+			chezmoiCloneDir:       chezmoiCloneDir,
+			githubUsername:        githubUsername,
+			cloneViaSSH:           cloneViaSSH,
+		}), nil
+}
+
+func TryStandardChezmoiManagerWithDefaults(filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander) (*ChezmoiManager, error) {
+	return TryStandardChezmoiManager(filesystem, userManager, commander, "MrPointer", false)
 }

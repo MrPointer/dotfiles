@@ -22,6 +22,7 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, "config")
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
+	cloneDir := filepath.Join(tempDir, "clone")
 
 	mockFileSystem := &utils.MoqFileSystem{
 		PathExistsFunc: func(path string) (bool, error) {
@@ -35,7 +36,10 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -46,7 +50,7 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 		SystemData:    mo.None[dotfilesmanager.DotfilesSystemData](),
 	}
 
-	err := initializer.Initialize(data)
+	err := manager.Initialize(data)
 
 	require.NoError(t, err)
 	require.Len(t, mockFileSystem.PathExistsCalls(), 1)
@@ -65,6 +69,7 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, "config")
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
+	cloneDir := filepath.Join(tempDir, "clone")
 
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
@@ -78,7 +83,10 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -89,7 +97,7 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 		SystemData:    mo.None[dotfilesmanager.DotfilesSystemData](),
 	}
 
-	err = initializer.Initialize(data)
+	err = manager.Initialize(data)
 
 	require.NoError(t, err)
 	require.Len(t, mockFileSystem.PathExistsCalls(), 1)
@@ -109,9 +117,13 @@ func Test_Initialize_ReturnsError_WhenDirectoryCreationFails(t *testing.T) {
 			return expectedError
 		},
 	}
-	configFilePath := "/home/user/.config/chezmoi.toml"
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	configFilePath := "/home/user/.config/chezmoi.toml"
+	cloneDir := "/home/user/.local/share/chezmoi"
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:     "test@example.com",
@@ -119,7 +131,7 @@ func Test_Initialize_ReturnsError_WhenDirectoryCreationFails(t *testing.T) {
 		LastName:  "Doe",
 	}
 
-	err := initializer.Initialize(data)
+	err := manager.Initialize(data)
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to create chezmoi config directory")
@@ -134,6 +146,7 @@ func Test_Initialize_WritesBasicPersonalData_WhenOnlyRequiredFieldsProvided(t *t
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, "config")
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
+	cloneDir := filepath.Join(tempDir, "clone")
 
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
@@ -144,7 +157,10 @@ func Test_Initialize_WritesBasicPersonalData_WhenOnlyRequiredFieldsProvided(t *t
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -155,7 +171,7 @@ func Test_Initialize_WritesBasicPersonalData_WhenOnlyRequiredFieldsProvided(t *t
 		SystemData:    mo.None[dotfilesmanager.DotfilesSystemData](),
 	}
 
-	err = initializer.Initialize(data)
+	err = manager.Initialize(data)
 
 	require.NoError(t, err)
 	require.FileExists(t, configFilePath)
@@ -176,6 +192,7 @@ func Test_Initialize_WritesGpgSigningKey_WhenProvided(t *testing.T) {
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, "config")
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
+	cloneDir := filepath.Join(tempDir, "clone")
 
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
@@ -186,7 +203,10 @@ func Test_Initialize_WritesGpgSigningKey_WhenProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -197,7 +217,7 @@ func Test_Initialize_WritesGpgSigningKey_WhenProvided(t *testing.T) {
 		SystemData:    mo.None[dotfilesmanager.DotfilesSystemData](),
 	}
 
-	err = initializer.Initialize(data)
+	err = manager.Initialize(data)
 
 	require.NoError(t, err)
 	require.FileExists(t, configFilePath)
@@ -216,6 +236,7 @@ func Test_Initialize_WritesWorkEnvironmentData_WhenProvided(t *testing.T) {
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, "config")
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
+	cloneDir := filepath.Join(tempDir, "clone")
 
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
@@ -226,7 +247,10 @@ func Test_Initialize_WritesWorkEnvironmentData_WhenProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
@@ -241,7 +265,7 @@ func Test_Initialize_WritesWorkEnvironmentData_WhenProvided(t *testing.T) {
 		SystemData:    mo.None[dotfilesmanager.DotfilesSystemData](),
 	}
 
-	err = initializer.Initialize(data)
+	err = manager.Initialize(data)
 
 	require.NoError(t, err)
 	require.FileExists(t, configFilePath)
@@ -262,6 +286,7 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, "config")
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
+	cloneDir := filepath.Join(tempDir, "clone")
 
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
@@ -272,7 +297,10 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	systemData := dotfilesmanager.DotfilesSystemData{
 		Shell:           "/bin/zsh",
@@ -289,7 +317,7 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 		SystemData:    mo.Some(systemData),
 	}
 
-	err = initializer.Initialize(data)
+	err = manager.Initialize(data)
 
 	require.NoError(t, err)
 	require.FileExists(t, configFilePath)
@@ -311,6 +339,7 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, "config")
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
+	cloneDir := filepath.Join(tempDir, "clone")
 
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
@@ -321,7 +350,10 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	mockCommander := &utils.MoqCommander{}
+
+	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
@@ -342,7 +374,7 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 		SystemData:    mo.Some(systemData),
 	}
 
-	err = initializer.Initialize(data)
+	err = manager.Initialize(data)
 
 	require.NoError(t, err)
 	require.FileExists(t, configFilePath)
