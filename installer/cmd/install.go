@@ -121,6 +121,26 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 	return nil
 }
 
+func installShell() error {
+	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager)
+
+	isAvailable, err := shellInstaller.IsAvailable()
+	if err != nil {
+		return err
+	}
+	if isAvailable {
+		cliLogger.Success("%s shell is already installed", shellName)
+		return nil
+	}
+
+	if err := shellInstaller.Install(nil); err != nil { // Pass context if needed.
+		return err
+	}
+
+	cliLogger.Success("%s shell installed successfully", shellName)
+	return nil
+}
+
 func setupGpgKeys() error {
 	err := installGpgClient()
 	if err != nil {
@@ -185,26 +205,6 @@ func installGpgClient() error {
 	}
 
 	cliLogger.Success("GPG client installed successfully")
-	return nil
-}
-
-func installShell() error {
-	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager)
-
-	isAvailable, err := shellInstaller.IsAvailable()
-	if err != nil {
-		return err
-	}
-	if isAvailable {
-		cliLogger.Success("%s shell is already installed", shellName)
-		return nil
-	}
-
-	if err := shellInstaller.Install(nil); err != nil { // Pass context if needed.
-		return err
-	}
-
-	cliLogger.Success("%s shell installed successfully", shellName)
 	return nil
 }
 
