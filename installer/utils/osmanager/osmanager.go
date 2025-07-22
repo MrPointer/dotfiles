@@ -22,6 +22,12 @@ type UserManager interface {
 
 	// UserExists checks if a user exists in the system.
 	UserExists(username string) (bool, error)
+
+	// GetHomeDirectory returns the home directory of the current user.
+	GetHomeDir() (string, error)
+
+	// GetConfigDir returns the configuration directory of the current user.
+	GetConfigDir() (string, error)
 }
 
 // SudoManager defines operations for managing sudo permissions.
@@ -131,6 +137,14 @@ func (u *UnixOsManager) AddUserToGroup(username, group string) error {
 	}
 
 	return nil
+}
+
+func (u *UnixOsManager) GetHomeDir() (string, error) {
+	return os.UserHomeDir()
+}
+
+func (u *UnixOsManager) GetConfigDir() (string, error) {
+	return os.UserConfigDir()
 }
 
 func (u *UnixOsManager) AddSudoAccess(username string) error {

@@ -24,6 +24,12 @@ var _ UserManager = &MoqUserManager{}
 //			AddUserToGroupFunc: func(username string, group string) error {
 //				panic("mock out the AddUserToGroup method")
 //			},
+//			GetConfigDirFunc: func() (string, error) {
+//				panic("mock out the GetConfigDir method")
+//			},
+//			GetHomeDirFunc: func() (string, error) {
+//				panic("mock out the GetHomeDir method")
+//			},
 //			UserExistsFunc: func(username string) (bool, error) {
 //				panic("mock out the UserExists method")
 //			},
@@ -39,6 +45,12 @@ type MoqUserManager struct {
 
 	// AddUserToGroupFunc mocks the AddUserToGroup method.
 	AddUserToGroupFunc func(username string, group string) error
+
+	// GetConfigDirFunc mocks the GetConfigDir method.
+	GetConfigDirFunc func() (string, error)
+
+	// GetHomeDirFunc mocks the GetHomeDir method.
+	GetHomeDirFunc func() (string, error)
 
 	// UserExistsFunc mocks the UserExists method.
 	UserExistsFunc func(username string) (bool, error)
@@ -57,6 +69,12 @@ type MoqUserManager struct {
 			// Group is the group argument value.
 			Group string
 		}
+		// GetConfigDir holds details about calls to the GetConfigDir method.
+		GetConfigDir []struct {
+		}
+		// GetHomeDir holds details about calls to the GetHomeDir method.
+		GetHomeDir []struct {
+		}
 		// UserExists holds details about calls to the UserExists method.
 		UserExists []struct {
 			// Username is the username argument value.
@@ -65,6 +83,8 @@ type MoqUserManager struct {
 	}
 	lockAddUser        sync.RWMutex
 	lockAddUserToGroup sync.RWMutex
+	lockGetConfigDir   sync.RWMutex
+	lockGetHomeDir     sync.RWMutex
 	lockUserExists     sync.RWMutex
 }
 
@@ -133,6 +153,60 @@ func (mock *MoqUserManager) AddUserToGroupCalls() []struct {
 	mock.lockAddUserToGroup.RLock()
 	calls = mock.calls.AddUserToGroup
 	mock.lockAddUserToGroup.RUnlock()
+	return calls
+}
+
+// GetConfigDir calls GetConfigDirFunc.
+func (mock *MoqUserManager) GetConfigDir() (string, error) {
+	if mock.GetConfigDirFunc == nil {
+		panic("MoqUserManager.GetConfigDirFunc: method is nil but UserManager.GetConfigDir was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetConfigDir.Lock()
+	mock.calls.GetConfigDir = append(mock.calls.GetConfigDir, callInfo)
+	mock.lockGetConfigDir.Unlock()
+	return mock.GetConfigDirFunc()
+}
+
+// GetConfigDirCalls gets all the calls that were made to GetConfigDir.
+// Check the length with:
+//
+//	len(mockedUserManager.GetConfigDirCalls())
+func (mock *MoqUserManager) GetConfigDirCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetConfigDir.RLock()
+	calls = mock.calls.GetConfigDir
+	mock.lockGetConfigDir.RUnlock()
+	return calls
+}
+
+// GetHomeDir calls GetHomeDirFunc.
+func (mock *MoqUserManager) GetHomeDir() (string, error) {
+	if mock.GetHomeDirFunc == nil {
+		panic("MoqUserManager.GetHomeDirFunc: method is nil but UserManager.GetHomeDir was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetHomeDir.Lock()
+	mock.calls.GetHomeDir = append(mock.calls.GetHomeDir, callInfo)
+	mock.lockGetHomeDir.Unlock()
+	return mock.GetHomeDirFunc()
+}
+
+// GetHomeDirCalls gets all the calls that were made to GetHomeDir.
+// Check the length with:
+//
+//	len(mockedUserManager.GetHomeDirCalls())
+func (mock *MoqUserManager) GetHomeDirCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetHomeDir.RLock()
+	calls = mock.calls.GetHomeDir
+	mock.lockGetHomeDir.RUnlock()
 	return calls
 }
 

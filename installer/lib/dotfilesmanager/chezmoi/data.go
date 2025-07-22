@@ -7,6 +7,7 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/spf13/viper"
 )
 
@@ -28,8 +29,8 @@ func NewChezmoiDataInitializer(chezmoiConfigFilePath string, filesystem utils.Fi
 	}
 }
 
-func TryNewDefaultChezmoiDataInitializer(filesystem utils.FileSystem) (*ChezmoiDataInitializer, error) {
-	userConfigDir, err := os.UserConfigDir()
+func TryNewDefaultChezmoiDataInitializer(filesystem utils.FileSystem, userManager osmanager.UserManager) (*ChezmoiDataInitializer, error) {
+	userConfigDir, err := userManager.GetConfigDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user config directory: %w", err)
 	}

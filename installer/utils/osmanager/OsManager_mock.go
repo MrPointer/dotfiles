@@ -28,8 +28,14 @@ var _ OsManager = &MoqOsManager{}
 //			AddUserToGroupFunc: func(username string, group string) error {
 //				panic("mock out the AddUserToGroup method")
 //			},
+//			GetConfigDirFunc: func() (string, error) {
+//				panic("mock out the GetConfigDir method")
+//			},
 //			GetFileOwnerFunc: func(path string) (string, error) {
 //				panic("mock out the GetFileOwner method")
+//			},
+//			GetHomeDirFunc: func() (string, error) {
+//				panic("mock out the GetHomeDir method")
 //			},
 //			GetProgramPathFunc: func(program string) (string, error) {
 //				panic("mock out the GetProgramPath method")
@@ -65,8 +71,14 @@ type MoqOsManager struct {
 	// AddUserToGroupFunc mocks the AddUserToGroup method.
 	AddUserToGroupFunc func(username string, group string) error
 
+	// GetConfigDirFunc mocks the GetConfigDir method.
+	GetConfigDirFunc func() (string, error)
+
 	// GetFileOwnerFunc mocks the GetFileOwner method.
 	GetFileOwnerFunc func(path string) (string, error)
+
+	// GetHomeDirFunc mocks the GetHomeDir method.
+	GetHomeDirFunc func() (string, error)
 
 	// GetProgramPathFunc mocks the GetProgramPath method.
 	GetProgramPathFunc func(program string) (string, error)
@@ -105,10 +117,16 @@ type MoqOsManager struct {
 			// Group is the group argument value.
 			Group string
 		}
+		// GetConfigDir holds details about calls to the GetConfigDir method.
+		GetConfigDir []struct {
+		}
 		// GetFileOwner holds details about calls to the GetFileOwner method.
 		GetFileOwner []struct {
 			// Path is the path argument value.
 			Path string
+		}
+		// GetHomeDir holds details about calls to the GetHomeDir method.
+		GetHomeDir []struct {
 		}
 		// GetProgramPath holds details about calls to the GetProgramPath method.
 		GetProgramPath []struct {
@@ -152,7 +170,9 @@ type MoqOsManager struct {
 	lockAddSudoAccess     sync.RWMutex
 	lockAddUser           sync.RWMutex
 	lockAddUserToGroup    sync.RWMutex
+	lockGetConfigDir      sync.RWMutex
 	lockGetFileOwner      sync.RWMutex
+	lockGetHomeDir        sync.RWMutex
 	lockGetProgramPath    sync.RWMutex
 	lockGetProgramVersion sync.RWMutex
 	lockProgramExists     sync.RWMutex
@@ -261,6 +281,33 @@ func (mock *MoqOsManager) AddUserToGroupCalls() []struct {
 	return calls
 }
 
+// GetConfigDir calls GetConfigDirFunc.
+func (mock *MoqOsManager) GetConfigDir() (string, error) {
+	if mock.GetConfigDirFunc == nil {
+		panic("MoqOsManager.GetConfigDirFunc: method is nil but OsManager.GetConfigDir was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetConfigDir.Lock()
+	mock.calls.GetConfigDir = append(mock.calls.GetConfigDir, callInfo)
+	mock.lockGetConfigDir.Unlock()
+	return mock.GetConfigDirFunc()
+}
+
+// GetConfigDirCalls gets all the calls that were made to GetConfigDir.
+// Check the length with:
+//
+//	len(mockedOsManager.GetConfigDirCalls())
+func (mock *MoqOsManager) GetConfigDirCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetConfigDir.RLock()
+	calls = mock.calls.GetConfigDir
+	mock.lockGetConfigDir.RUnlock()
+	return calls
+}
+
 // GetFileOwner calls GetFileOwnerFunc.
 func (mock *MoqOsManager) GetFileOwner(path string) (string, error) {
 	if mock.GetFileOwnerFunc == nil {
@@ -290,6 +337,33 @@ func (mock *MoqOsManager) GetFileOwnerCalls() []struct {
 	mock.lockGetFileOwner.RLock()
 	calls = mock.calls.GetFileOwner
 	mock.lockGetFileOwner.RUnlock()
+	return calls
+}
+
+// GetHomeDir calls GetHomeDirFunc.
+func (mock *MoqOsManager) GetHomeDir() (string, error) {
+	if mock.GetHomeDirFunc == nil {
+		panic("MoqOsManager.GetHomeDirFunc: method is nil but OsManager.GetHomeDir was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetHomeDir.Lock()
+	mock.calls.GetHomeDir = append(mock.calls.GetHomeDir, callInfo)
+	mock.lockGetHomeDir.Unlock()
+	return mock.GetHomeDirFunc()
+}
+
+// GetHomeDirCalls gets all the calls that were made to GetHomeDir.
+// Check the length with:
+//
+//	len(mockedOsManager.GetHomeDirCalls())
+func (mock *MoqOsManager) GetHomeDirCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetHomeDir.RLock()
+	calls = mock.calls.GetHomeDir
+	mock.lockGetHomeDir.RUnlock()
 	return calls
 }
 
