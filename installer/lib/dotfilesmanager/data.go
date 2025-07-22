@@ -24,7 +24,3 @@ type DotfilesSystemData struct {
 	MultiUserSystem bool   `mapstructure:"multi_user_system"`
 	BrewUser        bool   `mapstructure:"brew_user"`
 }
-
-type DotfilesDataInitializer interface {
-	Initialize(data DotfilesData) error
-}
