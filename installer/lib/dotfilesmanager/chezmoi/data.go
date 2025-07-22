@@ -3,45 +3,12 @@ package chezmoi
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
-	"github.com/MrPointer/dotfiles/installer/utils"
-	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/spf13/viper"
 )
 
-type ChezmoiDataInitializer struct {
-	chezmoiConfigDir      string
-	chezmoiConfigFilePath string
-	filesystem            utils.FileSystem
-}
-
-var _ dotfilesmanager.DotfilesDataInitializer = (*ChezmoiDataInitializer)(nil)
-
-func NewChezmoiDataInitializer(chezmoiConfigFilePath string, filesystem utils.FileSystem) *ChezmoiDataInitializer {
-	configFileBasePath := filepath.Dir(chezmoiConfigFilePath)
-
-	return &ChezmoiDataInitializer{
-		chezmoiConfigDir:      configFileBasePath,
-		chezmoiConfigFilePath: chezmoiConfigFilePath,
-		filesystem:            filesystem,
-	}
-}
-
-func TryNewDefaultChezmoiDataInitializer(filesystem utils.FileSystem, userManager osmanager.UserManager) (*ChezmoiDataInitializer, error) {
-	userConfigDir, err := userManager.GetConfigDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user config directory: %w", err)
-	}
-
-	chezmoiConfigDir := fmt.Sprintf("%s/chezmoi", userConfigDir)
-	chezmoiConfigFilePath := fmt.Sprintf("%s.toml", chezmoiConfigDir)
-
-	return NewChezmoiDataInitializer(chezmoiConfigFilePath, filesystem), nil
-}
-
-func (c *ChezmoiDataInitializer) Initialize(data dotfilesmanager.DotfilesData) error {
+func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
 	if _, err := c.filesystem.PathExists(c.chezmoiConfigDir); os.IsNotExist(err) {
 		if err := c.filesystem.CreateDirectory(c.chezmoiConfigDir); err != nil {
 			return fmt.Errorf("failed to create chezmoi config directory: %w", err)

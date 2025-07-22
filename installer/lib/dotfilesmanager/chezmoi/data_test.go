@@ -12,45 +12,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager/chezmoi"
 	"github.com/MrPointer/dotfiles/installer/utils"
-	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
-
-func Test_NewChezmoiDataInitializer_ReturnsValidInstance(t *testing.T) {
-	mockFileSystem := &utils.MoqFileSystem{}
-	configFilePath := "/home/user/.config/chezmoi.toml"
-
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
-
-	require.NotNil(t, initializer)
-}
-
-func Test_TryNewDefaultChezmoiDataInitializer_ReturnsValidInstance_WhenUserConfigDirIsAvailable(t *testing.T) {
-	mockFileSystem := &utils.MoqFileSystem{}
-
-	userManager := &osmanager.MoqUserManager{}
-	userManager.GetConfigDirFunc = func() (string, error) {
-		return "/home/user/.config", nil
-	}
-
-	initializer, err := chezmoi.TryNewDefaultChezmoiDataInitializer(mockFileSystem, userManager)
-
-	require.NoError(t, err)
-	require.NotNil(t, initializer)
-}
-
-func Test_TryNewDefaultChezmoiDataInitializer_ReturnsError_WhenUserConfigDirIsUnavailable(t *testing.T) {
-	mockFileSystem := &utils.MoqFileSystem{}
-
-	userManager := &osmanager.MoqUserManager{}
-	userManager.GetConfigDirFunc = func() (string, error) {
-		return "", errors.New("failed to get user config directory")
-	}
-
-	initializer, err := chezmoi.TryNewDefaultChezmoiDataInitializer(mockFileSystem, userManager)
-
-	require.Error(t, err)
-	require.Nil(t, initializer)
-}
 
 func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing.T) {
 	if testing.Short() {
@@ -73,7 +35,7 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -116,7 +78,7 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -149,7 +111,7 @@ func Test_Initialize_ReturnsError_WhenDirectoryCreationFails(t *testing.T) {
 	}
 	configFilePath := "/home/user/.config/chezmoi.toml"
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:     "test@example.com",
@@ -182,7 +144,7 @@ func Test_Initialize_WritesBasicPersonalData_WhenOnlyRequiredFieldsProvided(t *t
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -224,7 +186,7 @@ func Test_Initialize_WritesGpgSigningKey_WhenProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -264,7 +226,7 @@ func Test_Initialize_WritesWorkEnvironmentData_WhenProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
@@ -310,7 +272,7 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	systemData := dotfilesmanager.DotfilesSystemData{
 		Shell:           "/bin/zsh",
@@ -359,7 +321,7 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 		},
 	}
 
-	initializer := chezmoi.NewChezmoiDataInitializer(configFilePath, mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
