@@ -11,7 +11,10 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager/chezmoi"
+	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
 func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing.T) {
@@ -35,11 +38,13 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 			return os.MkdirAll(path, 0755)
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -82,11 +87,13 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 			return false, nil
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -117,13 +124,15 @@ func Test_Initialize_ReturnsError_WhenDirectoryCreationFails(t *testing.T) {
 			return expectedError
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	configFilePath := "/home/user/.config/chezmoi.toml"
 	cloneDir := "/home/user/.local/share/chezmoi"
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:     "test@example.com",
@@ -156,11 +165,13 @@ func Test_Initialize_WritesBasicPersonalData_WhenOnlyRequiredFieldsProvided(t *t
 			return true, nil
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -202,11 +213,13 @@ func Test_Initialize_WritesGpgSigningKey_WhenProvided(t *testing.T) {
 			return true, nil
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -246,11 +259,13 @@ func Test_Initialize_WritesWorkEnvironmentData_WhenProvided(t *testing.T) {
 			return true, nil
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
@@ -296,11 +311,13 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 			return true, nil
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	systemData := dotfilesmanager.DotfilesSystemData{
 		Shell:           "/bin/zsh",
@@ -349,11 +366,13 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 			return true, nil
 		},
 	}
-
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, config)
+	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",

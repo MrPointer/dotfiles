@@ -5,18 +5,23 @@ import (
 	"testing"
 
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager/chezmoi"
+	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_NewChezmoiManager_ReturnsValidInstance(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
+	mockUserManager := &osmanager.MoqUserManager{}
 	mockCommander := &utils.MoqCommander{}
+	mockPkgManager := &pkgmanager.MoqPackageManager{}
+	mockHttpClient := &httpclient.MoqHTTPClient{}
 
 	configFilePath := "/home/user/.config/chezmoi.toml"
 
-	initializer := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, chezmoi.DefaultChezmoiConfig(configFilePath, ""))
+	initializer := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPkgManager, mockHttpClient, chezmoi.DefaultChezmoiConfig(configFilePath, ""))
 
 	require.NotNil(t, initializer)
 }
@@ -24,17 +29,19 @@ func Test_NewChezmoiManager_ReturnsValidInstance(t *testing.T) {
 func Test_TryNewDefaultChezmoiManager_ReturnsValidInstance_WhenUserConfigDirAndHomeDirAreAvailable(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
 
-	userManager := &osmanager.MoqUserManager{}
-	userManager.GetConfigDirFunc = func() (string, error) {
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockUserManager.GetConfigDirFunc = func() (string, error) {
 		return "/home/user/.config", nil
 	}
-	userManager.GetHomeDirFunc = func() (string, error) {
+	mockUserManager.GetHomeDirFunc = func() (string, error) {
 		return "/home/user", nil
 	}
 
 	mockCommander := &utils.MoqCommander{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
-	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, userManager, mockCommander)
+	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient)
 
 	require.NoError(t, err)
 	require.NotNil(t, initializer)
@@ -43,17 +50,19 @@ func Test_TryNewDefaultChezmoiManager_ReturnsValidInstance_WhenUserConfigDirAndH
 func Test_TryNewDefaultChezmoiManager_ReturnsError_WhenUserConfigDirIsUnavailable(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
 
-	userManager := &osmanager.MoqUserManager{}
-	userManager.GetConfigDirFunc = func() (string, error) {
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockUserManager.GetConfigDirFunc = func() (string, error) {
 		return "", errors.New("failed to get user config directory")
 	}
-	userManager.GetHomeDirFunc = func() (string, error) {
+	mockUserManager.GetHomeDirFunc = func() (string, error) {
 		return "/home/user", nil
 	}
 
 	mockCommander := &utils.MoqCommander{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
-	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, userManager, mockCommander)
+	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient)
 
 	require.Error(t, err)
 	require.Nil(t, initializer)
@@ -71,8 +80,10 @@ func Test_TryNewDefaultChezmoiManager_ReturnsError_WhenUserHomeDirIsUnavailable(
 	}
 
 	mockCommander := &utils.MoqCommander{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
-	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, userManager, mockCommander)
+	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, userManager, mockCommander, mockPackageManager, mockHTTPClient)
 
 	require.Error(t, err)
 	require.Nil(t, initializer)
