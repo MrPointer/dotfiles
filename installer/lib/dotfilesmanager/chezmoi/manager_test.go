@@ -12,9 +12,11 @@ import (
 
 func Test_NewChezmoiManager_ReturnsValidInstance(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
+	mockCommander := &utils.MoqCommander{}
+
 	configFilePath := "/home/user/.config/chezmoi.toml"
 
-	initializer := chezmoi.NewChezmoiManager(configFilePath, "", mockFileSystem)
+	initializer := chezmoi.NewChezmoiManager(mockFileSystem, mockCommander, chezmoi.DefaultChezmoiConfig(configFilePath, ""))
 
 	require.NotNil(t, initializer)
 }
@@ -30,7 +32,9 @@ func Test_TryNewDefaultChezmoiManager_ReturnsValidInstance_WhenUserConfigDirAndH
 		return "/home/user", nil
 	}
 
-	initializer, err := chezmoi.TryNewDefaultChezmoiManager(mockFileSystem, userManager)
+	mockCommander := &utils.MoqCommander{}
+
+	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, userManager, mockCommander)
 
 	require.NoError(t, err)
 	require.NotNil(t, initializer)
@@ -47,7 +51,9 @@ func Test_TryNewDefaultChezmoiManager_ReturnsError_WhenUserConfigDirIsUnavailabl
 		return "/home/user", nil
 	}
 
-	initializer, err := chezmoi.TryNewDefaultChezmoiManager(mockFileSystem, userManager)
+	mockCommander := &utils.MoqCommander{}
+
+	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, userManager, mockCommander)
 
 	require.Error(t, err)
 	require.Nil(t, initializer)
@@ -64,7 +70,9 @@ func Test_TryNewDefaultChezmoiManager_ReturnsError_WhenUserHomeDirIsUnavailable(
 		return "", errors.New("failed to get user home directory")
 	}
 
-	initializer, err := chezmoi.TryNewDefaultChezmoiManager(mockFileSystem, userManager)
+	mockCommander := &utils.MoqCommander{}
+
+	initializer, err := chezmoi.TryStandardChezmoiManagerWithDefaults(mockFileSystem, userManager, mockCommander)
 
 	require.Error(t, err)
 	require.Nil(t, initializer)

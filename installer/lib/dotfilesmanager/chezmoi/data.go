@@ -9,14 +9,14 @@ import (
 )
 
 func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
-	if _, err := c.filesystem.PathExists(c.chezmoiConfigDir); os.IsNotExist(err) {
-		if err := c.filesystem.CreateDirectory(c.chezmoiConfigDir); err != nil {
+	if _, err := c.filesystem.PathExists(c.chezmoiConfig.chezmoiConfigDir); os.IsNotExist(err) {
+		if err := c.filesystem.CreateDirectory(c.chezmoiConfig.chezmoiConfigDir); err != nil {
 			return fmt.Errorf("failed to create chezmoi config directory: %w", err)
 		}
 	}
 
 	viperObject := viper.New()
-	viperObject.SetConfigFile(c.chezmoiConfigFilePath)
+	viperObject.SetConfigFile(c.chezmoiConfig.chezmoiConfigFilePath)
 
 	viperObject.Set("data.personal.email", data.Email)
 	viperObject.Set("data.personal.full_name", fmt.Sprintf("%s %s", data.FirstName, data.LastName))
