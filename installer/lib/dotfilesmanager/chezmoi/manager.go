@@ -17,6 +17,16 @@ type ChezmoiConfig struct {
 	cloneViaSSH           bool
 }
 
+func NewChezmoiConfig(configDir, configFilePath, cloneDir, githubUsername string, cloneViaSSH bool) ChezmoiConfig {
+	return ChezmoiConfig{
+		chezmoiConfigDir:      configDir,
+		chezmoiConfigFilePath: configFilePath,
+		chezmoiCloneDir:       cloneDir,
+		githubUsername:        githubUsername,
+		cloneViaSSH:           cloneViaSSH,
+	}
+}
+
 func DefaultChezmoiConfig(chezmoiConfigFilePath string, chezmoiCloneDir string) ChezmoiConfig {
 	return ChezmoiConfig{
 		chezmoiConfigDir:      filepath.Dir(chezmoiConfigFilePath),
