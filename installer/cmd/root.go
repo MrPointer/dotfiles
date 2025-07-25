@@ -26,6 +26,31 @@ var (
 	globalOsManager  osmanager.OsManager = nil // Will be initialized before any command is executed
 )
 
+// HandleCompatibilityError displays compatibility error with install hints and exits.
+func HandleCompatibilityError(err error, sysInfo compatibility.SystemInfo, log logger.Logger) {
+	// Print the error symbol and message.
+	fmt.Fprint(os.Stderr, "✘ ")
+	log.Error("Your system isn't compatible with these dotfiles: %v", err)
+
+	// Show install hints for missing prerequisites
+	if len(sysInfo.Prerequisites.Missing) > 0 {
+		fmt.Println()
+		log.Info("Missing prerequisites and how to install them:")
+		for _, name := range sysInfo.Prerequisites.Missing {
+			if detail, exists := sysInfo.Prerequisites.Details[name]; exists {
+				if detail.InstallHint != "" {
+					fmt.Printf("  • %s: %s\n", detail.Description, detail.InstallHint)
+				} else {
+					fmt.Printf("  • %s\n", detail.Description)
+				}
+			} else {
+				fmt.Printf("  • %s: (no install hint available)\n", name)
+			}
+		}
+	}
+	os.Exit(1)
+}
+
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "dotfiles-installer",

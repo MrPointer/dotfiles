@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/spf13/cobra"
@@ -27,10 +26,7 @@ It's recommended to run this command before attempting to install the dotfiles.`
 		// Check system compatibility.
 		sysInfo, err := compatibility.CheckCompatibility(config, globalOsManager)
 		if err != nil {
-			// Print the error symbol and message.
-			fmt.Fprint(os.Stderr, "✘ ")
-			cliLogger.Error("Your system isn't compatible with these dotfiles: %v", err)
-			os.Exit(1)
+			HandleCompatibilityError(err, sysInfo, cliLogger)
 		}
 
 		// Print the success symbol and message.
