@@ -142,31 +142,31 @@ func (d *DefaultPrerequisiteChecker) CheckPrerequisites(config map[string]Prereq
 
 // CompatibilityConfig represents the structure of the compatibility.yaml file.
 type CompatibilityConfig struct {
-	OperatingSystems map[string]OSConfig `yaml:"operatingSystems"`
+	OperatingSystems map[string]OSConfig `mapstructure:"operatingSystems"`
 }
 
 // PrerequisiteConfig represents configuration for a system prerequisite.
 type PrerequisiteConfig struct {
-	Name        string `yaml:"name"`
-	Command     string `yaml:"command"`
-	Description string `yaml:"description"`
-	InstallHint string `yaml:"install_hint"`
+	Name        string `mapstructure:"name"`
+	Command     string `mapstructure:"command"`
+	Description string `mapstructure:"description"`
+	InstallHint string `mapstructure:"install_hint"`
 }
 
 // OSConfig represents configuration for an operating system.
 type OSConfig struct {
-	Supported     bool                    `yaml:"supported"`
-	Notes         string                  `yaml:"notes,omitempty"`
-	Prerequisites []PrerequisiteConfig    `yaml:"prerequisites,omitempty"`
-	Distributions map[string]DistroConfig `yaml:"distributions,omitempty"`
+	Supported     bool                    `mapstructure:"supported"`
+	Notes         string                  `mapstructure:"notes,omitempty"`
+	Prerequisites []PrerequisiteConfig    `mapstructure:"prerequisites,omitempty"`
+	Distributions map[string]DistroConfig `mapstructure:"distributions,omitempty"`
 }
 
 // DistroConfig represents configuration for a Linux distribution.
 type DistroConfig struct {
-	Supported         bool                 `yaml:"supported"`
-	VersionConstraint string               `yaml:"version_constraint,omitempty"`
-	Notes             string               `yaml:"notes,omitempty"`
-	Prerequisites     []PrerequisiteConfig `yaml:"prerequisites,omitempty"`
+	Supported         bool                 `mapstructure:"supported"`
+	VersionConstraint string               `mapstructure:"version_constraint,omitempty"`
+	Notes             string               `mapstructure:"notes,omitempty"`
+	Prerequisites     []PrerequisiteConfig `mapstructure:"prerequisites,omitempty"`
 }
 
 // CheckCompatibility checks if the current system is compatible.

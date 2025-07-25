@@ -54,8 +54,7 @@ making it easier to get started with a new system.`,
 		config := GetCompatibilityConfig()
 		sysInfo, err := compatibility.CheckCompatibility(config, globalOsManager)
 		if err != nil {
-			cliLogger.Error("Your system isn't compatible with these dotfiles: %v", err)
-			os.Exit(1)
+			HandleCompatibilityError(err, sysInfo, cliLogger)
 		}
 		cliLogger.Success("✔︎ System compatibility check passed")
 
