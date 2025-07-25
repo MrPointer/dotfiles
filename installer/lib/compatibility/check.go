@@ -6,13 +6,32 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
 // SystemInfo contains information about the detected system.
 type SystemInfo struct {
-	OSName     string // Operating system name (e.g., "linux", "darwin").
-	DistroName string // Linux distribution name (e.g., "ubuntu", "debian").
-	Arch       string // Architecture (e.g., "amd64", "arm64").
+	OSName        string             // Operating system name (e.g., "linux", "darwin").
+	DistroName    string             // Linux distribution name (e.g., "ubuntu", "debian").
+	Arch          string             // Architecture (e.g., "amd64", "arm64").
+	Prerequisites PrerequisiteStatus // Status of system prerequisites.
+}
+
+// PrerequisiteStatus contains the status of system prerequisites.
+type PrerequisiteStatus struct {
+	Available []string                      // List of available prerequisites.
+	Missing   []string                      // List of missing prerequisites.
+	Details   map[string]PrerequisiteDetail // Detailed status for each prerequisite.
+}
+
+// PrerequisiteDetail contains detailed information about a prerequisite.
+type PrerequisiteDetail struct {
+	Name        string // Name of the prerequisite.
+	Available   bool   // Whether the prerequisite is available.
+	Command     string // Command used to check availability.
+	Description string // Human-readable description.
+	InstallHint string // Hint for installing the prerequisite.
 }
 
 // OSDetector provides operating system detection capabilities.
@@ -24,6 +43,14 @@ type OSDetector interface {
 
 // DefaultOSDetector uses runtime and file system to detect OS information.
 type DefaultOSDetector struct{}
+
+// Ensure that DefaultOSDetector implements OSDetector.
+var _ OSDetector = (*DefaultOSDetector)(nil)
+
+// NewDefaultOSDetector creates a new DefaultOSDetector.
+func NewDefaultOSDetector() *DefaultOSDetector {
+	return &DefaultOSDetector{}
+}
 
 // GetOSName returns the current operating system name.
 func (d *DefaultOSDetector) GetOSName() string {
@@ -46,10 +73,71 @@ func (d *DefaultOSDetector) DetectSystem() (SystemInfo, error) {
 	}
 
 	return SystemInfo{
-		OSName:     osName,
-		DistroName: distroName,
-		Arch:       runtime.GOARCH,
+		OSName:        osName,
+		DistroName:    distroName,
+		Arch:          runtime.GOARCH,
+		Prerequisites: PrerequisiteStatus{}, // Will be populated by compatibility check
 	}, nil
+}
+
+// PrerequisiteChecker provides prerequisite checking capabilities.
+type PrerequisiteChecker interface {
+	CheckPrerequisites(config map[string]PrerequisiteConfig) (PrerequisiteStatus, error)
+}
+
+// DefaultPrerequisiteChecker uses ProgramQuery to check for prerequisites.
+type DefaultPrerequisiteChecker struct {
+	programQuery osmanager.ProgramQuery
+}
+
+// Ensure that DefaultPrerequisiteChecker implements PrerequisiteChecker.
+var _ PrerequisiteChecker = (*DefaultPrerequisiteChecker)(nil)
+
+// NewDefaultPrerequisiteChecker creates a new DefaultPrerequisiteChecker with the provided ProgramQuery.
+func NewDefaultPrerequisiteChecker(programQuery osmanager.ProgramQuery) *DefaultPrerequisiteChecker {
+	return &DefaultPrerequisiteChecker{
+		programQuery: programQuery,
+	}
+}
+
+// CheckPrerequisites checks if required prerequisites are available on the system.
+func (d *DefaultPrerequisiteChecker) CheckPrerequisites(config map[string]PrerequisiteConfig) (PrerequisiteStatus, error) {
+	status := PrerequisiteStatus{
+		Available: make([]string, 0),
+		Missing:   make([]string, 0),
+		Details:   make(map[string]PrerequisiteDetail),
+	}
+
+	for name, prereqConfig := range config {
+		detail := PrerequisiteDetail{
+			Name:        name,
+			Command:     prereqConfig.Command,
+			Description: prereqConfig.Description,
+			InstallHint: prereqConfig.InstallHint,
+		}
+
+		// Check if the command is available
+		exists, err := d.programQuery.ProgramExists(prereqConfig.Command)
+		if err != nil {
+			detail.Available = false
+			status.Missing = append(status.Missing, name)
+		} else if exists {
+			detail.Available = true
+			status.Available = append(status.Available, name)
+		} else {
+			detail.Available = false
+			status.Missing = append(status.Missing, name)
+		}
+
+		status.Details[name] = detail
+	}
+
+	// Return error if prerequisites are missing
+	if len(status.Missing) > 0 {
+		return status, fmt.Errorf("missing prerequisites: %v", status.Missing)
+	}
+
+	return status, nil
 }
 
 // CompatibilityConfig represents the structure of the compatibility.yaml file.
@@ -57,32 +145,52 @@ type CompatibilityConfig struct {
 	OperatingSystems map[string]OSConfig `yaml:"operatingSystems"`
 }
 
+// PrerequisiteConfig represents configuration for a system prerequisite.
+type PrerequisiteConfig struct {
+	Name        string `yaml:"name"`
+	Command     string `yaml:"command"`
+	Description string `yaml:"description"`
+	InstallHint string `yaml:"install_hint"`
+}
+
 // OSConfig represents configuration for an operating system.
 type OSConfig struct {
 	Supported     bool                    `yaml:"supported"`
 	Notes         string                  `yaml:"notes,omitempty"`
+	Prerequisites []PrerequisiteConfig    `yaml:"prerequisites,omitempty"`
 	Distributions map[string]DistroConfig `yaml:"distributions,omitempty"`
 }
 
 // DistroConfig represents configuration for a Linux distribution.
 type DistroConfig struct {
-	Supported         bool   `yaml:"supported"`
-	VersionConstraint string `yaml:"version_constraint,omitempty"`
-	Notes             string `yaml:"notes,omitempty"`
+	Supported         bool                 `yaml:"supported"`
+	VersionConstraint string               `yaml:"version_constraint,omitempty"`
+	Notes             string               `yaml:"notes,omitempty"`
+	Prerequisites     []PrerequisiteConfig `yaml:"prerequisites,omitempty"`
 }
 
 // CheckCompatibility checks if the current system is compatible.
-func CheckCompatibility(config *CompatibilityConfig) (SystemInfo, error) {
+func CheckCompatibility(config *CompatibilityConfig, programQuery osmanager.ProgramQuery) (SystemInfo, error) {
 	if config == nil {
 		return SystemInfo{}, fmt.Errorf("compatibility configuration is nil")
 	}
 
-	detector := &DefaultOSDetector{}
-	return CheckCompatibilityWithDetector(config, detector)
+	detector := NewDefaultOSDetector()
+	prereqChecker := NewDefaultPrerequisiteChecker(programQuery)
+	return CheckCompatibilityWithDetectors(config, detector, prereqChecker)
 }
 
 // CheckCompatibilityWithDetector checks compatibility using the provided detector.
-func CheckCompatibilityWithDetector(config *CompatibilityConfig, detector OSDetector) (SystemInfo, error) {
+// Deprecated: Use CheckCompatibilityWithDetectors instead.
+func CheckCompatibilityWithDetector(config *CompatibilityConfig, detector OSDetector, programQuery osmanager.ProgramQuery) (SystemInfo, error) {
+	prereqChecker := NewDefaultPrerequisiteChecker(programQuery)
+	return CheckCompatibilityWithDetectors(config, detector, prereqChecker)
+}
+
+// CheckCompatibilityWithDetectors checks compatibility using the provided detectors.
+func CheckCompatibilityWithDetectors(config *CompatibilityConfig,
+	detector OSDetector,
+	prereqChecker PrerequisiteChecker) (SystemInfo, error) {
 	if config == nil {
 		return SystemInfo{}, fmt.Errorf("compatibility configuration is nil")
 	}
@@ -92,6 +200,33 @@ func CheckCompatibilityWithDetector(config *CompatibilityConfig, detector OSDete
 	if err != nil {
 		return SystemInfo{}, fmt.Errorf("failed to detect system: %w", err)
 	}
+
+	// Check prerequisites based on OS and distribution
+	var prerequisites []PrerequisiteConfig
+	if osConfig, exists := config.OperatingSystems[sysInfo.OSName]; exists {
+		// Add OS-level prerequisites
+		prerequisites = append(prerequisites, osConfig.Prerequisites...)
+
+		// Add distribution-specific prerequisites for Linux
+		if sysInfo.OSName == "linux" {
+			if distroConfig, exists := osConfig.Distributions[sysInfo.DistroName]; exists {
+				prerequisites = append(prerequisites, distroConfig.Prerequisites...)
+			}
+		}
+	}
+
+	// Convert to map format for checker
+	prereqMap := make(map[string]PrerequisiteConfig)
+	for _, prereq := range prerequisites {
+		prereqMap[prereq.Name] = prereq
+	}
+
+	prereqStatus, err := prereqChecker.CheckPrerequisites(prereqMap)
+	if err != nil {
+		sysInfo.Prerequisites = prereqStatus
+		return sysInfo, fmt.Errorf("prerequisite check failed: %w", err)
+	}
+	sysInfo.Prerequisites = prereqStatus
 
 	// Check if the operating system is supported
 	osConfig, exists := config.OperatingSystems[sysInfo.OSName]

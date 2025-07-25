@@ -1,5 +1,6 @@
 # Compatibility configuration for the installer
-# This file defines which operating systems and distributions are supported
+# This file defines which operating systems and distributions are supported,
+# as well as required prerequisites for installation
 
 # Operating system compatibility matrix
 operatingSystems:
@@ -10,19 +11,112 @@ operatingSystems:
         supported: true
         version_constraint: ">= 20.04"
         notes: "Ubuntu 20.04 LTS or newer"
+        prerequisites:
+          - name: "build-essential"
+            command: "gcc"
+            description: "Essential build tools including gcc, make, and libc-dev"
+            install_hint: "sudo apt-get install build-essential"
+          - name: "procps"
+            command: "ps"
+            description: "Process utilities"
+            install_hint: "sudo apt-get install procps"
+          - name: "curl"
+            command: "curl"
+            description: "Command line tool for transferring data"
+            install_hint: "sudo apt-get install curl"
+          - name: "file"
+            command: "file"
+            description: "File type identification utility"
+            install_hint: "sudo apt-get install file"
+          - name: "git"
+            command: "git"
+            description: "Git version control system"
+            install_hint: "sudo apt-get install git"
       debian:
         supported: true
         version_constraint: ">= 10"
         notes: "Debian 10 (Buster) or newer"
+        prerequisites:
+          - name: "build-essential"
+            command: "gcc"
+            description: "Essential build tools including gcc, make, and libc-dev"
+            install_hint: "sudo apt-get install build-essential"
+          - name: "procps"
+            command: "ps"
+            description: "Process utilities"
+            install_hint: "sudo apt-get install procps"
+          - name: "curl"
+            command: "curl"
+            description: "Command line tool for transferring data"
+            install_hint: "sudo apt-get install curl"
+          - name: "file"
+            command: "file"
+            description: "File type identification utility"
+            install_hint: "sudo apt-get install file"
+          - name: "git"
+            command: "git"
+            description: "Git version control system"
+            install_hint: "sudo apt-get install git"
       fedora:
         supported: false
         notes: "Support planned for future release"
+        prerequisites:
+          - name: "development-tools"
+            command: "dnf group list installed | grep -i 'Development Tools'"
+            description: "Development tools group including gcc, make, and other build tools"
+            install_hint: "sudo dnf group install 'Development Tools'"
+          - name: "procps-ng"
+            command: "rpm -q procps-ng"
+            description: "Process utilities"
+            install_hint: "sudo dnf install procps-ng"
+          - name: "curl"
+            command: "curl"
+            description: "Command line tool for transferring data"
+            install_hint: "sudo dnf install curl"
+          - name: "file"
+            command: "file"
+            description: "File type identification utility"
+            install_hint: "sudo dnf install file"
       centos:
         supported: false
         notes: "Support planned for future release"
+        prerequisites:
+          - name: "development-tools"
+            command: "dnf group list installed | grep -i 'Development Tools'"
+            description: "Development tools group including gcc, make, and other build tools"
+            install_hint: "sudo dnf group install 'Development Tools'"
+          - name: "procps-ng"
+            command: "rpm -q procps-ng"
+            description: "Process utilities"
+            install_hint: "sudo dnf install procps-ng"
+          - name: "curl"
+            command: "curl"
+            description: "Command line tool for transferring data"
+            install_hint: "sudo dnf install curl"
+          - name: "file"
+            command: "file"
+            description: "File type identification utility"
+            install_hint: "sudo dnf install file"
       redhat:
         supported: false
         notes: "Support planned for future release"
+        prerequisites:
+          - name: "development-tools"
+            command: "dnf group list installed | grep -i 'Development Tools'"
+            description: "Development tools group including gcc, make, and other build tools"
+            install_hint: "sudo dnf group install 'Development Tools'"
+          - name: "procps-ng"
+            command: "rpm -q procps-ng"
+            description: "Process utilities"
+            install_hint: "sudo dnf install procps-ng"
+          - name: "curl"
+            command: "curl"
+            description: "Command line tool for transferring data"
+            install_hint: "sudo dnf install curl"
+          - name: "file"
+            command: "file"
+            description: "File type identification utility"
+            install_hint: "sudo dnf install file"
       suse:
         supported: false
         notes: "No current plans for support"
@@ -30,6 +124,19 @@ operatingSystems:
   darwin:
     supported: true
     notes: "macOS 10.15 or newer recommended"
+    prerequisites:
+      - name: "xcode-command-line-tools"
+        command: "xcode-select"
+        description: "Command Line Tools for Xcode"
+        install_hint: "xcode-select --install"
+      - name: "bash"
+        command: "bash"
+        description: "Bash shell"
+        install_hint: "Bash should be available by default on macOS"
+      - name: "git"
+        command: "git"
+        description: "Git version control system (included with Command Line Tools)"
+        install_hint: "Install Command Line Tools: xcode-select --install"
   windows:
     supported: false
     notes: "Windows is not supported"

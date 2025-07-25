@@ -11,7 +11,6 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/shell"
-	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/samber/mo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,18 +52,12 @@ making it easier to get started with a new system.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check system compatibility and get system info.
 		config := GetCompatibilityConfig()
-		sysInfo, err := compatibility.CheckCompatibility(config)
+		sysInfo, err := compatibility.CheckCompatibility(config, globalOsManager)
 		if err != nil {
 			cliLogger.Error("Your system isn't compatible with these dotfiles: %v", err)
 			os.Exit(1)
 		}
-		if sysInfo.OSName == "linux" || sysInfo.OSName == "darwin" {
-			globalOsManager = osmanager.NewUnixOsManager(cliLogger, globalCommander, osmanager.IsRoot())
-		} else {
-			cliLogger.Error("The system should be compatible, but we haven't implemented an OS manager for it yet. Please open an issue on GitHub to request support for this OS.")
-			os.Exit(1)
-		}
-		cliLogger.Success("System compatibility check passed")
+		cliLogger.Success("✔︎ System compatibility check passed")
 
 		cliLogger.Info("Installing dotfiles...")
 
@@ -122,7 +115,7 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 		return err
 	}
 
-	cliLogger.Success("Homebrew installed successfully")
+	cliLogger.Success("✔︎ Homebrew installed successfully")
 	return nil
 }
 
@@ -142,7 +135,7 @@ func installShell() error {
 		return err
 	}
 
-	cliLogger.Success("%s shell installed successfully", shellName)
+	cliLogger.Success("✔︎ %s shell installed successfully", shellName)
 	return nil
 }
 
@@ -156,6 +149,8 @@ func setupGpgKeys() error {
 		cliLogger.Warning("Skipping GPG key setup in non-interactive mode - You will need to set them up manually")
 		return nil
 	}
+
+	cliLogger.Info("Setting up GPG keys")
 
 	gpgClient := gpg.NewDefaultGpgClient(
 		globalOsManager,
@@ -182,7 +177,7 @@ func setupGpgKeys() error {
 		selectedGpgKey = selectedKey
 	}
 
-	cliLogger.Success("GPG keys set up successfully")
+	cliLogger.Success("✔︎ GPG keys set up successfully")
 	return nil
 }
 
@@ -205,10 +200,11 @@ func installGpgClient() error {
 		return nil
 	}
 
+	cliLogger.Info("Installing GPG client")
 	if err := installer.Install(nil); err != nil { // Pass context if needed.
 		return err
 	}
-	cliLogger.Success("✔️ GPG client installed successfully")
+	cliLogger.Success("✔︎ GPG client installed successfully")
 
 	return nil
 }
@@ -224,19 +220,19 @@ func setupDotfilesManager() error {
 	if err != nil {
 		return err
 	}
-	cliLogger.Success("✔️ Dotfiles manager installed successfully")
+	cliLogger.Success("✔︎ Dotfiles manager installed successfully")
 
 	cliLogger.Info("Initializing dotfiles manager data")
 	if err := initDotfilesManagerData(dm); err != nil {
 		return err
 	}
-	cliLogger.Success("✔️ Dotfiles manager data initialized successfully")
+	cliLogger.Success("✔︎ Dotfiles manager data initialized successfully")
 
 	cliLogger.Info("Applying dotfiles manager")
 	if err := dm.Apply(); err != nil {
 		return err
 	}
-	cliLogger.Success("✔️ Dotfiles manager data applied successfully")
+	cliLogger.Success("✔︎ Dotfiles manager data applied successfully")
 
 	return nil
 }

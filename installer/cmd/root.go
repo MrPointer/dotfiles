@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/utils"
@@ -22,7 +23,7 @@ var (
 	globalCommander                      = utils.NewDefaultCommander()
 	globalHttpClient                     = httpclient.NewDefaultHTTPClient()
 	globalFilesystem                     = utils.NewDefaultFileSystem()
-	globalOsManager  osmanager.OsManager = nil // Will be initialized in installer sub-command
+	globalOsManager  osmanager.OsManager = nil // Will be initialized before any command is executed
 )
 
 // rootCmd represents the base command when called without any subcommands.
@@ -46,7 +47,7 @@ func Execute() {
 
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
-	cobra.OnInitialize(initConfig, initCompatibilityConfig)
+	cobra.OnInitialize(initConfig, initCompatibilityConfig, initOsManager)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -97,4 +98,13 @@ func initCompatibilityConfig() {
 // GetCompatibilityConfig returns the loaded compatibility configuration.
 func GetCompatibilityConfig() *compatibility.CompatibilityConfig {
 	return globalCompatibilityConfig
+}
+
+func initOsManager() {
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		globalOsManager = osmanager.NewUnixOsManager(cliLogger, globalCommander, osmanager.IsRoot())
+	} else {
+		cliLogger.Error("The system may be compatible, but we haven't implemented an OS manager for it yet. Please open an issue on GitHub to request support for this OS.")
+		os.Exit(1)
+	}
 }

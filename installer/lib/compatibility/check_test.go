@@ -1,10 +1,13 @@
 package compatibility_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 )
 
 // MockOSDetector implements OSDetector for testing.
@@ -26,9 +29,10 @@ func (m *MockOSDetector) GetDistroName() string {
 // DetectSystem implements the OSDetector interface for the mock.
 func (m *MockOSDetector) DetectSystem() (compatibility.SystemInfo, error) {
 	return compatibility.SystemInfo{
-		OSName:     m.osName,
-		DistroName: m.distroName,
-		Arch:       "amd64", // Mock architecture
+		OSName:        m.osName,
+		DistroName:    m.distroName,
+		Arch:          "amd64",                            // Mock architecture
+		Prerequisites: compatibility.PrerequisiteStatus{}, // Will be populated by compatibility check
 	}, nil
 }
 
@@ -44,11 +48,33 @@ func createMockConfig() *compatibility.CompatibilityConfig {
 						Supported:         true,
 						VersionConstraint: ">= 20.04",
 						Notes:             "Ubuntu is supported",
+						Prerequisites: []compatibility.PrerequisiteConfig{
+							{
+								Name:        "git",
+								Command:     "git",
+								Description: "Git version control system",
+								InstallHint: "sudo apt-get install git",
+							},
+							{
+								Name:        "curl",
+								Command:     "curl",
+								Description: "Command line tool for transferring data",
+								InstallHint: "sudo apt-get install curl",
+							},
+						},
 					},
 					"debian": {
 						Supported:         true,
 						VersionConstraint: ">= 10",
 						Notes:             "Debian is supported",
+						Prerequisites: []compatibility.PrerequisiteConfig{
+							{
+								Name:        "git",
+								Command:     "git",
+								Description: "Git version control system",
+								InstallHint: "sudo apt-get install git",
+							},
+						},
 					},
 					"fedora": {
 						Supported: false,
@@ -59,6 +85,14 @@ func createMockConfig() *compatibility.CompatibilityConfig {
 			"darwin": {
 				Supported: true,
 				Notes:     "macOS is supported",
+				Prerequisites: []compatibility.PrerequisiteConfig{
+					{
+						Name:        "git",
+						Command:     "git",
+						Description: "Git version control system",
+						InstallHint: "Install Command Line Tools: xcode-select --install",
+					},
+				},
 			},
 			"windows": {
 				Supported: false,
@@ -134,7 +168,13 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndMockConfig(t *testing.T) {
 				distroName: tc.distroName,
 			}
 
-			sysInfo, err := compatibility.CheckCompatibilityWithDetector(config, detector)
+			// Create a mock program query that returns true for all programs
+			mockProgramQuery := &osmanager.MoqProgramQuery{
+				ProgramExistsFunc: func(program string) (bool, error) {
+					return true, nil
+				},
+			}
+			sysInfo, err := compatibility.CheckCompatibilityWithDetector(config, detector, mockProgramQuery)
 
 			if tc.expectError {
 				if err == nil {
@@ -179,7 +219,13 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndEmbeddedConfig(t *testing.T
 		t.Fatalf("Expected no error when loading embedded compatibility config, got: %v", err)
 	}
 
-	sysInfo, err := compatibility.CheckCompatibilityWithDetector(compatibilityConfig, detector)
+	// Create a mock program query that returns true for all programs
+	mockProgramQuery := &osmanager.MoqProgramQuery{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return true, nil
+		},
+	}
+	sysInfo, err := compatibility.CheckCompatibilityWithDetector(compatibilityConfig, detector, mockProgramQuery)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -195,7 +241,13 @@ func TestCompatibilityCanBeCheckedWithMockDetectorAndEmbeddedConfig(t *testing.T
 
 func TestCompatibilityCheckRejectsNilConfig(t *testing.T) {
 	detector := &MockOSDetector{osName: "linux", distroName: "ubuntu"}
-	sysInfo, err := compatibility.CheckCompatibilityWithDetector(nil, detector)
+	// Create a mock program query
+	mockProgramQuery := &osmanager.MoqProgramQuery{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return true, nil
+		},
+	}
+	sysInfo, err := compatibility.CheckCompatibilityWithDetector(nil, detector, mockProgramQuery)
 
 	if err == nil {
 		t.Fatal("Expected error with nil config, got nil")
@@ -210,4 +262,177 @@ func TestCompatibilityCheckRejectsNilConfig(t *testing.T) {
 	if sysInfo.OSName != "" || sysInfo.DistroName != "" || sysInfo.Arch != "" {
 		t.Fatalf("Expected empty system info, got %+v", sysInfo)
 	}
+}
+
+func Test_DefaultPrerequisiteChecker_CheckPrerequisites_WhenAllPrerequisitesAvailable(t *testing.T) {
+	// Arrange
+	mockProgramQuery := &osmanager.MoqProgramQuery{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return true, nil
+		},
+	}
+	checker := compatibility.NewDefaultPrerequisiteChecker(mockProgramQuery)
+
+	prereqConfig := map[string]compatibility.PrerequisiteConfig{
+		"git": {
+			Name:        "git",
+			Command:     "git",
+			Description: "Git version control system",
+			InstallHint: "Install git",
+		},
+		"curl": {
+			Name:        "curl",
+			Command:     "curl",
+			Description: "HTTP client",
+			InstallHint: "Install curl",
+		},
+	}
+
+	// Act
+	status, err := checker.CheckPrerequisites(prereqConfig)
+
+	// Assert
+	require.NoError(t, err)
+	require.Len(t, status.Available, 2)
+	require.Len(t, status.Missing, 0)
+	require.Contains(t, status.Available, "git")
+	require.Contains(t, status.Available, "curl")
+	require.Len(t, status.Details, 2)
+
+	gitDetail := status.Details["git"]
+	require.True(t, gitDetail.Available)
+	require.Equal(t, "git", gitDetail.Name)
+	require.Equal(t, "Git version control system", gitDetail.Description)
+}
+
+func Test_DefaultPrerequisiteChecker_CheckPrerequisites_WhenSomePrerequisitesMissing(t *testing.T) {
+	// Arrange
+	mockProgramQuery := &osmanager.MoqProgramQuery{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			// Only git is available, curl is missing
+			return program == "git", nil
+		},
+	}
+	checker := compatibility.NewDefaultPrerequisiteChecker(mockProgramQuery)
+
+	prereqConfig := map[string]compatibility.PrerequisiteConfig{
+		"git": {
+			Name:        "git",
+			Command:     "git",
+			Description: "Git version control system",
+			InstallHint: "Install git",
+		},
+		"curl": {
+			Name:        "curl",
+			Command:     "curl",
+			Description: "HTTP client",
+			InstallHint: "Install curl",
+		},
+	}
+
+	// Act
+	status, err := checker.CheckPrerequisites(prereqConfig)
+
+	// Assert
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "missing prerequisites")
+	require.Len(t, status.Available, 1)
+	require.Len(t, status.Missing, 1)
+	require.Contains(t, status.Available, "git")
+	require.Contains(t, status.Missing, "curl")
+
+	gitDetail := status.Details["git"]
+	require.True(t, gitDetail.Available)
+
+	curlDetail := status.Details["curl"]
+	require.False(t, curlDetail.Available)
+}
+
+func Test_DefaultPrerequisiteChecker_CheckPrerequisites_WhenAllPrerequisitesMissing(t *testing.T) {
+	// Arrange
+	mockProgramQuery := &osmanager.MoqProgramQuery{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return false, nil
+		},
+	}
+	checker := compatibility.NewDefaultPrerequisiteChecker(mockProgramQuery)
+
+	prereqConfig := map[string]compatibility.PrerequisiteConfig{
+		"git": {
+			Name:        "git",
+			Command:     "git",
+			Description: "Git version control system",
+			InstallHint: "Install git",
+		},
+		"make": {
+			Name:        "make",
+			Command:     "make",
+			Description: "Build tool",
+			InstallHint: "Install make",
+		},
+	}
+
+	// Act
+	status, err := checker.CheckPrerequisites(prereqConfig)
+
+	// Assert
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "missing prerequisites")
+	require.Len(t, status.Available, 0)
+	require.Len(t, status.Missing, 2)
+	require.Contains(t, status.Missing, "git")
+	require.Contains(t, status.Missing, "make")
+}
+
+func Test_DefaultPrerequisiteChecker_CheckPrerequisites_WhenProgramQueryReturnsError(t *testing.T) {
+	// Arrange
+	mockProgramQuery := &osmanager.MoqProgramQuery{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return false, errors.New("program query failed")
+		},
+	}
+	checker := compatibility.NewDefaultPrerequisiteChecker(mockProgramQuery)
+
+	prereqConfig := map[string]compatibility.PrerequisiteConfig{
+		"git": {
+			Name:        "git",
+			Command:     "git",
+			Description: "Git version control system",
+			InstallHint: "Install git",
+		},
+	}
+
+	// Act
+	status, err := checker.CheckPrerequisites(prereqConfig)
+
+	// Assert
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "missing prerequisites")
+	require.Len(t, status.Available, 0)
+	require.Len(t, status.Missing, 1)
+	require.Contains(t, status.Missing, "git")
+
+	gitDetail := status.Details["git"]
+	require.False(t, gitDetail.Available)
+}
+
+func Test_DefaultPrerequisiteChecker_CheckPrerequisites_WhenNoPrerequisitesProvided(t *testing.T) {
+	// Arrange
+	mockProgramQuery := &osmanager.MoqProgramQuery{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return true, nil
+		},
+	}
+	checker := compatibility.NewDefaultPrerequisiteChecker(mockProgramQuery)
+
+	prereqConfig := map[string]compatibility.PrerequisiteConfig{}
+
+	// Act
+	status, err := checker.CheckPrerequisites(prereqConfig)
+
+	// Assert
+	require.NoError(t, err)
+	require.Len(t, status.Available, 0)
+	require.Len(t, status.Missing, 0)
+	require.Len(t, status.Details, 0)
 }

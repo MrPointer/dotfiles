@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
-	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -22,32 +21,29 @@ provide a report on the compatibility status.
 
 It's recommended to run this command before attempting to install the dotfiles.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Create a CLI logger for output.
-		log := logger.NewCliLogger()
-
 		// Get the globally loaded compatibility config.
 		config := GetCompatibilityConfig()
 
 		// Check system compatibility.
-		sysInfo, err := compatibility.CheckCompatibility(config)
+		sysInfo, err := compatibility.CheckCompatibility(config, globalOsManager)
 		if err != nil {
 			// Print the error symbol and message.
 			fmt.Fprint(os.Stderr, "✘ ")
-			log.Error("Your system isn't compatible with these dotfiles: %v", err)
+			cliLogger.Error("Your system isn't compatible with these dotfiles: %v", err)
 			os.Exit(1)
 		}
 
 		// Print the success symbol and message.
 		fmt.Print("✔︎ ")
-		log.Success("Your system is compatible with these dotfiles!")
+		cliLogger.Success("Your system is compatible with these dotfiles!")
 
 		// Print detected system information if verbose flag is set.
 		if verbose {
 			fmt.Println() // Add an empty line for better spacing.
-			log.Info("Detected system information:")
-			fmt.Printf("OS: %s\n", sysInfo.OSName)
-			fmt.Printf("Distribution: %s\n", sysInfo.DistroName)
-			fmt.Printf("Architecture: %s\n", sysInfo.Arch)
+			cliLogger.Info("Detected system information:")
+			cliLogger.Info("OS: %s\n", sysInfo.OSName)
+			cliLogger.Info("Distribution: %s\n", sysInfo.DistroName)
+			cliLogger.Info("Architecture: %s\n", sysInfo.Arch)
 		}
 	},
 }
