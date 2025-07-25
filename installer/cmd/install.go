@@ -6,10 +6,13 @@ import (
 	"github.com/MrPointer/dotfiles/installer/cli"
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
+	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager/chezmoi"
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/shell"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
+	"github.com/samber/mo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -84,10 +87,12 @@ making it easier to get started with a new system.`,
 			os.Exit(1)
 		}
 
-		// TODO: Continue with other installation steps
-		// - Install chezmoi
-		// - Prepare environment
-		// - Apply dotfiles
+		if err := setupDotfilesManager(); err != nil {
+			cliLogger.Error("Failed to setup dotfiles manager: %v", err)
+			os.Exit(1)
+		}
+
+		cliLogger.Success("🪄 Installation completed 🎉")
 	},
 }
 
@@ -203,9 +208,59 @@ func installGpgClient() error {
 	if err := installer.Install(nil); err != nil { // Pass context if needed.
 		return err
 	}
+	cliLogger.Success("✔️ GPG client installed successfully")
 
-	cliLogger.Success("GPG client installed successfully")
 	return nil
+}
+
+func setupDotfilesManager() error {
+	dm, err := chezmoi.TryStandardChezmoiManager(globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
+	if err != nil {
+		return err
+	}
+
+	cliLogger.Info("Installing dotfiles manager")
+	err = dm.Install()
+	if err != nil {
+		return err
+	}
+	cliLogger.Success("✔️ Dotfiles manager installed successfully")
+
+	cliLogger.Info("Initializing dotfiles manager data")
+	if err := initDotfilesManagerData(dm); err != nil {
+		return err
+	}
+	cliLogger.Success("✔️ Dotfiles manager data initialized successfully")
+
+	cliLogger.Info("Applying dotfiles manager")
+	if err := dm.Apply(); err != nil {
+		return err
+	}
+	cliLogger.Success("✔️ Dotfiles manager data applied successfully")
+
+	return nil
+}
+
+func initDotfilesManagerData(dm dotfilesmanager.DotfilesManager) error {
+	dotfiles_data := dotfilesmanager.DotfilesData{
+		FirstName: "Timor",
+		LastName:  "Gruber",
+		Email:     "timor.gruber@gmail.com",
+	}
+
+	if workEnvironment {
+		work_data := dotfilesmanager.DotfilesWorkEnvData{
+			WorkName:  workName,
+			WorkEmail: workEmail,
+		}
+		dotfiles_data.WorkEnv = mo.Some(work_data)
+	}
+
+	if selectedGpgKey != "" {
+		dotfiles_data.GpgSigningKey = mo.Some(selectedGpgKey)
+	}
+
+	return dm.Initialize(dotfiles_data)
 }
 
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.

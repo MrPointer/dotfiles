@@ -11,6 +11,8 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
+const DefaultGitHubUsername = "MrPointer"
+
 type ChezmoiConfig struct {
 	chezmoiConfigDir      string
 	chezmoiConfigFilePath string
@@ -93,5 +95,5 @@ func TryStandardChezmoiManager(filesystem utils.FileSystem, userManager osmanage
 }
 
 func TryStandardChezmoiManagerWithDefaults(filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient) (*ChezmoiManager, error) {
-	return TryStandardChezmoiManager(filesystem, userManager, commander, pkgManager, httpClient, "MrPointer", false)
+	return TryStandardChezmoiManager(filesystem, userManager, commander, pkgManager, httpClient, DefaultGitHubUsername, false)
 }
