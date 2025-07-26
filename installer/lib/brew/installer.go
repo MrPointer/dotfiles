@@ -3,7 +3,12 @@ package brew
 import (
 	"fmt"
 	"net/http" // Keep for http.StatusOK and potentially other http constants if needed by other functions
+	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
+
+	"slices"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/utils"
@@ -50,6 +55,27 @@ func DetectBrewPath(systemInfo *compatibility.SystemInfo, pathOverride string) (
 	}
 
 	return "", fmt.Errorf("system information is not provided")
+}
+
+// UpdatePathWithBrewBinaries updates the current process's PATH to include brew's binary directories.
+// This function is primarily used internally by BrewInstaller but can be called directly if needed.
+func UpdatePathWithBrewBinaries(brewPath string) error {
+	// Extract the bin directory from the brew path
+	// e.g., /opt/homebrew/bin/brew -> /opt/homebrew/bin
+	brewBinDir := filepath.Dir(brewPath)
+
+	// Get current PATH
+	currentPath := os.Getenv("PATH")
+
+	// Check if already in PATH to avoid duplicates
+	pathDirs := strings.Split(currentPath, string(os.PathListSeparator))
+	if slices.Contains(pathDirs, brewBinDir) {
+		return nil // Already in PATH
+	}
+
+	// Prepend brew bin directory to PATH
+	newPath := brewBinDir + string(os.PathListSeparator) + currentPath
+	return os.Setenv("PATH", newPath)
 }
 
 // BrewInstaller defines the interface for Homebrew operations.
@@ -133,6 +159,16 @@ func (b *brewInstaller) Install() error {
 
 	if isAvailable {
 		b.logger.Success("Homebrew is already installed")
+
+		// Update PATH to include brew binaries so installed tools can be found
+		brewPath, err := b.DetectBrewPath()
+		if err != nil {
+			return fmt.Errorf("failed to detect brew path for PATH update: %w", err)
+		}
+		if err := UpdatePathWithBrewBinaries(brewPath); err != nil {
+			b.logger.Warning("Failed to update PATH with brew binaries: %v", err)
+		}
+
 		return nil
 	}
 
@@ -145,6 +181,15 @@ func (b *brewInstaller) Install() error {
 	// Self-validation: check that brew is available and works
 	if err := b.validateInstall(); err != nil {
 		return fmt.Errorf("brew self-validation failed: %w", err)
+	}
+
+	// Update PATH to include brew binaries so installed tools can be found
+	brewPath, err := b.DetectBrewPath()
+	if err != nil {
+		return fmt.Errorf("failed to detect brew path for PATH update: %w", err)
+	}
+	if err := UpdatePathWithBrewBinaries(brewPath); err != nil {
+		b.logger.Warning("Failed to update PATH with brew binaries: %v", err)
 	}
 
 	return nil
@@ -185,6 +230,16 @@ func (m *MultiUserBrewInstaller) Install() error {
 
 	if isAvailable {
 		m.logger.Success("Homebrew is already installed (multi-user)")
+
+		// Update PATH to include brew binaries so installed tools can be found
+		brewPath, err := m.DetectBrewPath()
+		if err != nil {
+			return fmt.Errorf("failed to detect brew path for PATH update: %w", err)
+		}
+		if err := UpdatePathWithBrewBinaries(brewPath); err != nil {
+			m.logger.Warning("Failed to update PATH with brew binaries: %v", err)
+		}
+
 		return nil
 	}
 
@@ -201,6 +256,15 @@ func (m *MultiUserBrewInstaller) Install() error {
 	// Self-validation: check that brew is available and works
 	if err := m.validateInstall(); err != nil {
 		return fmt.Errorf("brew self-validation failed: %w", err)
+	}
+
+	// Update PATH to include brew binaries so installed tools can be found
+	brewPath, err := m.DetectBrewPath()
+	if err != nil {
+		return fmt.Errorf("failed to detect brew path for PATH update: %w", err)
+	}
+	if err := UpdatePathWithBrewBinaries(brewPath); err != nil {
+		m.logger.Warning("Failed to update PATH with brew binaries: %v", err)
 	}
 
 	return nil
