@@ -48,9 +48,8 @@ func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
 
 	data.SystemData.MapValue(func(value dotfilesmanager.DotfilesSystemData) dotfilesmanager.DotfilesSystemData {
 		viperObject.Set("data.system.shell", value.Shell)
-		viperObject.Set("data.system.user", value.User)
 		viperObject.Set("data.system.multi_user_system", value.MultiUserSystem)
-		viperObject.Set("data.system.brew_user", value.BrewUser)
+		viperObject.Set("data.system.brew_multi_user", value.BrewMultiUser)
 		return value
 	})
 

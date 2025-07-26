@@ -280,9 +280,8 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 
 	systemData := dotfilesmanager.DotfilesSystemData{
 		Shell:           "/bin/zsh",
-		User:            "johndoe",
 		MultiUserSystem: true,
-		BrewUser:        false,
+		BrewMultiUser:   "multifoo",
 	}
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -302,9 +301,9 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 	require.NoError(t, err)
 	configStr := string(configContent)
 	require.Contains(t, configStr, "/bin/zsh")
-	require.Contains(t, configStr, "johndoe")
 	require.Contains(t, configStr, "multi_user_system = true")
-	require.Contains(t, configStr, "brew_user = false")
+	require.Contains(t, configStr, "brew_multi_user")
+	require.Contains(t, configStr, "multifoo")
 }
 
 func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
@@ -335,9 +334,8 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 	}
 	systemData := dotfilesmanager.DotfilesSystemData{
 		Shell:           "/bin/zsh",
-		User:            "johndoe",
 		MultiUserSystem: true,
-		BrewUser:        false,
+		BrewMultiUser:   "multifoo",
 	}
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -363,7 +361,7 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 	require.Contains(t, configStr, "Acme Corp")
 	require.Contains(t, configStr, "john.doe@acme.com")
 	require.Contains(t, configStr, "/bin/zsh")
-	require.Contains(t, configStr, "johndoe")
 	require.Contains(t, configStr, "multi_user_system = true")
-	require.Contains(t, configStr, "brew_user = false")
+	require.Contains(t, configStr, "brew_multi_user")
+	require.Contains(t, configStr, "multifoo")
 }

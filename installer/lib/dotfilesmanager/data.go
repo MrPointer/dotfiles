@@ -20,7 +20,6 @@ type DotfilesWorkEnvData struct {
 
 type DotfilesSystemData struct {
 	Shell           string `mapstructure:"shell"`
-	User            string `mapstructure:"user"`
 	MultiUserSystem bool   `mapstructure:"multi_user_system"`
-	BrewUser        bool   `mapstructure:"brew_user"`
+	BrewMultiUser   string `mapstructure:"brew_multi_user"`
 }
