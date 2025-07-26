@@ -18,9 +18,6 @@ var _ BrewInstaller = &MoqBrewInstaller{}
 //
 //		// make and configure a mocked BrewInstaller
 //		mockedBrewInstaller := &MoqBrewInstaller{
-//			DetectBrewPathFunc: func() (string, error) {
-//				panic("mock out the DetectBrewPath method")
-//			},
 //			InstallFunc: func() error {
 //				panic("mock out the Install method")
 //			},
@@ -34,9 +31,6 @@ var _ BrewInstaller = &MoqBrewInstaller{}
 //
 //	}
 type MoqBrewInstaller struct {
-	// DetectBrewPathFunc mocks the DetectBrewPath method.
-	DetectBrewPathFunc func() (string, error)
-
 	// InstallFunc mocks the Install method.
 	InstallFunc func() error
 
@@ -45,9 +39,6 @@ type MoqBrewInstaller struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// DetectBrewPath holds details about calls to the DetectBrewPath method.
-		DetectBrewPath []struct {
-		}
 		// Install holds details about calls to the Install method.
 		Install []struct {
 		}
@@ -55,36 +46,8 @@ type MoqBrewInstaller struct {
 		IsAvailable []struct {
 		}
 	}
-	lockDetectBrewPath sync.RWMutex
-	lockInstall        sync.RWMutex
-	lockIsAvailable    sync.RWMutex
-}
-
-// DetectBrewPath calls DetectBrewPathFunc.
-func (mock *MoqBrewInstaller) DetectBrewPath() (string, error) {
-	if mock.DetectBrewPathFunc == nil {
-		panic("MoqBrewInstaller.DetectBrewPathFunc: method is nil but BrewInstaller.DetectBrewPath was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockDetectBrewPath.Lock()
-	mock.calls.DetectBrewPath = append(mock.calls.DetectBrewPath, callInfo)
-	mock.lockDetectBrewPath.Unlock()
-	return mock.DetectBrewPathFunc()
-}
-
-// DetectBrewPathCalls gets all the calls that were made to DetectBrewPath.
-// Check the length with:
-//
-//	len(mockedBrewInstaller.DetectBrewPathCalls())
-func (mock *MoqBrewInstaller) DetectBrewPathCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockDetectBrewPath.RLock()
-	calls = mock.calls.DetectBrewPath
-	mock.lockDetectBrewPath.RUnlock()
-	return calls
+	lockInstall     sync.RWMutex
+	lockIsAvailable sync.RWMutex
 }
 
 // Install calls InstallFunc.

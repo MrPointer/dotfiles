@@ -73,11 +73,12 @@ making it easier to get started with a new system.`,
 
 		// Install Homebrew if specified and not already available.
 		if installBrew {
-			if err := installHomebrew(&sysInfo); err != nil {
+			brewPath, err := installHomebrew(&sysInfo)
+			if err != nil {
 				cliLogger.Error("Failed to install Homebrew: %v", err)
 				os.Exit(1)
 			}
-			globalPackageManager = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager)
+			globalPackageManager = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager, brewPath)
 		}
 
 		if err := installShell(); err != nil {
@@ -111,7 +112,12 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 			return nil
 		}
 	case "darwin":
-		return brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager)
+		brewPath, err := brew.DetectBrewPath(sysInfo, "")
+		if err != nil {
+			cliLogger.Error("Failed to detect Homebrew path: %v", err)
+			return nil
+		}
+		return brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager, brewPath)
 	default:
 		cliLogger.Warning("Unsupported operating system for automatic package installation: %s", sysInfo.OSName)
 		return nil
@@ -169,7 +175,7 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
 }
 
 // installHomebrew installs Homebrew if not already installed.
-func installHomebrew(sysInfo *compatibility.SystemInfo) error {
+func installHomebrew(sysInfo *compatibility.SystemInfo) (string, error) {
 	// Create BrewInstaller using the new API.
 	installer := brew.NewBrewInstaller(brew.Options{
 		SystemInfo:      sysInfo,
@@ -183,19 +189,28 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) error {
 
 	isAvailable, err := installer.IsAvailable()
 	if err != nil {
-		return err
+		return "", err
 	}
 	if isAvailable {
 		cliLogger.Success("Homebrew is already installed")
-		return nil
+		brewPath, err := brew.DetectBrewPath(sysInfo, "")
+		if err != nil {
+			return "", err
+		}
+		return brewPath, nil
 	}
 
 	if err := installer.Install(); err != nil {
-		return err
+		return "", err
+	}
+
+	brewPath, err := brew.DetectBrewPath(sysInfo, "")
+	if err != nil {
+		return "", err
 	}
 
 	cliLogger.Success("✔︎ Homebrew installed successfully")
-	return nil
+	return brewPath, nil
 }
 
 func installShell() error {

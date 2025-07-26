@@ -26,10 +26,35 @@ const (
 	MacOSArmBrewPath = "/opt/homebrew/bin/brew"
 )
 
+// DetectBrewPath returns the appropriate brew binary path based on the system information.
+func DetectBrewPath(systemInfo *compatibility.SystemInfo, pathOverride string) (string, error) {
+	if pathOverride != "" {
+		return pathOverride, nil
+	}
+
+	if systemInfo != nil {
+		switch systemInfo.OSName {
+		case "darwin":
+			if systemInfo.Arch == "arm64" {
+				return MacOSArmBrewPath, nil
+			}
+
+			return MacOSIntelBrewPath, nil
+
+		case "linux":
+			return LinuxBrewPath, nil
+
+		default:
+			return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
+		}
+	}
+
+	return "", fmt.Errorf("system information is not provided")
+}
+
 // BrewInstaller defines the interface for Homebrew operations.
 // (moq is used for generating mocks in tests.)
 type BrewInstaller interface {
-	DetectBrewPath() (string, error)
 	IsAvailable() (bool, error)
 	Install() error
 }
@@ -81,28 +106,7 @@ func NewBrewInstaller(opts Options) BrewInstaller {
 
 // DetectBrewPath returns the appropriate brew binary path based on the system information.
 func (b *brewInstaller) DetectBrewPath() (string, error) {
-	if b.brewPathOverride != "" {
-		return b.brewPathOverride, nil
-	}
-
-	if b.systemInfo != nil {
-		switch b.systemInfo.OSName {
-		case "darwin":
-			if b.systemInfo.Arch == "arm64" {
-				return MacOSArmBrewPath, nil
-			}
-
-			return MacOSIntelBrewPath, nil
-
-		case "linux":
-			return LinuxBrewPath, nil
-
-		default:
-			return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
-		}
-	}
-
-	return "", fmt.Errorf("system information is not provided")
+	return DetectBrewPath(b.systemInfo, b.brewPathOverride)
 }
 
 // IsAvailable checks if Homebrew is already installed and available (single-user).
