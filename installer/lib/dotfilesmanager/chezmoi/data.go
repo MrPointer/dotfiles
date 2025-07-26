@@ -1,6 +1,7 @@
 package chezmoi
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -9,10 +10,19 @@ import (
 )
 
 func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
-	if _, err := c.filesystem.PathExists(c.chezmoiConfig.chezmoiConfigDir); os.IsNotExist(err) {
+	configDirExists, err := c.filesystem.PathExists(c.chezmoiConfig.chezmoiConfigDir)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to check if chezmoi config directory exists: %w", err)
+	}
+	if !configDirExists {
 		if err := c.filesystem.CreateDirectory(c.chezmoiConfig.chezmoiConfigDir); err != nil {
 			return fmt.Errorf("failed to create chezmoi config directory: %w", err)
 		}
+	}
+
+	_, err = c.filesystem.CreateFile(c.chezmoiConfig.chezmoiConfigFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create chezmoi config file: %w", err)
 	}
 
 	viperObject := viper.New()
