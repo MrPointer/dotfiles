@@ -1,7 +1,9 @@
 [user]
 	name = {{ .personal.full_name }}
 	email = {{ .personal.email }}
+	{{ if (hasKey .personal "signing_key") -}}
 	signingkey = {{ .personal.signing_key }}
+	{{- end }}
 [pull]
 	rebase = true
 [submodule]
