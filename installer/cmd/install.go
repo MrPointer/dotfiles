@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/MrPointer/dotfiles/installer/cli"
+	"github.com/MrPointer/dotfiles/installer/lib/apt"
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
@@ -11,6 +12,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/shell"
+	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 	"github.com/samber/mo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,6 +30,7 @@ var (
 	gitCloneProtocol     string
 	verbose              bool
 	nonInteractive       bool
+	installPrerequisites bool
 )
 
 // global variables for the command execution context.
@@ -54,7 +57,15 @@ making it easier to get started with a new system.`,
 		config := GetCompatibilityConfig()
 		sysInfo, err := compatibility.CheckCompatibility(config, globalOsManager)
 		if err != nil {
-			HandleCompatibilityError(err, sysInfo, cliLogger)
+			if handlePrerequisiteInstallation(sysInfo) {
+				// Prerequisites were installed, re-check compatibility
+				sysInfo, err = compatibility.CheckCompatibility(config, globalOsManager)
+				if err != nil {
+					HandleCompatibilityError(err, sysInfo, cliLogger)
+				}
+			} else {
+				HandleCompatibilityError(err, sysInfo, cliLogger)
+			}
 		}
 		cliLogger.Success("✔︎ System compatibility check passed")
 
@@ -86,6 +97,75 @@ making it easier to get started with a new system.`,
 
 		cliLogger.Success("🪄 Installation completed 🎉")
 	},
+}
+
+// createPackageManagerForSystem creates the appropriate package manager for the current system.
+func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager.PackageManager {
+	switch sysInfo.OSName {
+	case "linux":
+		switch sysInfo.DistroName {
+		case "ubuntu", "debian":
+			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager))
+		default:
+			cliLogger.Warning("Unsupported Linux distribution for automatic package installation: %s", sysInfo.DistroName)
+			return nil
+		}
+	case "darwin":
+		return brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager)
+	default:
+		cliLogger.Warning("Unsupported operating system for automatic package installation: %s", sysInfo.OSName)
+		return nil
+	}
+}
+
+// handlePrerequisiteInstallation handles automatic installation of missing prerequisites.
+// Returns true if prerequisites were installed and compatibility should be re-checked.
+func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
+	// Only attempt installation if we have missing prerequisites and the flag is set
+	if len(sysInfo.Prerequisites.Missing) == 0 || !installPrerequisites {
+		return false
+	}
+
+	// Create package manager for this system
+	packageManager := createPackageManagerForSystem(&sysInfo)
+	if packageManager == nil {
+		cliLogger.Warning("Cannot install prerequisites automatically on this system")
+		return false
+	}
+
+	if !nonInteractive {
+		cliLogger.Warning("Automatic prerequisite installation is only supported in non-interactive mode for now")
+		return false
+	}
+
+	cliLogger.Info("Installing missing prerequisites automatically...")
+
+	// Install each missing prerequisite
+	installed := false
+	for _, name := range sysInfo.Prerequisites.Missing {
+		if detail, exists := sysInfo.Prerequisites.Details[name]; exists {
+			cliLogger.Info("Installing %s...", detail.Description)
+
+			// Use the prerequisite name directly as the package name
+			packageInfo := pkgmanager.NewRequestedPackageInfo(name, nil)
+
+			err := packageManager.InstallPackage(packageInfo)
+			if err != nil {
+				cliLogger.Error("Failed to install %s: %v", name, err)
+				return false
+			}
+
+			cliLogger.Success("✔︎ %s installed successfully", name)
+			installed = true
+		}
+	}
+
+	if installed {
+		cliLogger.Success("Prerequisites installation completed")
+		return true
+	}
+
+	return false
 }
 
 // installHomebrew installs Homebrew if not already installed.
@@ -282,6 +362,8 @@ func init() {
 		"Enable verbose output")
 	installCmd.Flags().BoolVar(&nonInteractive, "non-interactive", false,
 		"Disable interactive mode")
+	installCmd.Flags().BoolVar(&installPrerequisites, "install-prerequisites", false,
+		"Automatically install missing prerequisites")
 
 	viper.BindPFlag("work-env", installCmd.Flags().Lookup("work-env"))
 	viper.BindPFlag("work-name", installCmd.Flags().Lookup("work-name"))
@@ -293,4 +375,5 @@ func init() {
 	viper.BindPFlag("git-clone-protocol", installCmd.Flags().Lookup("git-clone-protocol"))
 	viper.BindPFlag("verbose", installCmd.Flags().Lookup("verbose"))
 	viper.BindPFlag("interactive", installCmd.Flags().Lookup("interactive"))
+	viper.BindPFlag("install-prerequisites", installCmd.Flags().Lookup("install-prerequisites"))
 }
