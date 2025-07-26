@@ -345,6 +345,11 @@ func initDotfilesManagerData(dm dotfilesmanager.DotfilesManager) error {
 		FirstName: "Timor",
 		LastName:  "Gruber",
 		Email:     "timor.gruber@gmail.com",
+		SystemData: mo.Some(dotfilesmanager.DotfilesSystemData{
+			Shell:           shellName,
+			MultiUserSystem: multiUserSystem,
+			BrewMultiUser:   "linuxbrew-manager",
+		}),
 	}
 
 	if workEnvironment {
