@@ -1,6 +1,7 @@
 package osmanager
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -222,7 +223,7 @@ func (u *UnixOsManager) GetProgramPath(program string) (string, error) {
 func (u *UnixOsManager) ProgramExists(program string) (bool, error) {
 	_, err := u.GetProgramPath(program)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, exec.ErrNotFound) || errors.Is(err, os.ErrNotExist) {
 			return false, nil // Program not found.
 		}
 		return false, fmt.Errorf("error checking program existence: %w", err)

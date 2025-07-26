@@ -15,21 +15,23 @@ type BrewPackageManager struct {
 	logger       logger.Logger
 	commander    utils.Commander
 	programQuery osmanager.ProgramQuery
+	brewPath     string
 }
 
 var _ pkgmanager.PackageManager = &BrewPackageManager{}
 
 // NewBrewPackageManager creates a new BrewPackageManager instance.
-func NewBrewPackageManager(logger logger.Logger, commander utils.Commander, programQuery osmanager.ProgramQuery) *BrewPackageManager {
+func NewBrewPackageManager(logger logger.Logger, commander utils.Commander, programQuery osmanager.ProgramQuery, brewPath string) *BrewPackageManager {
 	return &BrewPackageManager{
 		logger:       logger,
 		commander:    commander,
 		programQuery: programQuery,
+		brewPath:     brewPath,
 	}
 }
 
 func (b *BrewPackageManager) GetInfo() (pkgmanager.PackageManagerInfo, error) {
-	brewVersion, err := b.programQuery.GetProgramVersion("brew", func(version string) (string, error) {
+	brewVersion, err := b.programQuery.GetProgramVersion(b.brewPath, func(version string) (string, error) {
 		if version == "" {
 			return "", nil
 		}
@@ -73,7 +75,7 @@ func (b *BrewPackageManager) GetPackageVersion(packageName string) (string, erro
 func (b *BrewPackageManager) InstallPackage(requestedPackageInfo pkgmanager.RequestedPackageInfo) error {
 	b.logger.Warning("Homebrew doesn't support version constraints, installing the latest version of package %s", requestedPackageInfo.Name)
 
-	_, err := b.commander.RunCommand("brew", []string{"install", requestedPackageInfo.Name})
+	_, err := b.commander.RunCommand(b.brewPath, []string{"install", requestedPackageInfo.Name})
 	if err != nil {
 		return errors.New(fmt.Sprintf("failed to install package %s with Homebrew: %v", requestedPackageInfo.Name, err))
 	}
@@ -101,7 +103,7 @@ func (b *BrewPackageManager) IsPackageInstalled(packageInfo pkgmanager.PackageIn
 // ListInstalledPackages implements pkgmanager.PackageManager.
 func (b *BrewPackageManager) ListInstalledPackages() ([]pkgmanager.PackageInfo, error) {
 	// Run `brew list` to get the list of installed packages.
-	output, err := b.commander.RunCommand("brew", []string{"list", "--versions"})
+	output, err := b.commander.RunCommand(b.brewPath, []string{"list", "--versions"})
 	if err != nil {
 		return nil, errors.New("failed to list installed packages with Homebrew: " + err.Error())
 	}
@@ -127,7 +129,7 @@ func (b *BrewPackageManager) ListInstalledPackages() ([]pkgmanager.PackageInfo, 
 
 // UninstallPackage implements pkgmanager.PackageManager.
 func (b *BrewPackageManager) UninstallPackage(packageInfo pkgmanager.PackageInfo) error {
-	_, err := b.commander.RunCommand("brew", []string{"uninstall", packageInfo.Name})
+	_, err := b.commander.RunCommand(b.brewPath, []string{"uninstall", packageInfo.Name})
 	if err != nil {
 		return errors.New(fmt.Sprintf("failed to uninstall package %s with Homebrew: %v", packageInfo.Name, err))
 	}

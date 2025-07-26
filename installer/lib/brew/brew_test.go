@@ -18,7 +18,7 @@ func Test_NewBrewPackageManager_ReturnsValidInstance(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	require.NotNil(t, packageManager)
 }
@@ -28,14 +28,14 @@ func Test_GetInfo_ReturnsCorrectInfo_WhenBrewVersionIsRetrieved(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 	mockProgramQuery := &osmanager.MoqProgramQuery{
 		GetProgramVersionFunc: func(program string, versionExtractor osmanager.VersionExtractor, queryArgs ...string) (string, error) {
-			if program == "brew" {
+			if program == "/usr/local/bin/brew" {
 				return "3.6.5", nil
 			}
 			return "", errors.New("unexpected program")
 		},
 	}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	info, err := packageManager.GetInfo()
 
@@ -87,7 +87,7 @@ func Test_GetInfo_HandlesBrewVersionExtractionCorrectly(t *testing.T) {
 				},
 			}
 
-			packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+			packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 			info, err := packageManager.GetInfo()
 
@@ -112,7 +112,7 @@ func Test_GetInfo_ReturnsError_WhenProgramQueryFails(t *testing.T) {
 		},
 	}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	info, err := packageManager.GetInfo()
 
@@ -125,7 +125,7 @@ func Test_GetPackageVersion_ReturnsVersion_WhenPackageIsInstalled(t *testing.T) 
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 				output := "git 2.39.0\nnode 18.12.1\nvim 9.0.0500"
 				return &utils.Result{
 					Stdout: []byte(output),
@@ -136,7 +136,7 @@ func Test_GetPackageVersion_ReturnsVersion_WhenPackageIsInstalled(t *testing.T) 
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	version, err := packageManager.GetPackageVersion("node")
 
@@ -148,7 +148,7 @@ func Test_GetPackageVersion_ReturnsError_WhenPackageIsNotInstalled(t *testing.T)
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 				output := "git 2.39.0\nvim 9.0.0500"
 				return &utils.Result{
 					Stdout: []byte(output),
@@ -159,7 +159,7 @@ func Test_GetPackageVersion_ReturnsError_WhenPackageIsNotInstalled(t *testing.T)
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	version, err := packageManager.GetPackageVersion("nonexistent")
 
@@ -177,7 +177,7 @@ func Test_GetPackageVersion_ReturnsError_WhenListInstalledPackagesFails(t *testi
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	version, err := packageManager.GetPackageVersion("git")
 
@@ -195,7 +195,7 @@ func Test_InstallPackage_InstallsPackageSuccessfully(t *testing.T) {
 	}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "install" && args[1] == "git" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "install" && args[1] == "git" {
 				return &utils.Result{}, nil
 			}
 			return nil, errors.New("unexpected command")
@@ -203,7 +203,7 @@ func Test_InstallPackage_InstallsPackageSuccessfully(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 	requestedPackage := pkgmanager.RequestedPackageInfo{Name: "git"}
 
 	err := packageManager.InstallPackage(requestedPackage)
@@ -223,7 +223,7 @@ func Test_InstallPackage_ReturnsError_WhenInstallationFails(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 	requestedPackage := pkgmanager.RequestedPackageInfo{Name: "git"}
 
 	err := packageManager.InstallPackage(requestedPackage)
@@ -236,7 +236,7 @@ func Test_IsPackageInstalled_ReturnsTrue_WhenPackageIsInstalled(t *testing.T) {
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 				output := "git 2.39.0\nnode 18.12.1\nvim 9.0.0500"
 				return &utils.Result{
 					Stdout: []byte(output),
@@ -247,7 +247,7 @@ func Test_IsPackageInstalled_ReturnsTrue_WhenPackageIsInstalled(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
@@ -260,7 +260,7 @@ func Test_IsPackageInstalled_ReturnsFalse_WhenPackageIsNotInstalled(t *testing.T
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 				output := "git 2.39.0\nvim 9.0.0500"
 				return &utils.Result{
 					Stdout: []byte(output),
@@ -271,7 +271,7 @@ func Test_IsPackageInstalled_ReturnsFalse_WhenPackageIsNotInstalled(t *testing.T
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 	packageInfo := pkgmanager.NewPackageInfo("nonexistent", "1.0.0")
 
 	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
@@ -289,7 +289,7 @@ func Test_IsPackageInstalled_ReturnsError_WhenListInstalledPackagesFails(t *test
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
@@ -303,7 +303,7 @@ func Test_ListInstalledPackages_ReturnsPackageList_WhenCommandSucceeds(t *testin
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 				output := "git 2.39.0\nnode 18.12.1\nvim 9.0.0500"
 				return &utils.Result{
 					Stdout: []byte(output),
@@ -314,7 +314,7 @@ func Test_ListInstalledPackages_ReturnsPackageList_WhenCommandSucceeds(t *testin
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -337,7 +337,7 @@ func Test_ListInstalledPackages_ReturnsError_WhenCommandFails(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -350,7 +350,7 @@ func Test_ListInstalledPackages_ReturnsError_WhenOutputFormatIsInvalid(t *testin
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 				output := "git\ninvalid-line-without-version\nvim 9.0.0500"
 				return &utils.Result{
 					Stdout: []byte(output),
@@ -361,7 +361,7 @@ func Test_ListInstalledPackages_ReturnsError_WhenOutputFormatIsInvalid(t *testin
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -374,7 +374,7 @@ func Test_ListInstalledPackages_HandlesEmptyOutput(t *testing.T) {
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 				return &utils.Result{
 					Stdout: []byte(""),
 				}, nil
@@ -384,7 +384,7 @@ func Test_ListInstalledPackages_HandlesEmptyOutput(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -396,7 +396,7 @@ func Test_UninstallPackage_UninstallsPackageSuccessfully(t *testing.T) {
 	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "brew" && len(args) == 2 && args[0] == "uninstall" && args[1] == "git" {
+			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "uninstall" && args[1] == "git" {
 				return &utils.Result{}, nil
 			}
 			return nil, errors.New("unexpected command")
@@ -404,7 +404,7 @@ func Test_UninstallPackage_UninstallsPackageSuccessfully(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	err := packageManager.UninstallPackage(packageInfo)
@@ -421,7 +421,7 @@ func Test_UninstallPackage_ReturnsError_WhenUninstallationFails(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+	packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	err := packageManager.UninstallPackage(packageInfo)
@@ -473,7 +473,7 @@ func Test_ListInstalledPackages_HandlesPackageNamesWithVersionsInMultipleFormats
 			mockLogger := &logger.MoqLogger{}
 			mockCommander := &utils.MoqCommander{
 				RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-					if name == "brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+					if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
 						return &utils.Result{
 							Stdout: []byte(tt.brewOutput),
 						}, nil
@@ -483,7 +483,7 @@ func Test_ListInstalledPackages_HandlesPackageNamesWithVersionsInMultipleFormats
 			}
 			mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-			packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery)
+			packageManager := brew.NewBrewPackageManager(mockLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
 
 			packages, err := packageManager.ListInstalledPackages()
 

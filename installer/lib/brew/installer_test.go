@@ -38,14 +38,7 @@ func Test_DetectBrewPath_ReturnsExpectedPath_WhenCompatible(t *testing.T) {
 	for _, tt := range tests {
 		current := tt
 		t.Run(current.name, func(t *testing.T) {
-			opts := brew.Options{
-				Logger:     logger.DefaultLogger,
-				SystemInfo: current.sysInfo,
-				Commander:  nil,
-			}
-
-			b := brew.NewBrewInstaller(opts)
-			got, err := b.DetectBrewPath()
+			got, err := brew.DetectBrewPath(current.sysInfo, "")
 			if (err != nil) != current.errorExpected {
 				t.Fatalf("DetectBrewPath() error = %v, wantError %v", err, current.errorExpected)
 			}
@@ -58,14 +51,9 @@ func Test_DetectBrewPath_ReturnsExpectedPath_WhenCompatible(t *testing.T) {
 
 func Test_DetectBrewPath_UsesOverride_WhenProvided(t *testing.T) {
 	overridePath := "/custom/brew/path"
-	opts := brew.Options{
-		Logger:           logger.DefaultLogger,
-		SystemInfo:       &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"},
-		BrewPathOverride: overridePath,
-	}
+	sysInfo := &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"}
 
-	b := brew.NewBrewInstaller(opts)
-	got, err := b.DetectBrewPath()
+	got, err := brew.DetectBrewPath(sysInfo, overridePath)
 
 	require.NoError(t, err)
 	require.Equal(t, overridePath, got)
@@ -724,17 +712,9 @@ func Test_SingleUserBrew_CanHandleLargeInstallScript(t *testing.T) {
 	// but the test ensures the system can handle large scripts without errors
 }
 
-func Test_BrewInstaller_ReturnsError_WhenSystemInfoIsNil(t *testing.T) {
+func Test_DetectBrewPath_ReturnsError_WhenSystemInfoIsNil(t *testing.T) {
 	// Test behavior when SystemInfo is nil
-	opts := brew.Options{
-		Logger:          logger.DefaultLogger,
-		SystemInfo:      nil, // Nil system info
-		Commander:       nil,
-		MultiUserSystem: false,
-	}
-
-	installer := brew.NewBrewInstaller(opts)
-	_, err := installer.DetectBrewPath()
+	_, err := brew.DetectBrewPath(nil, "")
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "system information is not provided")
