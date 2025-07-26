@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
@@ -712,12 +713,183 @@ func Test_SingleUserBrew_CanHandleLargeInstallScript(t *testing.T) {
 	// but the test ensures the system can handle large scripts without errors
 }
 
+func Test_SingleUserBrew_Install_UpdatesPath_AfterSuccessfulInstallation(t *testing.T) {
+	// Save original PATH to restore later
+	originalPath := os.Getenv("PATH")
+	defer func() {
+		os.Setenv("PATH", originalPath)
+	}()
+
+	// Set a test PATH that doesn't include brew bin
+	testPath := "/usr/bin:/bin"
+	os.Setenv("PATH", testPath)
+
+	brewPath := "/opt/homebrew/bin/brew"
+	expectedBrewBinDir := "/opt/homebrew/bin"
+
+	// Mock dependencies
+	mockLogger := &logger.MoqLogger{
+		InfoFunc:    func(format string, args ...any) {},
+		SuccessFunc: func(format string, args ...any) {},
+		DebugFunc:   func(format string, args ...any) {},
+		WarningFunc: func(format string, args ...any) {},
+	}
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			return &utils.Result{ExitCode: 0}, nil
+		},
+	}
+	mockFS := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			// Return true for the temporary install script and brew binary (after installation)
+			if path == "/tmp/brew-install.sh" || path == brewPath {
+				return true, nil
+			}
+			return false, nil
+		},
+		CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
+			return "/tmp/brew-install.sh", nil
+		},
+		WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
+			return 100, nil
+		},
+		RemovePathFunc: func(path string) error {
+			return nil
+		},
+	}
+	mockHTTPClient := &httpclient.MoqHTTPClient{
+		GetFunc: func(url string) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader("#!/bin/bash\necho 'installing homebrew'")),
+			}, nil
+		},
+	}
+	mockOsManager := &osmanager.MoqOsManager{
+		SetPermissionsFunc: func(path string, mode os.FileMode) error {
+			return nil
+		},
+	}
+
+	sysInfo := &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"}
+	opts := brew.Options{
+		Logger:           mockLogger,
+		SystemInfo:       sysInfo,
+		Commander:        mockCommander,
+		HTTPClient:       mockHTTPClient,
+		OsManager:        mockOsManager,
+		Fs:               mockFS,
+		MultiUserSystem:  false,
+		BrewPathOverride: brewPath,
+	}
+
+	installer := brew.NewBrewInstaller(opts)
+
+	err := installer.Install()
+
+	require.NoError(t, err)
+
+	// Verify PATH was updated
+	newPath := os.Getenv("PATH")
+	require.True(t, strings.HasPrefix(newPath, expectedBrewBinDir+string(os.PathListSeparator)))
+	require.Contains(t, newPath, testPath)
+}
+
 func Test_DetectBrewPath_ReturnsError_WhenSystemInfoIsNil(t *testing.T) {
 	// Test behavior when SystemInfo is nil
 	_, err := brew.DetectBrewPath(nil, "")
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "system information is not provided")
+}
+
+func Test_UpdatePathWithBrewBinaries_UpdatesPath_WhenBrewBinNotInPath(t *testing.T) {
+	// Save original PATH to restore later
+	originalPath := os.Getenv("PATH")
+	defer func() {
+		os.Setenv("PATH", originalPath)
+	}()
+
+	// Set a test PATH that doesn't include brew bin
+	testPath := "/usr/bin:/bin"
+	os.Setenv("PATH", testPath)
+
+	brewPath := "/opt/homebrew/bin/brew"
+	expectedBrewBinDir := "/opt/homebrew/bin"
+
+	err := brew.UpdatePathWithBrewBinaries(brewPath)
+
+	require.NoError(t, err)
+
+	newPath := os.Getenv("PATH")
+	require.True(t, strings.HasPrefix(newPath, expectedBrewBinDir+string(os.PathListSeparator)))
+	require.Contains(t, newPath, testPath)
+}
+
+func Test_UpdatePathWithBrewBinaries_DoesNotDuplicate_WhenBrewBinAlreadyInPath(t *testing.T) {
+	// Save original PATH to restore later
+	originalPath := os.Getenv("PATH")
+	defer func() {
+		os.Setenv("PATH", originalPath)
+	}()
+
+	brewPath := "/opt/homebrew/bin/brew"
+	brewBinDir := "/opt/homebrew/bin"
+
+	// Set PATH that already includes brew bin directory
+	testPath := brewBinDir + string(os.PathListSeparator) + "/usr/bin:/bin"
+	os.Setenv("PATH", testPath)
+
+	err := brew.UpdatePathWithBrewBinaries(brewPath)
+
+	require.NoError(t, err)
+
+	newPath := os.Getenv("PATH")
+	require.Equal(t, testPath, newPath) // Should remain unchanged
+}
+
+func Test_UpdatePathWithBrewBinaries_HandlesEmptyPath(t *testing.T) {
+	// Save original PATH to restore later
+	originalPath := os.Getenv("PATH")
+	defer func() {
+		os.Setenv("PATH", originalPath)
+	}()
+
+	// Set empty PATH
+	os.Setenv("PATH", "")
+
+	brewPath := "/usr/local/bin/brew"
+	expectedBrewBinDir := "/usr/local/bin"
+
+	err := brew.UpdatePathWithBrewBinaries(brewPath)
+
+	require.NoError(t, err)
+
+	newPath := os.Getenv("PATH")
+	require.Equal(t, expectedBrewBinDir+string(os.PathListSeparator), newPath)
+}
+
+func Test_UpdatePathWithBrewBinaries_UsesPlatformPathSeparator(t *testing.T) {
+	// Save original PATH to restore later
+	originalPath := os.Getenv("PATH")
+	defer func() {
+		os.Setenv("PATH", originalPath)
+	}()
+
+	// Set a test PATH
+	testPath := "/usr/bin:/bin"
+	os.Setenv("PATH", testPath)
+
+	brewPath := "/opt/homebrew/bin/brew"
+	expectedBrewBinDir := "/opt/homebrew/bin"
+
+	err := brew.UpdatePathWithBrewBinaries(brewPath)
+
+	require.NoError(t, err)
+
+	newPath := os.Getenv("PATH")
+	expectedPath := expectedBrewBinDir + string(os.PathListSeparator) + testPath
+	require.Equal(t, expectedPath, newPath)
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */

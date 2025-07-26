@@ -193,10 +193,19 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) (string, error) {
 	}
 	if isAvailable {
 		cliLogger.Success("Homebrew is already installed")
+
 		brewPath, err := brew.DetectBrewPath(sysInfo, "")
 		if err != nil {
 			return "", err
 		}
+
+		// Although Homebrew is already installed, we still need to update the PATH environment variable,
+		// because it may not be set correctly.
+		err = brew.UpdatePathWithBrewBinaries(brewPath)
+		if err != nil {
+			return "", err
+		}
+
 		return brewPath, nil
 	}
 
