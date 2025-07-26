@@ -103,7 +103,7 @@ func (b *BrewPackageManager) IsPackageInstalled(packageInfo pkgmanager.PackageIn
 // ListInstalledPackages implements pkgmanager.PackageManager.
 func (b *BrewPackageManager) ListInstalledPackages() ([]pkgmanager.PackageInfo, error) {
 	// Run `brew list` to get the list of installed packages.
-	output, err := b.commander.RunCommand(b.brewPath, []string{"list", "--versions"})
+	output, err := b.commander.RunCommand(b.brewPath, []string{"list", "--versions"}, utils.WithCaptureOutput())
 	if err != nil {
 		return nil, errors.New("failed to list installed packages with Homebrew: " + err.Error())
 	}
