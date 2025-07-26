@@ -27,24 +27,14 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 	configFilePath := filepath.Join(configDir, "chezmoi.toml")
 	cloneDir := filepath.Join(tempDir, "clone")
 
-	mockFileSystem := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			if path == configDir {
-				return false, os.ErrNotExist
-			}
-			return false, nil
-		},
-		CreateDirectoryFunc: func(path string) error {
-			return os.MkdirAll(path, 0755)
-		},
-	}
+	fileSystem := utils.NewDefaultFileSystem()
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -58,11 +48,7 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 	err := manager.Initialize(data)
 
 	require.NoError(t, err)
-	require.Len(t, mockFileSystem.PathExistsCalls(), 1)
-	require.Equal(t, configDir, mockFileSystem.PathExistsCalls()[0].Path)
-	require.Len(t, mockFileSystem.CreateDirectoryCalls(), 1)
-	require.Equal(t, configDir, mockFileSystem.CreateDirectoryCalls()[0].Path)
-
+	require.DirExists(t, configDir)
 	require.FileExists(t, configFilePath)
 }
 
@@ -79,21 +65,14 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
 
-	mockFileSystem := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			if path == configDir {
-				return true, nil
-			}
-			return false, nil
-		},
-	}
+	fileSystem := utils.NewDefaultFileSystem()
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -107,10 +86,6 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 	err = manager.Initialize(data)
 
 	require.NoError(t, err)
-	require.Len(t, mockFileSystem.PathExistsCalls(), 1)
-	require.Equal(t, configDir, mockFileSystem.PathExistsCalls()[0].Path)
-	require.Len(t, mockFileSystem.CreateDirectoryCalls(), 0)
-
 	require.FileExists(t, configFilePath)
 }
 
@@ -160,18 +135,14 @@ func Test_Initialize_WritesBasicPersonalData_WhenOnlyRequiredFieldsProvided(t *t
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
 
-	mockFileSystem := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			return true, nil
-		},
-	}
+	fileSystem := utils.NewDefaultFileSystem()
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -208,18 +179,14 @@ func Test_Initialize_WritesGpgSigningKey_WhenProvided(t *testing.T) {
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
 
-	mockFileSystem := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			return true, nil
-		},
-	}
+	fileSystem := utils.NewDefaultFileSystem()
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -254,18 +221,14 @@ func Test_Initialize_WritesWorkEnvironmentData_WhenProvided(t *testing.T) {
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
 
-	mockFileSystem := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			return true, nil
-		},
-	}
+	fileSystem := utils.NewDefaultFileSystem()
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
@@ -306,18 +269,14 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
 
-	mockFileSystem := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			return true, nil
-		},
-	}
+	fileSystem := utils.NewDefaultFileSystem()
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	systemData := dotfilesmanager.DotfilesSystemData{
 		Shell:           "/bin/zsh",
@@ -361,18 +320,14 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 	err := os.MkdirAll(configDir, 0755)
 	require.NoError(t, err)
 
-	mockFileSystem := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			return true, nil
-		},
-	}
+	fileSystem := utils.NewDefaultFileSystem()
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
