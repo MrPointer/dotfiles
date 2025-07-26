@@ -136,7 +136,9 @@ if command -v az &>/dev/null; then
 fi
 
 # Setup custom aliases
+{{ if (hasKey .personal "signing_key") -}}
 alias gpg-unlock='gpg --sign --local-user {{ .personal.signing_key }} --output /dev/null /dev/null'
+{{- end }}
 
 {{ if .personal.work_env -}}
 source "$WORK_ZSH_RC_EXTENSION"
