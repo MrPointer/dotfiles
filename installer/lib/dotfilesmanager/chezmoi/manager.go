@@ -70,7 +70,7 @@ func TryStandardChezmoiManager(filesystem utils.FileSystem, userManager osmanage
 	}
 
 	chezmoiConfigDir := fmt.Sprintf("%s/chezmoi", userConfigDir)
-	chezmoiConfigFilePath := fmt.Sprintf("%s.toml", chezmoiConfigDir)
+	chezmoiConfigFilePath := fmt.Sprintf("%s/chezmoi.toml", chezmoiConfigDir)
 
 	userHomeDir, err := userManager.GetHomeDir()
 	if err != nil {
@@ -85,13 +85,14 @@ func TryStandardChezmoiManager(filesystem utils.FileSystem, userManager osmanage
 		commander,
 		pkgManager,
 		httpClient,
-		ChezmoiConfig{
-			chezmoiConfigDir:      chezmoiConfigDir,
-			chezmoiConfigFilePath: chezmoiConfigFilePath,
-			chezmoiCloneDir:       chezmoiCloneDir,
-			githubUsername:        githubUsername,
-			cloneViaSSH:           cloneViaSSH,
-		}), nil
+		NewChezmoiConfig(
+			chezmoiConfigDir,
+			chezmoiConfigFilePath,
+			chezmoiCloneDir,
+			githubUsername,
+			cloneViaSSH,
+		),
+	), nil
 }
 
 func TryStandardChezmoiManagerWithDefaults(filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient) (*ChezmoiManager, error) {
