@@ -128,7 +128,7 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 // Returns true if prerequisites were installed and compatibility should be re-checked.
 func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
 	// Only attempt installation if we have missing prerequisites and the flag is set
-	if len(sysInfo.Prerequisites.Missing) == 0 || !installPrerequisites {
+	if len(sysInfo.Prerequisites.Missing) == 0 {
 		return false
 	}
 
@@ -139,18 +139,51 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
 		return false
 	}
 
-	if !nonInteractive {
-		cliLogger.Warning("Automatic prerequisite installation is only supported in non-interactive mode for now")
-		return false
+	var prerequisitesToInstall []string
+
+	// In non-interactive mode, or if explicitly requested, install all missing prerequisites automatically
+	if nonInteractive || installPrerequisites {
+		prerequisitesToInstall = sysInfo.Prerequisites.Missing
+		cliLogger.Info("Installing missing prerequisites automatically...")
+	} else {
+		// In interactive mode, let user select which prerequisites to install
+		prerequisiteSelector := cli.NewDefaultPrerequisiteSelector()
+
+		// Convert compatibility.PrerequisiteDetail to cli.PrerequisiteDetail
+		cliDetails := make(map[string]cli.PrerequisiteDetail)
+		for name, detail := range sysInfo.Prerequisites.Details {
+			cliDetails[name] = cli.PrerequisiteDetail{
+				Name:        detail.Name,
+				Available:   detail.Available,
+				Command:     detail.Command,
+				Description: detail.Description,
+				InstallHint: detail.InstallHint,
+			}
+		}
+
+		selectedPrerequisites, err := prerequisiteSelector.SelectPrerequisites(
+			sysInfo.Prerequisites.Missing,
+			cliDetails,
+		)
+		if err != nil {
+			cliLogger.Error("Failed to select prerequisites: %v", err)
+			return false
+		}
+
+		if len(selectedPrerequisites) == 0 {
+			cliLogger.Info("No prerequisites selected for installation")
+			return false
+		}
+
+		prerequisitesToInstall = selectedPrerequisites
+		cliLogger.Info("Installing selected prerequisites...")
 	}
 
-	cliLogger.Info("Installing missing prerequisites automatically...")
-
-	// Install each missing prerequisite
+	// Install each selected prerequisite
 	installed := false
-	for _, name := range sysInfo.Prerequisites.Missing {
+	for _, name := range prerequisitesToInstall {
 		if detail, exists := sysInfo.Prerequisites.Details[name]; exists {
-			cliLogger.Info("Installing %s...", detail.Description)
+			cliLogger.Info("Installing %s: %s...", name, detail.Description)
 
 			// Use the prerequisite name directly as the package name
 			packageInfo := pkgmanager.NewRequestedPackageInfo(name, nil)
