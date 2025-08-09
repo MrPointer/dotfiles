@@ -73,7 +73,7 @@ func Execute() {
 
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
-	cobra.OnInitialize(initConfig, initCompatibilityConfig, initOsManager, initLogger)
+	cobra.OnInitialize(initConfig, initCompatibilityConfig, initLogger, initOsManager)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
