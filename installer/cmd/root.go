@@ -18,8 +18,9 @@ var (
 	cfgFile                   string
 	compatibilityConfigFile   string
 	globalCompatibilityConfig *compatibility.CompatibilityConfig
+	globalVerbose             bool
 
-	cliLogger                            = logger.NewCliLogger()
+	cliLogger        logger.Logger       = nil // Will be initialized before any command is executed
 	globalCommander                      = utils.NewDefaultCommander()
 	globalHttpClient                     = httpclient.NewDefaultHTTPClient()
 	globalFilesystem                     = utils.NewDefaultFileSystem()
@@ -72,7 +73,7 @@ func Execute() {
 
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
-	cobra.OnInitialize(initConfig, initCompatibilityConfig, initOsManager)
+	cobra.OnInitialize(initConfig, initCompatibilityConfig, initOsManager, initLogger)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -84,6 +85,11 @@ func init() {
 	// Add compatibility config flag to root command so it's available globally.
 	rootCmd.PersistentFlags().StringVar(&compatibilityConfigFile, "compat-config", "",
 		"compatibility configuration file (uses embedded config by default)")
+
+	rootCmd.PersistentFlags().BoolVarP(&globalVerbose, "verbose", "v", false,
+		"Enable verbose output")
+
+	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -132,4 +138,8 @@ func initOsManager() {
 		cliLogger.Error("The system may be compatible, but we haven't implemented an OS manager for it yet. Please open an issue on GitHub to request support for this OS.")
 		os.Exit(1)
 	}
+}
+
+func initLogger() {
+	cliLogger = logger.NewCliLogger(globalVerbose)
 }

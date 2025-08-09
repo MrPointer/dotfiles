@@ -420,8 +420,6 @@ func init() {
 		"Treat this system as a multi-user system (affects some dotfiles)")
 	installCmd.Flags().StringVar(&gitCloneProtocol, "git-clone-protocol", "ssh",
 		"Use the given git clone protocol (ssh or https) for git operations")
-	installCmd.Flags().BoolVarP(&verbose, "verbose", "v", false,
-		"Enable verbose output")
 	installCmd.Flags().BoolVar(&nonInteractive, "non-interactive", false,
 		"Disable interactive mode")
 	installCmd.Flags().BoolVar(&installPrerequisites, "install-prerequisites", false,
@@ -435,7 +433,6 @@ func init() {
 	viper.BindPFlag("install-shell-with-brew", installCmd.Flags().Lookup("install-shell-with-brew"))
 	viper.BindPFlag("multi-user-system", installCmd.Flags().Lookup("multi-user-system"))
 	viper.BindPFlag("git-clone-protocol", installCmd.Flags().Lookup("git-clone-protocol"))
-	viper.BindPFlag("verbose", installCmd.Flags().Lookup("verbose"))
 	viper.BindPFlag("interactive", installCmd.Flags().Lookup("interactive"))
 	viper.BindPFlag("install-prerequisites", installCmd.Flags().Lookup("install-prerequisites"))
 }
