@@ -17,16 +17,24 @@ var (
 )
 
 // CliLogger implements the Logger interface using lipgloss styling.
-type CliLogger struct{}
+type CliLogger struct {
+	verbose bool
+}
+
+var _ Logger = (*CliLogger)(nil)
 
 // NewCliLogger creates a new CLI logger that uses lipgloss styling.
-func NewCliLogger() *CliLogger {
-	return &CliLogger{}
+func NewCliLogger(verbose bool) *CliLogger {
+	return &CliLogger{
+		verbose: verbose,
+	}
 }
 
 // Debug logs a debug message with gray styling.
 func (l *CliLogger) Debug(format string, args ...any) {
-	printStyled(os.Stdout, debugStyle, format, args...)
+	if l.verbose {
+		printStyled(os.Stdout, debugStyle, format, args...)
+	}
 }
 
 // Info logs an informational message with blue styling.
