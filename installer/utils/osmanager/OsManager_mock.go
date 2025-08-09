@@ -43,6 +43,9 @@ var _ OsManager = &MoqOsManager{}
 //			GetProgramVersionFunc: func(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error) {
 //				panic("mock out the GetProgramVersion method")
 //			},
+//			GetenvFunc: func(key string) string {
+//				panic("mock out the Getenv method")
+//			},
 //			ProgramExistsFunc: func(program string) (bool, error) {
 //				panic("mock out the ProgramExists method")
 //			},
@@ -85,6 +88,9 @@ type MoqOsManager struct {
 
 	// GetProgramVersionFunc mocks the GetProgramVersion method.
 	GetProgramVersionFunc func(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error)
+
+	// GetenvFunc mocks the Getenv method.
+	GetenvFunc func(key string) string
 
 	// ProgramExistsFunc mocks the ProgramExists method.
 	ProgramExistsFunc func(program string) (bool, error)
@@ -142,6 +148,11 @@ type MoqOsManager struct {
 			// QueryArgs is the queryArgs argument value.
 			QueryArgs []string
 		}
+		// Getenv holds details about calls to the Getenv method.
+		Getenv []struct {
+			// Key is the key argument value.
+			Key string
+		}
 		// ProgramExists holds details about calls to the ProgramExists method.
 		ProgramExists []struct {
 			// Program is the program argument value.
@@ -175,6 +186,7 @@ type MoqOsManager struct {
 	lockGetHomeDir        sync.RWMutex
 	lockGetProgramPath    sync.RWMutex
 	lockGetProgramVersion sync.RWMutex
+	lockGetenv            sync.RWMutex
 	lockProgramExists     sync.RWMutex
 	lockSetOwnership      sync.RWMutex
 	lockSetPermissions    sync.RWMutex
@@ -436,6 +448,38 @@ func (mock *MoqOsManager) GetProgramVersionCalls() []struct {
 	mock.lockGetProgramVersion.RLock()
 	calls = mock.calls.GetProgramVersion
 	mock.lockGetProgramVersion.RUnlock()
+	return calls
+}
+
+// Getenv calls GetenvFunc.
+func (mock *MoqOsManager) Getenv(key string) string {
+	if mock.GetenvFunc == nil {
+		panic("MoqOsManager.GetenvFunc: method is nil but OsManager.Getenv was just called")
+	}
+	callInfo := struct {
+		Key string
+	}{
+		Key: key,
+	}
+	mock.lockGetenv.Lock()
+	mock.calls.Getenv = append(mock.calls.Getenv, callInfo)
+	mock.lockGetenv.Unlock()
+	return mock.GetenvFunc(key)
+}
+
+// GetenvCalls gets all the calls that were made to Getenv.
+// Check the length with:
+//
+//	len(mockedOsManager.GetenvCalls())
+func (mock *MoqOsManager) GetenvCalls() []struct {
+	Key string
+} {
+	var calls []struct {
+		Key string
+	}
+	mock.lockGetenv.RLock()
+	calls = mock.calls.Getenv
+	mock.lockGetenv.RUnlock()
 	return calls
 }
 
