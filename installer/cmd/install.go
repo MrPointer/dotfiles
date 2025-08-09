@@ -290,7 +290,9 @@ func setupGpgKeys() error {
 
 	gpgClient := gpg.NewDefaultGpgClient(
 		globalOsManager,
+		globalFilesystem,
 		globalCommander,
+		cliLogger,
 	)
 
 	existingKeys, err := gpgClient.ListAvailableKeys()

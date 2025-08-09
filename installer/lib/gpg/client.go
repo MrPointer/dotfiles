@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
@@ -23,25 +24,38 @@ var _ GpgClient = (*DefaultGpgClient)(nil)
 // DefaultGpgClient implements GpgClient using OsManager and Commander.
 type DefaultGpgClient struct {
 	osMgr     osmanager.OsManager
+	fs        utils.FileSystem
 	commander utils.Commander
+	logger    logger.Logger
 }
 
-// NewDefaultGpgClient constructs a DefaultGpgClient with the given OsManager and Commander.
+// NewDefaultGpgClient constructs a DefaultGpgClient with the given OsManager, Commander, and Logger.
 func NewDefaultGpgClient(
 	osMgr osmanager.OsManager,
+	fs utils.FileSystem,
 	commander utils.Commander,
+	logger logger.Logger,
 ) *DefaultGpgClient {
 	return &DefaultGpgClient{
 		osMgr:     osMgr,
+		fs:        fs,
 		commander: commander,
+		logger:    logger,
 	}
 }
 
 // CreateKeyPair implements GpgClient.
 func (c *DefaultGpgClient) CreateKeyPair() (string, error) {
-	args := []string{"--expert", "--full-generate-key"}
-	// Run the command interactively.
-	result, err := c.commander.RunCommand("gpg", args, utils.WithCaptureOutput())
+	c.logger.Debug("Creating GPG key pair")
+
+	activeTerminal, err := c.detectTTY()
+	if err != nil {
+		return "", err
+	}
+
+	// Run the command interactively using the working variant with ECC NIST P-256
+	args := []string{"--gen-key", "--pinentry-mode", "loopback", "--default-new-key-algo", "nistp256"}
+	result, err := c.commander.RunCommand("gpg", args, utils.WithCaptureOutput(), utils.WithEnv(map[string]string{"GPG_TTY": activeTerminal}))
 	if err != nil {
 		return "", err
 	} else if result.ExitCode != 0 {
@@ -77,6 +91,8 @@ func (c *DefaultGpgClient) CreateKeyPair() (string, error) {
 
 // ListAvailableKeys implements GpgClient.
 func (c *DefaultGpgClient) ListAvailableKeys() ([]string, error) {
+	c.logger.Debug("Listing available GPG keys")
+
 	args := []string{"--list-secret-keys", "--keyid-format", "LONG"}
 	result, err := c.commander.RunCommand("gpg", args, utils.WithCaptureOutput())
 	if err != nil {
@@ -113,10 +129,59 @@ func (c *DefaultGpgClient) ListAvailableKeys() ([]string, error) {
 
 // KeysAvailable returns true if there are secret keys, false otherwise.
 func (c *DefaultGpgClient) KeysAvailable() (bool, error) {
+	c.logger.Debug("Checking for available GPG keys")
+
 	availableKeys, err := c.ListAvailableKeys()
 	if err != nil {
 		return false, err
 	}
 
-	return availableKeys != nil && len(availableKeys) > 0, nil
+	return len(availableKeys) > 0, nil
+}
+
+// detectTTY attempts to detect the current TTY using multiple fallback methods.
+// This is essential for GPG operations that require interactive input, as GPG needs
+// to know which terminal to use for user prompts.
+//
+// The method tries the following approaches in order:
+// 1. Check if GPG_TTY environment variable is already set
+// 2. Try running the 'tty' command to get the current terminal
+// 3. Use /dev/tty as a fallback if it exists
+// 4. Check other common TTY environment variables (TTY, TERM_TTY)
+//
+// Returns the detected TTY path or an error if no TTY can be determined.
+func (c *DefaultGpgClient) detectTTY() (string, error) {
+	c.logger.Debug("Detecting TTY for GPG operations")
+
+	// Method 1: Check if GPG_TTY is already set in the environment
+	if tty := c.osMgr.Getenv("GPG_TTY"); tty != "" {
+		c.logger.Debug("Using GPG_TTY from environment: " + tty)
+		return strings.TrimSpace(tty), nil
+	}
+
+	// Method 2: Try the tty command
+	ttyOutput, err := c.commander.RunCommand("tty", []string{}, utils.WithCaptureOutput())
+	if err == nil && ttyOutput.ExitCode == 0 && len(ttyOutput.Stdout) > 0 {
+		tty := strings.TrimSpace(ttyOutput.String())
+		if tty != "" && tty != "not a tty" {
+			c.logger.Debug("Detected TTY using tty command: " + tty)
+			return tty, nil
+		}
+	}
+
+	// Method 3: Try /dev/tty directly
+	if exists, err := c.fs.PathExists("/dev/tty"); err == nil && exists {
+		c.logger.Debug("Using /dev/tty as fallback")
+		return "/dev/tty", nil
+	}
+
+	// Method 4: Check common TTY environment variables
+	for _, envVar := range []string{"TTY", "TERM_TTY"} {
+		if tty := c.osMgr.Getenv(envVar); tty != "" {
+			c.logger.Debug("Using TTY from " + envVar + ": " + tty)
+			return strings.TrimSpace(tty), nil
+		}
+	}
+
+	return "", errors.New("unable to detect TTY for GPG operations - ensure you're running in an interactive terminal or set GPG_TTY environment variable")
 }

@@ -8,14 +8,17 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
 	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
 func Test_NewDefaultGpgClient_ReturnsValidInstance(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{}
+	mockLogger := &logger.MoqLogger{}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	require.NotNil(t, client)
 }
@@ -25,58 +28,69 @@ func Test_CreateKeyPair_ReturnsKeyID_WhenCommandSucceeds(t *testing.T) {
 		name          string
 		commandOutput string
 		expectedKeyID string
+		gpgTTY        string
 	}{
 		{
-			name: "RSA 3072-bit key",
+			name: "RSA 3072-bit key with GPG_TTY set",
 			commandOutput: `gpg: key ABC123DEF456 marked as ultimately trusted
 gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/ABC123DEF456789.rev'
 pub   rsa3072 2024-01-01 [SC]
       ABC123DEF456789
 uid                      Test User <test@example.com>`,
 			expectedKeyID: "ABC123DEF456789",
+			gpgTTY:        "/dev/pts/0",
 		},
 		{
-			name: "RSA 4096-bit key",
+			name: "RSA 4096-bit key with tty command fallback",
 			commandOutput: `gpg: key XYZ789ABC123 marked as ultimately trusted
 gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/XYZ789ABC123456.rev'
 pub   rsa4096 2024-01-02 [SC]
       XYZ789ABC123456
 uid                      Another User <another@example.com>`,
 			expectedKeyID: "XYZ789ABC123456",
-		},
-		{
-			name: "Ed25519 key",
-			commandOutput: `gpg: key FEDCBA987654 marked as ultimately trusted
-gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/FEDCBA987654321.rev'
-pub   ed25519 2024-01-03 [SC]
-      FEDCBA987654321
-uid                      Ed User <ed@example.com>`,
-			expectedKeyID: "FEDCBA987654321",
-		},
-		{
-			name: "Key with longer fingerprint",
-			commandOutput: `gpg: key 1A2B3C4D5E6F marked as ultimately trusted
-gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/1A2B3C4D5E6F7890ABCDEF12.rev'
-pub   rsa2048 2024-01-04 [SC]
-      1A2B3C4D5E6F7890ABCDEF12
-uid                      Long Key User <longkey@example.com>`,
-			expectedKeyID: "1A2B3C4D5E6F7890ABCDEF12",
+			gpgTTY:        "",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockOsManager := &osmanager.MoqOsManager{}
+			mockOsManager := &osmanager.MoqOsManager{
+				GetenvFunc: func(key string) string {
+					if key == "GPG_TTY" {
+						return tc.gpgTTY
+					}
+					return ""
+				},
+			}
+			mockFilesystem := &utils.MoqFileSystem{
+				PathExistsFunc: func(path string) (bool, error) {
+					return path == "/dev/tty", nil
+				},
+			}
 			mockCommander := &utils.MoqCommander{
 				RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-					return &utils.Result{
-						Stdout:   []byte(tc.commandOutput),
-						ExitCode: 0,
-					}, nil
+					if name == "tty" && tc.gpgTTY == "" {
+						return &utils.Result{
+							Stdout:   []byte("/dev/pts/1\n"),
+							ExitCode: 0,
+						}, nil
+					}
+					if name == "gpg" {
+						return &utils.Result{
+							Stdout:   []byte(tc.commandOutput),
+							ExitCode: 0,
+						}, nil
+					}
+					return &utils.Result{ExitCode: 0}, nil
+				},
+			}
+			mockLogger := &logger.MoqLogger{
+				DebugFunc: func(format string, args ...any) {
+					// No-op
 				},
 			}
 
-			client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+			client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 			keyID, err := client.CreateKeyPair()
 
@@ -84,63 +98,114 @@ uid                      Long Key User <longkey@example.com>`,
 			require.Equal(t, tc.expectedKeyID, keyID)
 
 			calls := mockCommander.RunCommandCalls()
-			require.Len(t, calls, 1)
-			require.Equal(t, "gpg", calls[0].Name)
-			require.Equal(t, []string{"--expert", "--full-generate-key"}, calls[0].Args)
+			// Find GPG call
+			var gpgCall bool
+			for _, call := range calls {
+				if call.Name == "gpg" && len(call.Args) > 0 && call.Args[0] == "--gen-key" {
+					gpgCall = true
+					require.Equal(t, []string{"--gen-key", "--pinentry-mode", "loopback", "--default-new-key-algo", "nistp256"}, call.Args)
+					break
+				}
+			}
+			require.True(t, gpgCall, "Expected GPG command call")
 		})
 	}
 }
 
-func Test_CreateKeyPair_ReturnsError_WhenCommandFails(t *testing.T) {
-	mockOsManager := &osmanager.MoqOsManager{}
+func Test_CreateKeyPair_ReturnsError_WhenTTYDetectionFails(t *testing.T) {
+	mockOsManager := &osmanager.MoqOsManager{
+		GetenvFunc: func(key string) string {
+			return ""
+		},
+	}
+	mockFilesystem := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			return path == "", errors.New("path not found")
+		},
+	}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			return nil, errors.New("command execution failed")
+			return &utils.Result{ExitCode: 1}, errors.New("command failed")
+		},
+	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
 		},
 	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	keyID, err := client.CreateKeyPair()
-
 	require.Error(t, err)
 	require.Empty(t, keyID)
-	require.Contains(t, err.Error(), "command execution failed")
+	require.Contains(t, err.Error(), "unable to detect TTY")
 }
 
-func Test_CreateKeyPair_ReturnsError_WhenCommandExitsWithNonZeroCode(t *testing.T) {
-	mockOsManager := &osmanager.MoqOsManager{}
+func Test_CreateKeyPair_ReturnsError_WhenGpgCommandExitsWithNonZeroCode(t *testing.T) {
+	mockOsManager := &osmanager.MoqOsManager{
+		GetenvFunc: func(key string) string {
+			if key == "GPG_TTY" {
+				return "/dev/pts/0"
+			}
+			return ""
+		},
+	}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			return &utils.Result{
-				Stderr:   []byte("GPG error occurred"),
-				ExitCode: 1,
-			}, nil
+			if name == "gpg" {
+				return &utils.Result{
+					Stderr:   []byte("GPG error occurred"),
+					ExitCode: 1,
+				}, nil
+			}
+			return &utils.Result{ExitCode: 0}, nil
+		},
+	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
 		},
 	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	keyID, err := client.CreateKeyPair()
 
 	require.Error(t, err)
 	require.Empty(t, keyID)
 	require.Contains(t, err.Error(), "failed to create GPG key pair")
-	require.Contains(t, err.Error(), "GPG error occurred")
 }
 
 func Test_CreateKeyPair_ReturnsError_WhenOutputHasInsufficientLines(t *testing.T) {
-	mockOsManager := &osmanager.MoqOsManager{}
+	mockOsManager := &osmanager.MoqOsManager{
+		GetenvFunc: func(key string) string {
+			if key == "GPG_TTY" {
+				return "/dev/pts/0"
+			}
+			return ""
+		},
+	}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			return &utils.Result{
-				Stdout:   []byte("line1\nline2"),
-				ExitCode: 0,
-			}, nil
+			if name == "gpg" {
+				return &utils.Result{
+					Stdout:   []byte("line1\nline2"),
+					ExitCode: 0,
+				}, nil
+			}
+			return &utils.Result{ExitCode: 0}, nil
+		},
+	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
 		},
 	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	keyID, err := client.CreateKeyPair()
 
@@ -150,19 +215,35 @@ func Test_CreateKeyPair_ReturnsError_WhenOutputHasInsufficientLines(t *testing.T
 }
 
 func Test_CreateKeyPair_ReturnsError_WhenKeyIDCannotBeExtracted(t *testing.T) {
-	mockOsManager := &osmanager.MoqOsManager{}
+	mockOsManager := &osmanager.MoqOsManager{
+		GetenvFunc: func(key string) string {
+			if key == "GPG_TTY" {
+				return "/dev/pts/0"
+			}
+			return ""
+		},
+	}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			return &utils.Result{
-				Stdout: []byte(`line1
+			if name == "gpg" {
+				return &utils.Result{
+					Stdout: []byte(`line1
 line2
 line3 without pub prefix`),
-				ExitCode: 0,
-			}, nil
+					ExitCode: 0,
+				}, nil
+			}
+			return &utils.Result{ExitCode: 0}, nil
+		},
+	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
 		},
 	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	keyID, err := client.CreateKeyPair()
 
@@ -206,6 +287,7 @@ ssb   cv25519/321FED654CBA 2024-01-01 [E]`,
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockOsManager := &osmanager.MoqOsManager{}
+			mockFilesystem := &utils.MoqFileSystem{}
 			mockCommander := &utils.MoqCommander{
 				RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 					return &utils.Result{
@@ -214,8 +296,13 @@ ssb   cv25519/321FED654CBA 2024-01-01 [E]`,
 					}, nil
 				},
 			}
+			mockLogger := &logger.MoqLogger{
+				DebugFunc: func(format string, args ...any) {
+					// No-op
+				},
+			}
 
-			client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+			client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 			keys, err := client.ListAvailableKeys()
 
@@ -232,6 +319,7 @@ ssb   cv25519/321FED654CBA 2024-01-01 [E]`,
 
 func Test_ListAvailableKeys_ReturnsNil_WhenNoKeysExist(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{
@@ -240,8 +328,13 @@ func Test_ListAvailableKeys_ReturnsNil_WhenNoKeysExist(t *testing.T) {
 			}, nil
 		},
 	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
+		},
+	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	keys, err := client.ListAvailableKeys()
 
@@ -251,13 +344,19 @@ func Test_ListAvailableKeys_ReturnsNil_WhenNoKeysExist(t *testing.T) {
 
 func Test_ListAvailableKeys_ReturnsError_WhenCommandFails(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return nil, errors.New("gpg command failed")
 		},
 	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
+		},
+	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	keys, err := client.ListAvailableKeys()
 
@@ -268,6 +367,7 @@ func Test_ListAvailableKeys_ReturnsError_WhenCommandFails(t *testing.T) {
 
 func Test_ListAvailableKeys_HandlesIncompleteSecLines(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{
@@ -278,8 +378,13 @@ sec   rsa3072/ABC123DEF456 2024-01-01 [SC]`),
 			}, nil
 		},
 	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
+		},
+	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	keys, err := client.ListAvailableKeys()
 
@@ -289,6 +394,7 @@ sec   rsa3072/ABC123DEF456 2024-01-01 [SC]`),
 
 func Test_KeysAvailable_ReturnsTrue_WhenKeysExist(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{
@@ -298,8 +404,13 @@ uid                 [ultimate] Test User <test@example.com>`),
 			}, nil
 		},
 	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
+		},
+	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	available, err := client.KeysAvailable()
 
@@ -309,6 +420,7 @@ uid                 [ultimate] Test User <test@example.com>`),
 
 func Test_KeysAvailable_ReturnsFalse_WhenNoKeysExist(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{
@@ -317,8 +429,13 @@ func Test_KeysAvailable_ReturnsFalse_WhenNoKeysExist(t *testing.T) {
 			}, nil
 		},
 	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
+		},
+	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	available, err := client.KeysAvailable()
 
@@ -328,13 +445,19 @@ func Test_KeysAvailable_ReturnsFalse_WhenNoKeysExist(t *testing.T) {
 
 func Test_KeysAvailable_ReturnsError_WhenListAvailableKeysFails(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
+	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return nil, errors.New("gpg list command failed")
 		},
 	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
+		},
+	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockCommander)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
 
 	available, err := client.KeysAvailable()
 

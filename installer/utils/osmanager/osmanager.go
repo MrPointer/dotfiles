@@ -64,12 +64,19 @@ type ProgramQuery interface {
 	GetProgramVersion(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error)
 }
 
+// EnvironmentManager defines operations for managing environment variables.
+type EnvironmentManager interface {
+	// Getenv retrieves the value of the environment variable named by the key.
+	Getenv(key string) string
+}
+
 // OsManager combines all system operation interfaces.
 type OsManager interface {
 	UserManager
 	SudoManager
 	FilePermissionManager
 	ProgramQuery
+	EnvironmentManager
 }
 
 // UnixOsManager implements OsManager for Unix-like systems.
@@ -253,6 +260,10 @@ func (u *UnixOsManager) GetProgramVersion(
 	}
 
 	return version, nil
+}
+
+func (u *UnixOsManager) Getenv(key string) string {
+	return os.Getenv(key)
 }
 
 // IsRoot returns true if the current user is root.
