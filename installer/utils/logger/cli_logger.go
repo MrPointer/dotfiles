@@ -16,23 +16,38 @@ var (
 	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#e74c3c")).Bold(true) // Red
 )
 
+type VerbosityLevel int
+
+const (
+	Normal VerbosityLevel = iota
+	Verbose
+	ExtraVerbose
+)
+
 // CliLogger implements the Logger interface using lipgloss styling.
 type CliLogger struct {
-	verbose bool
+	verbosity VerbosityLevel
 }
 
 var _ Logger = (*CliLogger)(nil)
 
 // NewCliLogger creates a new CLI logger that uses lipgloss styling.
-func NewCliLogger(verbose bool) *CliLogger {
+func NewCliLogger(verbosity VerbosityLevel) *CliLogger {
 	return &CliLogger{
-		verbose: verbose,
+		verbosity: verbosity,
+	}
+}
+
+// Trace logs a trace message with gray styling.
+func (l *CliLogger) Trace(format string, args ...any) {
+	if l.verbosity >= ExtraVerbose {
+		printStyled(os.Stdout, debugStyle, format, args...)
 	}
 }
 
 // Debug logs a debug message with gray styling.
 func (l *CliLogger) Debug(format string, args ...any) {
-	if l.verbose {
+	if l.verbosity >= Verbose {
 		printStyled(os.Stdout, debugStyle, format, args...)
 	}
 }

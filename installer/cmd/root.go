@@ -18,7 +18,9 @@ var (
 	cfgFile                   string
 	compatibilityConfigFile   string
 	globalCompatibilityConfig *compatibility.CompatibilityConfig
-	globalVerbose             bool
+	globalVerbosity           logger.VerbosityLevel
+	verboseCount              int
+	extraVerbose              bool
 
 	cliLogger        logger.Logger       = nil // Will be initialized before any command is executed
 	globalCommander                      = utils.NewDefaultCommander()
@@ -86,10 +88,18 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&compatibilityConfigFile, "compat-config", "",
 		"compatibility configuration file (uses embedded config by default)")
 
-	rootCmd.PersistentFlags().BoolVarP(&globalVerbose, "verbose", "v", false,
-		"Enable verbose output")
+	// Verbosity flags: supports multiple levels
+	// - No flags: Normal level (Info, Success, Warning, Error only)
+	// - -v or --verbose: Verbose level (adds Debug messages)
+	// - -vv or --extra-verbose: Extra verbose level (adds Trace messages)
+	rootCmd.PersistentFlags().CountVarP(&verboseCount, "verbose", "v",
+		"Enable verbose output (use -vv for extra verbose)")
+
+	rootCmd.PersistentFlags().BoolVar(&extraVerbose, "extra-verbose", false,
+		"Enable extra verbose output (equivalent to -vv)")
 
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("extra-verbose", rootCmd.PersistentFlags().Lookup("extra-verbose"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -141,5 +151,19 @@ func initOsManager() {
 }
 
 func initLogger() {
-	cliLogger = logger.NewCliLogger(globalVerbose)
+	// Determine verbosity level based on flags
+	if extraVerbose || verboseCount >= 2 {
+		globalVerbosity = logger.ExtraVerbose
+	} else if verboseCount >= 1 {
+		globalVerbosity = logger.Verbose
+	} else {
+		globalVerbosity = logger.Normal
+	}
+
+	cliLogger = logger.NewCliLogger(globalVerbosity)
+}
+
+// GetVerbosity returns the current global verbosity level.
+func GetVerbosity() logger.VerbosityLevel {
+	return globalVerbosity
 }
