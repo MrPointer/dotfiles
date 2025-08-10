@@ -30,6 +30,9 @@ var _ Logger = &MoqLogger{}
 //			SuccessFunc: func(format string, args ...any)  {
 //				panic("mock out the Success method")
 //			},
+//			TraceFunc: func(format string, args ...any)  {
+//				panic("mock out the Trace method")
+//			},
 //			WarningFunc: func(format string, args ...any)  {
 //				panic("mock out the Warning method")
 //			},
@@ -51,6 +54,9 @@ type MoqLogger struct {
 
 	// SuccessFunc mocks the Success method.
 	SuccessFunc func(format string, args ...any)
+
+	// TraceFunc mocks the Trace method.
+	TraceFunc func(format string, args ...any)
 
 	// WarningFunc mocks the Warning method.
 	WarningFunc func(format string, args ...any)
@@ -85,6 +91,13 @@ type MoqLogger struct {
 			// Args is the args argument value.
 			Args []any
 		}
+		// Trace holds details about calls to the Trace method.
+		Trace []struct {
+			// Format is the format argument value.
+			Format string
+			// Args is the args argument value.
+			Args []any
+		}
 		// Warning holds details about calls to the Warning method.
 		Warning []struct {
 			// Format is the format argument value.
@@ -97,6 +110,7 @@ type MoqLogger struct {
 	lockError   sync.RWMutex
 	lockInfo    sync.RWMutex
 	lockSuccess sync.RWMutex
+	lockTrace   sync.RWMutex
 	lockWarning sync.RWMutex
 }
 
@@ -241,6 +255,42 @@ func (mock *MoqLogger) SuccessCalls() []struct {
 	mock.lockSuccess.RLock()
 	calls = mock.calls.Success
 	mock.lockSuccess.RUnlock()
+	return calls
+}
+
+// Trace calls TraceFunc.
+func (mock *MoqLogger) Trace(format string, args ...any) {
+	if mock.TraceFunc == nil {
+		panic("MoqLogger.TraceFunc: method is nil but Logger.Trace was just called")
+	}
+	callInfo := struct {
+		Format string
+		Args   []any
+	}{
+		Format: format,
+		Args:   args,
+	}
+	mock.lockTrace.Lock()
+	mock.calls.Trace = append(mock.calls.Trace, callInfo)
+	mock.lockTrace.Unlock()
+	mock.TraceFunc(format, args...)
+}
+
+// TraceCalls gets all the calls that were made to Trace.
+// Check the length with:
+//
+//	len(mockedLogger.TraceCalls())
+func (mock *MoqLogger) TraceCalls() []struct {
+	Format string
+	Args   []any
+} {
+	var calls []struct {
+		Format string
+		Args   []any
+	}
+	mock.lockTrace.RLock()
+	calls = mock.calls.Trace
+	mock.lockTrace.RUnlock()
 	return calls
 }
 
