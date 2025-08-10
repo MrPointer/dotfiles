@@ -37,7 +37,7 @@ gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/ABC123
 pub   rsa3072 2024-01-01 [SC]
       ABC123DEF456789
 uid                      Test User <test@example.com>`,
-			expectedKeyID: "ABC123DEF456789",
+			expectedKeyID: "ABC123DEF456",
 			gpgTTY:        "/dev/pts/0",
 		},
 		{
@@ -47,7 +47,7 @@ gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/XYZ789
 pub   rsa4096 2024-01-02 [SC]
       XYZ789ABC123456
 uid                      Another User <another@example.com>`,
-			expectedKeyID: "XYZ789ABC123456",
+			expectedKeyID: "XYZ789ABC123",
 			gpgTTY:        "",
 		},
 	}
@@ -142,6 +142,118 @@ func Test_CreateKeyPair_ReturnsError_WhenTTYDetectionFails(t *testing.T) {
 	require.Contains(t, err.Error(), "unable to detect TTY")
 }
 
+func Test_CreateKeyPair_ExtractsKeyIDFromDifferentOutputFormats(t *testing.T) {
+	testCases := []struct {
+		name          string
+		gpgOutput     string
+		expectedKeyID string
+	}{
+		{
+			name: "ultimately trusted pattern",
+			gpgOutput: `gpg: directory '/home/user/.gnupg' created
+gpg: keybox '/home/user/.gnupg/pubring.kbx' created
+gpg: key ABC123DEF456 marked as ultimately trusted
+gpg: directory '/home/user/.gnupg/openpgp-revocs.d' created`,
+			expectedKeyID: "ABC123DEF456",
+		},
+		{
+			name: "public key pattern",
+			gpgOutput: `gpg: directory '/home/user/.gnupg' created
+gpg: XYZ789ABC123: public key "Test User <test@example.com>" imported
+gpg: Total number processed: 1`,
+			expectedKeyID: "XYZ789ABC123",
+		},
+		{
+			name: "pub line pattern with next line key",
+			gpgOutput: `gpg: directory '/home/user/.gnupg' created
+pub   nistp256 2024-01-01 [SC]
+      DEF456GHI789
+uid                      Test User <test@example.com>`,
+			expectedKeyID: "DEF456GHI789",
+		},
+		{
+			name: "revocation certificate pattern",
+			gpgOutput: `gpg: directory '/home/user/.gnupg' created
+gpg: keybox '/home/user/.gnupg/pubring.kbx' created
+gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/JKL012MNO345.rev'`,
+			expectedKeyID: "JKL012MNO345",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockOsManager := &osmanager.MoqOsManager{
+				GetenvFunc: func(key string) string {
+					if key == "GPG_TTY" {
+						return "/dev/pts/0"
+					}
+					return ""
+				},
+			}
+			mockFileSystem := &utils.MoqFileSystem{}
+			mockCommander := &utils.MoqCommander{
+				RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+					if name == "gpg" {
+						return &utils.Result{
+							Stdout:   []byte(tc.gpgOutput),
+							ExitCode: 0,
+						}, nil
+					}
+					return &utils.Result{ExitCode: 0}, nil
+				},
+			}
+			mockLogger := &logger.MoqLogger{
+				DebugFunc: func(format string, args ...any) {
+					// No-op
+				},
+			}
+
+			client := gpg.NewDefaultGpgClient(mockOsManager, mockFileSystem, mockCommander, mockLogger)
+
+			keyID, err := client.CreateKeyPair()
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedKeyID, keyID)
+		})
+	}
+}
+
+func Test_CreateKeyPair_ReturnsError_WhenKeyIDCannotBeExtractedFromOutput(t *testing.T) {
+	mockOsManager := &osmanager.MoqOsManager{
+		GetenvFunc: func(key string) string {
+			if key == "GPG_TTY" {
+				return "/dev/pts/0"
+			}
+			return ""
+		},
+	}
+	mockFileSystem := &utils.MoqFileSystem{}
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			if name == "gpg" {
+				return &utils.Result{
+					Stdout: []byte(`gpg: directory '/home/user/.gnupg' created
+gpg: keybox '/home/user/.gnupg/pubring.kbx' created
+Some random output without key information`),
+					ExitCode: 0,
+				}, nil
+			}
+			return &utils.Result{ExitCode: 0}, nil
+		},
+	}
+	mockLogger := &logger.MoqLogger{
+		DebugFunc: func(format string, args ...any) {
+			// No-op
+		},
+	}
+
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFileSystem, mockCommander, mockLogger)
+
+	keyID, err := client.CreateKeyPair()
+	require.Error(t, err)
+	require.Empty(t, keyID)
+	require.Contains(t, err.Error(), "could not find key ID in GPG output")
+}
+
 func Test_CreateKeyPair_ReturnsError_WhenGpgCommandExitsWithNonZeroCode(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{
 		GetenvFunc: func(key string) string {
@@ -211,7 +323,7 @@ func Test_CreateKeyPair_ReturnsError_WhenOutputHasInsufficientLines(t *testing.T
 
 	require.Error(t, err)
 	require.Empty(t, keyID)
-	require.Contains(t, err.Error(), "unexpected output format")
+	require.Contains(t, err.Error(), "failed to extract GPG key ID")
 }
 
 func Test_CreateKeyPair_ReturnsError_WhenKeyIDCannotBeExtracted(t *testing.T) {
@@ -249,7 +361,7 @@ line3 without pub prefix`),
 
 	require.Error(t, err)
 	require.Empty(t, keyID)
-	require.Contains(t, err.Error(), "failed to extract GPG key ID")
+	require.Contains(t, err.Error(), "could not find key ID in GPG output")
 }
 
 func Test_ListAvailableKeys_ReturnsKeys_WhenKeysExist(t *testing.T) {

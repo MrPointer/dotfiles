@@ -62,29 +62,10 @@ func (c *DefaultGpgClient) CreateKeyPair() (string, error) {
 		return "", errors.New("failed to create GPG key pair: " + result.StderrString())
 	}
 
-	trimmedOutput := strings.TrimSpace(result.String())
-	outputLines := strings.Split(trimmedOutput, "\n")
-
-	// Take last 3 lines of output containing the summary of the key creation.
-	if len(outputLines) < 3 {
-		return "", errors.New("unexpected output format from GPG key creation")
-	}
-	keySummary := outputLines[len(outputLines)-3:]
-
-	// From that summary we extract the full key ID, which is expected to be the 2nd line after the "pub" field.
-	var keyID string
-	parseCurrentLine := false
-	for _, line := range keySummary {
-		if parseCurrentLine {
-			keyID = strings.TrimSpace(line)
-			break
-		} else if strings.HasPrefix(line, "pub") {
-			parseCurrentLine = true
-		}
-	}
-
-	if keyID == "" {
-		return "", errors.New("failed to extract GPG key ID from output")
+	// Parse the output to extract the key ID using multiple robust methods
+	keyID, err := c.extractKeyIDFromGPGOutput(result.String())
+	if err != nil {
+		return "", errors.New("failed to extract GPG key ID from output: " + err.Error())
 	}
 	return keyID, nil
 }
@@ -184,4 +165,109 @@ func (c *DefaultGpgClient) detectTTY() (string, error) {
 	}
 
 	return "", errors.New("unable to detect TTY for GPG operations - ensure you're running in an interactive terminal or set GPG_TTY environment variable")
+}
+
+// extractKeyIDFromGPGOutput parses GPG output to extract the key ID using multiple robust methods.
+func (c *DefaultGpgClient) extractKeyIDFromGPGOutput(output string) (string, error) {
+	c.logger.Debug("Extracting key ID from GPG output")
+
+	// Method 1: Look for "key <KEYID> marked as ultimately trusted" pattern
+	// This is the most reliable pattern across distributions
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "marked as ultimately trusted") {
+			// Pattern: "gpg: key ABC123DEF456 marked as ultimately trusted"
+			parts := strings.Fields(line)
+			for i, part := range parts {
+				if part == "key" && i+1 < len(parts) {
+					keyID := parts[i+1]
+					c.logger.Debug("Found key ID using 'ultimately trusted' pattern: " + keyID)
+					return keyID, nil
+				}
+			}
+		}
+	}
+
+	// Method 2: Look for "gpg: <KEYID>: public key" pattern
+	for _, line := range lines {
+		if strings.Contains(line, ": public key") {
+			// Pattern: "gpg: ABC123DEF456: public key"
+			parts := strings.Split(line, ":")
+			if len(parts) >= 2 {
+				keyID := strings.TrimSpace(parts[1])
+				if keyID != "" && keyID != "gpg" {
+					c.logger.Debug("Found key ID using 'public key' pattern: " + keyID)
+					return keyID, nil
+				}
+			}
+		}
+	}
+
+	// Method 3: Look for fingerprint patterns in pub lines
+	// Parse lines that start with "pub" and extract the key ID
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "pub") {
+			// The key ID might be on the same line or the next line
+			// Format: "pub   nistp256 2024-01-01 [SC]" followed by "      ABC123DEF456"
+			if i+1 < len(lines) {
+				nextLine := strings.TrimSpace(lines[i+1])
+				// Check if next line looks like a key ID (alphanumeric, reasonable length)
+				if len(nextLine) >= 8 && len(nextLine) <= 40 && isAlphanumeric(nextLine) {
+					c.logger.Debug("Found key ID using pub line pattern: " + nextLine)
+					return nextLine, nil
+				}
+			}
+
+			// Also check if key ID is on the same line after the algorithm
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				// Sometimes format is "pub   nistp256/ABC123DEF456 2024-01-01 [SC]"
+				for _, part := range parts {
+					if strings.Contains(part, "/") {
+						keyParts := strings.Split(part, "/")
+						if len(keyParts) == 2 {
+							keyID := keyParts[1]
+							if len(keyID) >= 8 && isAlphanumeric(keyID) {
+								c.logger.Debug("Found key ID using pub/keyid pattern: " + keyID)
+								return keyID, nil
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Method 4: Look for revocation certificate patterns
+	for _, line := range lines {
+		if strings.Contains(line, "revocation certificate stored") {
+			// Pattern: "gpg: revocation certificate stored as '/path/ABC123DEF456.rev'"
+			// Extract the filename and get the key ID from it
+			if strings.Contains(line, ".rev") {
+				parts := strings.Split(line, "/")
+				if len(parts) > 0 {
+					filename := parts[len(parts)-1]
+					if strings.HasSuffix(filename, ".rev'") || strings.HasSuffix(filename, ".rev\"") {
+						keyID := strings.TrimSuffix(strings.TrimSuffix(filename, ".rev'"), ".rev\"")
+						if len(keyID) >= 8 && isAlphanumeric(keyID) {
+							c.logger.Debug("Found key ID using revocation certificate pattern: " + keyID)
+							return keyID, nil
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return "", errors.New("could not find key ID in GPG output using any known pattern")
+}
+
+// isAlphanumeric checks if a string contains only alphanumeric characters.
+func isAlphanumeric(s string) bool {
+	for _, r := range s {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')) {
+			return false
+		}
+	}
+	return true
 }
