@@ -8,6 +8,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,7 @@ func Test_Apply_RemovesExistingCloneDirectory(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		require.Equal(t, "/home/user/.local/share/chezmoi", path)
@@ -45,7 +46,7 @@ func Test_Apply_ReturnsError_WhenRemovePathFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return errors.New("permission denied")
@@ -66,7 +67,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithBasicArgs(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
@@ -92,7 +93,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithSourceDir(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
@@ -125,7 +126,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithSSHCloningPreference(t *testing.
 		"testuser",
 		true,
 	)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
@@ -158,7 +159,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithCustomUsername(t *testing.T) {
 		"customuser",
 		false,
 	)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
@@ -184,7 +185,7 @@ func Test_Apply_ReturnsError_WhenCommandExecutionFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
@@ -208,7 +209,7 @@ func Test_Apply_ReturnsError_WhenCommandExitsWithNonZeroCode(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
@@ -236,7 +237,7 @@ func Test_Apply_PassesStdoutAndStderrOptions(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
@@ -268,7 +269,7 @@ func Test_Apply_SucceedsWithAllParametersCombined(t *testing.T) {
 		"testuser123",
 		true,
 	)
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		require.Equal(t, "/custom/clone/dir", path)

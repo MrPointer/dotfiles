@@ -13,6 +13,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
@@ -24,7 +25,7 @@ func Test_Install_ReturnsEarly_WhenChezmoiAlreadyInstalled(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		require.Equal(t, "chezmoi", packageInfo.Name)
@@ -48,7 +49,7 @@ func Test_Install_ReturnsError_WhenPackageInstalledCheckFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, errors.New("package manager unavailable")
@@ -69,7 +70,7 @@ func Test_Install_SucceedsWithPackageManager_WhenChezmoiNotInstalledAndPackageMa
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -98,7 +99,7 @@ func Test_Install_FallsBackToManualInstall_WhenPackageManagerFails(t *testing.T)
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -145,7 +146,7 @@ func Test_Install_ReturnsError_WhenHTTPRequestFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -176,7 +177,7 @@ func Test_Install_ReturnsError_WhenHTTPResponseIsNotOK(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -210,7 +211,7 @@ func Test_Install_ReturnsError_WhenResponseBodyReadFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -243,7 +244,7 @@ func Test_Install_ReturnsError_WhenGetHomeDirFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -279,7 +280,7 @@ func Test_Install_ReturnsError_WhenManualInstallCommandFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -319,7 +320,7 @@ func Test_Install_ReturnsError_WhenManualInstallCommandExitsWithNonZeroCode(t *t
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -363,7 +364,7 @@ func Test_Install_ClosesResponseBody(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil

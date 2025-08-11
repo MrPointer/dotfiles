@@ -348,7 +348,7 @@ func installGpgClient() error {
 }
 
 func setupDotfilesManager() error {
-	dm, err := chezmoi.TryStandardChezmoiManager(globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
+	dm, err := chezmoi.TryStandardChezmoiManager(cliLogger, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
 	if err != nil {
 		return err
 	}
