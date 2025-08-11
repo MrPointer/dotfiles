@@ -17,21 +17,21 @@ func Test_AptPackageManager_CanCheckIfPackageExists_Integration(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	// This test only runs on systems where apt is available
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewUnixOsManager(&logger.MoqLogger{}, defaultCommander, false)
-
-	// Check if apt is available on this system
-	aptExists, err := defaultOsManager.ProgramExists("apt")
-	if err != nil || !aptExists {
-		t.Skip("apt not available on this system")
-	}
-
 	mockLogger := &logger.MoqLogger{
 		InfoFunc:    func(format string, args ...interface{}) {},
 		WarningFunc: func(format string, args ...interface{}) {},
 		ErrorFunc:   func(format string, args ...interface{}) {},
 		SuccessFunc: func(format string, args ...interface{}) {},
+	}
+
+	// This test only runs on systems where apt is available
+	defaultCommander := utils.NewDefaultCommander(mockLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(mockLogger, defaultCommander, false)
+
+	// Check if apt is available on this system
+	aptExists, err := defaultOsManager.ProgramExists("apt")
+	if err != nil || !aptExists {
+		t.Skip("apt not available on this system")
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)
@@ -51,21 +51,21 @@ func Test_AptPackageManager_CanListInstalledPackages_Integration(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	// This test only runs on systems where apt is available
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewUnixOsManager(&logger.MoqLogger{}, defaultCommander, false)
-
-	// Check if apt is available on this system
-	aptExists, err := defaultOsManager.ProgramExists("apt")
-	if err != nil || !aptExists {
-		t.Skip("apt not available on this system")
-	}
-
 	mockLogger := &logger.MoqLogger{
 		InfoFunc:    func(format string, args ...interface{}) {},
 		WarningFunc: func(format string, args ...interface{}) {},
 		ErrorFunc:   func(format string, args ...interface{}) {},
 		SuccessFunc: func(format string, args ...interface{}) {},
+	}
+
+	// This test only runs on systems where apt is available
+	defaultCommander := utils.NewDefaultCommander(mockLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(mockLogger, defaultCommander, false)
+
+	// Check if apt is available on this system
+	aptExists, err := defaultOsManager.ProgramExists("apt")
+	if err != nil || !aptExists {
+		t.Skip("apt not available on this system")
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)
@@ -88,21 +88,21 @@ func Test_AptPackageManager_CanGetManagerInfo_Integration(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	// This test only runs on systems where apt is available
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewUnixOsManager(&logger.MoqLogger{}, defaultCommander, false)
-
-	// Check if apt is available on this system
-	aptExists, err := defaultOsManager.ProgramExists("apt")
-	if err != nil || !aptExists {
-		t.Skip("apt not available on this system")
-	}
-
 	mockLogger := &logger.MoqLogger{
 		InfoFunc:    func(format string, args ...interface{}) {},
 		WarningFunc: func(format string, args ...interface{}) {},
 		ErrorFunc:   func(format string, args ...interface{}) {},
 		SuccessFunc: func(format string, args ...interface{}) {},
+	}
+
+	// This test only runs on systems where apt is available
+	defaultCommander := utils.NewDefaultCommander(mockLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(mockLogger, defaultCommander, false)
+
+	// Check if apt is available on this system
+	aptExists, err := defaultOsManager.ProgramExists("apt")
+	if err != nil || !aptExists {
+		t.Skip("apt not available on this system")
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)
@@ -120,9 +120,16 @@ func Test_AptPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 		t.Skip("skipping integration test")
 	}
 
+	mockLogger := &logger.MoqLogger{
+		InfoFunc:    func(format string, args ...interface{}) {},
+		WarningFunc: func(format string, args ...interface{}) {},
+		ErrorFunc:   func(format string, args ...interface{}) {},
+		SuccessFunc: func(format string, args ...interface{}) {},
+	}
+
 	// This test only runs on systems where apt is available
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewUnixOsManager(&logger.MoqLogger{}, defaultCommander, false)
+	defaultCommander := utils.NewDefaultCommander(mockLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(mockLogger, defaultCommander, false)
 
 	// Check if apt is available on this system
 	aptExists, err := defaultOsManager.ProgramExists("apt")
@@ -134,13 +141,6 @@ func Test_AptPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 	_, err = defaultCommander.RunCommand("sudo", []string{"-n", "true"}, utils.WithCaptureOutput())
 	if err != nil {
 		t.Skip("sudo not available or requires password - skipping package installation test")
-	}
-
-	mockLogger := &logger.MoqLogger{
-		InfoFunc:    func(format string, args ...interface{}) {},
-		WarningFunc: func(format string, args ...interface{}) {},
-		ErrorFunc:   func(format string, args ...interface{}) {},
-		SuccessFunc: func(format string, args ...interface{}) {},
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)

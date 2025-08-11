@@ -23,7 +23,7 @@ var (
 	extraVerbose              bool
 
 	cliLogger        logger.Logger       = nil // Will be initialized before any command is executed
-	globalCommander                      = utils.NewDefaultCommander()
+	globalCommander  utils.Commander     = nil // Will be initialized before any command is executed
 	globalHttpClient                     = httpclient.NewDefaultHTTPClient()
 	globalFilesystem                     = utils.NewDefaultFileSystem()
 	globalOsManager  osmanager.OsManager = nil // Will be initialized before any command is executed
@@ -75,7 +75,7 @@ func Execute() {
 
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
-	cobra.OnInitialize(initConfig, initCompatibilityConfig, initLogger, initOsManager)
+	cobra.OnInitialize(initConfig, initCompatibilityConfig, initLogger, initCommander, initOsManager)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -148,6 +148,10 @@ func initOsManager() {
 		cliLogger.Error("The system may be compatible, but we haven't implemented an OS manager for it yet. Please open an issue on GitHub to request support for this OS.")
 		os.Exit(1)
 	}
+}
+
+func initCommander() {
+	globalCommander = utils.NewDefaultCommander(cliLogger)
 }
 
 func initLogger() {

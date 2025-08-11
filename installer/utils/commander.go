@@ -6,7 +6,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
+
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
 // Commander defines an interface for running system commands
@@ -133,15 +136,21 @@ func WithStderr(w io.Writer) Option {
 }
 
 // DefaultCommander is the production implementation using os/exec
-type DefaultCommander struct{}
+type DefaultCommander struct {
+	logger logger.Logger
+}
 
-func NewDefaultCommander() *DefaultCommander {
-	return &DefaultCommander{}
+func NewDefaultCommander(logger logger.Logger) *DefaultCommander {
+	return &DefaultCommander{
+		logger: logger,
+	}
 }
 
 var _ Commander = (*DefaultCommander)(nil)
 
 func (c *DefaultCommander) RunCommand(name string, args []string, opts ...Option) (*Result, error) {
+	c.logger.Trace("Running command: %s %s", name, strings.Join(args, " "))
+
 	// Apply default options
 	options := &Options{
 		CaptureOutput: false,

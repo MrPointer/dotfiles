@@ -447,9 +447,9 @@ func DefaultOptions() *Options {
 		MultiUserSystem:  false,
 		Logger:           logger.DefaultLogger,
 		SystemInfo:       nil,
-		Commander:        utils.NewDefaultCommander(),
+		Commander:        utils.NewDefaultCommander(logger.DefaultLogger),
 		HTTPClient:       httpclient.NewDefaultHTTPClient(),
-		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, utils.NewDefaultCommander(), osmanager.IsRoot()),
+		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, utils.NewDefaultCommander(logger.DefaultLogger), osmanager.IsRoot()),
 		Fs:               utils.NewDefaultFileSystem(),
 		BrewPathOverride: "",
 	}

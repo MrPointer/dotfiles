@@ -80,6 +80,8 @@ func NewDefaultEscalator(logger logger.Logger, commander utils.Commander, progra
 // - Systems with alternative privilege escalation tools
 // - Regular user systems with proper sudo setup
 func (e *DefaultEscalator) EscalateCommand(baseCmd string, baseArgs []string) (EscalationResult, error) {
+	e.logger.Debug("Escalating command to run with privileges: %s %s", baseCmd, strings.Join(baseArgs, " "))
+
 	if baseCmd == "" {
 		return EscalationResult{}, fmt.Errorf("base command cannot be empty")
 	}
@@ -92,6 +94,7 @@ func (e *DefaultEscalator) EscalateCommand(baseCmd string, baseArgs []string) (E
 	}
 
 	if isRoot {
+		e.logger.Trace("Already running as root")
 		return EscalationResult{
 			Method:          EscalationNone,
 			Command:         baseCmd,
@@ -100,8 +103,11 @@ func (e *DefaultEscalator) EscalateCommand(baseCmd string, baseArgs []string) (E
 		}, nil
 	}
 
+	e.logger.Trace("Not running as root")
+
 	// Check if sudo is available
 	if e.isSudoAvailable() {
+		e.logger.Trace("Sudo is available")
 		args := make([]string, 0, len(baseArgs)+1)
 		args = append(args, baseCmd)
 		args = append(args, baseArgs...)
@@ -113,8 +119,11 @@ func (e *DefaultEscalator) EscalateCommand(baseCmd string, baseArgs []string) (E
 		}, nil
 	}
 
+	e.logger.Trace("Sudo is not available")
+
 	// Check if doas is available (alternative to sudo on some systems)
 	if e.isDoasAvailable() {
+		e.logger.Trace("Doas is available")
 		args := make([]string, 0, len(baseArgs)+1)
 		args = append(args, baseCmd)
 		args = append(args, baseArgs...)
@@ -141,6 +150,8 @@ func (e *DefaultEscalator) EscalateCommand(baseCmd string, baseArgs []string) (E
 // This is more reliable than checking environment variables or using
 // os.Geteuid() which might not work correctly in all container environments.
 func (e *DefaultEscalator) IsRunningAsRoot() (bool, error) {
+	e.logger.Trace("Checking if running as root")
+
 	exists, err := e.programQuery.ProgramExists("id")
 	if err != nil {
 		return false, fmt.Errorf("failed to check if 'id' command exists: %w", err)
@@ -191,6 +202,8 @@ func (e *DefaultEscalator) GetAvailableEscalationMethods() ([]EscalationMethod, 
 // without a password prompt using the -n (non-interactive) flag.
 // This handles cases where sudo exists but requires password authentication.
 func (e *DefaultEscalator) isSudoAvailable() bool {
+	e.logger.Trace("Checking if sudo is available")
+
 	// First check if sudo command exists
 	exists, err := e.programQuery.ProgramExists("sudo")
 	if err != nil || !exists {
@@ -206,6 +219,8 @@ func (e *DefaultEscalator) isSudoAvailable() bool {
 // doas is an alternative to sudo commonly found on OpenBSD and some Linux systems.
 // Like sudo, we test both existence and usability with non-interactive flag.
 func (e *DefaultEscalator) isDoasAvailable() bool {
+	e.logger.Trace("Checking if doas is available")
+
 	// First check if doas command exists
 	exists, err := e.programQuery.ProgramExists("doas")
 	if err != nil || !exists {
