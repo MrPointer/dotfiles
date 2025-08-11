@@ -137,6 +137,8 @@ func (b *brewInstaller) DetectBrewPath() (string, error) {
 
 // IsAvailable checks if Homebrew is already installed and available (single-user).
 func (b *brewInstaller) IsAvailable() (bool, error) {
+	b.logger.Debug("Checking if Homebrew is available")
+
 	brewPath, err := b.DetectBrewPath()
 	if err != nil {
 		return false, err
@@ -158,7 +160,7 @@ func (b *brewInstaller) Install() error {
 	}
 
 	if isAvailable {
-		b.logger.Success("Homebrew is already installed")
+		b.logger.Debug("Homebrew is already installed")
 
 		// Update PATH to include brew binaries so installed tools can be found
 		brewPath, err := b.DetectBrewPath()
@@ -172,7 +174,7 @@ func (b *brewInstaller) Install() error {
 		return nil
 	}
 
-	b.logger.Info("Installing Homebrew")
+	b.logger.Debug("Installing Homebrew")
 	err = b.installHomebrew("")
 	if err != nil {
 		return err
@@ -229,7 +231,7 @@ func (m *MultiUserBrewInstaller) Install() error {
 	}
 
 	if isAvailable {
-		m.logger.Success("Homebrew is already installed (multi-user)")
+		m.logger.Debug("Homebrew is already installed (multi-user)")
 
 		// Update PATH to include brew binaries so installed tools can be found
 		brewPath, err := m.DetectBrewPath()
@@ -243,7 +245,7 @@ func (m *MultiUserBrewInstaller) Install() error {
 		return nil
 	}
 
-	m.logger.Info("Installing Homebrew (multi-user)")
+	m.logger.Debug("Installing Homebrew (multi-user)")
 	if m.systemInfo.OSName == "darwin" {
 		return fmt.Errorf("multi-user Homebrew installation is not supported on macOS, please install manually")
 	}
@@ -273,6 +275,8 @@ func (m *MultiUserBrewInstaller) Install() error {
 // Multi-user overrides.
 // IsAvailable checks if Homebrew is already installed and available (multi-user).
 func (m *MultiUserBrewInstaller) IsAvailable() (bool, error) {
+	m.logger.Debug("Checking if Homebrew is available")
+
 	brewPath, err := m.DetectBrewPath()
 	if err != nil {
 		return false, err
@@ -344,6 +348,7 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 	}
 	defer cleanup() // Ensure the temporary script is removed after execution
 
+	b.logger.Debug("Downloading Homebrew install script")
 	exists, err := b.fs.PathExists(installScriptPath)
 	if err != nil {
 		return fmt.Errorf("failed checking if install script exists: %w", err)
@@ -351,25 +356,26 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 	if !exists {
 		return fmt.Errorf("install script does not exist at %s", installScriptPath)
 	}
-	b.logger.Debug("Homebrew install script downloaded to %s", installScriptPath)
+	b.logger.Debug("Successfully downloaded Homebrew install script")
+	b.logger.Trace("Homebrew install script downloaded to %s", installScriptPath)
 
 	// Execute the downloaded install script, optionally as a different user
 	if asUser != "" {
-		b.logger.Info("Running Homebrew install script as %s", asUser)
+		b.logger.Debug("Running Homebrew install script as %s", asUser)
 		_, err := b.commander.RunCommand("sudo", []string{"-Hu", asUser, "bash", installScriptPath})
 		if err != nil {
 			return fmt.Errorf("failed running Homebrew install script as %s: %w", asUser, err)
 		}
 
-		b.logger.Success("Successfully installed Homebrew for user %s", asUser)
+		b.logger.Debug("Successfully installed Homebrew for user %s", asUser)
 	} else {
-		b.logger.Info("Running Homebrew install script")
+		b.logger.Debug("Running Homebrew install script")
 		_, err := b.commander.RunCommand("/bin/bash", []string{installScriptPath}, utils.WithEnv(map[string]string{"NONINTERACTIVE": "1"}))
 		if err != nil {
 			return err
 		}
 
-		b.logger.Success("Homebrew installed successfully")
+		b.logger.Debug("Homebrew installed successfully")
 	}
 
 	return nil
@@ -377,7 +383,6 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 
 // downloadAndPrepareInstallScript downloads the Homebrew installation script and prepares it for execution.
 func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error) {
-	b.logger.Info("Downloading Homebrew install script")
 	installScriptURL := "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
 
 	resp, err := b.httpClient.Get(installScriptURL) // Changed to use httpClient
@@ -391,7 +396,7 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 	}
 
 	// Create a temporary file for the install script
-	b.logger.Debug("Creating temporary file for Homebrew install script")
+	b.logger.Trace("Creating temporary file for Homebrew install script")
 	tempFilePath, err := b.fs.CreateTemporaryFile("", "brew-install-*.sh")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temporary file for Homebrew install script: %w", err)
@@ -399,15 +404,15 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 
 	// Create a cleanup function to remove the temp file
 	cleanup := func() {
-		b.logger.Debug("Cleaning up temporary file for Homebrew install script")
+		b.logger.Trace("Cleaning up temporary file for Homebrew install script")
 		err := b.fs.RemovePath(tempFilePath)
 		if err != nil {
-			b.logger.Warning("Failed to remove temporary file: %w", err)
+			b.logger.Trace("Failed to remove temporary file: %w", err)
 		}
 	}
 
 	// Copy the script to the temp file
-	b.logger.Debug("Writing Homebrew install script to temporary file")
+	b.logger.Trace("Writing Homebrew install script to temporary file")
 	bytesWritten, err := b.fs.WriteFile(tempFilePath, resp.Body)
 	if err != nil {
 		cleanup()
@@ -420,7 +425,7 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 
 	// Make the script executable.
 	const permissions = 0o755 // Standard executable permissions
-	b.logger.Debug("Making Homebrew install script executable")
+	b.logger.Trace("Making Homebrew install script executable")
 	if err = b.osManager.SetPermissions(tempFilePath, permissions); err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("failed to make Homebrew install script executable: %w", err)

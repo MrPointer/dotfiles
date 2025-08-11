@@ -6,6 +6,7 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/shell"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func Test_ShellIsReportedAsAvailable_WhenShellProgramExists(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -47,7 +48,7 @@ func Test_ShellIsReportedAsUnavailable_WhenShellProgramDoesNotExist(t *testing.T
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -71,7 +72,7 @@ func Test_ShellAvailabilityCheckFails_WhenProgramExistsFails(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -95,7 +96,7 @@ func Test_ShellInstallationSucceeds_WhenPackageManagerSucceeds(t *testing.T) {
 		},
 	}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
 
 	// Act
 	err := installer.Install(context.Background())
@@ -119,7 +120,7 @@ func Test_ShellInstallationFails_WhenPackageManagerFails(t *testing.T) {
 		},
 	}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
 
 	// Act
 	err := installer.Install(context.Background())
