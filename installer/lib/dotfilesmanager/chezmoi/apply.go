@@ -8,12 +8,15 @@ import (
 )
 
 func (c *ChezmoiManager) Apply() error {
+	c.logger.Debug("Applying chezmoi")
+
 	// Always remove existing chezmoi clone first, just in case
 	err := c.filesystem.RemovePath(c.chezmoiConfig.chezmoiCloneDir)
 	if err != nil {
 		return err
 	}
 
+	c.logger.Trace("Building chezmoi apply command")
 	chezmoiApplyCmdArgs := []string{"init", "--apply"}
 	if c.chezmoiConfig.chezmoiCloneDir != "" {
 		chezmoiApplyCmdArgs = append(chezmoiApplyCmdArgs, "--source", c.chezmoiConfig.chezmoiCloneDir)
@@ -31,5 +34,6 @@ func (c *ChezmoiManager) Apply() error {
 		return fmt.Errorf("chezmoi init failed with exit code %d: %s", result.ExitCode, result.StderrString())
 	}
 
+	c.logger.Debug("Chezmoi has been applied successfully")
 	return nil
 }

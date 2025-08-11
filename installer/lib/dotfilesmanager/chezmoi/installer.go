@@ -18,11 +18,15 @@ func (c *ChezmoiManager) Install() error {
 		return nil
 	}
 
+	c.logger.Debug("Trying to install chezmoi using package manager")
 	err = c.tryPackageManagerInstall()
 	if err == nil {
+		c.logger.Debug("chezmoi installed successfully using package manager")
 		return nil
 	}
+	c.logger.Debug("Failed to install chezmoi using package manager")
 
+	c.logger.Debug("Trying to install chezmoi manually")
 	return c.tryManualInstall()
 }
 
@@ -40,6 +44,7 @@ func (c *ChezmoiManager) tryPackageManagerInstall() error {
 // the installation script from get.chezmoi.io.
 // Returns nil if successful, otherwise returns an error describing the failure.
 func (c *ChezmoiManager) tryManualInstall() error {
+	c.logger.Debug("Downloading chezmoi binary from official website (get.chezmoi.io)")
 	resp, err := c.httpClient.Get("get.chezmoi.io")
 	if err != nil {
 		return err
@@ -50,6 +55,7 @@ func (c *ChezmoiManager) tryManualInstall() error {
 		return fmt.Errorf("failed to download chezmoi binary: %s", resp.Status)
 	}
 
+	c.logger.Trace("Reading HTTP response body")
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -62,6 +68,7 @@ func (c *ChezmoiManager) tryManualInstall() error {
 
 	manualInstallDir := fmt.Sprintf("%s/.local/bin", userHomeDir)
 
+	c.logger.Trace("Executing downloaded binary through the shell")
 	result, err := c.commander.RunCommand("sh", []string{"-c", string(body), "--", "-b", manualInstallDir})
 	if err != nil {
 		return err
@@ -70,5 +77,6 @@ func (c *ChezmoiManager) tryManualInstall() error {
 		return fmt.Errorf("failed to install chezmoi manually: %s", result.Stderr)
 	}
 
+	c.logger.Debug("Chezmoi installed manually successfully")
 	return nil
 }

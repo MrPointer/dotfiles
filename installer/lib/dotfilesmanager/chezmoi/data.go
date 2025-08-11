@@ -10,6 +10,9 @@ import (
 )
 
 func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
+	c.logger.Debug("Initializing chezmoi data")
+
+	c.logger.Trace("Creating chezmoi config directory")
 	configDirExists, err := c.filesystem.PathExists(c.chezmoiConfig.chezmoiConfigDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("failed to check if chezmoi config directory exists: %w", err)
@@ -19,12 +22,16 @@ func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
 			return fmt.Errorf("failed to create chezmoi config directory: %w", err)
 		}
 	}
+	c.logger.Trace("Chezmoi config directory created")
 
+	c.logger.Trace("Creating chezmoi config file")
 	_, err = c.filesystem.CreateFile(c.chezmoiConfig.chezmoiConfigFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create chezmoi config file: %w", err)
 	}
+	c.logger.Trace("Chezmoi config file created")
 
+	c.logger.Trace("Building viper object to contain chezmoi data")
 	viperObject := viper.New()
 	viperObject.SetConfigFile(c.chezmoiConfig.chezmoiConfigFilePath)
 
@@ -53,5 +60,6 @@ func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
 		return value
 	})
 
+	c.logger.Trace("Writing viper object to chezmoi config file")
 	return viperObject.WriteConfig()
 }

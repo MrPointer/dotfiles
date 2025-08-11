@@ -8,6 +8,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
@@ -43,6 +44,7 @@ func DefaultChezmoiConfig(chezmoiConfigFilePath string, chezmoiCloneDir string) 
 
 type ChezmoiManager struct {
 	chezmoiConfig ChezmoiConfig
+	logger        logger.Logger
 	filesystem    utils.FileSystem
 	usermanager   osmanager.UserManager
 	commander     utils.Commander
@@ -52,9 +54,10 @@ type ChezmoiManager struct {
 
 var _ dotfilesmanager.DotfilesDataInitializer = (*ChezmoiManager)(nil)
 
-func NewChezmoiManager(filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, chezmoiConfig ChezmoiConfig) *ChezmoiManager {
+func NewChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, chezmoiConfig ChezmoiConfig) *ChezmoiManager {
 	return &ChezmoiManager{
 		chezmoiConfig: chezmoiConfig,
+		logger:        logger,
 		filesystem:    filesystem,
 		usermanager:   userManager,
 		commander:     commander,
@@ -63,7 +66,7 @@ func NewChezmoiManager(filesystem utils.FileSystem, userManager osmanager.UserMa
 	}
 }
 
-func TryStandardChezmoiManager(filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, githubUsername string, cloneViaSSH bool) (*ChezmoiManager, error) {
+func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, githubUsername string, cloneViaSSH bool) (*ChezmoiManager, error) {
 	userConfigDir, err := userManager.GetConfigDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user config directory: %w", err)
@@ -80,6 +83,7 @@ func TryStandardChezmoiManager(filesystem utils.FileSystem, userManager osmanage
 	chezmoiCloneDir := fmt.Sprintf("%s/.local/share/chezmoi", userHomeDir)
 
 	return NewChezmoiManager(
+		logger,
 		filesystem,
 		userManager,
 		commander,
@@ -95,6 +99,6 @@ func TryStandardChezmoiManager(filesystem utils.FileSystem, userManager osmanage
 	), nil
 }
 
-func TryStandardChezmoiManagerWithDefaults(filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient) (*ChezmoiManager, error) {
-	return TryStandardChezmoiManager(filesystem, userManager, commander, pkgManager, httpClient, DefaultGitHubUsername, false)
+func TryStandardChezmoiManagerWithDefaults(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient) (*ChezmoiManager, error) {
+	return TryStandardChezmoiManager(logger, filesystem, userManager, commander, pkgManager, httpClient, DefaultGitHubUsername, false)
 }
