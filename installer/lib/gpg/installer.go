@@ -42,6 +42,8 @@ func NewGpgInstaller(
 }
 
 func (g *gpgInstaller) IsAvailable() (bool, error) {
+	g.logger.Debug("Checking if GPG is available")
+
 	// Check if gpg is available.
 	gpgExists, err := g.osManager.ProgramExists("gpg")
 	if err != nil {
@@ -51,7 +53,9 @@ func (g *gpgInstaller) IsAvailable() (bool, error) {
 		g.logger.Warning("GPG is not available. Required for GPG operations.")
 		return false, nil
 	}
+	g.logger.Trace("GPG is available")
 
+	g.logger.Trace("Checking if GPG version is compatible")
 	// gpg is available, now ensure its version is compatible (we required anything above 2.2).
 	versionMatches, err := gpgVersionMatches(g)
 	if err != nil {
@@ -61,7 +65,9 @@ func (g *gpgInstaller) IsAvailable() (bool, error) {
 		g.logger.Warning("GPG version is not compatible. Required version is >=2.2.0")
 		return false, nil
 	}
+	g.logger.Trace("GPG version is compatible")
 
+	g.logger.Trace("Checking if GPG agent is available")
 	gpgAgentExists, err := g.osManager.ProgramExists("gpg-agent")
 	if err != nil {
 		return false, err
@@ -70,7 +76,9 @@ func (g *gpgInstaller) IsAvailable() (bool, error) {
 		g.logger.Warning("GPG agent is not available. Required for GPG operations.")
 		return false, nil
 	}
+	g.logger.Trace("GPG agent is available")
 
+	g.logger.Debug("GPG is compatible and agent is available")
 	return true, nil
 }
 
@@ -115,6 +123,8 @@ func extractGpgVersion(rawVersion string) (string, error) {
 }
 
 func (g *gpgInstaller) Install(ctx context.Context) error {
+	g.logger.Debug("Installing GPG client")
+
 	versionConstraints, err := semver.NewConstraint(supportedGpgVersionConstraintString)
 	if err != nil {
 		return errors.New("failed to create version constraints: " + err.Error())
@@ -125,5 +135,6 @@ func (g *gpgInstaller) Install(ctx context.Context) error {
 		return errors.New("failed to install GPG client: " + err.Error())
 	}
 
+	g.logger.Debug("GPG client installed successfully")
 	return nil
 }

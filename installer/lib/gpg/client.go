@@ -132,11 +132,11 @@ func (c *DefaultGpgClient) KeysAvailable() (bool, error) {
 //
 // Returns the detected TTY path or an error if no TTY can be determined.
 func (c *DefaultGpgClient) detectTTY() (string, error) {
-	c.logger.Debug("Detecting TTY for GPG operations")
+	c.logger.Trace("Detecting TTY for GPG operations")
 
 	// Method 1: Check if GPG_TTY is already set in the environment
 	if tty := c.osMgr.Getenv("GPG_TTY"); tty != "" {
-		c.logger.Debug("Using GPG_TTY from environment: " + tty)
+		c.logger.Trace("Using GPG_TTY from environment: " + tty)
 		return strings.TrimSpace(tty), nil
 	}
 
@@ -145,21 +145,21 @@ func (c *DefaultGpgClient) detectTTY() (string, error) {
 	if err == nil && ttyOutput.ExitCode == 0 && len(ttyOutput.Stdout) > 0 {
 		tty := strings.TrimSpace(ttyOutput.String())
 		if tty != "" && tty != "not a tty" {
-			c.logger.Debug("Detected TTY using tty command: " + tty)
+			c.logger.Trace("Detected TTY using tty command: " + tty)
 			return tty, nil
 		}
 	}
 
 	// Method 3: Try /dev/tty directly
 	if exists, err := c.fs.PathExists("/dev/tty"); err == nil && exists {
-		c.logger.Debug("Using /dev/tty as fallback")
+		c.logger.Trace("Using /dev/tty as fallback")
 		return "/dev/tty", nil
 	}
 
 	// Method 4: Check common TTY environment variables
 	for _, envVar := range []string{"TTY", "TERM_TTY"} {
 		if tty := c.osMgr.Getenv(envVar); tty != "" {
-			c.logger.Debug("Using TTY from " + envVar + ": " + tty)
+			c.logger.Trace("Using TTY from " + envVar + ": " + tty)
 			return strings.TrimSpace(tty), nil
 		}
 	}
@@ -169,7 +169,7 @@ func (c *DefaultGpgClient) detectTTY() (string, error) {
 
 // extractKeyIDFromGPGOutput parses GPG output to extract the key ID using multiple robust methods.
 func (c *DefaultGpgClient) extractKeyIDFromGPGOutput(output string) (string, error) {
-	c.logger.Debug("Extracting key ID from GPG output")
+	c.logger.Trace("Extracting key ID from GPG output")
 
 	// Method 1: Look for "key <KEYID> marked as ultimately trusted" pattern
 	// This is the most reliable pattern across distributions
@@ -181,7 +181,7 @@ func (c *DefaultGpgClient) extractKeyIDFromGPGOutput(output string) (string, err
 			for i, part := range parts {
 				if part == "key" && i+1 < len(parts) {
 					keyID := parts[i+1]
-					c.logger.Debug("Found key ID using 'ultimately trusted' pattern: " + keyID)
+					c.logger.Trace("Found key ID using 'ultimately trusted' pattern: " + keyID)
 					return keyID, nil
 				}
 			}
@@ -196,7 +196,7 @@ func (c *DefaultGpgClient) extractKeyIDFromGPGOutput(output string) (string, err
 			if len(parts) >= 2 {
 				keyID := strings.TrimSpace(parts[1])
 				if keyID != "" && keyID != "gpg" {
-					c.logger.Debug("Found key ID using 'public key' pattern: " + keyID)
+					c.logger.Trace("Found key ID using 'public key' pattern: " + keyID)
 					return keyID, nil
 				}
 			}
@@ -213,7 +213,7 @@ func (c *DefaultGpgClient) extractKeyIDFromGPGOutput(output string) (string, err
 				nextLine := strings.TrimSpace(lines[i+1])
 				// Check if next line looks like a key ID (alphanumeric, reasonable length)
 				if len(nextLine) >= 8 && len(nextLine) <= 40 && isAlphanumeric(nextLine) {
-					c.logger.Debug("Found key ID using pub line pattern: " + nextLine)
+					c.logger.Trace("Found key ID using pub line pattern: " + nextLine)
 					return nextLine, nil
 				}
 			}
@@ -228,7 +228,7 @@ func (c *DefaultGpgClient) extractKeyIDFromGPGOutput(output string) (string, err
 						if len(keyParts) == 2 {
 							keyID := keyParts[1]
 							if len(keyID) >= 8 && isAlphanumeric(keyID) {
-								c.logger.Debug("Found key ID using pub/keyid pattern: " + keyID)
+								c.logger.Trace("Found key ID using pub/keyid pattern: " + keyID)
 								return keyID, nil
 							}
 						}
@@ -250,7 +250,7 @@ func (c *DefaultGpgClient) extractKeyIDFromGPGOutput(output string) (string, err
 					if strings.HasSuffix(filename, ".rev'") || strings.HasSuffix(filename, ".rev\"") {
 						keyID := strings.TrimSuffix(strings.TrimSuffix(filename, ".rev'"), ".rev\"")
 						if len(keyID) >= 8 && isAlphanumeric(keyID) {
-							c.logger.Debug("Found key ID using revocation certificate pattern: " + keyID)
+							c.logger.Trace("Found key ID using revocation certificate pattern: " + keyID)
 							return keyID, nil
 						}
 					}
