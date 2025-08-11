@@ -256,7 +256,7 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) (string, error) {
 }
 
 func installShell() error {
-	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager)
+	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager, cliLogger)
 
 	isAvailable, err := shellInstaller.IsAvailable()
 	if err != nil {
