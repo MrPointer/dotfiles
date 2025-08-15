@@ -3,6 +3,7 @@ package chezmoi_test
 import (
 	"errors"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -334,9 +335,11 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 		WorkEmail: "john.doe@acme.com",
 	}
 	systemData := dotfilesmanager.DotfilesSystemData{
-		Shell:           "/bin/zsh",
-		MultiUserSystem: true,
-		BrewMultiUser:   "multifoo",
+		Shell:               "/bin/zsh",
+		MultiUserSystem:     true,
+		BrewMultiUser:       "multifoo",
+		GenericWorkProfile:  mo.Some(path.Join("/home", "user", ".work", "profile")),
+		SpecificWorkProfile: mo.Some(path.Join("/home", "user", ".work", "foobar", "profile")),
 	}
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
