@@ -420,7 +420,7 @@ func init() {
 		"Install shell with brew if not already installed")
 	installCmd.Flags().BoolVar(&multiUserSystem, "multi-user-system", false,
 		"Treat this system as a multi-user system (affects some dotfiles)")
-	installCmd.Flags().StringVar(&gitCloneProtocol, "git-clone-protocol", "ssh",
+	installCmd.Flags().StringVar(&gitCloneProtocol, "git-clone-protocol", "https",
 		"Use the given git clone protocol (ssh or https) for git operations")
 	installCmd.Flags().BoolVar(&nonInteractive, "non-interactive", false,
 		"Disable interactive mode")
