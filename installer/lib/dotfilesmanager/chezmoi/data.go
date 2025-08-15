@@ -57,6 +57,14 @@ func (c *ChezmoiManager) Initialize(data dotfilesmanager.DotfilesData) error {
 		viperObject.Set("data.system.shell", value.Shell)
 		viperObject.Set("data.system.multi_user_system", value.MultiUserSystem)
 		viperObject.Set("data.system.brew_multi_user", value.BrewMultiUser)
+
+		if value.GenericWorkProfile.IsPresent() {
+			viperObject.Set("data.system.work_generic_dotfiles_profile", value.GenericWorkProfile)
+			if value.SpecificWorkProfile.IsPresent() {
+				viperObject.Set("data.system.work_specific_dotfiles_profile", value.SpecificWorkProfile)
+			}
+		}
+
 		return value
 	})
 

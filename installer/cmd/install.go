@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path"
 
 	"github.com/MrPointer/dotfiles/installer/cli"
 	"github.com/MrPointer/dotfiles/installer/lib/apt"
@@ -393,6 +394,18 @@ func initDotfilesManagerData(dm dotfilesmanager.DotfilesManager) error {
 			WorkEmail: workEmail,
 		}
 		dotfiles_data.WorkEnv = mo.Some(work_data)
+
+		userHomeDir, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		generic_work_dotfiles_dir := path.Join(userHomeDir, ".work")
+
+		dotfiles_data.SystemData = dotfiles_data.SystemData.Map(func(value dotfilesmanager.DotfilesSystemData) (dotfilesmanager.DotfilesSystemData, bool) {
+			value.GenericWorkProfile = mo.Some(path.Join(generic_work_dotfiles_dir, "profile"))
+			value.SpecificWorkProfile = mo.Some(path.Join(generic_work_dotfiles_dir, workName, "profile"))
+			return value, true
+		})
 	}
 
 	if selectedGpgKey != "" {
@@ -408,9 +421,9 @@ func init() {
 
 	installCmd.Flags().BoolVar(&workEnvironment, "work-env", false,
 		"Treat this installation as a work environment (affects some dotfiles)")
-	installCmd.Flags().StringVar(&workName, "work-name", "",
+	installCmd.Flags().StringVar(&workName, "work-name", "sedg",
 		"Use the given name as the work's name")
-	installCmd.Flags().StringVar(&workEmail, "work-email", "",
+	installCmd.Flags().StringVar(&workEmail, "work-email", "timor.gruber@solaredge.com",
 		"Use the given email address as work's email address")
 	installCmd.Flags().StringVar(&shellName, "shell", "zsh",
 		"Install given shell if required and set it as user's default")
