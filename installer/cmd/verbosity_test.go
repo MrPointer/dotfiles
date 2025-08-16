@@ -57,6 +57,7 @@ func Test_VerbosityLevelDeterminationLogic(t *testing.T) {
 			// Reset global state
 			verboseCount = tt.verboseCount
 			extraVerbose = tt.extraVerbose
+			plainFlag = false
 			globalVerbosity = logger.Normal
 
 			// Call the verbosity determination logic
@@ -95,6 +96,52 @@ func Test_CliLoggerCreationWithDifferentVerbosityLevels(t *testing.T) {
 
 			// Verify logger was created successfully
 			require.NotNil(t, testLogger)
+		})
+	}
+}
+
+func Test_ShouldShowProgress_Logic(t *testing.T) {
+	tests := []struct {
+		name           string
+		plainFlag      bool
+		nonInteractive bool
+		expected       bool
+	}{
+		{
+			name:           "Progress_WhenNoFlags",
+			plainFlag:      false,
+			nonInteractive: false,
+			expected:       true,
+		},
+		{
+			name:           "NoProgress_WhenPlainFlagSet",
+			plainFlag:      true,
+			nonInteractive: false,
+			expected:       false,
+		},
+		{
+			name:           "NoProgress_WhenNonInteractiveSet",
+			plainFlag:      false,
+			nonInteractive: true,
+			expected:       false,
+		},
+		{
+			name:           "NoProgress_WhenBothPlainAndNonInteractiveSet",
+			plainFlag:      true,
+			nonInteractive: true,
+			expected:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset global state
+			plainFlag = tt.plainFlag
+			nonInteractive = tt.nonInteractive
+
+			// Verify the result
+			actual := ShouldShowProgress()
+			require.Equal(t, tt.expected, actual)
 		})
 	}
 }
