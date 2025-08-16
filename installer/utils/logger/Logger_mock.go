@@ -24,14 +24,26 @@ var _ Logger = &MoqLogger{}
 //			ErrorFunc: func(format string, args ...any)  {
 //				panic("mock out the Error method")
 //			},
+//			FailProgressFunc: func(message string, err error)  {
+//				panic("mock out the FailProgress method")
+//			},
+//			FinishProgressFunc: func(message string)  {
+//				panic("mock out the FinishProgress method")
+//			},
 //			InfoFunc: func(format string, args ...any)  {
 //				panic("mock out the Info method")
+//			},
+//			StartProgressFunc: func(message string)  {
+//				panic("mock out the StartProgress method")
 //			},
 //			SuccessFunc: func(format string, args ...any)  {
 //				panic("mock out the Success method")
 //			},
 //			TraceFunc: func(format string, args ...any)  {
 //				panic("mock out the Trace method")
+//			},
+//			UpdateProgressFunc: func(message string)  {
+//				panic("mock out the UpdateProgress method")
 //			},
 //			WarningFunc: func(format string, args ...any)  {
 //				panic("mock out the Warning method")
@@ -49,14 +61,26 @@ type MoqLogger struct {
 	// ErrorFunc mocks the Error method.
 	ErrorFunc func(format string, args ...any)
 
+	// FailProgressFunc mocks the FailProgress method.
+	FailProgressFunc func(message string, err error)
+
+	// FinishProgressFunc mocks the FinishProgress method.
+	FinishProgressFunc func(message string)
+
 	// InfoFunc mocks the Info method.
 	InfoFunc func(format string, args ...any)
+
+	// StartProgressFunc mocks the StartProgress method.
+	StartProgressFunc func(message string)
 
 	// SuccessFunc mocks the Success method.
 	SuccessFunc func(format string, args ...any)
 
 	// TraceFunc mocks the Trace method.
 	TraceFunc func(format string, args ...any)
+
+	// UpdateProgressFunc mocks the UpdateProgress method.
+	UpdateProgressFunc func(message string)
 
 	// WarningFunc mocks the Warning method.
 	WarningFunc func(format string, args ...any)
@@ -77,12 +101,29 @@ type MoqLogger struct {
 			// Args is the args argument value.
 			Args []any
 		}
+		// FailProgress holds details about calls to the FailProgress method.
+		FailProgress []struct {
+			// Message is the message argument value.
+			Message string
+			// Err is the err argument value.
+			Err error
+		}
+		// FinishProgress holds details about calls to the FinishProgress method.
+		FinishProgress []struct {
+			// Message is the message argument value.
+			Message string
+		}
 		// Info holds details about calls to the Info method.
 		Info []struct {
 			// Format is the format argument value.
 			Format string
 			// Args is the args argument value.
 			Args []any
+		}
+		// StartProgress holds details about calls to the StartProgress method.
+		StartProgress []struct {
+			// Message is the message argument value.
+			Message string
 		}
 		// Success holds details about calls to the Success method.
 		Success []struct {
@@ -98,6 +139,11 @@ type MoqLogger struct {
 			// Args is the args argument value.
 			Args []any
 		}
+		// UpdateProgress holds details about calls to the UpdateProgress method.
+		UpdateProgress []struct {
+			// Message is the message argument value.
+			Message string
+		}
 		// Warning holds details about calls to the Warning method.
 		Warning []struct {
 			// Format is the format argument value.
@@ -106,12 +152,16 @@ type MoqLogger struct {
 			Args []any
 		}
 	}
-	lockDebug   sync.RWMutex
-	lockError   sync.RWMutex
-	lockInfo    sync.RWMutex
-	lockSuccess sync.RWMutex
-	lockTrace   sync.RWMutex
-	lockWarning sync.RWMutex
+	lockDebug          sync.RWMutex
+	lockError          sync.RWMutex
+	lockFailProgress   sync.RWMutex
+	lockFinishProgress sync.RWMutex
+	lockInfo           sync.RWMutex
+	lockStartProgress  sync.RWMutex
+	lockSuccess        sync.RWMutex
+	lockTrace          sync.RWMutex
+	lockUpdateProgress sync.RWMutex
+	lockWarning        sync.RWMutex
 }
 
 // Debug calls DebugFunc.
@@ -186,6 +236,74 @@ func (mock *MoqLogger) ErrorCalls() []struct {
 	return calls
 }
 
+// FailProgress calls FailProgressFunc.
+func (mock *MoqLogger) FailProgress(message string, err error) {
+	if mock.FailProgressFunc == nil {
+		panic("MoqLogger.FailProgressFunc: method is nil but Logger.FailProgress was just called")
+	}
+	callInfo := struct {
+		Message string
+		Err     error
+	}{
+		Message: message,
+		Err:     err,
+	}
+	mock.lockFailProgress.Lock()
+	mock.calls.FailProgress = append(mock.calls.FailProgress, callInfo)
+	mock.lockFailProgress.Unlock()
+	mock.FailProgressFunc(message, err)
+}
+
+// FailProgressCalls gets all the calls that were made to FailProgress.
+// Check the length with:
+//
+//	len(mockedLogger.FailProgressCalls())
+func (mock *MoqLogger) FailProgressCalls() []struct {
+	Message string
+	Err     error
+} {
+	var calls []struct {
+		Message string
+		Err     error
+	}
+	mock.lockFailProgress.RLock()
+	calls = mock.calls.FailProgress
+	mock.lockFailProgress.RUnlock()
+	return calls
+}
+
+// FinishProgress calls FinishProgressFunc.
+func (mock *MoqLogger) FinishProgress(message string) {
+	if mock.FinishProgressFunc == nil {
+		panic("MoqLogger.FinishProgressFunc: method is nil but Logger.FinishProgress was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockFinishProgress.Lock()
+	mock.calls.FinishProgress = append(mock.calls.FinishProgress, callInfo)
+	mock.lockFinishProgress.Unlock()
+	mock.FinishProgressFunc(message)
+}
+
+// FinishProgressCalls gets all the calls that were made to FinishProgress.
+// Check the length with:
+//
+//	len(mockedLogger.FinishProgressCalls())
+func (mock *MoqLogger) FinishProgressCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockFinishProgress.RLock()
+	calls = mock.calls.FinishProgress
+	mock.lockFinishProgress.RUnlock()
+	return calls
+}
+
 // Info calls InfoFunc.
 func (mock *MoqLogger) Info(format string, args ...any) {
 	if mock.InfoFunc == nil {
@@ -219,6 +337,38 @@ func (mock *MoqLogger) InfoCalls() []struct {
 	mock.lockInfo.RLock()
 	calls = mock.calls.Info
 	mock.lockInfo.RUnlock()
+	return calls
+}
+
+// StartProgress calls StartProgressFunc.
+func (mock *MoqLogger) StartProgress(message string) {
+	if mock.StartProgressFunc == nil {
+		panic("MoqLogger.StartProgressFunc: method is nil but Logger.StartProgress was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockStartProgress.Lock()
+	mock.calls.StartProgress = append(mock.calls.StartProgress, callInfo)
+	mock.lockStartProgress.Unlock()
+	mock.StartProgressFunc(message)
+}
+
+// StartProgressCalls gets all the calls that were made to StartProgress.
+// Check the length with:
+//
+//	len(mockedLogger.StartProgressCalls())
+func (mock *MoqLogger) StartProgressCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockStartProgress.RLock()
+	calls = mock.calls.StartProgress
+	mock.lockStartProgress.RUnlock()
 	return calls
 }
 
@@ -291,6 +441,38 @@ func (mock *MoqLogger) TraceCalls() []struct {
 	mock.lockTrace.RLock()
 	calls = mock.calls.Trace
 	mock.lockTrace.RUnlock()
+	return calls
+}
+
+// UpdateProgress calls UpdateProgressFunc.
+func (mock *MoqLogger) UpdateProgress(message string) {
+	if mock.UpdateProgressFunc == nil {
+		panic("MoqLogger.UpdateProgressFunc: method is nil but Logger.UpdateProgress was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockUpdateProgress.Lock()
+	mock.calls.UpdateProgress = append(mock.calls.UpdateProgress, callInfo)
+	mock.lockUpdateProgress.Unlock()
+	mock.UpdateProgressFunc(message)
+}
+
+// UpdateProgressCalls gets all the calls that were made to UpdateProgress.
+// Check the length with:
+//
+//	len(mockedLogger.UpdateProgressCalls())
+func (mock *MoqLogger) UpdateProgressCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockUpdateProgress.RLock()
+	calls = mock.calls.UpdateProgress
+	mock.lockUpdateProgress.RUnlock()
 	return calls
 }
 
