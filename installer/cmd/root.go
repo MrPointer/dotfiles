@@ -21,6 +21,8 @@ var (
 	globalVerbosity           logger.VerbosityLevel
 	verboseCount              int
 	extraVerbose              bool
+	progressFlag              bool
+	nonInteractive            bool
 
 	cliLogger        logger.Logger       = nil // Will be initialized before any command is executed
 	globalCommander  utils.Commander     = nil // Will be initialized before any command is executed
@@ -89,17 +91,33 @@ func init() {
 		"compatibility configuration file (uses embedded config by default)")
 
 	// Verbosity flags: supports multiple levels
-	// - No flags: Normal level (Info, Success, Warning, Error only)
-	// - -v or --verbose: Verbose level (adds Debug messages)
-	// - -vv or --extra-verbose: Extra verbose level (adds Trace messages)
+	// - No flags: Normal verbosity with progress indicators (default)
+	// - -v or --verbose: Verbose level (adds Debug messages, progress disabled by default)
+	// - -vv or --extra-verbose: Extra verbose level (adds Trace messages, progress disabled by default)
+	// Note: Progress can be explicitly enabled with --progress even when using verbosity flags
 	rootCmd.PersistentFlags().CountVarP(&verboseCount, "verbose", "v",
 		"Enable verbose output (use -vv for extra verbose)")
 
 	rootCmd.PersistentFlags().BoolVar(&extraVerbose, "extra-verbose", false,
 		"Enable extra verbose output (equivalent to -vv)")
 
+	// Progress flag: controls whether to show hierarchical progress indicators
+	// - Default behavior: disabled (shows regular log messages instead)
+	// - Explicit --progress: enables npm-style hierarchical display with spinners and timing information
+	// - Always disabled in non-interactive mode regardless of other flags
+	rootCmd.PersistentFlags().BoolVar(&progressFlag, "progress", false,
+		"Show hierarchical progress indicators with spinners and timing")
+
+	// Interactive flag: controls whether to allow user interaction
+	// - When enabled, disables progress indicators and skips any prompts
+	// - Affects all commands that might need user input
+	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false,
+		"Disable interactive mode (also disables progress indicators)")
+
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("extra-verbose", rootCmd.PersistentFlags().Lookup("extra-verbose"))
+	viper.BindPFlag("progress", rootCmd.PersistentFlags().Lookup("progress"))
+	viper.BindPFlag("non-interactive", rootCmd.PersistentFlags().Lookup("non-interactive"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -164,10 +182,35 @@ func initLogger() {
 		globalVerbosity = logger.Normal
 	}
 
-	cliLogger = logger.NewCliLogger(globalVerbosity)
+	// Create logger with or without progress based on ShouldShowProgress()
+	if ShouldShowProgress() {
+		cliLogger = logger.NewProgressCliLogger(globalVerbosity)
+	} else {
+		cliLogger = logger.NewCliLogger(globalVerbosity)
+	}
+}
+
+// ShouldShowProgress determines if hierarchical progress indicators should be shown.
+// The logic is:
+// 1. If --non-interactive is set, never show progress
+// 2. If --progress was explicitly set, show progress (unless non-interactive)
+// 3. Otherwise, default to no progress (regular logging)
+func ShouldShowProgress() bool {
+	// If non-interactive mode is enabled, never show progress
+	if nonInteractive {
+		return false
+	}
+
+	// Only show progress if explicitly requested
+	return progressFlag
 }
 
 // GetVerbosity returns the current global verbosity level.
 func GetVerbosity() logger.VerbosityLevel {
 	return globalVerbosity
+}
+
+// IsNonInteractive returns whether non-interactive mode is enabled.
+func IsNonInteractive() bool {
+	return nonInteractive
 }
