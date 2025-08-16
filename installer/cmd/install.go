@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/shell"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 	"github.com/samber/mo"
 	"github.com/spf13/cobra"
@@ -30,7 +32,6 @@ var (
 	multiUserSystem      bool
 	gitCloneProtocol     string
 	verbose              bool
-	nonInteractive       bool
 	installPrerequisites bool
 )
 
@@ -54,50 +55,53 @@ install essential packages and tools that I use on a daily basis.
 It automates the process of setting up the dotfiles,
 making it easier to get started with a new system.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Use the global logger (already configured with proper progress/verbosity settings)
+		installLogger := cliLogger
+
 		// Check system compatibility and get system info.
 		config := GetCompatibilityConfig()
 		sysInfo, err := compatibility.CheckCompatibility(config, globalOsManager)
 		if err != nil {
-			if handlePrerequisiteInstallation(sysInfo) {
+			if handlePrerequisiteInstallation(sysInfo, installLogger) {
 				// Prerequisites were installed, re-check compatibility
 				sysInfo, err = compatibility.CheckCompatibility(config, globalOsManager)
 				if err != nil {
-					HandleCompatibilityError(err, sysInfo, cliLogger)
+					HandleCompatibilityError(err, sysInfo, installLogger)
 				}
 			} else {
-				HandleCompatibilityError(err, sysInfo, cliLogger)
+				HandleCompatibilityError(err, sysInfo, installLogger)
 			}
 		}
-		cliLogger.Success("✔︎ System compatibility check passed")
+		installLogger.Success("✔︎ System compatibility check passed")
 
-		cliLogger.Info("Installing dotfiles...")
+		installLogger.Info("Installing dotfiles...")
 
 		// Install Homebrew if specified and not already available.
 		if installBrew {
-			brewPath, err := installHomebrew(&sysInfo)
+			brewPath, err := installHomebrew(sysInfo, installLogger)
 			if err != nil {
-				cliLogger.Error("Failed to install Homebrew: %v", err)
+				installLogger.Error("Failed to install Homebrew: %v", err)
 				os.Exit(1)
 			}
-			globalPackageManager = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager, brewPath)
+			globalPackageManager = brew.NewBrewPackageManager(installLogger, globalCommander, globalOsManager, brewPath)
 		}
 
-		if err := installShell(); err != nil {
-			cliLogger.Error("Failed to install shell: %v", err)
+		if err := installShell(installLogger); err != nil {
+			installLogger.Error("Failed to install shell: %v", err)
 			os.Exit(1)
 		}
 
-		if err := setupGpgKeys(); err != nil {
-			cliLogger.Error("Failed to setup GPG keys: %v", err)
+		if err := setupGpgKeys(installLogger); err != nil {
+			installLogger.Error("Failed to setup GPG keys: %v", err)
 			os.Exit(1)
 		}
 
-		if err := setupDotfilesManager(); err != nil {
-			cliLogger.Error("Failed to setup dotfiles manager: %v", err)
+		if err := setupDotfilesManager(installLogger); err != nil {
+			installLogger.Error("Failed to setup dotfiles manager: %v", err)
 			os.Exit(1)
 		}
 
-		cliLogger.Success("🪄 Installation completed 🎉")
+		installLogger.Success("🪄 Installation completed 🎉")
 	},
 }
 
@@ -127,7 +131,7 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 
 // handlePrerequisiteInstallation handles automatic installation of missing prerequisites.
 // Returns true if prerequisites were installed and compatibility should be re-checked.
-func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
+func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo, log logger.Logger) bool {
 	// Only attempt installation if we have missing prerequisites and the flag is set
 	if len(sysInfo.Prerequisites.Missing) == 0 {
 		return false
@@ -136,16 +140,16 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
 	// Create package manager for this system
 	packageManager := createPackageManagerForSystem(&sysInfo)
 	if packageManager == nil {
-		cliLogger.Warning("Cannot install prerequisites automatically on this system")
+		log.Warning("Cannot install prerequisites automatically on this system")
 		return false
 	}
 
 	var prerequisitesToInstall []string
 
 	// In non-interactive mode, or if explicitly requested, install all missing prerequisites automatically
-	if nonInteractive || installPrerequisites {
+	if IsNonInteractive() || installPrerequisites {
 		prerequisitesToInstall = sysInfo.Prerequisites.Missing
-		cliLogger.Info("Installing missing prerequisites automatically...")
+		log.StartProgress("Installing missing prerequisites automatically")
 	} else {
 		// In interactive mode, let user select which prerequisites to install
 		prerequisiteSelector := cli.NewDefaultPrerequisiteSelector()
@@ -167,41 +171,41 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
 			cliDetails,
 		)
 		if err != nil {
-			cliLogger.Error("Failed to select prerequisites: %v", err)
+			log.Error("Failed to select prerequisites: %v", err)
 			return false
 		}
 
 		if len(selectedPrerequisites) == 0 {
-			cliLogger.Info("No prerequisites selected for installation")
+			log.Info("No prerequisites selected for installation")
 			return false
 		}
 
 		prerequisitesToInstall = selectedPrerequisites
-		cliLogger.Info("Installing selected prerequisites...")
+		log.StartProgress("Installing selected prerequisites")
 	}
 
 	// Install each selected prerequisite
 	installed := false
 	for _, name := range prerequisitesToInstall {
 		if detail, exists := sysInfo.Prerequisites.Details[name]; exists {
-			cliLogger.Info("Installing %s: %s...", name, detail.Description)
+			log.StartProgress(fmt.Sprintf("Installing %s", detail.Description))
 
 			// Use the prerequisite name directly as the package name
 			packageInfo := pkgmanager.NewRequestedPackageInfo(name, nil)
 
 			err := packageManager.InstallPackage(packageInfo)
 			if err != nil {
-				cliLogger.Error("Failed to install %s: %v", name, err)
+				log.FailProgress("Installation failed", err)
 				return false
 			}
 
-			cliLogger.Success("✔︎ %s installed successfully", name)
+			log.FinishProgress("Installation completed")
 			installed = true
 		}
 	}
 
 	if installed {
-		cliLogger.Success("Prerequisites installation completed")
+		log.FinishProgress("Prerequisites installation completed")
 		return true
 	}
 
@@ -209,10 +213,10 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo) bool {
 }
 
 // installHomebrew installs Homebrew if not already installed.
-func installHomebrew(sysInfo *compatibility.SystemInfo) (string, error) {
+func installHomebrew(sysInfo compatibility.SystemInfo, log logger.Logger) (string, error) {
 	// Create BrewInstaller using the new API.
 	installer := brew.NewBrewInstaller(brew.Options{
-		SystemInfo:      sysInfo,
+		SystemInfo:      &sysInfo,
 		Logger:          cliLogger,
 		Commander:       globalCommander,
 		HTTPClient:      globalHttpClient,
@@ -226,9 +230,9 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) (string, error) {
 		return "", err
 	}
 	if isAvailable {
-		cliLogger.Success("Homebrew is already installed")
+		log.Success("Homebrew is already installed")
 
-		brewPath, err := brew.DetectBrewPath(sysInfo, "")
+		brewPath, err := brew.DetectBrewPath(&sysInfo, "")
 		if err != nil {
 			return "", err
 		}
@@ -247,47 +251,48 @@ func installHomebrew(sysInfo *compatibility.SystemInfo) (string, error) {
 		return "", err
 	}
 
-	brewPath, err := brew.DetectBrewPath(sysInfo, "")
+	brewPath, err := brew.DetectBrewPath(&sysInfo, "")
 	if err != nil {
 		return "", err
 	}
 
-	cliLogger.Success("✔︎ Homebrew installed successfully")
+	log.Success("✔︎ Homebrew installed successfully")
 	return brewPath, nil
 }
 
-func installShell() error {
-	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager, cliLogger)
+func installShell(log logger.Logger) error {
+	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager, log)
 
 	isAvailable, err := shellInstaller.IsAvailable()
 	if err != nil {
 		return err
 	}
 	if isAvailable {
-		cliLogger.Success("%s shell is already installed", shellName)
+		log.Success("%s shell is already installed", shellName)
 		return nil
 	}
 
-	if err := shellInstaller.Install(nil); err != nil { // Pass context if needed.
+	log.Info("Installing %s shell", shellName)
+	if err := shellInstaller.Install(nil); err != nil {
 		return err
 	}
 
-	cliLogger.Success("✔︎ %s shell installed successfully", shellName)
+	log.Success("✔︎ %s shell installed successfully", shellName)
 	return nil
 }
 
-func setupGpgKeys() error {
-	err := installGpgClient()
+func setupGpgKeys(log logger.Logger) error {
+	err := installGpgClient(log)
 	if err != nil {
 		return err
 	}
 
-	if nonInteractive {
-		cliLogger.Warning("Skipping GPG key setup in non-interactive mode - You will need to set them up manually")
+	if IsNonInteractive() {
+		log.Warning("Skipping GPG key setup in non-interactive mode - You will need to set them up manually")
 		return nil
 	}
 
-	cliLogger.Info("Setting up GPG keys")
+	log.Info("Setting up GPG keys")
 
 	gpgClient := gpg.NewDefaultGpgClient(
 		globalOsManager,
@@ -316,15 +321,15 @@ func setupGpgKeys() error {
 		selectedGpgKey = selectedKey
 	}
 
-	cliLogger.Success("✔︎ GPG keys set up successfully")
+	log.Success("✔︎ GPG keys set up successfully")
 	return nil
 }
 
 // installGpgClient installs the GPG client if not already available.
-func installGpgClient() error {
+func installGpgClient(log logger.Logger) error {
 	// Create GpgClientInstaller using the new API.
 	installer := gpg.NewGpgInstaller(
-		cliLogger,
+		log,
 		globalCommander,
 		globalOsManager,
 		globalPackageManager,
@@ -335,43 +340,43 @@ func installGpgClient() error {
 		return err
 	}
 	if isAvailable {
-		cliLogger.Success("GPG client is already installed")
+		log.Success("GPG client is already installed")
 		return nil
 	}
 
-	cliLogger.Info("Installing GPG client")
+	log.Info("Installing GPG client")
 	if err := installer.Install(nil); err != nil { // Pass context if needed.
 		return err
 	}
-	cliLogger.Success("✔︎ GPG client installed successfully")
+	log.Success("✔︎ GPG client installed successfully")
 
 	return nil
 }
 
-func setupDotfilesManager() error {
-	dm, err := chezmoi.TryStandardChezmoiManager(cliLogger, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
+func setupDotfilesManager(log logger.Logger) error {
+	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
 	if err != nil {
 		return err
 	}
 
-	cliLogger.Info("Installing dotfiles manager")
+	log.Info("Installing dotfiles manager")
 	err = dm.Install()
 	if err != nil {
 		return err
 	}
-	cliLogger.Success("✔︎ Dotfiles manager installed successfully")
+	log.Success("✔︎ Dotfiles manager installed successfully")
 
-	cliLogger.Info("Initializing dotfiles manager data")
+	log.Info("Initializing dotfiles manager data")
 	if err := initDotfilesManagerData(dm); err != nil {
 		return err
 	}
-	cliLogger.Success("✔︎ Dotfiles manager data initialized successfully")
+	log.Success("✔︎ Dotfiles manager data initialized successfully")
 
-	cliLogger.Info("Applying dotfiles manager")
+	log.Info("Applying dotfiles manager")
 	if err := dm.Apply(); err != nil {
 		return err
 	}
-	cliLogger.Success("✔︎ Dotfiles manager data applied successfully")
+	log.Success("✔︎ Dotfiles manager data applied successfully")
 
 	return nil
 }
@@ -435,8 +440,7 @@ func init() {
 		"Treat this system as a multi-user system (affects some dotfiles)")
 	installCmd.Flags().StringVar(&gitCloneProtocol, "git-clone-protocol", "https",
 		"Use the given git clone protocol (ssh or https) for git operations")
-	installCmd.Flags().BoolVar(&nonInteractive, "non-interactive", false,
-		"Disable interactive mode")
+
 	installCmd.Flags().BoolVar(&installPrerequisites, "install-prerequisites", false,
 		"Automatically install missing prerequisites")
 
@@ -448,6 +452,6 @@ func init() {
 	viper.BindPFlag("install-shell-with-brew", installCmd.Flags().Lookup("install-shell-with-brew"))
 	viper.BindPFlag("multi-user-system", installCmd.Flags().Lookup("multi-user-system"))
 	viper.BindPFlag("git-clone-protocol", installCmd.Flags().Lookup("git-clone-protocol"))
-	viper.BindPFlag("interactive", installCmd.Flags().Lookup("interactive"))
+
 	viper.BindPFlag("install-prerequisites", installCmd.Flags().Lookup("install-prerequisites"))
 }
