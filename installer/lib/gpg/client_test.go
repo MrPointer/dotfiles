@@ -16,9 +16,8 @@ func Test_NewDefaultGpgClient_ReturnsValidInstance(t *testing.T) {
 	mockOsManager := &osmanager.MoqOsManager{}
 	mockFilesystem := &utils.MoqFileSystem{}
 	mockCommander := &utils.MoqCommander{}
-	mockLogger := &logger.MoqLogger{}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	require.NotNil(t, client)
 }
@@ -84,13 +83,8 @@ uid                      Another User <another@example.com>`,
 					return &utils.Result{ExitCode: 0}, nil
 				},
 			}
-			mockLogger := &logger.MoqLogger{
-				DebugFunc: func(format string, args ...any) {
-					// No-op
-				},
-			}
 
-			client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+			client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 			keyID, err := client.CreateKeyPair()
 
@@ -128,13 +122,8 @@ func Test_CreateKeyPair_ReturnsError_WhenTTYDetectionFails(t *testing.T) {
 			return &utils.Result{ExitCode: 1}, errors.New("command failed")
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	keyID, err := client.CreateKeyPair()
 	require.Error(t, err)
@@ -202,13 +191,7 @@ gpg: revocation certificate stored as '/home/user/.gnupg/openpgp-revocs.d/JKL012
 					return &utils.Result{ExitCode: 0}, nil
 				},
 			}
-			mockLogger := &logger.MoqLogger{
-				DebugFunc: func(format string, args ...any) {
-					// No-op
-				},
-			}
-
-			client := gpg.NewDefaultGpgClient(mockOsManager, mockFileSystem, mockCommander, mockLogger)
+			client := gpg.NewDefaultGpgClient(mockOsManager, mockFileSystem, mockCommander, logger.DefaultLogger)
 
 			keyID, err := client.CreateKeyPair()
 			require.NoError(t, err)
@@ -240,13 +223,7 @@ Some random output without key information`),
 			return &utils.Result{ExitCode: 0}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
-
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFileSystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFileSystem, mockCommander, logger.DefaultLogger)
 
 	keyID, err := client.CreateKeyPair()
 	require.Error(t, err)
@@ -275,13 +252,8 @@ func Test_CreateKeyPair_ReturnsError_WhenGpgCommandExitsWithNonZeroCode(t *testi
 			return &utils.Result{ExitCode: 0}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	keyID, err := client.CreateKeyPair()
 
@@ -311,13 +283,8 @@ func Test_CreateKeyPair_ReturnsError_WhenOutputHasInsufficientLines(t *testing.T
 			return &utils.Result{ExitCode: 0}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	keyID, err := client.CreateKeyPair()
 
@@ -349,13 +316,8 @@ line3 without pub prefix`),
 			return &utils.Result{ExitCode: 0}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	keyID, err := client.CreateKeyPair()
 
@@ -408,13 +370,8 @@ ssb   cv25519/321FED654CBA 2024-01-01 [E]`,
 					}, nil
 				},
 			}
-			mockLogger := &logger.MoqLogger{
-				DebugFunc: func(format string, args ...any) {
-					// No-op
-				},
-			}
 
-			client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+			client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 			keys, err := client.ListAvailableKeys()
 
@@ -440,13 +397,8 @@ func Test_ListAvailableKeys_ReturnsNil_WhenNoKeysExist(t *testing.T) {
 			}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	keys, err := client.ListAvailableKeys()
 
@@ -462,13 +414,8 @@ func Test_ListAvailableKeys_ReturnsError_WhenCommandFails(t *testing.T) {
 			return nil, errors.New("gpg command failed")
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	keys, err := client.ListAvailableKeys()
 
@@ -490,13 +437,8 @@ sec   rsa3072/ABC123DEF456 2024-01-01 [SC]`),
 			}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	keys, err := client.ListAvailableKeys()
 
@@ -516,13 +458,8 @@ uid                 [ultimate] Test User <test@example.com>`),
 			}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	available, err := client.KeysAvailable()
 
@@ -541,13 +478,8 @@ func Test_KeysAvailable_ReturnsFalse_WhenNoKeysExist(t *testing.T) {
 			}, nil
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	available, err := client.KeysAvailable()
 
@@ -563,13 +495,8 @@ func Test_KeysAvailable_ReturnsError_WhenListAvailableKeysFails(t *testing.T) {
 			return nil, errors.New("gpg list command failed")
 		},
 	}
-	mockLogger := &logger.MoqLogger{
-		DebugFunc: func(format string, args ...any) {
-			// No-op
-		},
-	}
 
-	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, mockLogger)
+	client := gpg.NewDefaultGpgClient(mockOsManager, mockFilesystem, mockCommander, logger.DefaultLogger)
 
 	available, err := client.KeysAvailable()
 

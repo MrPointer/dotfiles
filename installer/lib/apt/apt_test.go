@@ -13,29 +13,26 @@ import (
 )
 
 func Test_AptPackageManager_ImplementsPackageManagerInterface(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 
 	require.Implements(t, (*pkgmanager.PackageManager)(nil), aptManager)
 }
 
 func Test_NewAptPackageManager_ReturnsValidInstance(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 
 	require.NotNil(t, aptManager)
 }
 
 func Test_GetInfo_ReturnsAptManagerInfo(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{}
 	mockProgramQuery := &osmanager.MoqProgramQuery{
 		GetProgramVersionFunc: func(program string, versionExtractor osmanager.VersionExtractor, queryArgs ...string) (string, error) {
@@ -47,7 +44,7 @@ func Test_GetInfo_ReturnsAptManagerInfo(t *testing.T) {
 	}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 
 	info, err := aptManager.GetInfo()
 
@@ -57,9 +54,6 @@ func Test_GetInfo_ReturnsAptManagerInfo(t *testing.T) {
 }
 
 func Test_InstallPackage_CallsAptInstallCommand_AsRoot(t *testing.T) {
-	mockLogger := &logger.MoqLogger{
-		WarningFunc: func(format string, args ...interface{}) {},
-	}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{}, nil
@@ -77,7 +71,7 @@ func Test_InstallPackage_CallsAptInstallCommand_AsRoot(t *testing.T) {
 		},
 	}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 	packageInfo := pkgmanager.NewRequestedPackageInfo("git", nil)
 
 	err := aptManager.InstallPackage(packageInfo)
@@ -108,9 +102,6 @@ func Test_InstallPackage_CallsAptInstallCommand_AsRoot(t *testing.T) {
 }
 
 func Test_InstallPackage_CallsAptInstallCommand_WithSudo(t *testing.T) {
-	mockLogger := &logger.MoqLogger{
-		WarningFunc: func(format string, args ...interface{}) {},
-	}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{}, nil
@@ -128,7 +119,7 @@ func Test_InstallPackage_CallsAptInstallCommand_WithSudo(t *testing.T) {
 		},
 	}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 	packageInfo := pkgmanager.NewRequestedPackageInfo("git", nil)
 
 	err := aptManager.InstallPackage(packageInfo)
@@ -159,9 +150,6 @@ func Test_InstallPackage_CallsAptInstallCommand_WithSudo(t *testing.T) {
 }
 
 func Test_InstallPackage_CallsAptInstallCommand_WithoutPrivilegeEscalation(t *testing.T) {
-	mockLogger := &logger.MoqLogger{
-		WarningFunc: func(format string, args ...interface{}) {},
-	}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{}, nil
@@ -179,7 +167,7 @@ func Test_InstallPackage_CallsAptInstallCommand_WithoutPrivilegeEscalation(t *te
 		},
 	}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 	packageInfo := pkgmanager.NewRequestedPackageInfo("git", nil)
 
 	err := aptManager.InstallPackage(packageInfo)
@@ -210,7 +198,6 @@ func Test_InstallPackage_CallsAptInstallCommand_WithoutPrivilegeEscalation(t *te
 }
 
 func Test_IsPackageInstalled_ChecksInstalledPackages(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "dpkg-query" {
@@ -224,7 +211,7 @@ func Test_IsPackageInstalled_ChecksInstalledPackages(t *testing.T) {
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 	packageInfo := pkgmanager.NewPackageInfo("git", "")
 
 	isInstalled, err := aptManager.IsPackageInstalled(packageInfo)
@@ -234,7 +221,6 @@ func Test_IsPackageInstalled_ChecksInstalledPackages(t *testing.T) {
 }
 
 func Test_IsPackageInstalled_ReturnsFalse_WhenPackageNotInstalled(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "dpkg-query" {
@@ -248,7 +234,7 @@ func Test_IsPackageInstalled_ReturnsFalse_WhenPackageNotInstalled(t *testing.T) 
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 	packageInfo := pkgmanager.NewPackageInfo("git", "")
 
 	isInstalled, err := aptManager.IsPackageInstalled(packageInfo)
@@ -258,7 +244,6 @@ func Test_IsPackageInstalled_ReturnsFalse_WhenPackageNotInstalled(t *testing.T) 
 }
 
 func Test_ListInstalledPackages_ParsesDpkgQueryOutput(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "dpkg-query" {
@@ -272,7 +257,7 @@ func Test_ListInstalledPackages_ParsesDpkgQueryOutput(t *testing.T) {
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 
 	packages, err := aptManager.ListInstalledPackages()
 
@@ -287,7 +272,6 @@ func Test_ListInstalledPackages_ParsesDpkgQueryOutput(t *testing.T) {
 }
 
 func Test_UninstallPackage_CallsAptRemoveCommand_AsRoot(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return &utils.Result{}, nil
@@ -305,7 +289,7 @@ func Test_UninstallPackage_CallsAptRemoveCommand_AsRoot(t *testing.T) {
 		},
 	}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 	packageInfo := pkgmanager.NewPackageInfo("git", "1.0.0")
 
 	err := aptManager.UninstallPackage(packageInfo)
@@ -332,7 +316,6 @@ func Test_UninstallPackage_CallsAptRemoveCommand_AsRoot(t *testing.T) {
 }
 
 func Test_GetPackageVersion_ReturnsVersion_WhenPackageIsInstalled(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "dpkg-query" {
@@ -346,7 +329,7 @@ func Test_GetPackageVersion_ReturnsVersion_WhenPackageIsInstalled(t *testing.T) 
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 
 	version, err := aptManager.GetPackageVersion("git")
 
@@ -355,7 +338,6 @@ func Test_GetPackageVersion_ReturnsVersion_WhenPackageIsInstalled(t *testing.T) 
 }
 
 func Test_GetPackageVersion_ReturnsError_WhenPackageNotInstalled(t *testing.T) {
-	mockLogger := &logger.MoqLogger{}
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "dpkg-query" {
@@ -369,7 +351,7 @@ func Test_GetPackageVersion_ReturnsError_WhenPackageNotInstalled(t *testing.T) {
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 	mockEscalator := &privilege.MoqEscalator{}
 
-	aptManager := apt.NewAptPackageManager(mockLogger, mockCommander, mockProgramQuery, mockEscalator)
+	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator)
 
 	version, err := aptManager.GetPackageVersion("git")
 

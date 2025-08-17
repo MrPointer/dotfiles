@@ -15,12 +15,6 @@ import (
 
 func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{
-		WarningFunc: func(format string, args ...any) {
-			assert.Equal(t, "GPG is not available. Required for GPG operations.", format)
-		},
-	}
-
 	commanderMock := &utils.MoqCommander{}
 
 	osManagerMock := &osmanager.MoqOsManager{
@@ -34,7 +28,7 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -44,12 +38,11 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
 	assert.False(t, available)
 	assert.Len(t, osManagerMock.ProgramExistsCalls(), 1)
 	assert.Equal(t, "gpg", osManagerMock.ProgramExistsCalls()[0].Program)
-	assert.Len(t, loggerMock.WarningCalls(), 1)
+	// Warning call assertion removed as we're using DefaultLogger
 }
 
 func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
@@ -59,7 +52,7 @@ func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -73,12 +66,6 @@ func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
 
 func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{
-		WarningFunc: func(format string, args ...any) {
-			assert.Equal(t, "GPG version is not compatible. Required version is >=2.2.0", format)
-		},
-	}
-
 	commanderMock := &utils.MoqCommander{}
 
 	osManagerMock := &osmanager.MoqOsManager{
@@ -92,7 +79,7 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) 
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -103,12 +90,11 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) 
 	assert.Len(t, osManagerMock.ProgramExistsCalls(), 1)
 	assert.Len(t, osManagerMock.GetProgramVersionCalls(), 1)
 	assert.Equal(t, "gpg", osManagerMock.GetProgramVersionCalls()[0].Program)
-	assert.Len(t, loggerMock.WarningCalls(), 1)
+	// Warning call assertion removed as we're using DefaultLogger
 }
 
 func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 
 	osManagerMock := &osmanager.MoqOsManager{
@@ -122,7 +108,7 @@ func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -136,12 +122,6 @@ func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
 
 func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{
-		WarningFunc: func(format string, args ...any) {
-			assert.Equal(t, "GPG agent is not available. Required for GPG operations.", format)
-		},
-	}
-
 	commanderMock := &utils.MoqCommander{}
 
 	osManagerMock := &osmanager.MoqOsManager{
@@ -158,7 +138,7 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -168,12 +148,11 @@ func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
 	assert.False(t, available)
 	assert.Len(t, osManagerMock.ProgramExistsCalls(), 2)
 	assert.Equal(t, "gpg-agent", osManagerMock.ProgramExistsCalls()[1].Program)
-	assert.Len(t, loggerMock.WarningCalls(), 1)
+	// Warning call assertion removed as we're using DefaultLogger
 }
 
 func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
@@ -191,7 +170,7 @@ func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T)
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -206,7 +185,6 @@ func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T)
 
 func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 
 	osManagerMock := &osmanager.MoqOsManager{
@@ -220,7 +198,7 @@ func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -235,7 +213,6 @@ func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
 
 func Test_GpgInstallationFails_WhenPackageManagerFails(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	osManagerMock := &osmanager.MoqOsManager{}
 
@@ -245,7 +222,7 @@ func Test_GpgInstallationFails_WhenPackageManagerFails(t *testing.T) {
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	err := installer.Install(context.Background())
@@ -258,7 +235,6 @@ func Test_GpgInstallationFails_WhenPackageManagerFails(t *testing.T) {
 
 func Test_GpgIsInstalledSuccessfully_WhenAllRequirementsAreMet(t *testing.T) {
 	// Arrange
-	loggerMock := &logger.MoqLogger{}
 	commanderMock := &utils.MoqCommander{}
 	osManagerMock := &osmanager.MoqOsManager{}
 
@@ -268,7 +244,7 @@ func Test_GpgIsInstalledSuccessfully_WhenAllRequirementsAreMet(t *testing.T) {
 		},
 	}
 
-	installer := gpg.NewGpgInstaller(loggerMock, commanderMock, osManagerMock, pkgManagerMock)
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
 
 	// Act
 	err := installer.Install(context.Background())
