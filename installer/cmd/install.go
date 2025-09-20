@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -72,9 +73,7 @@ making it easier to get started with a new system.`,
 				HandleCompatibilityError(err, sysInfo, installLogger)
 			}
 		}
-		installLogger.Success("✔︎ System compatibility check passed")
-
-		installLogger.Info("Installing dotfiles...")
+		installLogger.Success("System compatibility check passed")
 
 		// Install Homebrew if specified and not already available.
 		if installBrew {
@@ -101,7 +100,7 @@ making it easier to get started with a new system.`,
 			os.Exit(1)
 		}
 
-		installLogger.Success("🪄 Installation completed 🎉")
+		installLogger.Success("Installation completed successfully")
 	},
 }
 
@@ -181,7 +180,7 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo, log logger
 		}
 
 		prerequisitesToInstall = selectedPrerequisites
-		log.StartProgress("Installing selected prerequisites")
+		log.StartProgress(fmt.Sprintf("Installing %d selected prerequisites", len(selectedPrerequisites)))
 	}
 
 	// Install each selected prerequisite
@@ -195,11 +194,11 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo, log logger
 
 			err := packageManager.InstallPackage(packageInfo)
 			if err != nil {
-				log.FailProgress("Installation failed", err)
+				log.FailProgress(fmt.Sprintf("Failed to install %s", detail.Description), err)
 				return false
 			}
 
-			log.FinishProgress("Installation completed")
+			log.FinishProgress(fmt.Sprintf("%s installed successfully", detail.Description))
 			installed = true
 		}
 	}
@@ -214,6 +213,8 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo, log logger
 
 // installHomebrew installs Homebrew if not already installed.
 func installHomebrew(sysInfo compatibility.SystemInfo, log logger.Logger) (string, error) {
+	log.StartProgress("Setting up Homebrew")
+
 	// Create BrewInstaller using the new API.
 	installer := brew.NewBrewInstaller(brew.Options{
 		SystemInfo:      &sysInfo,
@@ -225,59 +226,85 @@ func installHomebrew(sysInfo compatibility.SystemInfo, log logger.Logger) (strin
 		MultiUserSystem: multiUserSystem,
 	})
 
+	log.StartProgress("Checking Homebrew availability")
 	isAvailable, err := installer.IsAvailable()
 	if err != nil {
+		log.FailProgress("Failed to check Homebrew availability", err)
 		return "", err
 	}
-	if isAvailable {
-		log.Success("Homebrew is already installed")
 
+	if isAvailable {
+		log.FinishProgress("Homebrew is already available")
+
+		log.Debug("Detecting Homebrew path")
 		brewPath, err := brew.DetectBrewPath(&sysInfo, "")
 		if err != nil {
+			log.FailProgress("Failed to detect Homebrew path", err)
 			return "", err
 		}
+		log.Debug("Homebrew path detected: %s", brewPath)
 
+		log.Debug("Updating PATH environment variable with Homebrew binaries")
 		// Although Homebrew is already installed, we still need to update the PATH environment variable,
 		// because it may not be set correctly.
 		err = brew.UpdatePathWithBrewBinaries(brewPath)
 		if err != nil {
+			log.FailProgress("Failed to update PATH with Homebrew binaries", err)
 			return "", err
 		}
+		log.Debug("PATH updated with Homebrew binaries")
 
+		log.FinishProgress("Homebrew is ready")
 		return brewPath, nil
 	}
+	log.FinishProgress("Homebrew not found")
 
+	log.StartProgress("Installing Homebrew")
 	if err := installer.Install(); err != nil {
+		log.FailProgress("Failed to install Homebrew", err)
 		return "", err
 	}
+	log.FinishProgress("Homebrew installation completed")
 
+	log.Debug("Detecting Homebrew path after installation")
 	brewPath, err := brew.DetectBrewPath(&sysInfo, "")
 	if err != nil {
+		log.FailProgress("Failed to detect Homebrew path after installation", err)
 		return "", err
 	}
+	log.Debug("Homebrew path detected: %s", brewPath)
 
-	log.Success("✔︎ Homebrew installed successfully")
+	log.FinishProgress("Homebrew setup completed")
 	return brewPath, nil
 }
 
 func installShell(log logger.Logger) error {
+	log.StartProgress(fmt.Sprintf("Setting up %s shell", shellName))
+
 	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager, log)
 
+	log.StartProgress(fmt.Sprintf("Checking %s shell availability", shellName))
 	isAvailable, err := shellInstaller.IsAvailable()
 	if err != nil {
+		log.FailProgress(fmt.Sprintf("Failed to check %s shell availability", shellName), err)
 		return err
 	}
+
 	if isAvailable {
-		log.Success("%s shell is already installed", shellName)
+		log.FinishProgress(fmt.Sprintf("%s shell is already available", shellName))
+		log.FinishProgress(fmt.Sprintf("%s shell is ready", shellName))
 		return nil
 	}
+	log.FinishProgress(fmt.Sprintf("%s shell not found", shellName))
 
-	log.Info("Installing %s shell", shellName)
-	if err := shellInstaller.Install(nil); err != nil {
+	log.StartProgress(fmt.Sprintf("Installing %s shell", shellName))
+	if err := shellInstaller.Install(context.TODO()); err != nil {
+		log.FailProgress(fmt.Sprintf("Failed to install %s shell", shellName), err)
 		return err
 	}
+	log.FinishProgress(fmt.Sprintf("%s shell installed successfully", shellName))
 
-	log.Success("✔︎ %s shell installed successfully", shellName)
+	log.FinishProgress(fmt.Sprintf("%s shell setup completed", shellName))
 	return nil
 }
 
@@ -292,7 +319,7 @@ func setupGpgKeys(log logger.Logger) error {
 		return nil
 	}
 
-	log.Info("Setting up GPG keys")
+	log.StartProgress("Setting up GPG keys")
 
 	gpgClient := gpg.NewDefaultGpgClient(
 		globalOsManager,
@@ -301,32 +328,43 @@ func setupGpgKeys(log logger.Logger) error {
 		cliLogger,
 	)
 
+	log.StartProgress("Checking for existing GPG keys")
 	existingKeys, err := gpgClient.ListAvailableKeys()
 	if err != nil {
+		log.FailProgress("Failed to list available GPG keys", err)
 		return err
 	}
+	log.FinishProgress("GPG keys check completed")
 
 	if len(existingKeys) == 0 {
+		log.StartProgress("Creating new GPG key pair")
 		keyId, err := gpgClient.CreateKeyPair()
 		if err != nil {
+			log.FailProgress("Failed to create GPG key pair", err)
 			return err
 		}
 		selectedGpgKey = keyId
+		log.FinishProgress("GPG key pair created successfully")
 	} else {
+		log.StartProgress("Selecting GPG key from existing keys")
 		gpgSelector := cli.NewDefaultGpgKeySelector()
 		selectedKey, err := gpgSelector.SelectKey(existingKeys)
 		if err != nil {
+			log.FailProgress("Failed to select GPG key", err)
 			return err
 		}
 		selectedGpgKey = selectedKey
+		log.FinishProgress("GPG key selected successfully")
 	}
 
-	log.Success("✔︎ GPG keys set up successfully")
+	log.FinishProgress("GPG keys set up successfully")
 	return nil
 }
 
 // installGpgClient installs the GPG client if not already available.
 func installGpgClient(log logger.Logger) error {
+	log.StartProgress("Setting up GPG client")
+
 	// Create GpgClientInstaller using the new API.
 	installer := gpg.NewGpgInstaller(
 		log,
@@ -335,49 +373,63 @@ func installGpgClient(log logger.Logger) error {
 		globalPackageManager,
 	)
 
+	log.StartProgress("Checking GPG client availability")
 	isAvailable, err := installer.IsAvailable()
 	if err != nil {
+		log.FailProgress("Failed to check GPG client availability", err)
 		return err
 	}
+
 	if isAvailable {
-		log.Success("GPG client is already installed")
+		log.FinishProgress("GPG client is already available")
+		log.FinishProgress("GPG client is ready")
 		return nil
 	}
+	log.FinishProgress("GPG client not found")
 
-	log.Info("Installing GPG client")
-	if err := installer.Install(nil); err != nil { // Pass context if needed.
+	log.StartProgress("Installing GPG client")
+	if err := installer.Install(context.TODO()); err != nil {
+		log.FailProgress("Failed to install GPG client", err)
 		return err
 	}
-	log.Success("✔︎ GPG client installed successfully")
+	log.FinishProgress("GPG client installed successfully")
 
+	log.FinishProgress("GPG client setup completed")
 	return nil
 }
 
 func setupDotfilesManager(log logger.Logger) error {
+	log.StartProgress("Setting up dotfiles manager")
+
 	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
 	if err != nil {
+		log.FailProgress("Failed to create dotfiles manager", err)
 		return err
 	}
 
-	log.Info("Installing dotfiles manager")
+	log.StartProgress("Installing dotfiles manager")
 	err = dm.Install()
 	if err != nil {
+		log.FailProgress("Failed to install dotfiles manager", err)
 		return err
 	}
-	log.Success("✔︎ Dotfiles manager installed successfully")
+	log.FinishProgress("Dotfiles manager installed successfully")
 
-	log.Info("Initializing dotfiles manager data")
+	log.StartProgress("Initializing dotfiles manager data")
 	if err := initDotfilesManagerData(dm); err != nil {
+		log.FailProgress("Failed to initialize dotfiles manager data", err)
 		return err
 	}
-	log.Success("✔︎ Dotfiles manager data initialized successfully")
+	log.FinishProgress("Dotfiles manager data initialized successfully")
 
-	log.Info("Applying dotfiles manager")
+	log.StartProgress("Applying dotfiles configuration")
 	if err := dm.Apply(); err != nil {
+		log.FailProgress("Failed to apply dotfiles configuration", err)
 		return err
 	}
-	log.Success("✔︎ Dotfiles manager data applied successfully")
+	log.FinishProgress("Dotfiles configuration applied successfully")
 
+	log.FinishProgress("Dotfiles manager setup completed successfully")
 	return nil
 }
 
