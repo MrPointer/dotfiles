@@ -43,3 +43,6 @@
 # Embedded config files
 !internal/config/*.yaml
 !internal/config/*.yml
+
+# Custom Docker files
+!docker/**/*

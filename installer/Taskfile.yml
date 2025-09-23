@@ -36,7 +36,7 @@ tasks:
       - go.mod
       - go.sum
       - "**/testdata/**/*"
-    cmds: 
+    cmds:
       - go test -race ./... {{ .CLI_ARGS }}
 
   build:

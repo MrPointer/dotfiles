@@ -1,0 +1,59 @@
+# Git directories and files
+.git
+.gitignore
+.gitattributes
+
+# Go build artifacts
+/bin/
+/dist/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# Task runner
+.task/
+
+# Documentation (not needed for builds)
+README.md
+*.md
+
+# GitHub workflows
+.github/
+
+# Demo and test files
+/demo/
+*.test
+
+# License and config files
+LICENSE
+.copier-answers.yml
+.golangci.yml
+.goreleaser.yaml
+.mockery.yml
+.typos.toml
+brew.test
+
+# Other Docker files in parent directories
+**/Dockerfile
+**/docker-compose.yml
+**/docker/
+
+# Temporary files
+*.tmp
+*.temp

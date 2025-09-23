@@ -1,0 +1,19 @@
+services:
+  installer-test-fedora:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: installer-test-fedora-env
+    volumes:
+      - ../../:/workspace/installer
+      - installer-cache-fedora:/home/testuser/.cache
+    working_dir: /workspace/installer
+    environment:
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+volumes:
+  installer-cache-fedora:
+    driver: local

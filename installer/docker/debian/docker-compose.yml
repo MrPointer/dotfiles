@@ -1,0 +1,19 @@
+services:
+  installer-test-debian:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: installer-test-debian-env
+    volumes:
+      - ../../:/workspace/installer
+      - installer-cache-debian:/home/testuser/.cache
+    working_dir: /workspace/installer
+    environment:
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+volumes:
+  installer-cache-debian:
+    driver: local

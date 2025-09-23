@@ -1,0 +1,19 @@
+services:
+  installer-test-ubuntu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: installer-test-ubuntu-env
+    volumes:
+      - ../../:/workspace/installer
+      - installer-cache-ubuntu:/home/testuser/.cache
+    working_dir: /workspace/installer
+    environment:
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+volumes:
+  installer-cache-ubuntu:
+    driver: local
