@@ -173,6 +173,49 @@ func (l *CliLogger) FailProgress(message string, err error) {
 	}
 }
 
+// StartPersistentProgress starts a persistent progress indicator that shows accomplishments.
+func (l *CliLogger) StartPersistentProgress(message string) {
+	// Always try to start persistent progress - the progress display handles whether it's active
+	l.progress.StartPersistent(message)
+
+	// If no progress operations are active after attempting to start,
+	// fall back to Info logging (this handles NoopProgressDisplay)
+	if !l.progress.IsActive() {
+		l.Info("%s", message)
+	}
+}
+
+// LogAccomplishment logs an accomplishment that stays visible.
+func (l *CliLogger) LogAccomplishment(message string) {
+	l.progress.LogAccomplishment(message)
+	// If progress is not active, fall back to Success logging
+	if !l.progress.IsActive() {
+		l.Success("%s", message)
+	}
+}
+
+// FinishPersistentProgress completes the persistent progress with success.
+func (l *CliLogger) FinishPersistentProgress(message string) {
+	wasActive := l.progress.IsActive()
+	l.progress.FinishPersistent(message)
+
+	// Fall back to Success logging if no progress was active
+	if !wasActive {
+		l.Success("%s", message)
+	}
+}
+
+// FailPersistentProgress completes the persistent progress with failure and shows error.
+func (l *CliLogger) FailPersistentProgress(message string, err error) {
+	wasActive := l.progress.IsActive()
+	l.progress.FailPersistent(message, err)
+
+	// Fall back to Error logging if no progress was active
+	if !wasActive {
+		l.Error("%s: %v", message, err)
+	}
+}
+
 // PrintStyled is a helper function to print styled text to the specified writer.
 func PrintStyled(writer io.Writer, style lipgloss.Style, format string, args ...any) {
 	if file, ok := writer.(*os.File); ok {

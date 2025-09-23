@@ -14,6 +14,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// ANSI escape codes for terminal control
+const (
+	clearLine = "\033[K" // Clear line from cursor to end
+)
+
 // ProgressOperation represents an active progress operation.
 type ProgressOperation struct {
 	Message    string
@@ -41,6 +46,7 @@ type ProgressDisplay struct {
 	progressStack       []*ProgressOperation
 	activeSpinner       *ProgressOperation
 	operationInProgress int32 // atomic counter
+	persistentMode      bool  // whether we're in persistent mode
 }
 
 var _ ProgressReporter = (*ProgressDisplay)(nil)
@@ -79,9 +85,8 @@ func (p *ProgressDisplay) Start(message string) {
 	// Increment operation counter
 	atomic.AddInt32(&p.operationInProgress, 1)
 
-	// Create indented message for hierarchical display
-	indent := strings.Repeat("  ", level)
-	displayMessage := indent + message
+	// Create contextual message showing hierarchy
+	displayMessage := p.buildContextualMessage()
 
 	// Start spinner in background
 	go p.runSpinner(ctx, operation, displayMessage)
@@ -199,29 +204,34 @@ func (p *ProgressDisplay) resumeParentOperation() {
 // displayCompletion shows the completion message for an operation.
 func (p *ProgressDisplay) displayCompletion(operation *ProgressOperation, success bool, err error) {
 	duration := time.Since(operation.StartTime)
-	indent := strings.Repeat("  ", operation.Level)
+
+	// In persistent mode, don't show individual completion messages
+	// unless it's the top-level operation
+	if p.persistentMode && operation.Level > 0 {
+		return
+	}
 
 	var displayMessage string
 	if success {
 		if duration > 100*time.Millisecond {
-			displayMessage = fmt.Sprintf("%s%s (took %v)", indent, operation.Message, duration.Round(10*time.Millisecond))
+			displayMessage = fmt.Sprintf("%s (took %v)", operation.Message, duration.Round(10*time.Millisecond))
 		} else {
-			displayMessage = fmt.Sprintf("%s%s", indent, operation.Message)
+			displayMessage = operation.Message
 		}
 
-		// Print success message
+		// Print success message without indentation for minimal output
 		checkmark := lipgloss.NewStyle().Foreground(lipgloss.Color("#2ecc71")).Render("✓")
-		fmt.Fprintf(p.output, "\r%s %s\n", checkmark, displayMessage)
+		fmt.Fprintf(p.output, "\r%s%s %s\n", clearLine, checkmark, displayMessage)
 	} else {
 		if duration > 100*time.Millisecond {
-			displayMessage = fmt.Sprintf("%s%s (failed after %v)", indent, operation.Message, duration.Round(10*time.Millisecond))
+			displayMessage = fmt.Sprintf("%s (failed after %v)", operation.Message, duration.Round(10*time.Millisecond))
 		} else {
-			displayMessage = fmt.Sprintf("%s%s", indent, operation.Message)
+			displayMessage = operation.Message
 		}
 
-		// Print failure message
+		// Print failure message without indentation for minimal output
 		cross := lipgloss.NewStyle().Foreground(lipgloss.Color("#e74c3c")).Render("✗")
-		errorMsg := fmt.Sprintf("\r%s %s", cross, displayMessage)
+		errorMsg := fmt.Sprintf("\r%s%s %s", clearLine, cross, displayMessage)
 		if err != nil {
 			errorMsg += fmt.Sprintf("\n  Error: %v", err)
 		}
@@ -269,6 +279,46 @@ func (p *ProgressDisplay) runSpinner(ctx context.Context, operation *ProgressOpe
 	s.Run()
 }
 
+// buildContextualMessage creates a hierarchical message showing the full context
+func (p *ProgressDisplay) buildContextualMessage() string {
+	if len(p.progressStack) == 0 {
+		return ""
+	}
+
+	// Build context from all operations in the stack
+	var parts []string
+	for _, op := range p.progressStack {
+		parts = append(parts, op.Message)
+	}
+
+	// Join with separator to show hierarchy
+	return strings.Join(parts, ": ")
+}
+
+// StartPersistent begins a persistent progress operation that shows accomplishments.
+func (p *ProgressDisplay) StartPersistent(message string) {
+	p.persistentMode = true
+	p.Start(message)
+}
+
+// LogAccomplishment logs an accomplishment that stays visible.
+func (p *ProgressDisplay) LogAccomplishment(message string) {
+	checkmark := lipgloss.NewStyle().Foreground(lipgloss.Color("#2ecc71")).Render("✓")
+	fmt.Fprintf(p.output, "\r%s   %s %s\n", clearLine, checkmark, message)
+}
+
+// FinishPersistent completes persistent progress with success.
+func (p *ProgressDisplay) FinishPersistent(message string) {
+	p.persistentMode = false
+	p.Finish(message)
+}
+
+// FailPersistent completes persistent progress with failure.
+func (p *ProgressDisplay) FailPersistent(message string, err error) {
+	p.persistentMode = false
+	p.Fail(message, err)
+}
+
 // ProgressReporter defines the interface for hierarchical progress reporting.
 type ProgressReporter interface {
 	// Start begins a new progress operation with the given message
@@ -283,6 +333,14 @@ type ProgressReporter interface {
 	IsActive() bool
 	// Clear stops all progress operations without displaying completion messages
 	Clear()
+	// StartPersistent begins a persistent progress operation that shows accomplishments
+	StartPersistent(message string)
+	// LogAccomplishment logs an accomplishment that stays visible
+	LogAccomplishment(message string)
+	// FinishPersistent completes persistent progress with success
+	FinishPersistent(message string)
+	// FailPersistent completes persistent progress with failure
+	FailPersistent(message string, err error)
 }
 
 // NoopProgressDisplay is a progress display that does nothing.
@@ -312,3 +370,15 @@ func (n *NoopProgressDisplay) IsActive() bool { return false }
 
 // Clear does nothing.
 func (n *NoopProgressDisplay) Clear() {}
+
+// StartPersistent does nothing.
+func (n *NoopProgressDisplay) StartPersistent(message string) {}
+
+// LogAccomplishment does nothing.
+func (n *NoopProgressDisplay) LogAccomplishment(message string) {}
+
+// FinishPersistent does nothing.
+func (n *NoopProgressDisplay) FinishPersistent(message string) {}
+
+// FailPersistent does nothing.
+func (n *NoopProgressDisplay) FailPersistent(message string, err error) {}

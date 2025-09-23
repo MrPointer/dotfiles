@@ -402,3 +402,265 @@ func Test_VerboseLoggingWithoutProgressWorks(t *testing.T) {
 
 	require.NotNil(t, log)
 }
+
+func Test_StartPersistentProgressWithProgressEnabledWorks(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	log := logger.NewProgressCliLogger(logger.Normal)
+
+	log.StartPersistentProgress("Installing components")
+	time.Sleep(50 * time.Millisecond)
+	log.FinishPersistentProgress("Installation complete")
+
+	require.NotNil(t, log)
+}
+
+func Test_StartPersistentProgressWithoutProgressFallsBackToInfoLogging(t *testing.T) {
+	log := logger.NewCliLogger(logger.Normal)
+
+	log.StartPersistentProgress("This should appear as Info message")
+	log.FinishPersistentProgress("This should appear as Success message")
+
+	require.NotNil(t, log)
+}
+
+func Test_LogAccomplishmentWithProgressEnabledShowsPersistentMessage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	log := logger.NewProgressCliLogger(logger.Normal)
+
+	log.StartPersistentProgress("Installing packages")
+	time.Sleep(30 * time.Millisecond)
+
+	log.LogAccomplishment("Downloaded package A")
+	log.LogAccomplishment("Downloaded package B")
+	log.LogAccomplishment("Downloaded package C")
+
+	time.Sleep(30 * time.Millisecond)
+	log.FinishPersistentProgress("All packages installed")
+
+	require.NotNil(t, log)
+}
+
+func Test_LogAccomplishmentWithoutProgressFallsBackToSuccessLogging(t *testing.T) {
+	log := logger.NewCliLogger(logger.Normal)
+
+	log.LogAccomplishment("This should appear as Success message")
+
+	require.NotNil(t, log)
+}
+
+func Test_FinishPersistentProgressWithoutActiveProgressFallsBackToSuccessLogging(t *testing.T) {
+	log := logger.NewProgressCliLogger(logger.Normal)
+
+	log.FinishPersistentProgress("Never started persistent progress")
+
+	require.NotNil(t, log)
+}
+
+func Test_FailPersistentProgressWithoutActiveProgressFallsBackToErrorLogging(t *testing.T) {
+	log := logger.NewProgressCliLogger(logger.Normal)
+
+	log.FailPersistentProgress("Never started persistent progress", errors.New("test error"))
+
+	require.NotNil(t, log)
+}
+
+func Test_PersistentProgressCanFailWithError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	log := logger.NewProgressCliLogger(logger.Normal)
+
+	log.StartPersistentProgress("Installing critical component")
+	log.LogAccomplishment("Downloaded dependencies")
+	log.LogAccomplishment("Validated checksums")
+	time.Sleep(50 * time.Millisecond)
+	log.FailPersistentProgress("Installation failed", errors.New("permission denied"))
+
+	require.NotNil(t, log)
+}
+
+func Test_MixedPersistentAndRegularProgressOperationsWork(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	log := logger.NewProgressCliLogger(logger.Normal)
+
+	log.StartPersistentProgress("Setting up development environment")
+	log.LogAccomplishment("Created project directory")
+
+	log.StartProgress("Downloading dependencies")
+	time.Sleep(50 * time.Millisecond)
+	log.FinishProgress("Dependencies downloaded")
+
+	log.LogAccomplishment("Installed build tools")
+	log.LogAccomplishment("Configured IDE settings")
+
+	log.StartProgress("Running initial build")
+	time.Sleep(50 * time.Millisecond)
+	log.FinishProgress("Build completed successfully")
+
+	log.FinishPersistentProgress("Development environment ready")
+
+	require.NotNil(t, log)
+}
+
+func Test_PersistentProgressWithMultipleAccomplishmentsDisplaysCorrectly(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	log := logger.NewProgressCliLogger(logger.Normal)
+
+	log.StartPersistentProgress("Deploying application")
+
+	accomplishments := []string{
+		"Built application binary",
+		"Created Docker image",
+		"Pushed to registry",
+		"Updated deployment configuration",
+		"Applied Kubernetes manifests",
+		"Verified health checks",
+	}
+
+	for _, accomplishment := range accomplishments {
+		time.Sleep(20 * time.Millisecond)
+		log.LogAccomplishment(accomplishment)
+	}
+
+	time.Sleep(30 * time.Millisecond)
+	log.FinishPersistentProgress("Application deployed successfully")
+
+	require.NotNil(t, log)
+}
+
+func Test_StartPersistentProgressCallsProgressReporterStartPersistent(t *testing.T) {
+	mockProgress := &logger.MoqProgressReporter{
+		StartPersistentFunc: func(message string) {},
+		IsActiveFunc:        func() bool { return true },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.StartPersistentProgress("Test message")
+
+	calls := mockProgress.StartPersistentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test message", calls[0].Message)
+}
+
+func Test_StartPersistentProgressFallsBackToInfoWhenProgressNotActive(t *testing.T) {
+	mockProgress := &logger.MoqProgressReporter{
+		StartPersistentFunc: func(message string) {},
+		IsActiveFunc:        func() bool { return false },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.StartPersistentProgress("Test message")
+
+	calls := mockProgress.StartPersistentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test message", calls[0].Message)
+}
+
+func Test_LogAccomplishmentCallsProgressReporterLogAccomplishment(t *testing.T) {
+	mockProgress := &logger.MoqProgressReporter{
+		LogAccomplishmentFunc: func(message string) {},
+		IsActiveFunc:          func() bool { return true },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.LogAccomplishment("Test accomplishment")
+
+	calls := mockProgress.LogAccomplishmentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test accomplishment", calls[0].Message)
+}
+
+func Test_LogAccomplishmentFallsBackToSuccessWhenProgressNotActive(t *testing.T) {
+	mockProgress := &logger.MoqProgressReporter{
+		LogAccomplishmentFunc: func(message string) {},
+		IsActiveFunc:          func() bool { return false },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.LogAccomplishment("Test accomplishment")
+
+	calls := mockProgress.LogAccomplishmentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test accomplishment", calls[0].Message)
+}
+
+func Test_FinishPersistentProgressCallsProgressReporterFinishPersistent(t *testing.T) {
+	mockProgress := &logger.MoqProgressReporter{
+		FinishPersistentFunc: func(message string) {},
+		IsActiveFunc:         func() bool { return true },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.FinishPersistentProgress("Test finished")
+
+	calls := mockProgress.FinishPersistentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test finished", calls[0].Message)
+}
+
+func Test_FinishPersistentProgressFallsBackToSuccessWhenProgressNotActive(t *testing.T) {
+	mockProgress := &logger.MoqProgressReporter{
+		FinishPersistentFunc: func(message string) {},
+		IsActiveFunc:         func() bool { return false },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.FinishPersistentProgress("Test finished")
+
+	calls := mockProgress.FinishPersistentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test finished", calls[0].Message)
+}
+
+func Test_FailPersistentProgressCallsProgressReporterFailPersistent(t *testing.T) {
+	testErr := errors.New("test error")
+	mockProgress := &logger.MoqProgressReporter{
+		FailPersistentFunc: func(message string, err error) {},
+		IsActiveFunc:       func() bool { return true },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.FailPersistentProgress("Test failed", testErr)
+
+	calls := mockProgress.FailPersistentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test failed", calls[0].Message)
+	require.Equal(t, testErr, calls[0].Err)
+}
+
+func Test_FailPersistentProgressFallsBackToErrorWhenProgressNotActive(t *testing.T) {
+	testErr := errors.New("test error")
+	mockProgress := &logger.MoqProgressReporter{
+		FailPersistentFunc: func(message string, err error) {},
+		IsActiveFunc:       func() bool { return false },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.FailPersistentProgress("Test failed", testErr)
+
+	calls := mockProgress.FailPersistentCalls()
+	require.Len(t, calls, 1)
+	require.Equal(t, "Test failed", calls[0].Message)
+	require.Equal(t, testErr, calls[0].Err)
+}

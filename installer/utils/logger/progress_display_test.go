@@ -69,8 +69,8 @@ func Test_NestedProgressOperationsShowProperHierarchy(t *testing.T) {
 	output := buf.String()
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 
-	// Should have indented child operation
-	require.Contains(t, output, "  Child operation")
+	// Should have contextual messages during progress and clean completion messages
+	require.Contains(t, output, "Child operation")
 	require.Contains(t, output, "Parent operation")
 	require.Contains(t, strings.Join(lines, "\n"), "✓")
 }
@@ -165,11 +165,11 @@ func Test_DeeplyNestedOperationsShowCorrectIndentation(t *testing.T) {
 
 	output := buf.String()
 
-	// Check indentation levels
-	require.Contains(t, output, "Level 1")       // No indentation
-	require.Contains(t, output, "  Level 2")     // 2 spaces
-	require.Contains(t, output, "    Level 3")   // 4 spaces
-	require.Contains(t, output, "      Level 4") // 6 spaces
+	// Check that all levels appear in output (contextual messages during progress)
+	require.Contains(t, output, "Level 1")
+	require.Contains(t, output, "Level 2")
+	require.Contains(t, output, "Level 3")
+	require.Contains(t, output, "Level 4")
 }
 
 func Test_LongRunningOperationsShowTimingInformation(t *testing.T) {
@@ -332,4 +332,178 @@ func Test_RapidSequentialOperationsWork(t *testing.T) {
 	// Should have multiple completion messages
 	checkmarkCount := strings.Count(output, "✓")
 	require.Equal(t, 10, checkmarkCount)
+}
+
+func Test_StartPersistentProgressActivatesPersistentMode(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.StartPersistent("Installing packages")
+	require.True(t, display.IsActive())
+
+	time.Sleep(50 * time.Millisecond)
+	display.FinishPersistent("Installation complete")
+	require.False(t, display.IsActive())
+
+	output := buf.String()
+	require.Contains(t, output, "✓")
+	require.Contains(t, output, "Installing packages")
+}
+
+func Test_LogAccomplishmentShowsVisibleAccomplishments(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.StartPersistent("Deploying application")
+	time.Sleep(30 * time.Millisecond)
+
+	display.LogAccomplishment("Built application")
+	display.LogAccomplishment("Created container")
+	display.LogAccomplishment("Pushed to registry")
+
+	time.Sleep(30 * time.Millisecond)
+	display.FinishPersistent("Deployment complete")
+
+	output := buf.String()
+	require.Contains(t, output, "Built application")
+	require.Contains(t, output, "Created container")
+	require.Contains(t, output, "Pushed to registry")
+	require.Contains(t, output, "Deploying application")
+}
+
+func Test_ProgressDisplayPersistentProgressCanFailWithError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.StartPersistent("Critical operation")
+	display.LogAccomplishment("Step 1 completed")
+	display.LogAccomplishment("Step 2 completed")
+	time.Sleep(30 * time.Millisecond)
+	display.FailPersistent("Critical operation failed", errors.New("permission denied"))
+
+	require.False(t, display.IsActive())
+
+	output := buf.String()
+	require.Contains(t, output, "Step 1 completed")
+	require.Contains(t, output, "Step 2 completed")
+	require.Contains(t, output, "✗")
+	require.Contains(t, output, "Critical operation")
+	require.Contains(t, output, "permission denied")
+}
+
+func Test_ProgressDisplayMixedPersistentAndRegularProgressOperationsWork(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.StartPersistent("Setting up environment")
+	display.LogAccomplishment("Created directories")
+
+	display.Start("Downloading files")
+	time.Sleep(30 * time.Millisecond)
+	display.Finish("Files downloaded")
+
+	display.LogAccomplishment("Installed dependencies")
+
+	display.Start("Running tests")
+	time.Sleep(30 * time.Millisecond)
+	display.Finish("Tests passed")
+
+	display.FinishPersistent("Environment ready")
+
+	output := buf.String()
+	require.Contains(t, output, "Created directories")
+	require.Contains(t, output, "Installed dependencies")
+	require.Contains(t, output, "Setting up environment")
+}
+
+func Test_LogAccomplishmentWithoutActivePersistentProgressStillWorks(t *testing.T) {
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.LogAccomplishment("Standalone accomplishment")
+
+	output := buf.String()
+	require.Contains(t, output, "✓")
+	require.Contains(t, output, "Standalone accomplishment")
+}
+
+func Test_FinishPersistentWithoutActiveProgressDoesNothing(t *testing.T) {
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.FinishPersistent("No active progress")
+	require.False(t, display.IsActive())
+}
+
+func Test_FailPersistentWithoutActiveProgressDoesNothing(t *testing.T) {
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.FailPersistent("No active progress", errors.New("test error"))
+	require.False(t, display.IsActive())
+}
+
+func Test_PersistentProgressShowsAccomplishmentsInRealTime(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.StartPersistent("Processing items")
+
+	accomplishments := []string{
+		"Processed item 1",
+		"Processed item 2",
+		"Processed item 3",
+		"Processed item 4",
+		"Processed item 5",
+	}
+
+	for _, accomplishment := range accomplishments {
+		time.Sleep(20 * time.Millisecond)
+		display.LogAccomplishment(accomplishment)
+	}
+
+	display.FinishPersistent("All items processed")
+
+	output := buf.String()
+	for _, accomplishment := range accomplishments {
+		require.Contains(t, output, accomplishment)
+	}
+	require.Contains(t, output, "Processing items")
+}
+
+func Test_NoopProgressDisplayPersistentMethodsDoNothing(t *testing.T) {
+	display := logger.NewNoopProgressDisplay()
+
+	// All these should not crash and should not do anything
+	display.StartPersistent("Test")
+	require.False(t, display.IsActive())
+
+	display.LogAccomplishment("Test accomplishment")
+	require.False(t, display.IsActive())
+
+	display.FinishPersistent("Test")
+	require.False(t, display.IsActive())
+
+	display.FailPersistent("Test", errors.New("test"))
+	require.False(t, display.IsActive())
 }

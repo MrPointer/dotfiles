@@ -24,14 +24,26 @@ var _ ProgressReporter = &MoqProgressReporter{}
 //			FailFunc: func(message string, err error)  {
 //				panic("mock out the Fail method")
 //			},
+//			FailPersistentFunc: func(message string, err error)  {
+//				panic("mock out the FailPersistent method")
+//			},
 //			FinishFunc: func(message string)  {
 //				panic("mock out the Finish method")
+//			},
+//			FinishPersistentFunc: func(message string)  {
+//				panic("mock out the FinishPersistent method")
 //			},
 //			IsActiveFunc: func() bool {
 //				panic("mock out the IsActive method")
 //			},
+//			LogAccomplishmentFunc: func(message string)  {
+//				panic("mock out the LogAccomplishment method")
+//			},
 //			StartFunc: func(message string)  {
 //				panic("mock out the Start method")
+//			},
+//			StartPersistentFunc: func(message string)  {
+//				panic("mock out the StartPersistent method")
 //			},
 //			UpdateFunc: func(message string)  {
 //				panic("mock out the Update method")
@@ -49,14 +61,26 @@ type MoqProgressReporter struct {
 	// FailFunc mocks the Fail method.
 	FailFunc func(message string, err error)
 
+	// FailPersistentFunc mocks the FailPersistent method.
+	FailPersistentFunc func(message string, err error)
+
 	// FinishFunc mocks the Finish method.
 	FinishFunc func(message string)
+
+	// FinishPersistentFunc mocks the FinishPersistent method.
+	FinishPersistentFunc func(message string)
 
 	// IsActiveFunc mocks the IsActive method.
 	IsActiveFunc func() bool
 
+	// LogAccomplishmentFunc mocks the LogAccomplishment method.
+	LogAccomplishmentFunc func(message string)
+
 	// StartFunc mocks the Start method.
 	StartFunc func(message string)
+
+	// StartPersistentFunc mocks the StartPersistent method.
+	StartPersistentFunc func(message string)
 
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(message string)
@@ -73,16 +97,38 @@ type MoqProgressReporter struct {
 			// Err is the err argument value.
 			Err error
 		}
+		// FailPersistent holds details about calls to the FailPersistent method.
+		FailPersistent []struct {
+			// Message is the message argument value.
+			Message string
+			// Err is the err argument value.
+			Err error
+		}
 		// Finish holds details about calls to the Finish method.
 		Finish []struct {
+			// Message is the message argument value.
+			Message string
+		}
+		// FinishPersistent holds details about calls to the FinishPersistent method.
+		FinishPersistent []struct {
 			// Message is the message argument value.
 			Message string
 		}
 		// IsActive holds details about calls to the IsActive method.
 		IsActive []struct {
 		}
+		// LogAccomplishment holds details about calls to the LogAccomplishment method.
+		LogAccomplishment []struct {
+			// Message is the message argument value.
+			Message string
+		}
 		// Start holds details about calls to the Start method.
 		Start []struct {
+			// Message is the message argument value.
+			Message string
+		}
+		// StartPersistent holds details about calls to the StartPersistent method.
+		StartPersistent []struct {
 			// Message is the message argument value.
 			Message string
 		}
@@ -92,12 +138,16 @@ type MoqProgressReporter struct {
 			Message string
 		}
 	}
-	lockClear    sync.RWMutex
-	lockFail     sync.RWMutex
-	lockFinish   sync.RWMutex
-	lockIsActive sync.RWMutex
-	lockStart    sync.RWMutex
-	lockUpdate   sync.RWMutex
+	lockClear             sync.RWMutex
+	lockFail              sync.RWMutex
+	lockFailPersistent    sync.RWMutex
+	lockFinish            sync.RWMutex
+	lockFinishPersistent  sync.RWMutex
+	lockIsActive          sync.RWMutex
+	lockLogAccomplishment sync.RWMutex
+	lockStart             sync.RWMutex
+	lockStartPersistent   sync.RWMutex
+	lockUpdate            sync.RWMutex
 }
 
 // Clear calls ClearFunc.
@@ -163,6 +213,42 @@ func (mock *MoqProgressReporter) FailCalls() []struct {
 	return calls
 }
 
+// FailPersistent calls FailPersistentFunc.
+func (mock *MoqProgressReporter) FailPersistent(message string, err error) {
+	if mock.FailPersistentFunc == nil {
+		panic("MoqProgressReporter.FailPersistentFunc: method is nil but ProgressReporter.FailPersistent was just called")
+	}
+	callInfo := struct {
+		Message string
+		Err     error
+	}{
+		Message: message,
+		Err:     err,
+	}
+	mock.lockFailPersistent.Lock()
+	mock.calls.FailPersistent = append(mock.calls.FailPersistent, callInfo)
+	mock.lockFailPersistent.Unlock()
+	mock.FailPersistentFunc(message, err)
+}
+
+// FailPersistentCalls gets all the calls that were made to FailPersistent.
+// Check the length with:
+//
+//	len(mockedProgressReporter.FailPersistentCalls())
+func (mock *MoqProgressReporter) FailPersistentCalls() []struct {
+	Message string
+	Err     error
+} {
+	var calls []struct {
+		Message string
+		Err     error
+	}
+	mock.lockFailPersistent.RLock()
+	calls = mock.calls.FailPersistent
+	mock.lockFailPersistent.RUnlock()
+	return calls
+}
+
 // Finish calls FinishFunc.
 func (mock *MoqProgressReporter) Finish(message string) {
 	if mock.FinishFunc == nil {
@@ -195,6 +281,38 @@ func (mock *MoqProgressReporter) FinishCalls() []struct {
 	return calls
 }
 
+// FinishPersistent calls FinishPersistentFunc.
+func (mock *MoqProgressReporter) FinishPersistent(message string) {
+	if mock.FinishPersistentFunc == nil {
+		panic("MoqProgressReporter.FinishPersistentFunc: method is nil but ProgressReporter.FinishPersistent was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockFinishPersistent.Lock()
+	mock.calls.FinishPersistent = append(mock.calls.FinishPersistent, callInfo)
+	mock.lockFinishPersistent.Unlock()
+	mock.FinishPersistentFunc(message)
+}
+
+// FinishPersistentCalls gets all the calls that were made to FinishPersistent.
+// Check the length with:
+//
+//	len(mockedProgressReporter.FinishPersistentCalls())
+func (mock *MoqProgressReporter) FinishPersistentCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockFinishPersistent.RLock()
+	calls = mock.calls.FinishPersistent
+	mock.lockFinishPersistent.RUnlock()
+	return calls
+}
+
 // IsActive calls IsActiveFunc.
 func (mock *MoqProgressReporter) IsActive() bool {
 	if mock.IsActiveFunc == nil {
@@ -219,6 +337,38 @@ func (mock *MoqProgressReporter) IsActiveCalls() []struct {
 	mock.lockIsActive.RLock()
 	calls = mock.calls.IsActive
 	mock.lockIsActive.RUnlock()
+	return calls
+}
+
+// LogAccomplishment calls LogAccomplishmentFunc.
+func (mock *MoqProgressReporter) LogAccomplishment(message string) {
+	if mock.LogAccomplishmentFunc == nil {
+		panic("MoqProgressReporter.LogAccomplishmentFunc: method is nil but ProgressReporter.LogAccomplishment was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockLogAccomplishment.Lock()
+	mock.calls.LogAccomplishment = append(mock.calls.LogAccomplishment, callInfo)
+	mock.lockLogAccomplishment.Unlock()
+	mock.LogAccomplishmentFunc(message)
+}
+
+// LogAccomplishmentCalls gets all the calls that were made to LogAccomplishment.
+// Check the length with:
+//
+//	len(mockedProgressReporter.LogAccomplishmentCalls())
+func (mock *MoqProgressReporter) LogAccomplishmentCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockLogAccomplishment.RLock()
+	calls = mock.calls.LogAccomplishment
+	mock.lockLogAccomplishment.RUnlock()
 	return calls
 }
 
@@ -251,6 +401,38 @@ func (mock *MoqProgressReporter) StartCalls() []struct {
 	mock.lockStart.RLock()
 	calls = mock.calls.Start
 	mock.lockStart.RUnlock()
+	return calls
+}
+
+// StartPersistent calls StartPersistentFunc.
+func (mock *MoqProgressReporter) StartPersistent(message string) {
+	if mock.StartPersistentFunc == nil {
+		panic("MoqProgressReporter.StartPersistentFunc: method is nil but ProgressReporter.StartPersistent was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockStartPersistent.Lock()
+	mock.calls.StartPersistent = append(mock.calls.StartPersistent, callInfo)
+	mock.lockStartPersistent.Unlock()
+	mock.StartPersistentFunc(message)
+}
+
+// StartPersistentCalls gets all the calls that were made to StartPersistent.
+// Check the length with:
+//
+//	len(mockedProgressReporter.StartPersistentCalls())
+func (mock *MoqProgressReporter) StartPersistentCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockStartPersistent.RLock()
+	calls = mock.calls.StartPersistent
+	mock.lockStartPersistent.RUnlock()
 	return calls
 }
 
