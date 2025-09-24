@@ -53,6 +53,8 @@ type Options struct {
 	Input []byte
 	// CaptureOutput determines whether to capture stdout/stderr or pipe to current process
 	CaptureOutput bool
+	// Interactive determines whether this is an interactive command that needs direct terminal access
+	Interactive bool
 	// Timeout specifies a timeout for the command execution
 	Timeout time.Duration
 	// Stdout specifies where to write stdout (only used when CaptureOutput is false)
@@ -114,6 +116,24 @@ func WithCaptureOutput() Option {
 	}
 }
 
+// WithInteractive enables interactive mode for commands that need user input
+// This ensures stdin/stdout/stderr are connected to the terminal and not captured
+func WithInteractive() Option {
+	return func(o *Options) {
+		o.Interactive = true
+		o.CaptureOutput = false // Interactive commands should not capture output
+	}
+}
+
+// WithInteractiveCapture enables interactive mode while still capturing output
+// This allows user interaction but also captures output for parsing
+func WithInteractiveCapture() Option {
+	return func(o *Options) {
+		o.Interactive = true
+		o.CaptureOutput = true // Capture output for parsing while allowing interaction
+	}
+}
+
 // WithTimeout sets a timeout for command execution
 func WithTimeout(timeout time.Duration) Option {
 	return func(o *Options) {
@@ -154,6 +174,7 @@ func (c *DefaultCommander) RunCommand(name string, args []string, opts ...Option
 	// Apply default options
 	options := &Options{
 		CaptureOutput: false,
+		Interactive:   false,
 		Stdout:        os.Stdout,
 		Stderr:        os.Stderr,
 	}
@@ -180,7 +201,10 @@ func (c *DefaultCommander) RunCommand(name string, args []string, opts ...Option
 	}
 
 	// Set up input
-	if len(options.Input) > 0 {
+	if options.Interactive {
+		// For interactive commands, connect stdin directly to terminal
+		cmd.Stdin = os.Stdin
+	} else if len(options.Input) > 0 {
 		cmd.Stdin = bytes.NewReader(options.Input)
 	}
 
@@ -189,7 +213,16 @@ func (c *DefaultCommander) RunCommand(name string, args []string, opts ...Option
 
 	start := time.Now()
 
-	if options.CaptureOutput {
+	if options.Interactive && !options.CaptureOutput {
+		// For pure interactive commands, connect directly to terminal
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	} else if options.Interactive && options.CaptureOutput {
+		// For interactive commands that also need output capture,
+		// use io.MultiWriter to both display and capture
+		cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
+		cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
+	} else if options.CaptureOutput {
 		// Capture output in buffers
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr

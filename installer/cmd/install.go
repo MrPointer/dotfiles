@@ -337,24 +337,24 @@ func setupGpgKeys(log logger.Logger) error {
 	log.FinishProgress("GPG keys check completed")
 
 	if len(existingKeys) == 0 {
-		log.StartProgress("Creating new GPG key pair")
+		log.StartInteractiveProgress("Creating new GPG key pair")
 		keyId, err := gpgClient.CreateKeyPair()
 		if err != nil {
-			log.FailProgress("Failed to create GPG key pair", err)
+			log.FailInteractiveProgress("Failed to create GPG key pair", err)
 			return err
 		}
 		selectedGpgKey = keyId
-		log.FinishProgress("GPG key pair created successfully")
+		log.FinishInteractiveProgress("GPG key pair created successfully")
 	} else {
-		log.StartProgress("Selecting GPG key from existing keys")
+		log.StartInteractiveProgress("Selecting GPG key from existing keys")
 		gpgSelector := cli.NewDefaultGpgKeySelector()
 		selectedKey, err := gpgSelector.SelectKey(existingKeys)
 		if err != nil {
-			log.FailProgress("Failed to select GPG key", err)
+			log.FailInteractiveProgress("Failed to select GPG key", err)
 			return err
 		}
 		selectedGpgKey = selectedKey
-		log.FinishProgress("GPG key selected successfully")
+		log.FinishInteractiveProgress("GPG key selected successfully")
 	}
 
 	log.FinishProgress("GPG keys set up successfully")

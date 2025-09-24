@@ -80,6 +80,20 @@ tasks:
       - echo "6️⃣ Running persistent demo..."
       - ./{{.DEMO_BINARY}} --type persistent
 
+  interactive:
+    desc: Run interactive demo (tests spinner pause/resume)
+    deps: [build]
+    cmds:
+      - echo "7️⃣ Running interactive demo..."
+      - ./{{.DEMO_BINARY}} --type interactive
+
+  interactive-stress:
+    desc: Run stress test demo (rapid pause/resume cycles)
+    deps: [build]
+    cmds:
+      - echo "🔥 Running stress test demo..."
+      - ./{{.DEMO_BINARY}} --type stress
+
   # Comparison and testing
   compare:
     desc: Compare progress vs plain output modes
@@ -131,6 +145,20 @@ tasks:
           read -p "Press Enter to continue..."
         fi
       - task: long
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: interactive
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: stress
       - echo ""
       - echo "🎉 All demos completed!"
 
@@ -146,6 +174,8 @@ tasks:
       - ./{{.DEMO_BINARY}} --type concurrent --count 3
       - ./{{.DEMO_BINARY}} --type long
       - ./{{.DEMO_BINARY}} --type persistent
+      - ./{{.DEMO_BINARY}} --type interactive
+      - ./{{.DEMO_BINARY}} --type stress
 
   verbose:
     desc: Run with verbose logging for debugging

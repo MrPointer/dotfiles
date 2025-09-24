@@ -53,9 +53,9 @@ func (c *DefaultGpgClient) CreateKeyPair() (string, error) {
 		return "", err
 	}
 
-	// Run the command interactively using the working variant with ECC NIST P-256
-	args := []string{"--gen-key", "--pinentry-mode", "loopback", "--default-new-key-algo", "nistp256"}
-	result, err := c.commander.RunCommand("gpg", args, utils.WithCaptureOutput(), utils.WithEnv(map[string]string{"GPG_TTY": activeTerminal}))
+	// Run the command interactively while capturing output for parsing
+	args := []string{"--gen-key", "--default-new-key-algo", "nistp256"}
+	result, err := c.commander.RunCommand("gpg", args, utils.WithInteractiveCapture(), utils.WithEnv(map[string]string{"GPG_TTY": activeTerminal}))
 	if err != nil {
 		return "", err
 	} else if result.ExitCode != 0 {

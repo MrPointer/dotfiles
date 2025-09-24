@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -45,8 +46,11 @@ type ProgressDisplay struct {
 	output              io.Writer
 	progressStack       []*ProgressOperation
 	activeSpinner       *ProgressOperation
-	operationInProgress int32 // atomic counter
-	persistentMode      bool  // whether we're in persistent mode
+	operationInProgress int32          // atomic counter
+	persistentMode      bool           // whether we're in persistent mode
+	paused              int32          // atomic flag for paused state
+	pauseMutex          sync.Mutex     // protects pause/resume operations
+	spinnerWaitGroup    sync.WaitGroup // tracks active spinner goroutines
 }
 
 var _ ProgressReporter = (*ProgressDisplay)(nil)
@@ -89,6 +93,7 @@ func (p *ProgressDisplay) Start(message string) {
 	displayMessage := p.buildContextualMessage()
 
 	// Start spinner in background
+	p.spinnerWaitGroup.Add(1)
 	go p.runSpinner(ctx, operation, displayMessage)
 }
 
@@ -178,6 +183,7 @@ func (p *ProgressDisplay) Clear() {
 	p.progressStack = nil
 	p.activeSpinner = nil
 	atomic.StoreInt32(&p.operationInProgress, 0)
+	atomic.StoreInt32(&p.paused, 0)
 }
 
 // resumeParentOperation resumes the spinner for the parent operation if one exists.
@@ -194,6 +200,7 @@ func (p *ProgressDisplay) resumeParentOperation() {
 			// Resume spinner for previous operation
 			indent := strings.Repeat("  ", prevOperation.Level)
 			displayMessage := indent + prevOperation.Message
+			p.spinnerWaitGroup.Add(1)
 			go p.runSpinner(ctx, prevOperation, displayMessage)
 		}
 	} else {
@@ -247,6 +254,14 @@ func (p *ProgressDisplay) displayCompletion(operation *ProgressOperation, succes
 
 // runSpinner runs a spinner for the given operation in the background.
 func (p *ProgressDisplay) runSpinner(ctx context.Context, operation *ProgressOperation, displayMessage string) {
+	// Signal completion when function exits
+	defer p.spinnerWaitGroup.Done()
+
+	// Don't start spinner if paused
+	if p.IsPaused() {
+		return
+	}
+
 	// Create spinner with huh
 	s := spinner.New().
 		Title(displayMessage).
@@ -265,6 +280,10 @@ func (p *ProgressDisplay) runSpinner(ctx context.Context, operation *ProgressOpe
 			case <-spinnerCtx.Done():
 				return spinnerCtx.Err()
 			case <-ticker.C:
+				// Stop spinner if paused
+				if p.IsPaused() {
+					return nil
+				}
 				if operation == nil {
 					return errors.New("no operation in progress")
 				}
@@ -277,6 +296,53 @@ func (p *ProgressDisplay) runSpinner(ctx context.Context, operation *ProgressOpe
 
 	// Run the spinner
 	s.Run()
+}
+
+// Pause temporarily stops all spinner operations for interactive commands
+func (p *ProgressDisplay) Pause() {
+	p.pauseMutex.Lock()
+	defer p.pauseMutex.Unlock()
+
+	// Set paused state first
+	atomic.StoreInt32(&p.paused, 1)
+
+	// Cancel all active spinners
+	for _, operation := range p.progressStack {
+		if operation.CancelFunc != nil {
+			operation.CancelFunc()
+		}
+	}
+
+	// Wait for all spinner goroutines to finish
+	p.spinnerWaitGroup.Wait()
+}
+
+// Resume restarts spinner operations after interactive commands complete
+func (p *ProgressDisplay) Resume() {
+	p.pauseMutex.Lock()
+	defer p.pauseMutex.Unlock()
+
+	atomic.StoreInt32(&p.paused, 0)
+
+	// Resume the most recent operation if there is one
+	if len(p.progressStack) > 0 {
+		currentOperation := p.progressStack[len(p.progressStack)-1]
+		if !currentOperation.IsDone() {
+			// Create new context for resumed operation
+			ctx, cancel := context.WithCancel(context.Background())
+			currentOperation.CancelFunc = cancel
+
+			// Resume spinner for current operation
+			displayMessage := p.buildContextualMessage()
+			p.spinnerWaitGroup.Add(1)
+			go p.runSpinner(ctx, currentOperation, displayMessage)
+		}
+	}
+}
+
+// IsPaused returns whether the progress display is currently paused
+func (p *ProgressDisplay) IsPaused() bool {
+	return atomic.LoadInt32(&p.paused) == 1
 }
 
 // buildContextualMessage creates a hierarchical message showing the full context
@@ -333,6 +399,12 @@ type ProgressReporter interface {
 	IsActive() bool
 	// Clear stops all progress operations without displaying completion messages
 	Clear()
+	// Pause temporarily stops all spinner operations for interactive commands
+	Pause()
+	// Resume restarts spinner operations after interactive commands complete
+	Resume()
+	// IsPaused returns whether the progress display is currently paused
+	IsPaused() bool
 	// StartPersistent begins a persistent progress operation that shows accomplishments
 	StartPersistent(message string)
 	// LogAccomplishment logs an accomplishment that stays visible
@@ -370,6 +442,15 @@ func (n *NoopProgressDisplay) IsActive() bool { return false }
 
 // Clear does nothing.
 func (n *NoopProgressDisplay) Clear() {}
+
+// Pause does nothing.
+func (n *NoopProgressDisplay) Pause() {}
+
+// Resume does nothing.
+func (n *NoopProgressDisplay) Resume() {}
+
+// IsPaused always returns false.
+func (n *NoopProgressDisplay) IsPaused() bool { return false }
 
 // StartPersistent does nothing.
 func (n *NoopProgressDisplay) StartPersistent(message string) {}

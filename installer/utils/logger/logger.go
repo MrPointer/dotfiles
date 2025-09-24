@@ -30,6 +30,12 @@ type Logger interface {
 	FinishPersistentProgress(message string)
 	// FailPersistentProgress completes persistent progress with failure
 	FailPersistentProgress(message string, err error)
+	// StartInteractiveProgress starts progress and pauses spinners for interactive commands
+	StartInteractiveProgress(message string)
+	// FinishInteractiveProgress completes interactive progress and resumes spinners
+	FinishInteractiveProgress(message string)
+	// FailInteractiveProgress completes interactive progress with error and resumes spinners
+	FailInteractiveProgress(message string, err error)
 }
 
 // NoopLogger implements Logger but does nothing.
@@ -45,14 +51,17 @@ func (l NoopLogger) Warning(format string, args ...any) {}
 func (l NoopLogger) Error(format string, args ...any)   {}
 
 // Progress methods - no-op implementations
-func (l NoopLogger) StartProgress(message string)                     {}
-func (l NoopLogger) UpdateProgress(message string)                    {}
-func (l NoopLogger) FinishProgress(message string)                    {}
-func (l NoopLogger) FailProgress(message string, err error)           {}
-func (l NoopLogger) StartPersistentProgress(message string)           {}
-func (l NoopLogger) LogAccomplishment(message string)                 {}
-func (l NoopLogger) FinishPersistentProgress(message string)          {}
-func (l NoopLogger) FailPersistentProgress(message string, err error) {}
+func (l NoopLogger) StartProgress(message string)                      {}
+func (l NoopLogger) UpdateProgress(message string)                     {}
+func (l NoopLogger) FinishProgress(message string)                     {}
+func (l NoopLogger) FailProgress(message string, err error)            {}
+func (l NoopLogger) StartPersistentProgress(message string)            {}
+func (l NoopLogger) LogAccomplishment(message string)                  {}
+func (l NoopLogger) FinishPersistentProgress(message string)           {}
+func (l NoopLogger) FailPersistentProgress(message string, err error)  {}
+func (l NoopLogger) StartInteractiveProgress(message string)           {}
+func (l NoopLogger) FinishInteractiveProgress(message string)          {}
+func (l NoopLogger) FailInteractiveProgress(message string, err error) {}
 
 // DefaultLogger is the default logger used if none is provided.
 var DefaultLogger Logger = NoopLogger{}

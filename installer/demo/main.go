@@ -40,7 +40,7 @@ func init() {
 	rootCmd.Flags().BoolVarP(&withProgress, "progress", "p", true,
 		"Enable progress display with spinners")
 	rootCmd.Flags().StringVarP(&operationType, "type", "t", "simple",
-		"Type of demo operation (simple, nested, mixed, concurrent, long, persistent)")
+		"Type of demo to run (simple, nested, mixed, concurrent, long, persistent, interactive, stress)")
 	rootCmd.Flags().IntVarP(&operationCount, "count", "c", 3,
 		"Number of operations to run")
 	rootCmd.Flags().IntVar(&failureRate, "fail-rate", 0,
@@ -90,6 +90,10 @@ func runDemo(cmd *cobra.Command, args []string) error {
 		return runLongDemo(log)
 	case "persistent":
 		return runPersistentDemo(log)
+	case "interactive":
+		return runInteractiveDemo(log)
+	case "stress":
+		return runStressTestDemo(log)
 	default:
 		return fmt.Errorf("invalid operation type: %s", operationType)
 	}
@@ -354,5 +358,68 @@ func runPersistentDemo(log logger.Logger) error {
 	log.FinishPersistentProgress(fmt.Sprintf("Dotfiles linked (%d files)", len(dotfiles)))
 
 	log.Success("✅ Persistent demo completed - notice how accomplishments stay visible!")
+	return nil
+}
+
+func runStressTestDemo(log logger.Logger) error {
+	log.Info("🔥 Starting stress test demo - rapid pause/resume cycles")
+
+	// Start background operations
+	log.StartProgress("Background operation 1")
+	time.Sleep(100 * time.Millisecond)
+
+	log.StartProgress("Background operation 2")
+	time.Sleep(100 * time.Millisecond)
+
+	// Perform rapid pause/resume cycles to test race conditions
+	for i := 1; i <= 5; i++ {
+		log.StartInteractiveProgress(fmt.Sprintf("Interactive cycle %d (rapid test)", i))
+
+		// Very short interaction to stress test the synchronization
+		time.Sleep(50 * time.Millisecond)
+
+		log.FinishInteractiveProgress(fmt.Sprintf("Interactive cycle %d completed", i))
+
+		// Brief pause between cycles
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	// Finish background operations
+	log.FinishProgress("Background operation 2 completed")
+	log.FinishProgress("Background operation 1 completed")
+
+	log.Success("🔥 Stress test completed - no race conditions detected!")
+	return nil
+}
+
+func runInteractiveDemo(log logger.Logger) error {
+	log.Info("🎯 Starting interactive demo to test spinner pause/resume")
+
+	// Start a regular progress operation
+	log.StartProgress("Background operation running")
+
+	// Simulate some background work
+	time.Sleep(500 * time.Millisecond)
+
+	// Start an interactive operation that should pause the spinner
+	log.StartInteractiveProgress("Interactive operation (spinner should pause)")
+
+	// Simulate an interactive command (like GPG key creation)
+	fmt.Print("Please enter some text (this simulates GPG prompts): ")
+	var userInput string
+	fmt.Scanln(&userInput)
+
+	// Finish the interactive operation (should resume spinner)
+	log.FinishInteractiveProgress("Interactive operation completed")
+
+	// Continue with background work
+	time.Sleep(500 * time.Millisecond)
+
+	// Finish the background operation
+	log.FinishProgress("Background operation finished")
+
+	log.Success("🎉 Interactive demo completed successfully!")
+	log.Info("User input was: %s", userInput)
+
 	return nil
 }

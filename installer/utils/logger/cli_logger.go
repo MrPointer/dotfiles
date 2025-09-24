@@ -216,6 +216,53 @@ func (l *CliLogger) FailPersistentProgress(message string, err error) {
 	}
 }
 
+// StartInteractiveProgress starts progress and pauses spinners for interactive commands.
+func (l *CliLogger) StartInteractiveProgress(message string) {
+	// Pause any active spinners to prevent interference
+	l.progress.Pause()
+
+	// Start progress normally but it won't show spinners while paused
+	l.progress.Start(message)
+
+	// If no progress operations are active, fall back to Info logging
+	if !l.progress.IsActive() {
+		l.Info("%s", message)
+	}
+}
+
+// FinishInteractiveProgress completes interactive progress and resumes spinners.
+func (l *CliLogger) FinishInteractiveProgress(message string) {
+	wasActive := l.progress.IsActive()
+	l.progress.Finish(message)
+
+	// Resume spinners for any remaining operations
+	l.progress.Resume()
+
+	// Fall back to Success logging if no progress was active
+	if !wasActive {
+		l.Success("%s", message)
+	}
+}
+
+// FailInteractiveProgress completes interactive progress with error and resumes spinners.
+func (l *CliLogger) FailInteractiveProgress(message string, err error) {
+	wasActive := l.progress.IsActive()
+	l.progress.Fail(message, err)
+
+	// Resume spinners for any remaining operations
+	l.progress.Resume()
+
+	// Fall back to Error logging if no progress was active
+	if !wasActive {
+		l.Error("%s: %v", message, err)
+	}
+}
+
+// Cleanup ensures proper cleanup of terminal state, including cursor restoration.
+func (l *CliLogger) Cleanup() {
+	l.progress.Cleanup()
+}
+
 // PrintStyled is a helper function to print styled text to the specified writer.
 func PrintStyled(writer io.Writer, style lipgloss.Style, format string, args ...any) {
 	if file, ok := writer.(*os.File); ok {

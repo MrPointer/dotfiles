@@ -24,11 +24,17 @@ var _ Logger = &MoqLogger{}
 //			ErrorFunc: func(format string, args ...any)  {
 //				panic("mock out the Error method")
 //			},
+//			FailInteractiveProgressFunc: func(message string, err error)  {
+//				panic("mock out the FailInteractiveProgress method")
+//			},
 //			FailPersistentProgressFunc: func(message string, err error)  {
 //				panic("mock out the FailPersistentProgress method")
 //			},
 //			FailProgressFunc: func(message string, err error)  {
 //				panic("mock out the FailProgress method")
+//			},
+//			FinishInteractiveProgressFunc: func(message string)  {
+//				panic("mock out the FinishInteractiveProgress method")
 //			},
 //			FinishPersistentProgressFunc: func(message string)  {
 //				panic("mock out the FinishPersistentProgress method")
@@ -41,6 +47,9 @@ var _ Logger = &MoqLogger{}
 //			},
 //			LogAccomplishmentFunc: func(message string)  {
 //				panic("mock out the LogAccomplishment method")
+//			},
+//			StartInteractiveProgressFunc: func(message string)  {
+//				panic("mock out the StartInteractiveProgress method")
 //			},
 //			StartPersistentProgressFunc: func(message string)  {
 //				panic("mock out the StartPersistentProgress method")
@@ -73,11 +82,17 @@ type MoqLogger struct {
 	// ErrorFunc mocks the Error method.
 	ErrorFunc func(format string, args ...any)
 
+	// FailInteractiveProgressFunc mocks the FailInteractiveProgress method.
+	FailInteractiveProgressFunc func(message string, err error)
+
 	// FailPersistentProgressFunc mocks the FailPersistentProgress method.
 	FailPersistentProgressFunc func(message string, err error)
 
 	// FailProgressFunc mocks the FailProgress method.
 	FailProgressFunc func(message string, err error)
+
+	// FinishInteractiveProgressFunc mocks the FinishInteractiveProgress method.
+	FinishInteractiveProgressFunc func(message string)
 
 	// FinishPersistentProgressFunc mocks the FinishPersistentProgress method.
 	FinishPersistentProgressFunc func(message string)
@@ -90,6 +105,9 @@ type MoqLogger struct {
 
 	// LogAccomplishmentFunc mocks the LogAccomplishment method.
 	LogAccomplishmentFunc func(message string)
+
+	// StartInteractiveProgressFunc mocks the StartInteractiveProgress method.
+	StartInteractiveProgressFunc func(message string)
 
 	// StartPersistentProgressFunc mocks the StartPersistentProgress method.
 	StartPersistentProgressFunc func(message string)
@@ -125,6 +143,13 @@ type MoqLogger struct {
 			// Args is the args argument value.
 			Args []any
 		}
+		// FailInteractiveProgress holds details about calls to the FailInteractiveProgress method.
+		FailInteractiveProgress []struct {
+			// Message is the message argument value.
+			Message string
+			// Err is the err argument value.
+			Err error
+		}
 		// FailPersistentProgress holds details about calls to the FailPersistentProgress method.
 		FailPersistentProgress []struct {
 			// Message is the message argument value.
@@ -138,6 +163,11 @@ type MoqLogger struct {
 			Message string
 			// Err is the err argument value.
 			Err error
+		}
+		// FinishInteractiveProgress holds details about calls to the FinishInteractiveProgress method.
+		FinishInteractiveProgress []struct {
+			// Message is the message argument value.
+			Message string
 		}
 		// FinishPersistentProgress holds details about calls to the FinishPersistentProgress method.
 		FinishPersistentProgress []struct {
@@ -158,6 +188,11 @@ type MoqLogger struct {
 		}
 		// LogAccomplishment holds details about calls to the LogAccomplishment method.
 		LogAccomplishment []struct {
+			// Message is the message argument value.
+			Message string
+		}
+		// StartInteractiveProgress holds details about calls to the StartInteractiveProgress method.
+		StartInteractiveProgress []struct {
 			// Message is the message argument value.
 			Message string
 		}
@@ -198,20 +233,25 @@ type MoqLogger struct {
 			Args []any
 		}
 	}
-	lockDebug                    sync.RWMutex
-	lockError                    sync.RWMutex
-	lockFailPersistentProgress   sync.RWMutex
-	lockFailProgress             sync.RWMutex
-	lockFinishPersistentProgress sync.RWMutex
-	lockFinishProgress           sync.RWMutex
-	lockInfo                     sync.RWMutex
-	lockLogAccomplishment        sync.RWMutex
-	lockStartPersistentProgress  sync.RWMutex
-	lockStartProgress            sync.RWMutex
-	lockSuccess                  sync.RWMutex
-	lockTrace                    sync.RWMutex
-	lockUpdateProgress           sync.RWMutex
-	lockWarning                  sync.RWMutex
+	lockDebug                     sync.RWMutex
+	lockError                     sync.RWMutex
+	lockFailInteractiveProgress   sync.RWMutex
+	lockFailPersistentProgress    sync.RWMutex
+	lockFailProgress              sync.RWMutex
+	lockFinishInteractiveProgress sync.RWMutex
+	lockFinishPersistentProgress  sync.RWMutex
+	lockFinishProgress            sync.RWMutex
+	lockInfo                      sync.RWMutex
+	lockLogAccomplishment         sync.RWMutex
+	lockStartInteractiveProgress  sync.RWMutex
+	lockStartPersistentProgress   sync.RWMutex
+	lockStartProgress             sync.RWMutex
+	lockSuccess                   sync.RWMutex
+	lockTrace                     sync.RWMutex
+	lockUpdateProgress            sync.RWMutex
+	lockWarning                   sync.RWMutex
+}
+
 }
 
 // Debug calls DebugFunc.
@@ -286,6 +326,42 @@ func (mock *MoqLogger) ErrorCalls() []struct {
 	return calls
 }
 
+// FailInteractiveProgress calls FailInteractiveProgressFunc.
+func (mock *MoqLogger) FailInteractiveProgress(message string, err error) {
+	if mock.FailInteractiveProgressFunc == nil {
+		panic("MoqLogger.FailInteractiveProgressFunc: method is nil but Logger.FailInteractiveProgress was just called")
+	}
+	callInfo := struct {
+		Message string
+		Err     error
+	}{
+		Message: message,
+		Err:     err,
+	}
+	mock.lockFailInteractiveProgress.Lock()
+	mock.calls.FailInteractiveProgress = append(mock.calls.FailInteractiveProgress, callInfo)
+	mock.lockFailInteractiveProgress.Unlock()
+	mock.FailInteractiveProgressFunc(message, err)
+}
+
+// FailInteractiveProgressCalls gets all the calls that were made to FailInteractiveProgress.
+// Check the length with:
+//
+//	len(mockedLogger.FailInteractiveProgressCalls())
+func (mock *MoqLogger) FailInteractiveProgressCalls() []struct {
+	Message string
+	Err     error
+} {
+	var calls []struct {
+		Message string
+		Err     error
+	}
+	mock.lockFailInteractiveProgress.RLock()
+	calls = mock.calls.FailInteractiveProgress
+	mock.lockFailInteractiveProgress.RUnlock()
+	return calls
+}
+
 // FailPersistentProgress calls FailPersistentProgressFunc.
 func (mock *MoqLogger) FailPersistentProgress(message string, err error) {
 	if mock.FailPersistentProgressFunc == nil {
@@ -355,6 +431,38 @@ func (mock *MoqLogger) FailProgressCalls() []struct {
 	mock.lockFailProgress.RLock()
 	calls = mock.calls.FailProgress
 	mock.lockFailProgress.RUnlock()
+	return calls
+}
+
+// FinishInteractiveProgress calls FinishInteractiveProgressFunc.
+func (mock *MoqLogger) FinishInteractiveProgress(message string) {
+	if mock.FinishInteractiveProgressFunc == nil {
+		panic("MoqLogger.FinishInteractiveProgressFunc: method is nil but Logger.FinishInteractiveProgress was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockFinishInteractiveProgress.Lock()
+	mock.calls.FinishInteractiveProgress = append(mock.calls.FinishInteractiveProgress, callInfo)
+	mock.lockFinishInteractiveProgress.Unlock()
+	mock.FinishInteractiveProgressFunc(message)
+}
+
+// FinishInteractiveProgressCalls gets all the calls that were made to FinishInteractiveProgress.
+// Check the length with:
+//
+//	len(mockedLogger.FinishInteractiveProgressCalls())
+func (mock *MoqLogger) FinishInteractiveProgressCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockFinishInteractiveProgress.RLock()
+	calls = mock.calls.FinishInteractiveProgress
+	mock.lockFinishInteractiveProgress.RUnlock()
 	return calls
 }
 
@@ -487,6 +595,38 @@ func (mock *MoqLogger) LogAccomplishmentCalls() []struct {
 	mock.lockLogAccomplishment.RLock()
 	calls = mock.calls.LogAccomplishment
 	mock.lockLogAccomplishment.RUnlock()
+	return calls
+}
+
+// StartInteractiveProgress calls StartInteractiveProgressFunc.
+func (mock *MoqLogger) StartInteractiveProgress(message string) {
+	if mock.StartInteractiveProgressFunc == nil {
+		panic("MoqLogger.StartInteractiveProgressFunc: method is nil but Logger.StartInteractiveProgress was just called")
+	}
+	callInfo := struct {
+		Message string
+	}{
+		Message: message,
+	}
+	mock.lockStartInteractiveProgress.Lock()
+	mock.calls.StartInteractiveProgress = append(mock.calls.StartInteractiveProgress, callInfo)
+	mock.lockStartInteractiveProgress.Unlock()
+	mock.StartInteractiveProgressFunc(message)
+}
+
+// StartInteractiveProgressCalls gets all the calls that were made to StartInteractiveProgress.
+// Check the length with:
+//
+//	len(mockedLogger.StartInteractiveProgressCalls())
+func (mock *MoqLogger) StartInteractiveProgressCalls() []struct {
+	Message string
+} {
+	var calls []struct {
+		Message string
+	}
+	mock.lockStartInteractiveProgress.RLock()
+	calls = mock.calls.StartInteractiveProgress
+	mock.lockStartInteractiveProgress.RUnlock()
 	return calls
 }
 

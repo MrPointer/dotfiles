@@ -36,8 +36,17 @@ var _ ProgressReporter = &MoqProgressReporter{}
 //			IsActiveFunc: func() bool {
 //				panic("mock out the IsActive method")
 //			},
+//			IsPausedFunc: func() bool {
+//				panic("mock out the IsPaused method")
+//			},
 //			LogAccomplishmentFunc: func(message string)  {
 //				panic("mock out the LogAccomplishment method")
+//			},
+//			PauseFunc: func()  {
+//				panic("mock out the Pause method")
+//			},
+//			ResumeFunc: func()  {
+//				panic("mock out the Resume method")
 //			},
 //			StartFunc: func(message string)  {
 //				panic("mock out the Start method")
@@ -73,8 +82,17 @@ type MoqProgressReporter struct {
 	// IsActiveFunc mocks the IsActive method.
 	IsActiveFunc func() bool
 
+	// IsPausedFunc mocks the IsPaused method.
+	IsPausedFunc func() bool
+
 	// LogAccomplishmentFunc mocks the LogAccomplishment method.
 	LogAccomplishmentFunc func(message string)
+
+	// PauseFunc mocks the Pause method.
+	PauseFunc func()
+
+	// ResumeFunc mocks the Resume method.
+	ResumeFunc func()
 
 	// StartFunc mocks the Start method.
 	StartFunc func(message string)
@@ -117,10 +135,19 @@ type MoqProgressReporter struct {
 		// IsActive holds details about calls to the IsActive method.
 		IsActive []struct {
 		}
+		// IsPaused holds details about calls to the IsPaused method.
+		IsPaused []struct {
+		}
 		// LogAccomplishment holds details about calls to the LogAccomplishment method.
 		LogAccomplishment []struct {
 			// Message is the message argument value.
 			Message string
+		}
+		// Pause holds details about calls to the Pause method.
+		Pause []struct {
+		}
+		// Resume holds details about calls to the Resume method.
+		Resume []struct {
 		}
 		// Start holds details about calls to the Start method.
 		Start []struct {
@@ -144,7 +171,10 @@ type MoqProgressReporter struct {
 	lockFinish            sync.RWMutex
 	lockFinishPersistent  sync.RWMutex
 	lockIsActive          sync.RWMutex
+	lockIsPaused          sync.RWMutex
 	lockLogAccomplishment sync.RWMutex
+	lockPause             sync.RWMutex
+	lockResume            sync.RWMutex
 	lockStart             sync.RWMutex
 	lockStartPersistent   sync.RWMutex
 	lockUpdate            sync.RWMutex
@@ -340,6 +370,33 @@ func (mock *MoqProgressReporter) IsActiveCalls() []struct {
 	return calls
 }
 
+// IsPaused calls IsPausedFunc.
+func (mock *MoqProgressReporter) IsPaused() bool {
+	if mock.IsPausedFunc == nil {
+		panic("MoqProgressReporter.IsPausedFunc: method is nil but ProgressReporter.IsPaused was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockIsPaused.Lock()
+	mock.calls.IsPaused = append(mock.calls.IsPaused, callInfo)
+	mock.lockIsPaused.Unlock()
+	return mock.IsPausedFunc()
+}
+
+// IsPausedCalls gets all the calls that were made to IsPaused.
+// Check the length with:
+//
+//	len(mockedProgressReporter.IsPausedCalls())
+func (mock *MoqProgressReporter) IsPausedCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockIsPaused.RLock()
+	calls = mock.calls.IsPaused
+	mock.lockIsPaused.RUnlock()
+	return calls
+}
+
 // LogAccomplishment calls LogAccomplishmentFunc.
 func (mock *MoqProgressReporter) LogAccomplishment(message string) {
 	if mock.LogAccomplishmentFunc == nil {
@@ -369,6 +426,60 @@ func (mock *MoqProgressReporter) LogAccomplishmentCalls() []struct {
 	mock.lockLogAccomplishment.RLock()
 	calls = mock.calls.LogAccomplishment
 	mock.lockLogAccomplishment.RUnlock()
+	return calls
+}
+
+// Pause calls PauseFunc.
+func (mock *MoqProgressReporter) Pause() {
+	if mock.PauseFunc == nil {
+		panic("MoqProgressReporter.PauseFunc: method is nil but ProgressReporter.Pause was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockPause.Lock()
+	mock.calls.Pause = append(mock.calls.Pause, callInfo)
+	mock.lockPause.Unlock()
+	mock.PauseFunc()
+}
+
+// PauseCalls gets all the calls that were made to Pause.
+// Check the length with:
+//
+//	len(mockedProgressReporter.PauseCalls())
+func (mock *MoqProgressReporter) PauseCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockPause.RLock()
+	calls = mock.calls.Pause
+	mock.lockPause.RUnlock()
+	return calls
+}
+
+// Resume calls ResumeFunc.
+func (mock *MoqProgressReporter) Resume() {
+	if mock.ResumeFunc == nil {
+		panic("MoqProgressReporter.ResumeFunc: method is nil but ProgressReporter.Resume was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockResume.Lock()
+	mock.calls.Resume = append(mock.calls.Resume, callInfo)
+	mock.lockResume.Unlock()
+	mock.ResumeFunc()
+}
+
+// ResumeCalls gets all the calls that were made to Resume.
+// Check the length with:
+//
+//	len(mockedProgressReporter.ResumeCalls())
+func (mock *MoqProgressReporter) ResumeCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockResume.RLock()
+	calls = mock.calls.Resume
+	mock.lockResume.RUnlock()
 	return calls
 }
 
