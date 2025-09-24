@@ -26,7 +26,7 @@ type ProgressOperation struct {
 	Message    string
 	StartTime  time.Time
 	Level      int
-	done       int32 // atomic
+	done       atomic.Int32 // atomic
 	Success    bool
 	Error      error
 	CancelFunc context.CancelFunc
@@ -34,12 +34,12 @@ type ProgressOperation struct {
 
 // IsDone returns whether this operation is completed.
 func (op *ProgressOperation) IsDone() bool {
-	return atomic.LoadInt32(&op.done) == 1
+	return op.done.Load() == 1
 }
 
 // SetDone marks this operation as completed.
 func (op *ProgressOperation) SetDone() {
-	atomic.StoreInt32(&op.done, 1)
+	op.done.Store(1)
 }
 
 // ProgressReporter defines the interface for hierarchical progress reporting.
@@ -81,12 +81,13 @@ type ProgressDisplay struct {
 	output              io.Writer
 	progressStack       []*ProgressOperation
 	activeSpinner       *ProgressOperation
-	operationInProgress int32          // atomic counter
+	operationInProgress atomic.Int32   // atomic counter
 	persistentMode      bool           // whether we're in persistent mode
-	cursorHidden        int32          // atomic flag for cursor state
-	paused              int32          // atomic flag for paused state
+	cursorHidden        atomic.Int32   // atomic flag for cursor state
+	paused              atomic.Int32   // atomic flag for paused state
 	pauseMutex          sync.Mutex     // protects pause/resume operations
 	spinnerWaitGroup    sync.WaitGroup // tracks active spinner goroutines
+	stackMutex          sync.RWMutex   // protects progressStack and activeSpinner
 }
 
 var _ ProgressReporter = (*ProgressDisplay)(nil)
@@ -108,6 +109,7 @@ func NewProgressDisplay(output io.Writer) *ProgressDisplay {
 
 // Start begins a new progress operation with the given message.
 func (p *ProgressDisplay) Start(message string) error {
+	p.stackMutex.Lock()
 	level := len(p.progressStack)
 
 	// Stop any currently active spinner
@@ -127,11 +129,12 @@ func (p *ProgressDisplay) Start(message string) error {
 	p.progressStack = append(p.progressStack, operation)
 	p.activeSpinner = operation
 
-	// Increment operation counter
-	atomic.AddInt32(&p.operationInProgress, 1)
-
 	// Create contextual message showing hierarchy
 	displayMessage := p.buildContextualMessage()
+	p.stackMutex.Unlock()
+
+	// Increment operation counter
+	p.operationInProgress.Add(1)
 
 	// Start spinner in background
 	p.spinnerWaitGroup.Add(1)
@@ -142,6 +145,9 @@ func (p *ProgressDisplay) Start(message string) error {
 
 // Update modifies the message of the current progress operation.
 func (p *ProgressDisplay) Update(message string) error {
+	p.stackMutex.Lock()
+	defer p.stackMutex.Unlock()
+
 	if len(p.progressStack) == 0 {
 		// Updating an inexistent operation is not an error
 		return nil
@@ -156,7 +162,9 @@ func (p *ProgressDisplay) Update(message string) error {
 
 // Finish completes the current progress operation successfully.
 func (p *ProgressDisplay) Finish(message string) error {
+	p.stackMutex.Lock()
 	if len(p.progressStack) == 0 {
+		p.stackMutex.Unlock()
 		return nil
 	}
 
@@ -164,6 +172,7 @@ func (p *ProgressDisplay) Finish(message string) error {
 	currentIndex := len(p.progressStack) - 1
 	operation := p.progressStack[currentIndex]
 	p.progressStack = p.progressStack[:currentIndex]
+	p.stackMutex.Unlock()
 
 	// Stop the spinner for this operation
 	if operation.CancelFunc != nil {
@@ -181,7 +190,7 @@ func (p *ProgressDisplay) Finish(message string) error {
 	}
 
 	// Decrement operation counter
-	atomic.AddInt32(&p.operationInProgress, -1)
+	p.operationInProgress.Add(-1)
 
 	// Display completion message
 	if err := p.displayCompletion(operation, true, nil); err != nil {
@@ -189,14 +198,18 @@ func (p *ProgressDisplay) Finish(message string) error {
 	}
 
 	// Resume parent operation if exists
+	p.stackMutex.Lock()
 	p.resumeParentOperation()
+	p.stackMutex.Unlock()
 
 	return nil
 }
 
 // Fail completes the current progress operation with an error.
 func (p *ProgressDisplay) Fail(message string, err error) error {
+	p.stackMutex.Lock()
 	if len(p.progressStack) == 0 {
+		p.stackMutex.Unlock()
 		return nil
 	}
 
@@ -204,6 +217,7 @@ func (p *ProgressDisplay) Fail(message string, err error) error {
 	currentIndex := len(p.progressStack) - 1
 	operation := p.progressStack[currentIndex]
 	p.progressStack = p.progressStack[:currentIndex]
+	p.stackMutex.Unlock()
 
 	// Stop the spinner for this operation
 	if operation.CancelFunc != nil {
@@ -222,7 +236,7 @@ func (p *ProgressDisplay) Fail(message string, err error) error {
 	}
 
 	// Decrement operation counter
-	atomic.AddInt32(&p.operationInProgress, -1)
+	p.operationInProgress.Add(-1)
 
 	// Display failure message
 	if err := p.displayCompletion(operation, false, err); err != nil {
@@ -230,18 +244,21 @@ func (p *ProgressDisplay) Fail(message string, err error) error {
 	}
 
 	// Resume parent operation if exists
+	p.stackMutex.Lock()
 	p.resumeParentOperation()
+	p.stackMutex.Unlock()
 
 	return nil
 }
 
 // IsActive returns true if there are any active progress operations.
 func (p *ProgressDisplay) IsActive() bool {
-	return atomic.LoadInt32(&p.operationInProgress) > 0
+	return p.operationInProgress.Load() > 0
 }
 
 // Clear stops all progress operations without displaying completion messages.
 func (p *ProgressDisplay) Clear() error {
+	p.stackMutex.Lock()
 	// Stop all active spinners
 	for _, operation := range p.progressStack {
 		if operation.CancelFunc != nil {
@@ -250,14 +267,16 @@ func (p *ProgressDisplay) Clear() error {
 		operation.SetDone()
 	}
 
-	// Wait for all spinner goroutines to complete
-	p.spinnerWaitGroup.Wait()
-
 	// Clear the stack and reset counter
 	p.progressStack = nil
 	p.activeSpinner = nil
-	atomic.StoreInt32(&p.operationInProgress, 0)
-	atomic.StoreInt32(&p.paused, 0)
+	p.stackMutex.Unlock()
+
+	// Wait for all spinner goroutines to complete
+	p.spinnerWaitGroup.Wait()
+
+	p.operationInProgress.Store(0)
+	p.paused.Store(0)
 
 	// Restore cursor if it was hidden
 	return p.restoreCursor()
@@ -269,7 +288,7 @@ func (p *ProgressDisplay) Pause() error {
 	defer p.pauseMutex.Unlock()
 
 	// Set paused state first
-	atomic.StoreInt32(&p.paused, 1)
+	p.paused.Store(1)
 
 	// Cancel all active spinners
 	for _, operation := range p.progressStack {
@@ -287,15 +306,9 @@ func (p *ProgressDisplay) Pause() error {
 	}
 
 	if file, ok := p.output.(*os.File); ok {
-		_, err := file.WriteString("\r" + clearLine)
-		if err != nil {
-			return err
-		}
+		file.WriteString("\r" + clearLine)
 	} else {
-		_, err := fmt.Fprint(p.output, "\r"+clearLine)
-		if err != nil {
-			return err
-		}
+		fmt.Fprint(p.output, "\r"+clearLine)
 	}
 
 	return nil
@@ -306,9 +319,10 @@ func (p *ProgressDisplay) Resume() error {
 	p.pauseMutex.Lock()
 	defer p.pauseMutex.Unlock()
 
-	atomic.StoreInt32(&p.paused, 0)
+	p.paused.Store(0)
 
 	// Resume the most recent operation if there is one
+	p.stackMutex.Lock()
 	if len(p.progressStack) > 0 {
 		currentOperation := p.progressStack[len(p.progressStack)-1]
 		if !currentOperation.IsDone() {
@@ -318,9 +332,14 @@ func (p *ProgressDisplay) Resume() error {
 
 			// Resume spinner for current operation
 			displayMessage := p.buildContextualMessage()
+			p.stackMutex.Unlock()
 			p.spinnerWaitGroup.Add(1)
 			go p.runSpinner(ctx, currentOperation, displayMessage)
+		} else {
+			p.stackMutex.Unlock()
 		}
+	} else {
+		p.stackMutex.Unlock()
 	}
 
 	return nil
@@ -328,7 +347,7 @@ func (p *ProgressDisplay) Resume() error {
 
 // IsPaused returns whether the progress display is currently paused
 func (p *ProgressDisplay) IsPaused() bool {
-	return atomic.LoadInt32(&p.paused) == 1
+	return p.paused.Load() == 1
 }
 
 // StartPersistent begins a persistent progress operation that shows accomplishments.
@@ -368,6 +387,7 @@ func (p *ProgressDisplay) setupCleanup() {
 }
 
 // resumeParentOperation resumes the spinner for the parent operation if one exists.
+// Note: This method assumes the caller holds a lock on stackMutex
 func (p *ProgressDisplay) resumeParentOperation() {
 	if len(p.progressStack) == 0 {
 		p.activeSpinner = nil
@@ -383,8 +403,7 @@ func (p *ProgressDisplay) resumeParentOperation() {
 		prevOperation.CancelFunc = cancel
 
 		// Resume spinner for previous operation
-		indent := strings.Repeat("  ", prevOperation.Level)
-		displayMessage := indent + prevOperation.Message
+		displayMessage := p.buildContextualMessage()
 
 		p.spinnerWaitGroup.Add(1)
 		go p.runSpinner(ctx, prevOperation, displayMessage)
@@ -454,7 +473,7 @@ func (p *ProgressDisplay) runSpinner(ctx context.Context, operation *ProgressOpe
 	}
 
 	// Mark cursor as hidden when spinner starts
-	atomic.StoreInt32(&p.cursorHidden, 1)
+	p.cursorHidden.Store(1)
 
 	// Create spinner with huh
 	s := spinner.New().
@@ -493,6 +512,7 @@ func (p *ProgressDisplay) runSpinner(ctx context.Context, operation *ProgressOpe
 }
 
 // buildContextualMessage creates a hierarchical message showing the full context
+// Note: This method assumes the caller holds a lock on stackMutex
 func (p *ProgressDisplay) buildContextualMessage() string {
 	if len(p.progressStack) == 0 {
 		return ""
@@ -510,14 +530,20 @@ func (p *ProgressDisplay) buildContextualMessage() string {
 
 // restoreCursor ensures the terminal cursor is visible.
 func (p *ProgressDisplay) restoreCursor() error {
-	if !atomic.CompareAndSwapInt32(&p.cursorHidden, 1, 0) {
-		return errors.New("Failed swapping atomic value representing cursor visibility")
+	if !p.cursorHidden.CompareAndSwap(1, 0) {
+		return errors.New("Failed to swap atomic variable representing cursor visibility")
 	}
 
 	if file, ok := p.output.(*os.File); ok {
-		file.WriteString(showCursor)
+		_, err := file.WriteString(showCursor)
+		if err != nil {
+			return err
+		}
 	} else {
-		fmt.Fprint(p.output, showCursor)
+		_, err := fmt.Fprint(p.output, showCursor)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
