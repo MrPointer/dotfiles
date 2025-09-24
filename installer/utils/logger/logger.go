@@ -18,28 +18,31 @@ type Logger interface {
 	Warning(format string, args ...any)
 	// Error logs an error message
 	Error(format string, args ...any)
+
 	// StartProgress starts a progress indicator with the given message
-	StartProgress(message string)
+	StartProgress(message string) error
 	// UpdateProgress updates the current progress message
-	UpdateProgress(message string)
+	UpdateProgress(message string) error
 	// FinishProgress completes the progress with success
-	FinishProgress(message string)
+	FinishProgress(message string) error
 	// FailProgress completes the progress with failure and shows error
-	FailProgress(message string, err error)
+	FailProgress(message string, err error) error
+
 	// StartPersistentProgress starts a progress indicator that shows accomplishments
-	StartPersistentProgress(message string)
+	StartPersistentProgress(message string) error
 	// LogAccomplishment logs an accomplishment that stays visible
-	LogAccomplishment(message string)
+	LogAccomplishment(message string) error
 	// FinishPersistentProgress completes persistent progress with success
-	FinishPersistentProgress(message string)
+	FinishPersistentProgress(message string) error
 	// FailPersistentProgress completes persistent progress with failure
-	FailPersistentProgress(message string, err error)
+	FailPersistentProgress(message string, err error) error
+
 	// StartInteractiveProgress starts progress and pauses spinners for interactive commands
-	StartInteractiveProgress(message string)
+	StartInteractiveProgress(message string) error
 	// FinishInteractiveProgress completes interactive progress and resumes spinners
-	FinishInteractiveProgress(message string)
+	FinishInteractiveProgress(message string) error
 	// FailInteractiveProgress completes interactive progress with error and resumes spinners
-	FailInteractiveProgress(message string, err error)
+	FailInteractiveProgress(message string, err error) error
 }
 
 // NoopLogger implements Logger but does nothing.
@@ -55,18 +58,18 @@ func (l NoopLogger) Warning(format string, args ...any) {}
 func (l NoopLogger) Error(format string, args ...any)   {}
 
 // Progress methods - no-op implementations
-func (l NoopLogger) StartProgress(message string)                      {}
-func (l NoopLogger) UpdateProgress(message string)                     {}
-func (l NoopLogger) FinishProgress(message string)                     {}
-func (l NoopLogger) FailProgress(message string, err error)            {}
-func (l NoopLogger) StartPersistentProgress(message string)            {}
-func (l NoopLogger) LogAccomplishment(message string)                  {}
-func (l NoopLogger) FinishPersistentProgress(message string)           {}
-func (l NoopLogger) FailPersistentProgress(message string, err error)  {}
-func (l NoopLogger) StartInteractiveProgress(message string)           {}
-func (l NoopLogger) FinishInteractiveProgress(message string)          {}
-func (l NoopLogger) FailInteractiveProgress(message string, err error) {}
-func (l NoopLogger) Close() error                                      { return nil }
+func (l NoopLogger) StartProgress(message string) error                      { return nil }
+func (l NoopLogger) UpdateProgress(message string) error                     { return nil }
+func (l NoopLogger) FinishProgress(message string) error                     { return nil }
+func (l NoopLogger) FailProgress(message string, err error) error            { return nil }
+func (l NoopLogger) StartPersistentProgress(message string) error            { return nil }
+func (l NoopLogger) LogAccomplishment(message string) error                  { return nil }
+func (l NoopLogger) FinishPersistentProgress(message string) error           { return nil }
+func (l NoopLogger) FailPersistentProgress(message string, err error) error  { return nil }
+func (l NoopLogger) StartInteractiveProgress(message string) error           { return nil }
+func (l NoopLogger) FinishInteractiveProgress(message string) error          { return nil }
+func (l NoopLogger) FailInteractiveProgress(message string, err error) error { return nil }
+func (l NoopLogger) Close() error                                            { return nil }
 
 // DefaultLogger is the default logger used if none is provided.
 var DefaultLogger Logger = NoopLogger{}

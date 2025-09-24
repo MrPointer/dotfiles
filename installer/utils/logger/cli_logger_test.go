@@ -47,7 +47,7 @@ func Test_MultipleRapidProgressOperationsWork(t *testing.T) {
 	log := logger.NewProgressCliLogger(logger.Normal)
 
 	// Rapidly start and finish operations
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		log.StartProgress("Rapid operation")
 		time.Sleep(10 * time.Millisecond)
 		log.FinishProgress("Completed")
@@ -108,7 +108,7 @@ func Test_MixedSuccessAndFailureProgressOperationsDisplayCorrectly(t *testing.T)
 	require.NotNil(t, log)
 }
 
-func Test_UpdateProgressWithoutActiveProgressDoesNothing(t *testing.T) {
+func Test_UpdateProgress_WithoutActiveProgress_DoesNothing(t *testing.T) {
 	log := logger.NewProgressCliLogger(logger.Normal)
 
 	// This should not crash
@@ -117,7 +117,7 @@ func Test_UpdateProgressWithoutActiveProgressDoesNothing(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_FinishProgressWithoutActiveProgressFallsBackToSuccessLogging(t *testing.T) {
+func Test_FinishProgress_WithoutActiveProgress_FallsBackToSuccessLogging(t *testing.T) {
 	log := logger.NewProgressCliLogger(logger.Normal)
 
 	// This should fall back to Success logging
@@ -126,7 +126,7 @@ func Test_FinishProgressWithoutActiveProgressFallsBackToSuccessLogging(t *testin
 	require.NotNil(t, log)
 }
 
-func Test_FailProgressWithoutActiveProgressFallsBackToErrorLogging(t *testing.T) {
+func Test_FailProgress_WithoutActiveProgress_FallsBackToErrorLogging(t *testing.T) {
 	log := logger.NewProgressCliLogger(logger.Normal)
 
 	// This should fall back to Error logging
@@ -238,7 +238,7 @@ func Test_VerbosityLevelsFilterMessagesCorrectly(t *testing.T) {
 	}
 }
 
-func Test_ProgressMethodsFallBackToRegularLoggingWhenProgressDisabled(t *testing.T) {
+func Test_ProgressMethods_FallBackToRegularLogging_WhenProgressDisabled(t *testing.T) {
 	// Test that progress methods work correctly when progress is disabled
 	log := logger.NewCliLogger(logger.Normal) // Not a progress logger
 
@@ -403,7 +403,7 @@ func Test_VerboseLoggingWithoutProgressWorks(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_StartPersistentProgressWithProgressEnabledWorks(t *testing.T) {
+func Test_StartPersistentProgress_WithProgressEnabledWorks(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -417,7 +417,7 @@ func Test_StartPersistentProgressWithProgressEnabledWorks(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_StartPersistentProgressWithoutProgressFallsBackToInfoLogging(t *testing.T) {
+func Test_StartPersistentProgress_WithoutProgress_FallsBackToInfoLogging(t *testing.T) {
 	log := logger.NewCliLogger(logger.Normal)
 
 	log.StartPersistentProgress("This should appear as Info message")
@@ -426,7 +426,7 @@ func Test_StartPersistentProgressWithoutProgressFallsBackToInfoLogging(t *testin
 	require.NotNil(t, log)
 }
 
-func Test_LogAccomplishmentWithProgressEnabledShowsPersistentMessage(t *testing.T) {
+func Test_LogAccomplishment_WithProgressEnabled_ShowsPersistentMessage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -446,7 +446,7 @@ func Test_LogAccomplishmentWithProgressEnabledShowsPersistentMessage(t *testing.
 	require.NotNil(t, log)
 }
 
-func Test_LogAccomplishmentWithoutProgressFallsBackToSuccessLogging(t *testing.T) {
+func Test_LogAccomplishment_WithoutProgress_FallsBackToSuccessLogging(t *testing.T) {
 	log := logger.NewCliLogger(logger.Normal)
 
 	log.LogAccomplishment("This should appear as Success message")
@@ -454,7 +454,7 @@ func Test_LogAccomplishmentWithoutProgressFallsBackToSuccessLogging(t *testing.T
 	require.NotNil(t, log)
 }
 
-func Test_FinishPersistentProgressWithoutActiveProgressFallsBackToSuccessLogging(t *testing.T) {
+func Test_FinishPersistent_ProgressWithoutActiveProgress_FallsBackToSuccessLogging(t *testing.T) {
 	log := logger.NewProgressCliLogger(logger.Normal)
 
 	log.FinishPersistentProgress("Never started persistent progress")
@@ -462,7 +462,7 @@ func Test_FinishPersistentProgressWithoutActiveProgressFallsBackToSuccessLogging
 	require.NotNil(t, log)
 }
 
-func Test_FailPersistentProgressWithoutActiveProgressFallsBackToErrorLogging(t *testing.T) {
+func Test_FailPersistentProgress_WithoutActiveProgress_FallsBackToErrorLogging(t *testing.T) {
 	log := logger.NewProgressCliLogger(logger.Normal)
 
 	log.FailPersistentProgress("Never started persistent progress", errors.New("test error"))
@@ -512,7 +512,7 @@ func Test_MixedPersistentAndRegularProgressOperationsWork(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_PersistentProgressWithMultipleAccomplishmentsDisplaysCorrectly(t *testing.T) {
+func Test_PersistentProgress_WithMultipleAccomplishments_DisplaysCorrectly(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -541,9 +541,9 @@ func Test_PersistentProgressWithMultipleAccomplishmentsDisplaysCorrectly(t *test
 	require.NotNil(t, log)
 }
 
-func Test_StartPersistentProgressCallsProgressReporterStartPersistent(t *testing.T) {
+func Test_StartPersistentProgress_CallsProgressReporterStartPersistent(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
-		StartPersistentFunc: func(message string) {},
+		StartPersistentFunc: func(message string) error { return nil },
 		IsActiveFunc:        func() bool { return true },
 	}
 
@@ -556,9 +556,9 @@ func Test_StartPersistentProgressCallsProgressReporterStartPersistent(t *testing
 	require.Equal(t, "Test message", calls[0].Message)
 }
 
-func Test_StartPersistentProgressFallsBackToInfoWhenProgressNotActive(t *testing.T) {
+func Test_StartPersistentProgress_FallsBackToInfo_WhenProgressNotActive(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
-		StartPersistentFunc: func(message string) {},
+		StartPersistentFunc: func(message string) error { return nil },
 		IsActiveFunc:        func() bool { return false },
 	}
 
@@ -571,9 +571,9 @@ func Test_StartPersistentProgressFallsBackToInfoWhenProgressNotActive(t *testing
 	require.Equal(t, "Test message", calls[0].Message)
 }
 
-func Test_LogAccomplishmentCallsProgressReporterLogAccomplishment(t *testing.T) {
+func Test_LogAccomplishmentCalls_ProgressReporterLogAccomplishment(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
-		LogAccomplishmentFunc: func(message string) {},
+		LogAccomplishmentFunc: func(message string) error { return nil },
 		IsActiveFunc:          func() bool { return true },
 	}
 
@@ -586,9 +586,9 @@ func Test_LogAccomplishmentCallsProgressReporterLogAccomplishment(t *testing.T) 
 	require.Equal(t, "Test accomplishment", calls[0].Message)
 }
 
-func Test_LogAccomplishmentFallsBackToSuccessWhenProgressNotActive(t *testing.T) {
+func Test_LogAccomplishment_FallsBackToSuccess_WhenProgressNotActive(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
-		LogAccomplishmentFunc: func(message string) {},
+		LogAccomplishmentFunc: func(message string) error { return nil },
 		IsActiveFunc:          func() bool { return false },
 	}
 
@@ -601,9 +601,9 @@ func Test_LogAccomplishmentFallsBackToSuccessWhenProgressNotActive(t *testing.T)
 	require.Equal(t, "Test accomplishment", calls[0].Message)
 }
 
-func Test_FinishPersistentProgressCallsProgressReporterFinishPersistent(t *testing.T) {
+func Test_FinishPersistentProgress_CallsProgressReporterFinishPersistent(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
-		FinishPersistentFunc: func(message string) {},
+		FinishPersistentFunc: func(message string) error { return nil },
 		IsActiveFunc:         func() bool { return true },
 	}
 
@@ -616,9 +616,9 @@ func Test_FinishPersistentProgressCallsProgressReporterFinishPersistent(t *testi
 	require.Equal(t, "Test finished", calls[0].Message)
 }
 
-func Test_FinishPersistentProgressFallsBackToSuccessWhenProgressNotActive(t *testing.T) {
+func Test_FinishPersistentProgress_FallsBackToSuccess_WhenProgressNotActive(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
-		FinishPersistentFunc: func(message string) {},
+		FinishPersistentFunc: func(message string) error { return nil },
 		IsActiveFunc:         func() bool { return false },
 	}
 
@@ -631,10 +631,10 @@ func Test_FinishPersistentProgressFallsBackToSuccessWhenProgressNotActive(t *tes
 	require.Equal(t, "Test finished", calls[0].Message)
 }
 
-func Test_FailPersistentProgressCallsProgressReporterFailPersistent(t *testing.T) {
+func Test_FailPersistentProgress_CallsProgressReporterFailPersistent(t *testing.T) {
 	testErr := errors.New("test error")
 	mockProgress := &logger.MoqProgressReporter{
-		FailPersistentFunc: func(message string, err error) {},
+		FailPersistentFunc: func(message string, err error) error { return nil },
 		IsActiveFunc:       func() bool { return true },
 	}
 
@@ -648,10 +648,10 @@ func Test_FailPersistentProgressCallsProgressReporterFailPersistent(t *testing.T
 	require.Equal(t, testErr, calls[0].Err)
 }
 
-func Test_FailPersistentProgressFallsBackToErrorWhenProgressNotActive(t *testing.T) {
+func Test_FailPersistentProgress_FallsBackToError_WhenProgressNotActive(t *testing.T) {
 	testErr := errors.New("test error")
 	mockProgress := &logger.MoqProgressReporter{
-		FailPersistentFunc: func(message string, err error) {},
+		FailPersistentFunc: func(message string, err error) error { return nil },
 		IsActiveFunc:       func() bool { return false },
 	}
 
@@ -665,7 +665,7 @@ func Test_FailPersistentProgressFallsBackToErrorWhenProgressNotActive(t *testing
 	require.Equal(t, testErr, calls[0].Err)
 }
 
-func Test_CloseCallsProgressReporterClose(t *testing.T) {
+func Test_Close_CallsProgressReporterClose(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
 		CloseFunc: func() error { return nil },
 	}
@@ -678,7 +678,7 @@ func Test_CloseCallsProgressReporterClose(t *testing.T) {
 	require.Len(t, calls, 1)
 }
 
-func Test_CloseWithoutProgressStillWorks(t *testing.T) {
+func Test_Close_WithoutProgress_StillWorks(t *testing.T) {
 	log := logger.NewCliLogger(logger.Normal)
 
 	require.NotPanics(t, func() {

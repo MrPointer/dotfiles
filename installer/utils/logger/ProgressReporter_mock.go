@@ -24,16 +24,16 @@ var _ ProgressReporter = &MoqProgressReporter{}
 //			CloseFunc: func() error {
 //				panic("mock out the Close method")
 //			},
-//			FailFunc: func(message string, err error)  {
+//			FailFunc: func(message string, err error) error {
 //				panic("mock out the Fail method")
 //			},
-//			FailPersistentFunc: func(message string, err error)  {
+//			FailPersistentFunc: func(message string, err error) error {
 //				panic("mock out the FailPersistent method")
 //			},
-//			FinishFunc: func(message string)  {
+//			FinishFunc: func(message string) error {
 //				panic("mock out the Finish method")
 //			},
-//			FinishPersistentFunc: func(message string)  {
+//			FinishPersistentFunc: func(message string) error {
 //				panic("mock out the FinishPersistent method")
 //			},
 //			IsActiveFunc: func() bool {
@@ -42,22 +42,22 @@ var _ ProgressReporter = &MoqProgressReporter{}
 //			IsPausedFunc: func() bool {
 //				panic("mock out the IsPaused method")
 //			},
-//			LogAccomplishmentFunc: func(message string)  {
+//			LogAccomplishmentFunc: func(message string) error {
 //				panic("mock out the LogAccomplishment method")
 //			},
-//			PauseFunc: func()  {
+//			PauseFunc: func() error {
 //				panic("mock out the Pause method")
 //			},
-//			ResumeFunc: func()  {
+//			ResumeFunc: func() error {
 //				panic("mock out the Resume method")
 //			},
-//			StartFunc: func(message string)  {
+//			StartFunc: func(message string) error {
 //				panic("mock out the Start method")
 //			},
-//			StartPersistentFunc: func(message string)  {
+//			StartPersistentFunc: func(message string) error {
 //				panic("mock out the StartPersistent method")
 //			},
-//			UpdateFunc: func(message string)  {
+//			UpdateFunc: func(message string) error {
 //				panic("mock out the Update method")
 //			},
 //		}
@@ -74,16 +74,16 @@ type MoqProgressReporter struct {
 	CloseFunc func() error
 
 	// FailFunc mocks the Fail method.
-	FailFunc func(message string, err error)
+	FailFunc func(message string, err error) error
 
 	// FailPersistentFunc mocks the FailPersistent method.
-	FailPersistentFunc func(message string, err error)
+	FailPersistentFunc func(message string, err error) error
 
 	// FinishFunc mocks the Finish method.
-	FinishFunc func(message string)
+	FinishFunc func(message string) error
 
 	// FinishPersistentFunc mocks the FinishPersistent method.
-	FinishPersistentFunc func(message string)
+	FinishPersistentFunc func(message string) error
 
 	// IsActiveFunc mocks the IsActive method.
 	IsActiveFunc func() bool
@@ -92,22 +92,22 @@ type MoqProgressReporter struct {
 	IsPausedFunc func() bool
 
 	// LogAccomplishmentFunc mocks the LogAccomplishment method.
-	LogAccomplishmentFunc func(message string)
+	LogAccomplishmentFunc func(message string) error
 
 	// PauseFunc mocks the Pause method.
-	PauseFunc func()
+	PauseFunc func() error
 
 	// ResumeFunc mocks the Resume method.
-	ResumeFunc func()
+	ResumeFunc func() error
 
 	// StartFunc mocks the Start method.
-	StartFunc func(message string)
+	StartFunc func(message string) error
 
 	// StartPersistentFunc mocks the StartPersistent method.
-	StartPersistentFunc func(message string)
+	StartPersistentFunc func(message string) error
 
 	// UpdateFunc mocks the Update method.
-	UpdateFunc func(message string)
+	UpdateFunc func(message string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -245,7 +245,7 @@ func (mock *MoqProgressReporter) CloseCalls() []struct {
 }
 
 // Fail calls FailFunc.
-func (mock *MoqProgressReporter) Fail(message string, err error) {
+func (mock *MoqProgressReporter) Fail(message string, err error) error {
 	if mock.FailFunc == nil {
 		panic("MoqProgressReporter.FailFunc: method is nil but ProgressReporter.Fail was just called")
 	}
@@ -259,7 +259,7 @@ func (mock *MoqProgressReporter) Fail(message string, err error) {
 	mock.lockFail.Lock()
 	mock.calls.Fail = append(mock.calls.Fail, callInfo)
 	mock.lockFail.Unlock()
-	mock.FailFunc(message, err)
+	return mock.FailFunc(message, err)
 }
 
 // FailCalls gets all the calls that were made to Fail.
@@ -281,7 +281,7 @@ func (mock *MoqProgressReporter) FailCalls() []struct {
 }
 
 // FailPersistent calls FailPersistentFunc.
-func (mock *MoqProgressReporter) FailPersistent(message string, err error) {
+func (mock *MoqProgressReporter) FailPersistent(message string, err error) error {
 	if mock.FailPersistentFunc == nil {
 		panic("MoqProgressReporter.FailPersistentFunc: method is nil but ProgressReporter.FailPersistent was just called")
 	}
@@ -295,7 +295,7 @@ func (mock *MoqProgressReporter) FailPersistent(message string, err error) {
 	mock.lockFailPersistent.Lock()
 	mock.calls.FailPersistent = append(mock.calls.FailPersistent, callInfo)
 	mock.lockFailPersistent.Unlock()
-	mock.FailPersistentFunc(message, err)
+	return mock.FailPersistentFunc(message, err)
 }
 
 // FailPersistentCalls gets all the calls that were made to FailPersistent.
@@ -317,7 +317,7 @@ func (mock *MoqProgressReporter) FailPersistentCalls() []struct {
 }
 
 // Finish calls FinishFunc.
-func (mock *MoqProgressReporter) Finish(message string) {
+func (mock *MoqProgressReporter) Finish(message string) error {
 	if mock.FinishFunc == nil {
 		panic("MoqProgressReporter.FinishFunc: method is nil but ProgressReporter.Finish was just called")
 	}
@@ -329,7 +329,7 @@ func (mock *MoqProgressReporter) Finish(message string) {
 	mock.lockFinish.Lock()
 	mock.calls.Finish = append(mock.calls.Finish, callInfo)
 	mock.lockFinish.Unlock()
-	mock.FinishFunc(message)
+	return mock.FinishFunc(message)
 }
 
 // FinishCalls gets all the calls that were made to Finish.
@@ -349,7 +349,7 @@ func (mock *MoqProgressReporter) FinishCalls() []struct {
 }
 
 // FinishPersistent calls FinishPersistentFunc.
-func (mock *MoqProgressReporter) FinishPersistent(message string) {
+func (mock *MoqProgressReporter) FinishPersistent(message string) error {
 	if mock.FinishPersistentFunc == nil {
 		panic("MoqProgressReporter.FinishPersistentFunc: method is nil but ProgressReporter.FinishPersistent was just called")
 	}
@@ -361,7 +361,7 @@ func (mock *MoqProgressReporter) FinishPersistent(message string) {
 	mock.lockFinishPersistent.Lock()
 	mock.calls.FinishPersistent = append(mock.calls.FinishPersistent, callInfo)
 	mock.lockFinishPersistent.Unlock()
-	mock.FinishPersistentFunc(message)
+	return mock.FinishPersistentFunc(message)
 }
 
 // FinishPersistentCalls gets all the calls that were made to FinishPersistent.
@@ -435,7 +435,7 @@ func (mock *MoqProgressReporter) IsPausedCalls() []struct {
 }
 
 // LogAccomplishment calls LogAccomplishmentFunc.
-func (mock *MoqProgressReporter) LogAccomplishment(message string) {
+func (mock *MoqProgressReporter) LogAccomplishment(message string) error {
 	if mock.LogAccomplishmentFunc == nil {
 		panic("MoqProgressReporter.LogAccomplishmentFunc: method is nil but ProgressReporter.LogAccomplishment was just called")
 	}
@@ -447,7 +447,7 @@ func (mock *MoqProgressReporter) LogAccomplishment(message string) {
 	mock.lockLogAccomplishment.Lock()
 	mock.calls.LogAccomplishment = append(mock.calls.LogAccomplishment, callInfo)
 	mock.lockLogAccomplishment.Unlock()
-	mock.LogAccomplishmentFunc(message)
+	return mock.LogAccomplishmentFunc(message)
 }
 
 // LogAccomplishmentCalls gets all the calls that were made to LogAccomplishment.
@@ -467,7 +467,7 @@ func (mock *MoqProgressReporter) LogAccomplishmentCalls() []struct {
 }
 
 // Pause calls PauseFunc.
-func (mock *MoqProgressReporter) Pause() {
+func (mock *MoqProgressReporter) Pause() error {
 	if mock.PauseFunc == nil {
 		panic("MoqProgressReporter.PauseFunc: method is nil but ProgressReporter.Pause was just called")
 	}
@@ -476,7 +476,7 @@ func (mock *MoqProgressReporter) Pause() {
 	mock.lockPause.Lock()
 	mock.calls.Pause = append(mock.calls.Pause, callInfo)
 	mock.lockPause.Unlock()
-	mock.PauseFunc()
+	return mock.PauseFunc()
 }
 
 // PauseCalls gets all the calls that were made to Pause.
@@ -494,7 +494,7 @@ func (mock *MoqProgressReporter) PauseCalls() []struct {
 }
 
 // Resume calls ResumeFunc.
-func (mock *MoqProgressReporter) Resume() {
+func (mock *MoqProgressReporter) Resume() error {
 	if mock.ResumeFunc == nil {
 		panic("MoqProgressReporter.ResumeFunc: method is nil but ProgressReporter.Resume was just called")
 	}
@@ -503,7 +503,7 @@ func (mock *MoqProgressReporter) Resume() {
 	mock.lockResume.Lock()
 	mock.calls.Resume = append(mock.calls.Resume, callInfo)
 	mock.lockResume.Unlock()
-	mock.ResumeFunc()
+	return mock.ResumeFunc()
 }
 
 // ResumeCalls gets all the calls that were made to Resume.
@@ -521,7 +521,7 @@ func (mock *MoqProgressReporter) ResumeCalls() []struct {
 }
 
 // Start calls StartFunc.
-func (mock *MoqProgressReporter) Start(message string) {
+func (mock *MoqProgressReporter) Start(message string) error {
 	if mock.StartFunc == nil {
 		panic("MoqProgressReporter.StartFunc: method is nil but ProgressReporter.Start was just called")
 	}
@@ -533,7 +533,7 @@ func (mock *MoqProgressReporter) Start(message string) {
 	mock.lockStart.Lock()
 	mock.calls.Start = append(mock.calls.Start, callInfo)
 	mock.lockStart.Unlock()
-	mock.StartFunc(message)
+	return mock.StartFunc(message)
 }
 
 // StartCalls gets all the calls that were made to Start.
@@ -553,7 +553,7 @@ func (mock *MoqProgressReporter) StartCalls() []struct {
 }
 
 // StartPersistent calls StartPersistentFunc.
-func (mock *MoqProgressReporter) StartPersistent(message string) {
+func (mock *MoqProgressReporter) StartPersistent(message string) error {
 	if mock.StartPersistentFunc == nil {
 		panic("MoqProgressReporter.StartPersistentFunc: method is nil but ProgressReporter.StartPersistent was just called")
 	}
@@ -565,7 +565,7 @@ func (mock *MoqProgressReporter) StartPersistent(message string) {
 	mock.lockStartPersistent.Lock()
 	mock.calls.StartPersistent = append(mock.calls.StartPersistent, callInfo)
 	mock.lockStartPersistent.Unlock()
-	mock.StartPersistentFunc(message)
+	return mock.StartPersistentFunc(message)
 }
 
 // StartPersistentCalls gets all the calls that were made to StartPersistent.
@@ -585,7 +585,7 @@ func (mock *MoqProgressReporter) StartPersistentCalls() []struct {
 }
 
 // Update calls UpdateFunc.
-func (mock *MoqProgressReporter) Update(message string) {
+func (mock *MoqProgressReporter) Update(message string) error {
 	if mock.UpdateFunc == nil {
 		panic("MoqProgressReporter.UpdateFunc: method is nil but ProgressReporter.Update was just called")
 	}
@@ -597,7 +597,7 @@ func (mock *MoqProgressReporter) Update(message string) {
 	mock.lockUpdate.Lock()
 	mock.calls.Update = append(mock.calls.Update, callInfo)
 	mock.lockUpdate.Unlock()
-	mock.UpdateFunc(message)
+	return mock.UpdateFunc(message)
 }
 
 // UpdateCalls gets all the calls that were made to Update.

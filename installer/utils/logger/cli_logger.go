@@ -134,128 +134,175 @@ func (l *CliLogger) Error(format string, args ...any) {
 }
 
 // StartProgress starts a progress indicator with the given message.
-func (l *CliLogger) StartProgress(message string) {
+func (l *CliLogger) StartProgress(message string) error {
 	// Always try to start progress - the progress display handles whether it's active
-	l.progress.Start(message)
+	if err := l.progress.Start(message); err != nil {
+		return err
+	}
 
 	// If no progress operations are active after attempting to start,
 	// fall back to Info logging (this handles NoopProgressDisplay)
 	if !l.progress.IsActive() {
 		l.Info("%s", message)
 	}
+
+	return nil
 }
 
 // UpdateProgress updates the current progress message.
-func (l *CliLogger) UpdateProgress(message string) {
-	l.progress.Update(message)
+func (l *CliLogger) UpdateProgress(message string) error {
+	return l.progress.Update(message)
 	// If progress is not active, updates are ignored (no fallback needed)
 }
 
 // FinishProgress completes the progress with success.
-func (l *CliLogger) FinishProgress(message string) {
+func (l *CliLogger) FinishProgress(message string) error {
 	wasActive := l.progress.IsActive()
-	l.progress.Finish(message)
+	if err := l.progress.Finish(message); err != nil {
+		return err
+	}
 
 	// Fall back to Success logging if no progress was active
 	if !wasActive {
 		l.Success("%s", message)
 	}
+
+	return nil
 }
 
 // FailProgress completes the progress with failure and shows error.
-func (l *CliLogger) FailProgress(message string, err error) {
+func (l *CliLogger) FailProgress(message string, err error) error {
 	wasActive := l.progress.IsActive()
-	l.progress.Fail(message, err)
+	if err := l.progress.Fail(message, err); err != nil {
+		return err
+	}
 
 	// Fall back to Error logging if no progress was active
 	if !wasActive {
 		l.Error("%s: %v", message, err)
 	}
+
+	return nil
 }
 
 // StartPersistentProgress starts a persistent progress indicator that shows accomplishments.
-func (l *CliLogger) StartPersistentProgress(message string) {
+func (l *CliLogger) StartPersistentProgress(message string) error {
 	// Always try to start persistent progress - the progress display handles whether it's active
-	l.progress.StartPersistent(message)
+	if err := l.progress.StartPersistent(message); err != nil {
+		return err
+	}
 
 	// If no progress operations are active after attempting to start,
 	// fall back to Info logging (this handles NoopProgressDisplay)
 	if !l.progress.IsActive() {
 		l.Info("%s", message)
 	}
+
+	return nil
 }
 
 // LogAccomplishment logs an accomplishment that stays visible.
-func (l *CliLogger) LogAccomplishment(message string) {
-	l.progress.LogAccomplishment(message)
+func (l *CliLogger) LogAccomplishment(message string) error {
+	if err := l.progress.LogAccomplishment(message); err != nil {
+		return err
+	}
+
 	// If progress is not active, fall back to Success logging
 	if !l.progress.IsActive() {
 		l.Success("%s", message)
 	}
+
+	return nil
 }
 
 // FinishPersistentProgress completes the persistent progress with success.
-func (l *CliLogger) FinishPersistentProgress(message string) {
+func (l *CliLogger) FinishPersistentProgress(message string) error {
 	wasActive := l.progress.IsActive()
-	l.progress.FinishPersistent(message)
+	if err := l.progress.FinishPersistent(message); err != nil {
+		return err
+	}
 
 	// Fall back to Success logging if no progress was active
 	if !wasActive {
 		l.Success("%s", message)
 	}
+
+	return nil
 }
 
 // FailPersistentProgress completes the persistent progress with failure and shows error.
-func (l *CliLogger) FailPersistentProgress(message string, err error) {
+func (l *CliLogger) FailPersistentProgress(message string, err error) error {
 	wasActive := l.progress.IsActive()
-	l.progress.FailPersistent(message, err)
+	if err := l.progress.FailPersistent(message, err); err != nil {
+		return err
+	}
 
 	// Fall back to Error logging if no progress was active
 	if !wasActive {
 		l.Error("%s: %v", message, err)
 	}
+
+	return nil
 }
 
 // StartInteractiveProgress starts progress and pauses spinners for interactive commands.
-func (l *CliLogger) StartInteractiveProgress(message string) {
+func (l *CliLogger) StartInteractiveProgress(message string) error {
 	// Pause any active spinners to prevent interference
-	l.progress.Pause()
+	if err := l.progress.Pause(); err != nil {
+		return err
+	}
 
 	// Start progress normally but it won't show spinners while paused
-	l.progress.Start(message)
+	if err := l.progress.Start(message); err != nil {
+		return err
+	}
 
 	// If no progress operations are active, fall back to Info logging
 	if !l.progress.IsActive() {
 		l.Info("%s", message)
 	}
+
+	return nil
 }
 
 // FinishInteractiveProgress completes interactive progress and resumes spinners.
-func (l *CliLogger) FinishInteractiveProgress(message string) {
+func (l *CliLogger) FinishInteractiveProgress(message string) error {
 	wasActive := l.progress.IsActive()
-	l.progress.Finish(message)
+	if err := l.progress.Finish(message); err != nil {
+		return err
+	}
 
 	// Resume spinners for any remaining operations
-	l.progress.Resume()
+	if err := l.progress.Resume(); err != nil {
+		return err
+	}
 
 	// Fall back to Success logging if no progress was active
 	if !wasActive {
 		l.Success("%s", message)
 	}
+
+	return nil
 }
 
 // FailInteractiveProgress completes interactive progress with error and resumes spinners.
-func (l *CliLogger) FailInteractiveProgress(message string, err error) {
+func (l *CliLogger) FailInteractiveProgress(message string, err error) error {
 	wasActive := l.progress.IsActive()
-	l.progress.Fail(message, err)
+	if err := l.progress.Fail(message, err); err != nil {
+		return err
+	}
 
 	// Resume spinners for any remaining operations
-	l.progress.Resume()
+	if err := l.progress.Resume(); err != nil {
+		return err
+	}
 
 	// Fall back to Error logging if no progress was active
 	if !wasActive {
 		l.Error("%s: %v", message, err)
 	}
+
+	return nil
 }
 
 // Cleanup ensures proper cleanup of terminal state, including cursor restoration.
