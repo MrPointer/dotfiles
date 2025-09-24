@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/utils"
@@ -67,6 +69,12 @@ It also installs essential packages and tools that I use on a daily basis.
 
 By default, the installer shows hierarchical progress indicators with spinners
 and timing information (similar to npm). Use --plain for simple text output.`,
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		// Ensure cleanup happens after all commands complete successfully
+		if cliLogger != nil {
+			cliLogger.Close()
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -74,13 +82,37 @@ and timing information (similar to npm). Use --plain for simple text output.`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		cleanupAndExit(1)
 	}
+	// Cleanup is handled by PersistentPostRun for successful completion
+}
+
+// cleanupAndExit performs cleanup and exits with the given code.
+func cleanupAndExit(code int) {
+	if cliLogger != nil {
+		cliLogger.Close()
+	}
+	os.Exit(code)
+}
+
+// setupCleanup sets up signal handlers and cleanup after logger is initialized.
+func setupCleanup() {
+	// Set up signal handling to ensure cleanup on interrupt
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-c
+		if cliLogger != nil {
+			cliLogger.Info("Interrupt received, cleaning up...")
+		}
+		cleanupAndExit(1)
+	}()
 }
 
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
-	cobra.OnInitialize(initConfig, initCompatibilityConfig, initLogger, initCommander, initOsManager)
+	cobra.OnInitialize(initConfig, initCompatibilityConfig, initLogger, setupCleanup, initCommander, initOsManager)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,

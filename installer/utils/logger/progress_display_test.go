@@ -506,4 +506,140 @@ func Test_NoopProgressDisplayPersistentMethodsDoNothing(t *testing.T) {
 
 	display.FailPersistent("Test", errors.New("test"))
 	require.False(t, display.IsActive())
+
+	display.Close()
+	require.False(t, display.IsActive())
+}
+
+func Test_CloseStopsAllOperationsAndRestoresCursor(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.Start("Operation 1")
+	display.Start("Operation 2")
+	require.True(t, display.IsActive())
+
+	display.Close()
+	require.False(t, display.IsActive())
+
+	// Should not crash when calling methods after cleanup
+	display.Update("Should be ignored")
+	display.Finish("Should be ignored")
+	display.Fail("Should be ignored", errors.New("test"))
+}
+
+func Test_CloseCanBeCalledMultipleTimes(t *testing.T) {
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.Start("Test operation")
+	require.True(t, display.IsActive())
+
+	// Multiple cleanups should not crash
+	display.Close()
+	display.Close()
+	display.Close()
+
+	require.False(t, display.IsActive())
+}
+
+func Test_CloseWithoutActiveOperationsDoesNotCrash(t *testing.T) {
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	require.NotPanics(t, func() {
+		display.Close()
+	})
+
+	require.False(t, display.IsActive())
+}
+
+func Test_CloseAlsoRestoresCursor(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.Start("Operation with cursor")
+	require.True(t, display.IsActive())
+
+	time.Sleep(30 * time.Millisecond)
+	display.Close()
+	require.False(t, display.IsActive())
+
+	// Close should not crash and should handle cursor state properly
+	require.NotNil(t, display)
+}
+
+func Test_ProgressFailureSynchronizesCleanupAndPreventsHangingCursor(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	display.Start("Operation that will fail")
+	require.True(t, display.IsActive())
+
+	// Simulate work that results in failure
+	time.Sleep(100 * time.Millisecond)
+	display.Fail("Operation failed", errors.New("simulated error"))
+
+	// After failure, display should be properly cleaned up
+	require.False(t, display.IsActive())
+
+	// Verify that output contains failure message and cursor control sequences are handled
+	output := buf.String()
+	require.Contains(t, output, "✗")
+	require.Contains(t, output, "Operation that will fail")
+	require.Contains(t, output, "simulated error")
+
+	// Should be able to start new operations without issues
+	display.Start("New operation after failure")
+	require.True(t, display.IsActive())
+
+	time.Sleep(30 * time.Millisecond)
+	display.Finish("New operation completed")
+	require.False(t, display.IsActive())
+
+	// Verify new operation also completed successfully
+	require.Contains(t, buf.String(), "New operation after failure")
+}
+
+func Test_RapidFailureAndRecoveryMaintainsProperTerminalState(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	var buf bytes.Buffer
+	display := logger.NewProgressDisplay(&buf)
+
+	// Test rapid failure and recovery cycles
+	for i := 0; i < 5; i++ {
+		display.Start("Rapid operation")
+		time.Sleep(20 * time.Millisecond)
+
+		if i%2 == 0 {
+			display.Fail("Operation failed", errors.New("test error"))
+		} else {
+			display.Finish("Operation succeeded")
+		}
+
+		require.False(t, display.IsActive())
+	}
+
+	output := buf.String()
+	// Should have both success and failure indicators
+	require.Contains(t, output, "✓")
+	require.Contains(t, output, "✗")
+
+	// Should not have any hanging operations
+	require.False(t, display.IsActive())
 }

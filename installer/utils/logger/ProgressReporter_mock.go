@@ -18,8 +18,11 @@ var _ ProgressReporter = &MoqProgressReporter{}
 //
 //		// make and configure a mocked ProgressReporter
 //		mockedProgressReporter := &MoqProgressReporter{
-//			ClearFunc: func()  {
+//			ClearFunc: func() error {
 //				panic("mock out the Clear method")
+//			},
+//			CloseFunc: func() error {
+//				panic("mock out the Close method")
 //			},
 //			FailFunc: func(message string, err error)  {
 //				panic("mock out the Fail method")
@@ -65,7 +68,10 @@ var _ ProgressReporter = &MoqProgressReporter{}
 //	}
 type MoqProgressReporter struct {
 	// ClearFunc mocks the Clear method.
-	ClearFunc func()
+	ClearFunc func() error
+
+	// CloseFunc mocks the Close method.
+	CloseFunc func() error
 
 	// FailFunc mocks the Fail method.
 	FailFunc func(message string, err error)
@@ -107,6 +113,9 @@ type MoqProgressReporter struct {
 	calls struct {
 		// Clear holds details about calls to the Clear method.
 		Clear []struct {
+		}
+		// Close holds details about calls to the Close method.
+		Close []struct {
 		}
 		// Fail holds details about calls to the Fail method.
 		Fail []struct {
@@ -166,6 +175,7 @@ type MoqProgressReporter struct {
 		}
 	}
 	lockClear             sync.RWMutex
+	lockClose             sync.RWMutex
 	lockFail              sync.RWMutex
 	lockFailPersistent    sync.RWMutex
 	lockFinish            sync.RWMutex
@@ -181,7 +191,7 @@ type MoqProgressReporter struct {
 }
 
 // Clear calls ClearFunc.
-func (mock *MoqProgressReporter) Clear() {
+func (mock *MoqProgressReporter) Clear() error {
 	if mock.ClearFunc == nil {
 		panic("MoqProgressReporter.ClearFunc: method is nil but ProgressReporter.Clear was just called")
 	}
@@ -190,7 +200,7 @@ func (mock *MoqProgressReporter) Clear() {
 	mock.lockClear.Lock()
 	mock.calls.Clear = append(mock.calls.Clear, callInfo)
 	mock.lockClear.Unlock()
-	mock.ClearFunc()
+	return mock.ClearFunc()
 }
 
 // ClearCalls gets all the calls that were made to Clear.
@@ -204,6 +214,33 @@ func (mock *MoqProgressReporter) ClearCalls() []struct {
 	mock.lockClear.RLock()
 	calls = mock.calls.Clear
 	mock.lockClear.RUnlock()
+	return calls
+}
+
+// Close calls CloseFunc.
+func (mock *MoqProgressReporter) Close() error {
+	if mock.CloseFunc == nil {
+		panic("MoqProgressReporter.CloseFunc: method is nil but ProgressReporter.Close was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockClose.Lock()
+	mock.calls.Close = append(mock.calls.Close, callInfo)
+	mock.lockClose.Unlock()
+	return mock.CloseFunc()
+}
+
+// CloseCalls gets all the calls that were made to Close.
+// Check the length with:
+//
+//	len(mockedProgressReporter.CloseCalls())
+func (mock *MoqProgressReporter) CloseCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockClose.RLock()
+	calls = mock.calls.Close
+	mock.lockClose.RUnlock()
 	return calls
 }
 

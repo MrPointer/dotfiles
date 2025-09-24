@@ -18,6 +18,9 @@ var _ Logger = &MoqLogger{}
 //
 //		// make and configure a mocked Logger
 //		mockedLogger := &MoqLogger{
+//			CloseFunc: func() error {
+//				panic("mock out the Close method")
+//			},
 //			DebugFunc: func(format string, args ...any)  {
 //				panic("mock out the Debug method")
 //			},
@@ -76,6 +79,9 @@ var _ Logger = &MoqLogger{}
 //
 //	}
 type MoqLogger struct {
+	// CloseFunc mocks the Close method.
+	CloseFunc func() error
+
 	// DebugFunc mocks the Debug method.
 	DebugFunc func(format string, args ...any)
 
@@ -129,6 +135,9 @@ type MoqLogger struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// Close holds details about calls to the Close method.
+		Close []struct {
+		}
 		// Debug holds details about calls to the Debug method.
 		Debug []struct {
 			// Format is the format argument value.
@@ -233,6 +242,7 @@ type MoqLogger struct {
 			Args []any
 		}
 	}
+	lockClose                     sync.RWMutex
 	lockDebug                     sync.RWMutex
 	lockError                     sync.RWMutex
 	lockFailInteractiveProgress   sync.RWMutex
@@ -252,6 +262,31 @@ type MoqLogger struct {
 	lockWarning                   sync.RWMutex
 }
 
+// Close calls CloseFunc.
+func (mock *MoqLogger) Close() error {
+	if mock.CloseFunc == nil {
+		panic("MoqLogger.CloseFunc: method is nil but Logger.Close was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockClose.Lock()
+	mock.calls.Close = append(mock.calls.Close, callInfo)
+	mock.lockClose.Unlock()
+	return mock.CloseFunc()
+}
+
+// CloseCalls gets all the calls that were made to Close.
+// Check the length with:
+//
+//	len(mockedLogger.CloseCalls())
+func (mock *MoqLogger) CloseCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockClose.RLock()
+	calls = mock.calls.Close
+	mock.lockClose.RUnlock()
+	return calls
 }
 
 // Debug calls DebugFunc.

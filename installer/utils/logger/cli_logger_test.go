@@ -664,3 +664,24 @@ func Test_FailPersistentProgressFallsBackToErrorWhenProgressNotActive(t *testing
 	require.Equal(t, "Test failed", calls[0].Message)
 	require.Equal(t, testErr, calls[0].Err)
 }
+
+func Test_CloseCallsProgressReporterClose(t *testing.T) {
+	mockProgress := &logger.MoqProgressReporter{
+		CloseFunc: func() error { return nil },
+	}
+
+	log := logger.NewCliLoggerWithProgress(logger.Normal, mockProgress)
+
+	log.Close()
+
+	calls := mockProgress.CloseCalls()
+	require.Len(t, calls, 1)
+}
+
+func Test_CloseWithoutProgressStillWorks(t *testing.T) {
+	log := logger.NewCliLogger(logger.Normal)
+
+	require.NotPanics(t, func() {
+		log.Close()
+	})
+}

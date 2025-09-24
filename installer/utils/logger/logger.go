@@ -1,7 +1,11 @@
 package logger
 
+import "io"
+
 // Logger defines a minimal logging interface that our installer utilities need.
 type Logger interface {
+	io.Closer
+
 	// Trace logs a trace message
 	Trace(format string, args ...any)
 	// Debug logs a debug message
@@ -62,6 +66,7 @@ func (l NoopLogger) FailPersistentProgress(message string, err error)  {}
 func (l NoopLogger) StartInteractiveProgress(message string)           {}
 func (l NoopLogger) FinishInteractiveProgress(message string)          {}
 func (l NoopLogger) FailInteractiveProgress(message string, err error) {}
+func (l NoopLogger) Close() error                                      { return nil }
 
 // DefaultLogger is the default logger used if none is provided.
 var DefaultLogger Logger = NoopLogger{}

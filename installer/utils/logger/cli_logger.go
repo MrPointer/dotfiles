@@ -259,8 +259,8 @@ func (l *CliLogger) FailInteractiveProgress(message string, err error) {
 }
 
 // Cleanup ensures proper cleanup of terminal state, including cursor restoration.
-func (l *CliLogger) Cleanup() {
-	l.progress.Cleanup()
+func (l *CliLogger) Close() error {
+	return l.progress.Close()
 }
 
 // PrintStyled is a helper function to print styled text to the specified writer.

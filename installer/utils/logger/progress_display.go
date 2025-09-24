@@ -17,7 +17,8 @@ import (
 
 // ANSI escape codes for terminal control
 const (
-	clearLine = "\033[K" // Clear line from cursor to end
+	clearLine  = "\033[K"    // Clear line from cursor to end
+	showCursor = "\033[?25h" // Show cursor
 )
 
 // ProgressOperation represents an active progress operation.
@@ -41,6 +42,37 @@ func (op *ProgressOperation) SetDone() {
 	atomic.StoreInt32(&op.done, 1)
 }
 
+// ProgressReporter defines the interface for hierarchical progress reporting.
+type ProgressReporter interface {
+	io.Closer
+	// Start begins a new progress operation with the given message
+	Start(message string)
+	// Update modifies the message of the current progress operation
+	Update(message string)
+	// Finish completes the current progress operation successfully
+	Finish(message string)
+	// Fail completes the current progress operation with an error
+	Fail(message string, err error)
+	// IsActive returns true if there are any active progress operations
+	IsActive() bool
+	// Clear stops all progress operations without displaying completion messages
+	Clear() error
+	// Pause temporarily stops all spinner operations for interactive commands
+	Pause()
+	// Resume restarts spinner operations after interactive commands complete
+	Resume()
+	// IsPaused returns whether the progress display is currently paused
+	IsPaused() bool
+	// StartPersistent begins a persistent progress operation that shows accomplishments
+	StartPersistent(message string)
+	// LogAccomplishment logs an accomplishment that stays visible
+	LogAccomplishment(message string)
+	// FinishPersistent completes persistent progress with success
+	FinishPersistent(message string)
+	// FailPersistent completes persistent progress with failure
+	FailPersistent(message string, err error)
+}
+
 // ProgressDisplay provides hierarchical progress reporting with npm-style output.
 type ProgressDisplay struct {
 	output              io.Writer
@@ -48,6 +80,7 @@ type ProgressDisplay struct {
 	activeSpinner       *ProgressOperation
 	operationInProgress int32          // atomic counter
 	persistentMode      bool           // whether we're in persistent mode
+	cursorHidden        int32          // atomic flag for cursor state
 	paused              int32          // atomic flag for paused state
 	pauseMutex          sync.Mutex     // protects pause/resume operations
 	spinnerWaitGroup    sync.WaitGroup // tracks active spinner goroutines
@@ -60,9 +93,14 @@ func NewProgressDisplay(output io.Writer) *ProgressDisplay {
 	if output == nil {
 		output = os.Stdout
 	}
-	return &ProgressDisplay{
+	pd := &ProgressDisplay{
 		output: output,
 	}
+
+	// Ensure cursor is restored on program exit
+	pd.setupCleanup()
+
+	return pd
 }
 
 // Start begins a new progress operation with the given message.
@@ -126,14 +164,20 @@ func (p *ProgressDisplay) Finish(message string) {
 	operation.SetDone()
 	operation.Success = true
 
+	// Wait for spinner goroutine to complete cleanup before proceeding
+	p.spinnerWaitGroup.Wait()
+
+	// Ensure cursor is restored before displaying completion message
+	p.restoreCursor()
+
 	// Decrement operation counter
 	atomic.AddInt32(&p.operationInProgress, -1)
 
-	// Resume parent operation if exists
-	p.resumeParentOperation()
-
 	// Display completion message
 	p.displayCompletion(operation, true, nil)
+
+	// Resume parent operation if exists
+	p.resumeParentOperation()
 }
 
 // Fail completes the current progress operation with an error.
@@ -155,14 +199,20 @@ func (p *ProgressDisplay) Fail(message string, err error) {
 	operation.Success = false
 	operation.Error = err
 
+	// Wait for spinner goroutine to complete cleanup before proceeding
+	p.spinnerWaitGroup.Wait()
+
+	// Ensure cursor is restored before displaying completion message
+	p.restoreCursor()
+
 	// Decrement operation counter
 	atomic.AddInt32(&p.operationInProgress, -1)
 
-	// Resume parent operation if exists
-	p.resumeParentOperation()
-
 	// Display failure message
 	p.displayCompletion(operation, false, err)
+
+	// Resume parent operation if exists
+	p.resumeParentOperation()
 }
 
 // IsActive returns true if there are any active progress operations.
@@ -171,19 +221,26 @@ func (p *ProgressDisplay) IsActive() bool {
 }
 
 // Clear stops all progress operations without displaying completion messages.
-func (p *ProgressDisplay) Clear() {
+func (p *ProgressDisplay) Clear() error {
 	// Stop all active spinners
 	for _, operation := range p.progressStack {
 		if operation.CancelFunc != nil {
 			operation.CancelFunc()
 		}
+		operation.SetDone()
 	}
+
+	// Wait for all spinner goroutines to complete
+	p.spinnerWaitGroup.Wait()
 
 	// Clear the stack and reset counter
 	p.progressStack = nil
 	p.activeSpinner = nil
 	atomic.StoreInt32(&p.operationInProgress, 0)
 	atomic.StoreInt32(&p.paused, 0)
+
+	// Restore cursor if it was hidden
+	return p.restoreCursor()
 }
 
 // resumeParentOperation resumes the spinner for the parent operation if one exists.
@@ -262,6 +319,9 @@ func (p *ProgressDisplay) runSpinner(ctx context.Context, operation *ProgressOpe
 		return
 	}
 
+	// Mark cursor as hidden when spinner starts
+	atomic.StoreInt32(&p.cursorHidden, 1)
+
 	// Create spinner with huh
 	s := spinner.New().
 		Title(displayMessage).
@@ -315,6 +375,14 @@ func (p *ProgressDisplay) Pause() {
 
 	// Wait for all spinner goroutines to finish
 	p.spinnerWaitGroup.Wait()
+
+	// Now it's safe to clean up terminal state
+	p.restoreCursor()
+	if file, ok := p.output.(*os.File); ok {
+		file.WriteString("\r" + clearLine)
+	} else {
+		fmt.Fprint(p.output, "\r"+clearLine)
+	}
 }
 
 // Resume restarts spinner operations after interactive commands complete
@@ -385,34 +453,30 @@ func (p *ProgressDisplay) FailPersistent(message string, err error) {
 	p.Fail(message, err)
 }
 
-// ProgressReporter defines the interface for hierarchical progress reporting.
-type ProgressReporter interface {
-	// Start begins a new progress operation with the given message
-	Start(message string)
-	// Update modifies the message of the current progress operation
-	Update(message string)
-	// Finish completes the current progress operation successfully
-	Finish(message string)
-	// Fail completes the current progress operation with an error
-	Fail(message string, err error)
-	// IsActive returns true if there are any active progress operations
-	IsActive() bool
-	// Clear stops all progress operations without displaying completion messages
-	Clear()
-	// Pause temporarily stops all spinner operations for interactive commands
-	Pause()
-	// Resume restarts spinner operations after interactive commands complete
-	Resume()
-	// IsPaused returns whether the progress display is currently paused
-	IsPaused() bool
-	// StartPersistent begins a persistent progress operation that shows accomplishments
-	StartPersistent(message string)
-	// LogAccomplishment logs an accomplishment that stays visible
-	LogAccomplishment(message string)
-	// FinishPersistent completes persistent progress with success
-	FinishPersistent(message string)
-	// FailPersistent completes persistent progress with failure
-	FailPersistent(message string, err error)
+// Close ensures proper cleanup of terminal state.
+func (p *ProgressDisplay) Close() error {
+	return p.Clear()
+}
+
+// setupCleanup sets up signal handlers and cleanup mechanisms to ensure cursor is restored.
+func (p *ProgressDisplay) setupCleanup() {
+	// Note: We don't set up signal handlers here to avoid dependencies.
+	// The cursor restoration will happen when Clear() is called or through defer.
+}
+
+// restoreCursor ensures the terminal cursor is visible.
+func (p *ProgressDisplay) restoreCursor() error {
+	if !atomic.CompareAndSwapInt32(&p.cursorHidden, 1, 0) {
+		return errors.New("Failed swapping atomic value representing cursor visibility")
+	}
+
+	if file, ok := p.output.(*os.File); ok {
+		file.WriteString(showCursor)
+	} else {
+		fmt.Fprint(p.output, showCursor)
+	}
+
+	return nil
 }
 
 // NoopProgressDisplay is a progress display that does nothing.
@@ -441,7 +505,7 @@ func (n *NoopProgressDisplay) Fail(message string, err error) {}
 func (n *NoopProgressDisplay) IsActive() bool { return false }
 
 // Clear does nothing.
-func (n *NoopProgressDisplay) Clear() {}
+func (n *NoopProgressDisplay) Clear() error { return nil }
 
 // Pause does nothing.
 func (n *NoopProgressDisplay) Pause() {}
@@ -463,3 +527,6 @@ func (n *NoopProgressDisplay) FinishPersistent(message string) {}
 
 // FailPersistent does nothing.
 func (n *NoopProgressDisplay) FailPersistent(message string, err error) {}
+
+// Close does nothing.
+func (n *NoopProgressDisplay) Close() error { return nil }

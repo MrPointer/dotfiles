@@ -15,6 +15,14 @@ The installer of my dotfiles, used to bootstrap the system
 
 ## Project Description
 
+## Features
+
+- **Hierarchical Progress Display**: Shows npm-style progress indicators with spinners and timing information
+- **Automatic Cursor Cleanup**: Ensures terminal cursor is always visible after program exit, even on interruption
+- **Signal Handling**: Gracefully handles Ctrl+C and other termination signals with proper cleanup
+- **Verbosity Control**: Multiple verbosity levels from minimal to extra-verbose output
+- **Non-Interactive Mode**: Supports automated installations without user prompts
+
 ## Installation
 
 Compiled binaries for all supported platforms can be found in the [GitHub release]. There is also a [homebrew] tap:

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
@@ -72,6 +74,20 @@ func runDemo(cmd *cobra.Command, args []string) error {
 		log = logger.NewCliLogger(verbosityLevel)
 		fmt.Println("📝 Running spinner demo with plain text output")
 	}
+
+	// Set up signal handling to ensure cleanup on interrupt
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-c
+		log.Info("Interrupt received, cleaning up...")
+		log.Close()
+		os.Exit(1)
+	}()
+
+	// Defer cleanup to ensure it runs even if program exits normally
+	defer log.Close()
 
 	fmt.Printf("📊 Configuration: type=%s, count=%d, fail-rate=%d%%\n\n",
 		operationType, operationCount, failureRate)
