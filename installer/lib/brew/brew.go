@@ -16,17 +16,19 @@ type BrewPackageManager struct {
 	commander    utils.Commander
 	programQuery osmanager.ProgramQuery
 	brewPath     string
+	displayMode  utils.DisplayMode
 }
 
 var _ pkgmanager.PackageManager = &BrewPackageManager{}
 
 // NewBrewPackageManager creates a new BrewPackageManager instance.
-func NewBrewPackageManager(logger logger.Logger, commander utils.Commander, programQuery osmanager.ProgramQuery, brewPath string) *BrewPackageManager {
+func NewBrewPackageManager(logger logger.Logger, commander utils.Commander, programQuery osmanager.ProgramQuery, brewPath string, displayMode utils.DisplayMode) *BrewPackageManager {
 	return &BrewPackageManager{
 		logger:       logger,
 		commander:    commander,
 		programQuery: programQuery,
 		brewPath:     brewPath,
+		displayMode:  displayMode,
 	}
 }
 
@@ -85,7 +87,12 @@ func (b *BrewPackageManager) InstallPackage(requestedPackageInfo pkgmanager.Requ
 		b.logger.Warning("Homebrew doesn't support version constraints, installing the latest version of package %s", requestedPackageInfo.Name)
 	}
 
-	_, err := b.commander.RunCommand(b.brewPath, []string{"install", requestedPackageInfo.Name})
+	var discardOutputOption utils.Option = utils.EmptyOption()
+	if b.displayMode.ShouldDiscardOutput() {
+		discardOutputOption = utils.WithDiscardOutput()
+	}
+
+	_, err := b.commander.RunCommand(b.brewPath, []string{"install", requestedPackageInfo.Name}, discardOutputOption)
 	if err != nil {
 		return fmt.Errorf("failed to install package %s with Homebrew: %v", requestedPackageInfo.Name, err)
 	}
@@ -150,7 +157,12 @@ func (b *BrewPackageManager) ListInstalledPackages() ([]pkgmanager.PackageInfo, 
 func (b *BrewPackageManager) UninstallPackage(packageInfo pkgmanager.PackageInfo) error {
 	b.logger.Debug("Uninstalling package %s with Homebrew", packageInfo.Name)
 
-	_, err := b.commander.RunCommand(b.brewPath, []string{"uninstall", packageInfo.Name})
+	var discardOutputOption utils.Option = utils.EmptyOption()
+	if b.displayMode.ShouldDiscardOutput() {
+		discardOutputOption = utils.WithDiscardOutput()
+	}
+
+	_, err := b.commander.RunCommand(b.brewPath, []string{"uninstall", packageInfo.Name}, discardOutputOption)
 	if err != nil {
 		return fmt.Errorf("failed to uninstall package %s with Homebrew: %v", packageInfo.Name, err)
 	}

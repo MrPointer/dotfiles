@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func Test_Install_ReturnsEarly_WhenChezmoiAlreadyInstalled(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		require.Equal(t, "chezmoi", packageInfo.Name)
@@ -49,7 +50,7 @@ func Test_Install_ReturnsError_WhenPackageInstalledCheckFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, errors.New("package manager unavailable")
@@ -70,7 +71,7 @@ func Test_Install_SucceedsWithPackageManager_WhenChezmoiNotInstalledAndPackageMa
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -99,7 +100,7 @@ func Test_Install_FallsBackToManualInstall_WhenPackageManagerFails(t *testing.T)
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -146,7 +147,7 @@ func Test_Install_ReturnsError_WhenHTTPRequestFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -177,7 +178,7 @@ func Test_Install_ReturnsError_WhenHTTPResponseIsNotOK(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -211,7 +212,7 @@ func Test_Install_ReturnsError_WhenResponseBodyReadFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -244,7 +245,7 @@ func Test_Install_ReturnsError_WhenGetHomeDirFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -280,7 +281,7 @@ func Test_Install_ReturnsError_WhenManualInstallCommandFails(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -320,7 +321,7 @@ func Test_Install_ReturnsError_WhenManualInstallCommandExitsWithNonZeroCode(t *t
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -364,7 +365,7 @@ func Test_Install_ClosesResponseBody(t *testing.T) {
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
 		return false, nil
@@ -415,4 +416,126 @@ type MockReadCloser struct {
 func (mrc *MockReadCloser) Close() error {
 	mrc.CloseCalled = true
 	return nil
+}
+
+func Test_Install_ManualInstall_DiscardsOutput_WhenDisplayModeIsNotPassthrough(t *testing.T) {
+	mockFileSystem := &utils.MoqFileSystem{}
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			// Apply all provided options
+			for _, opt := range opts {
+				opt(&cmdOptions)
+			}
+
+			require.Equal(t, "sh", name)
+			require.Equal(t, []string{"-c", "#!/bin/sh\necho 'Installing chezmoi...'", "--", "-b", "/home/user/.local/bin"}, args)
+
+			// Verify that output was discarded (stdout/stderr should be different from original)
+			require.NotEqual(t, os.Stdout, cmdOptions.Stdout)
+			require.NotEqual(t, os.Stderr, cmdOptions.Stderr)
+			return &utils.Result{ExitCode: 0}, nil
+		},
+	}
+
+	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
+
+	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
+		return false, nil
+	}
+
+	mockPackageManager.InstallPackageFunc = func(packageInfo pkgmanager.RequestedPackageInfo) error {
+		return errors.New("package manager failed")
+	}
+
+	mockHTTPClient.GetFunc = func(url string) (*http.Response, error) {
+		response := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString("#!/bin/sh\necho 'Installing chezmoi...'")),
+		}
+		return response, nil
+	}
+
+	mockUserManager.GetHomeDirFunc = func() (string, error) {
+		return "/home/user", nil
+	}
+
+	err := manager.Install()
+
+	require.NoError(t, err)
+	require.Len(t, mockPackageManager.IsPackageInstalledCalls(), 1)
+	require.Len(t, mockPackageManager.InstallPackageCalls(), 1)
+	require.Len(t, mockHTTPClient.GetCalls(), 1)
+	require.Len(t, mockUserManager.GetHomeDirCalls(), 1)
+	require.Len(t, mockCommander.RunCommandCalls(), 1)
+}
+
+func Test_Install_ManualInstall_DoesNotDiscardOutput_WhenDisplayModeIsPassthrough(t *testing.T) {
+	mockFileSystem := &utils.MoqFileSystem{}
+	mockUserManager := &osmanager.MoqUserManager{}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			// Apply all provided options
+			for _, opt := range opts {
+				opt(&cmdOptions)
+			}
+
+			require.Equal(t, "sh", name)
+			require.Equal(t, []string{"-c", "#!/bin/sh\necho 'Installing chezmoi...'", "--", "-b", "/home/user/.local/bin"}, args)
+
+			// Verify that output was not discarded (stdout/stderr should remain unchanged)
+			require.Equal(t, os.Stdout, cmdOptions.Stdout)
+			require.Equal(t, os.Stderr, cmdOptions.Stderr)
+			return &utils.Result{ExitCode: 0}, nil
+		},
+	}
+
+	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModePassthrough, chezmoiConfig)
+
+	mockPackageManager.IsPackageInstalledFunc = func(packageInfo pkgmanager.PackageInfo) (bool, error) {
+		return false, nil
+	}
+
+	mockPackageManager.InstallPackageFunc = func(packageInfo pkgmanager.RequestedPackageInfo) error {
+		return errors.New("package manager failed")
+	}
+
+	mockHTTPClient.GetFunc = func(url string) (*http.Response, error) {
+		response := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString("#!/bin/sh\necho 'Installing chezmoi...'")),
+		}
+		return response, nil
+	}
+
+	mockUserManager.GetHomeDirFunc = func() (string, error) {
+		return "/home/user", nil
+	}
+
+	err := manager.Install()
+
+	require.NoError(t, err)
+	require.Len(t, mockPackageManager.IsPackageInstalledCalls(), 1)
+	require.Len(t, mockPackageManager.InstallPackageCalls(), 1)
+	require.Len(t, mockHTTPClient.GetCalls(), 1)
+	require.Len(t, mockUserManager.GetHomeDirCalls(), 1)
+	require.Len(t, mockCommander.RunCommandCalls(), 1)
 }

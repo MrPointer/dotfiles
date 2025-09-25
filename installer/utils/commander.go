@@ -66,6 +66,11 @@ type Options struct {
 // Option is a function that modifies Options
 type Option func(*Options)
 
+// EmptyOption returns an empty option function
+func EmptyOption() Option {
+	return func(opts *Options) {}
+}
+
 // WithEnv sets environment variables for the command
 func WithEnv(env map[string]string) Option {
 	return func(o *Options) {
@@ -113,6 +118,14 @@ func WithInputString(input string) Option {
 func WithCaptureOutput() Option {
 	return func(o *Options) {
 		o.CaptureOutput = true
+	}
+}
+
+// WithDiscardOutput discards stdout and stderr output (sends to io.Discard)
+func WithDiscardOutput() Option {
+	return func(o *Options) {
+		o.Stdout = io.Discard
+		o.Stderr = io.Discard
 	}
 }
 

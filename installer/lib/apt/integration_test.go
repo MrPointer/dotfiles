@@ -35,7 +35,7 @@ func Test_AptPackageManager_CanCheckIfPackageExists_Integration(t *testing.T) {
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)
-	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator)
+	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	// Test with a commonly available package that should exist
 	packageInfo := pkgmanager.NewPackageInfo("libc6", "")
@@ -69,7 +69,7 @@ func Test_AptPackageManager_CanListInstalledPackages_Integration(t *testing.T) {
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)
-	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator)
+	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	packages, err := aptManager.ListInstalledPackages()
 
@@ -106,7 +106,7 @@ func Test_AptPackageManager_CanGetManagerInfo_Integration(t *testing.T) {
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)
-	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator)
+	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	info, err := aptManager.GetInfo()
 
@@ -144,7 +144,7 @@ func Test_AptPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 	}
 
 	escalator := privilege.NewDefaultEscalator(mockLogger, defaultCommander, defaultOsManager)
-	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator)
+	aptManager := apt.NewAptPackageManager(mockLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	// Test with a lightweight package that's commonly available but might not be installed
 	testPackage := "file"

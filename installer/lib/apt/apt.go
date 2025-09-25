@@ -16,17 +16,19 @@ type AptPackageManager struct {
 	commander    utils.Commander
 	programQuery osmanager.ProgramQuery
 	escalator    privilege.Escalator
+	displayMode  utils.DisplayMode
 }
 
 var _ pkgmanager.PackageManager = (*AptPackageManager)(nil)
 
 // NewAptPackageManager creates a new AptPackageManager instance.
-func NewAptPackageManager(logger logger.Logger, commander utils.Commander, programQuery osmanager.ProgramQuery, escalator privilege.Escalator) *AptPackageManager {
+func NewAptPackageManager(logger logger.Logger, commander utils.Commander, programQuery osmanager.ProgramQuery, escalator privilege.Escalator, displayMode utils.DisplayMode) *AptPackageManager {
 	return &AptPackageManager{
 		logger:       logger,
 		commander:    commander,
 		programQuery: programQuery,
 		escalator:    escalator,
+		displayMode:  displayMode,
 	}
 }
 
@@ -83,23 +85,33 @@ func (a *AptPackageManager) InstallPackage(requestedPackageInfo pkgmanager.Reque
 	}
 
 	// Update package list first to ensure we have the latest package information.
-	updateResult, err := a.escalator.EscalateCommand("apt", []string{"update"})
+	escalatedUpdate, err := a.escalator.EscalateCommand("apt", []string{"update"})
 	if err != nil {
 		return fmt.Errorf("failed to determine privilege escalation for apt update: %w", err)
 	}
 
-	_, err = a.commander.RunCommand(updateResult.Command, updateResult.Args, utils.WithCaptureOutput())
+	var discardOutputOption utils.Option = utils.EmptyOption()
+	if a.displayMode.ShouldDiscardOutput() {
+		discardOutputOption = utils.WithDiscardOutput()
+	}
+
+	_, err = a.commander.RunCommand(escalatedUpdate.Command, escalatedUpdate.Args, discardOutputOption)
 	if err != nil {
 		return fmt.Errorf("failed to update package list: %w", err)
 	}
 
 	// Install the package with automatic yes confirmation.
-	installResult, err := a.escalator.EscalateCommand("apt", []string{"install", "-y", requestedPackageInfo.Name})
+	escalatedInstall, err := a.escalator.EscalateCommand("apt", []string{"install", "-y", requestedPackageInfo.Name})
 	if err != nil {
 		return fmt.Errorf("failed to determine privilege escalation for apt install: %w", err)
 	}
 
-	_, err = a.commander.RunCommand(installResult.Command, installResult.Args, utils.WithCaptureOutput())
+	discardOutputOption = utils.EmptyOption()
+	if a.displayMode.ShouldDiscardOutput() {
+		discardOutputOption = utils.WithDiscardOutput()
+	}
+
+	_, err = a.commander.RunCommand(escalatedInstall.Command, escalatedInstall.Args, discardOutputOption)
 	if err != nil {
 		return fmt.Errorf("failed to install package %s: %w", requestedPackageInfo.Name, err)
 	}
@@ -173,7 +185,12 @@ func (a *AptPackageManager) UninstallPackage(packageInfo pkgmanager.PackageInfo)
 		return fmt.Errorf("failed to determine privilege escalation for apt remove: %w", err)
 	}
 
-	_, err = a.commander.RunCommand(removeResult.Command, removeResult.Args, utils.WithCaptureOutput())
+	var discardOutputOption utils.Option = utils.EmptyOption()
+	if a.displayMode.ShouldDiscardOutput() {
+		discardOutputOption = utils.WithDiscardOutput()
+	}
+
+	_, err = a.commander.RunCommand(removeResult.Command, removeResult.Args, discardOutputOption)
 	if err != nil {
 		return fmt.Errorf("failed to uninstall package %s: %w", packageInfo.Name, err)
 	}

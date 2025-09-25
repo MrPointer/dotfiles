@@ -2,6 +2,8 @@ package chezmoi_test
 
 import (
 	"errors"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager/chezmoi"
@@ -15,22 +17,23 @@ import (
 
 func Test_Apply_RemovesExistingCloneDirectory(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
-	mockUserManager := &osmanager.MoqUserManager{}
-	mockCommander := &utils.MoqCommander{}
-	mockPackageManager := &pkgmanager.MoqPackageManager{}
-	mockHTTPClient := &httpclient.MoqHTTPClient{}
-
-	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
-
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		require.Equal(t, "/home/user/.local/share/chezmoi", path)
 		return nil
 	}
 
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		return &utils.Result{ExitCode: 0}, nil
 	}
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
+
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -40,17 +43,18 @@ func Test_Apply_RemovesExistingCloneDirectory(t *testing.T) {
 
 func Test_Apply_ReturnsError_WhenRemovePathFails(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
+	mockFileSystem.RemovePathFunc = func(path string) error {
+		return errors.New("permission denied")
+	}
+
 	mockUserManager := &osmanager.MoqUserManager{}
 	mockCommander := &utils.MoqCommander{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
 	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
-	mockFileSystem.RemovePathFunc = func(path string) error {
-		return errors.New("permission denied")
-	}
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -61,23 +65,25 @@ func Test_Apply_ReturnsError_WhenRemovePathFails(t *testing.T) {
 
 func Test_Apply_RunsChezmoiInitApplyCommand_WithBasicArgs(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
-	mockUserManager := &osmanager.MoqUserManager{}
-	mockCommander := &utils.MoqCommander{}
-	mockPackageManager := &pkgmanager.MoqPackageManager{}
-	mockHTTPClient := &httpclient.MoqHTTPClient{}
-
-	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
-
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
 	}
 
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
 		require.Equal(t, []string{"init", "--apply", "MrPointer"}, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "")
+
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -87,24 +93,26 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithBasicArgs(t *testing.T) {
 
 func Test_Apply_RunsChezmoiInitApplyCommand_WithSourceDir(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
-	mockUserManager := &osmanager.MoqUserManager{}
-	mockCommander := &utils.MoqCommander{}
-	mockPackageManager := &pkgmanager.MoqPackageManager{}
-	mockHTTPClient := &httpclient.MoqHTTPClient{}
-
-	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
-
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
 	}
 
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
 		expectedArgs := []string{"init", "--apply", "--source", "/home/user/.local/share/chezmoi", "MrPointer"}
 		require.Equal(t, expectedArgs, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
+
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -114,8 +122,20 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithSourceDir(t *testing.T) {
 
 func Test_Apply_RunsChezmoiInitApplyCommand_WithSSHCloningPreference(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
+	mockFileSystem.RemovePathFunc = func(path string) error {
+		return nil
+	}
+
 	mockUserManager := &osmanager.MoqUserManager{}
+
 	mockCommander := &utils.MoqCommander{}
+	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+		require.Equal(t, "chezmoi", name)
+		expectedArgs := []string{"init", "--apply", "--source", "/home/user/.local/share/chezmoi", "--ssh", "testuser"}
+		require.Equal(t, expectedArgs, args)
+		return &utils.Result{ExitCode: 0}, nil
+	}
+
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
@@ -126,18 +146,8 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithSSHCloningPreference(t *testing.
 		"testuser",
 		true,
 	)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
-	mockFileSystem.RemovePathFunc = func(path string) error {
-		return nil
-	}
-
-	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-		require.Equal(t, "chezmoi", name)
-		expectedArgs := []string{"init", "--apply", "--source", "/home/user/.local/share/chezmoi", "--ssh", "testuser"}
-		require.Equal(t, expectedArgs, args)
-		return &utils.Result{ExitCode: 0}, nil
-	}
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -147,8 +157,19 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithSSHCloningPreference(t *testing.
 
 func Test_Apply_RunsChezmoiInitApplyCommand_WithCustomUsername(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
+	mockFileSystem.RemovePathFunc = func(path string) error {
+		return nil
+	}
+
 	mockUserManager := &osmanager.MoqUserManager{}
+
 	mockCommander := &utils.MoqCommander{}
+	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+		require.Equal(t, "chezmoi", name)
+		require.Equal(t, []string{"init", "--apply", "customuser"}, args)
+		return &utils.Result{ExitCode: 0}, nil
+	}
+
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
@@ -159,17 +180,8 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithCustomUsername(t *testing.T) {
 		"customuser",
 		false,
 	)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
-	mockFileSystem.RemovePathFunc = func(path string) error {
-		return nil
-	}
-
-	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-		require.Equal(t, "chezmoi", name)
-		require.Equal(t, []string{"init", "--apply", "customuser"}, args)
-		return &utils.Result{ExitCode: 0}, nil
-	}
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -179,21 +191,23 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithCustomUsername(t *testing.T) {
 
 func Test_Apply_ReturnsError_WhenCommandExecutionFails(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
-	mockUserManager := &osmanager.MoqUserManager{}
-	mockCommander := &utils.MoqCommander{}
-	mockPackageManager := &pkgmanager.MoqPackageManager{}
-	mockHTTPClient := &httpclient.MoqHTTPClient{}
-
-	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
-
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
 	}
 
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		return nil, errors.New("command not found")
 	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
+
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -203,24 +217,26 @@ func Test_Apply_ReturnsError_WhenCommandExecutionFails(t *testing.T) {
 
 func Test_Apply_ReturnsError_WhenCommandExitsWithNonZeroCode(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
-	mockUserManager := &osmanager.MoqUserManager{}
-	mockCommander := &utils.MoqCommander{}
-	mockPackageManager := &pkgmanager.MoqPackageManager{}
-	mockHTTPClient := &httpclient.MoqHTTPClient{}
-
-	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
-
 	mockFileSystem.RemovePathFunc = func(path string) error {
 		return nil
 	}
 
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		return &utils.Result{
 			ExitCode: 1,
 			Stderr:   []byte("initialization failed"),
 		}, nil
 	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
+
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
@@ -229,36 +245,23 @@ func Test_Apply_ReturnsError_WhenCommandExitsWithNonZeroCode(t *testing.T) {
 	require.Contains(t, err.Error(), "initialization failed")
 }
 
-func Test_Apply_PassesStdoutAndStderrOptions(t *testing.T) {
+func Test_Apply_SucceedsWithAllParametersCombined(t *testing.T) {
 	mockFileSystem := &utils.MoqFileSystem{}
-	mockUserManager := &osmanager.MoqUserManager{}
-	mockCommander := &utils.MoqCommander{}
-	mockPackageManager := &pkgmanager.MoqPackageManager{}
-	mockHTTPClient := &httpclient.MoqHTTPClient{}
-
-	chezmoiConfig := chezmoi.DefaultChezmoiConfig("/home/user/.config/chezmoi/chezmoi.toml", "/home/user/.local/share/chezmoi")
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
-
 	mockFileSystem.RemovePathFunc = func(path string) error {
+		require.Equal(t, "/custom/clone/dir", path)
 		return nil
 	}
 
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
-		require.Len(t, opts, 2)
+		expectedArgs := []string{"init", "--apply", "--source", "/custom/clone/dir", "--ssh", "testuser123"}
+		require.Equal(t, expectedArgs, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
 
-	err := manager.Apply()
-
-	require.NoError(t, err)
-	require.Len(t, mockCommander.RunCommandCalls(), 1)
-}
-
-func Test_Apply_SucceedsWithAllParametersCombined(t *testing.T) {
-	mockFileSystem := &utils.MoqFileSystem{}
-	mockUserManager := &osmanager.MoqUserManager{}
-	mockCommander := &utils.MoqCommander{}
 	mockPackageManager := &pkgmanager.MoqPackageManager{}
 	mockHTTPClient := &httpclient.MoqHTTPClient{}
 
@@ -269,24 +272,100 @@ func Test_Apply_SucceedsWithAllParametersCombined(t *testing.T) {
 		"testuser123",
 		true,
 	)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, chezmoiConfig)
 
-	mockFileSystem.RemovePathFunc = func(path string) error {
-		require.Equal(t, "/custom/clone/dir", path)
-		return nil
-	}
-
-	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-		require.Equal(t, "chezmoi", name)
-		expectedArgs := []string{"init", "--apply", "--source", "/custom/clone/dir", "--ssh", "testuser123"}
-		require.Equal(t, expectedArgs, args)
-		require.Len(t, opts, 2)
-		return &utils.Result{ExitCode: 0}, nil
-	}
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
 
 	err := manager.Apply()
 
 	require.NoError(t, err)
 	require.Len(t, mockFileSystem.RemovePathCalls(), 1)
 	require.Len(t, mockCommander.RunCommandCalls(), 1)
+}
+
+func Test_Apply_DiscardsOutput_WhenDisplayModeIsNotPassthrough(t *testing.T) {
+	mockFileSystem := &utils.MoqFileSystem{
+		RemovePathFunc: func(path string) error {
+			require.Equal(t, "/custom/clone/dir", path)
+			return nil
+		},
+	}
+
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(command string, args []string, options ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{}
+
+			// Apply all provided options
+			for _, opt := range options {
+				opt(&cmdOptions)
+			}
+
+			require.Equal(t, io.Discard, cmdOptions.Stdout)
+			require.Equal(t, io.Discard, cmdOptions.Stderr)
+			return &utils.Result{}, nil
+		},
+	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	chezmoiConfig := chezmoi.NewChezmoiConfig(
+		"/home/user/.config/chezmoi",
+		"/home/user/.config/chezmoi/chezmoi.toml",
+		"/custom/clone/dir",
+		"testuser123",
+		true,
+	)
+
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, chezmoiConfig)
+
+	err := manager.Apply()
+
+	require.NoError(t, err)
+}
+
+func Test_Apply_DoesNotDiscardOutput_WhenDisplayModeIsPassthrough(t *testing.T) {
+	mockFileSystem := &utils.MoqFileSystem{
+		RemovePathFunc: func(path string) error {
+			require.Equal(t, "/custom/clone/dir", path)
+			return nil
+		},
+	}
+	mockUserManager := &osmanager.MoqUserManager{}
+
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(command string, args []string, options ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			// Apply all provided options
+			for _, opt := range options {
+				opt(&cmdOptions)
+			}
+
+			require.Equal(t, os.Stdout, cmdOptions.Stdout)
+			require.Equal(t, os.Stderr, cmdOptions.Stderr)
+			return &utils.Result{}, nil
+		},
+	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{}
+	mockHTTPClient := &httpclient.MoqHTTPClient{}
+
+	chezmoiConfig := chezmoi.NewChezmoiConfig(
+		"/home/user/.config/chezmoi",
+		"/home/user/.config/chezmoi/chezmoi.toml",
+		"/custom/clone/dir",
+		"testuser123",
+		true,
+	)
+
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModePassthrough, chezmoiConfig)
+
+	err := manager.Apply()
+
+	require.NoError(t, err)
 }

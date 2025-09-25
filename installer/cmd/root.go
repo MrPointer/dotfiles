@@ -254,3 +254,24 @@ func GetVerbosity() logger.VerbosityLevel {
 func IsNonInteractive() bool {
 	return nonInteractive
 }
+
+// GetDisplayMode determines the appropriate display mode for external tool output.
+func GetDisplayMode() utils.DisplayMode {
+	// If non-interactive mode is enabled, show all command output
+	if nonInteractive {
+		return utils.DisplayModePassthrough
+	}
+
+	// If verbose mode is enabled (any level), show all command output
+	if globalVerbosity >= logger.Verbose {
+		return utils.DisplayModePassthrough
+	}
+
+	// If plain flag is set, use plain mode (simple progress messages, hide output)
+	if plainFlag {
+		return utils.DisplayModePlain
+	}
+
+	// Default: use progress mode (spinners, hide output)
+	return utils.DisplayModeProgress
+}

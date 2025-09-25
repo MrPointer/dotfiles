@@ -36,7 +36,7 @@ func Test_Initialize_CreatesConfigDirectory_WhenDirectoryDoesNotExist(t *testing
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -74,7 +74,7 @@ func Test_Initialize_DoesNotCreateDirectory_WhenDirectoryExists(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -109,7 +109,7 @@ func Test_Initialize_ReturnsError_WhenDirectoryCreationFails(t *testing.T) {
 	configFilePath := "/home/user/.config/chezmoi.toml"
 	cloneDir := "/home/user/.local/share/chezmoi"
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, mockFileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:     "test@example.com",
@@ -144,7 +144,7 @@ func Test_Initialize_WritesBasicPersonalData_WhenOnlyRequiredFieldsProvided(t *t
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -188,7 +188,7 @@ func Test_Initialize_WritesGpgSigningKey_WhenProvided(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	data := dotfilesmanager.DotfilesData{
 		Email:         "test@example.com",
@@ -230,7 +230,7 @@ func Test_Initialize_WritesWorkEnvironmentData_WhenProvided(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",
@@ -278,7 +278,7 @@ func Test_Initialize_WritesSystemData_WhenProvided(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	systemData := dotfilesmanager.DotfilesSystemData{
 		Shell:           "/bin/zsh",
@@ -328,7 +328,7 @@ func Test_Initialize_WritesCompleteData_WhenAllFieldsProvided(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 
 	config := chezmoi.DefaultChezmoiConfig(configFilePath, cloneDir)
-	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, config)
+	manager := chezmoi.NewChezmoiManager(logger.DefaultLogger, fileSystem, mockUserManager, mockCommander, mockPackageManager, mockHTTPClient, utils.DisplayModeProgress, config)
 
 	workEnvData := dotfilesmanager.DotfilesWorkEnvData{
 		WorkName:  "Acme Corp",

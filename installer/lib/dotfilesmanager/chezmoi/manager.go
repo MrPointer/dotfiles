@@ -50,11 +50,12 @@ type ChezmoiManager struct {
 	commander     utils.Commander
 	pkgManager    pkgmanager.PackageManager
 	httpClient    httpclient.HTTPClient
+	displayMode   utils.DisplayMode
 }
 
 var _ dotfilesmanager.DotfilesDataInitializer = (*ChezmoiManager)(nil)
 
-func NewChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, chezmoiConfig ChezmoiConfig) *ChezmoiManager {
+func NewChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, displayMode utils.DisplayMode, chezmoiConfig ChezmoiConfig) *ChezmoiManager {
 	return &ChezmoiManager{
 		chezmoiConfig: chezmoiConfig,
 		logger:        logger,
@@ -63,10 +64,11 @@ func NewChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userMa
 		commander:     commander,
 		pkgManager:    pkgManager,
 		httpClient:    httpClient,
+		displayMode:   displayMode,
 	}
 }
 
-func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, githubUsername string, cloneViaSSH bool) (*ChezmoiManager, error) {
+func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, displayMode utils.DisplayMode, githubUsername string, cloneViaSSH bool) (*ChezmoiManager, error) {
 	userConfigDir, err := userManager.GetConfigDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user config directory: %w", err)
@@ -89,6 +91,7 @@ func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem
 		commander,
 		pkgManager,
 		httpClient,
+		displayMode,
 		NewChezmoiConfig(
 			chezmoiConfigDir,
 			chezmoiConfigFilePath,
@@ -99,6 +102,6 @@ func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem
 	), nil
 }
 
-func TryStandardChezmoiManagerWithDefaults(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient) (*ChezmoiManager, error) {
-	return TryStandardChezmoiManager(logger, filesystem, userManager, commander, pkgManager, httpClient, DefaultGitHubUsername, false)
+func TryStandardChezmoiManagerWithDefaults(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, displayMode utils.DisplayMode) (*ChezmoiManager, error) {
+	return TryStandardChezmoiManager(logger, filesystem, userManager, commander, pkgManager, httpClient, displayMode, DefaultGitHubUsername, false)
 }

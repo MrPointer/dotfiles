@@ -2,6 +2,7 @@ package brew_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func Test_NewBrewPackageManager_ReturnsValidInstance(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	require.NotNil(t, packageManager)
 }
@@ -33,7 +34,7 @@ func Test_GetInfo_ReturnsCorrectInfo_WhenBrewVersionIsRetrieved(t *testing.T) {
 		},
 	}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	info, err := packageManager.GetInfo()
 
@@ -84,7 +85,7 @@ func Test_GetInfo_HandlesBrewVersionExtractionCorrectly(t *testing.T) {
 				},
 			}
 
-			packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+			packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 			info, err := packageManager.GetInfo()
 
@@ -108,7 +109,7 @@ func Test_GetInfo_ReturnsError_WhenProgramQueryFails(t *testing.T) {
 		},
 	}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	info, err := packageManager.GetInfo()
 
@@ -131,7 +132,7 @@ func Test_GetPackageVersion_ReturnsVersion_WhenPackageIsInstalled(t *testing.T) 
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	version, err := packageManager.GetPackageVersion("node")
 
@@ -153,7 +154,7 @@ func Test_GetPackageVersion_ReturnsError_WhenPackageIsNotInstalled(t *testing.T)
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	version, err := packageManager.GetPackageVersion("nonexistent")
 
@@ -170,7 +171,7 @@ func Test_GetPackageVersion_ReturnsError_WhenListInstalledPackagesFails(t *testi
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	version, err := packageManager.GetPackageVersion("git")
 
@@ -190,7 +191,7 @@ func Test_InstallPackage_InstallsPackageSuccessfully(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 	requestedPackage := pkgmanager.RequestedPackageInfo{Name: "git"}
 
 	err := packageManager.InstallPackage(requestedPackage)
@@ -206,7 +207,7 @@ func Test_InstallPackage_ReturnsError_WhenInstallationFails(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 	requestedPackage := pkgmanager.RequestedPackageInfo{Name: "git"}
 
 	err := packageManager.InstallPackage(requestedPackage)
@@ -229,7 +230,7 @@ func Test_IsPackageInstalled_ReturnsTrue_WhenPackageIsInstalled(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
@@ -252,7 +253,7 @@ func Test_IsPackageInstalled_ReturnsFalse_WhenPackageIsNotInstalled(t *testing.T
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 	packageInfo := pkgmanager.NewPackageInfo("nonexistent", "1.0.0")
 
 	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
@@ -269,7 +270,7 @@ func Test_IsPackageInstalled_ReturnsError_WhenListInstalledPackagesFails(t *test
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
@@ -293,7 +294,7 @@ func Test_ListInstalledPackages_ReturnsPackageList_WhenCommandSucceeds(t *testin
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -315,7 +316,7 @@ func Test_ListInstalledPackages_ReturnsError_WhenCommandFails(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -338,7 +339,7 @@ func Test_ListInstalledPackages_ReturnsError_WhenOutputFormatIsInvalid(t *testin
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -360,7 +361,7 @@ func Test_ListInstalledPackages_HandlesEmptyOutput(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 	packages, err := packageManager.ListInstalledPackages()
 
@@ -379,10 +380,68 @@ func Test_UninstallPackage_UninstallsPackageSuccessfully(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	err := packageManager.UninstallPackage(packageInfo)
+
+	require.NoError(t, err)
+}
+
+func Test_InstallPackage_DiscardsOutput_WhenDisplayModeIsNotPassthrough(t *testing.T) {
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(command string, args []string, options ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			// Apply all provided options
+			for _, opt := range options {
+				opt(&cmdOptions)
+			}
+
+			// Verify that output was discarded (stdout/stderr should be different from original)
+			require.NotEqual(t, os.Stdout, cmdOptions.Stdout)
+			require.NotEqual(t, os.Stderr, cmdOptions.Stderr)
+			return &utils.Result{}, nil
+		},
+	}
+	mockProgramQuery := &osmanager.MoqProgramQuery{}
+
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
+	requestedPackage := pkgmanager.RequestedPackageInfo{Name: "git"}
+
+	err := packageManager.InstallPackage(requestedPackage)
+
+	require.NoError(t, err)
+}
+
+func Test_InstallPackage_DoesNotDiscardOutput_WhenDisplayModeIsPassthrough(t *testing.T) {
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(command string, args []string, options ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			// Apply all provided options
+			for _, opt := range options {
+				opt(&cmdOptions)
+			}
+
+			// Verify that output was not discarded (stdout/stderr should remain unchanged)
+			require.Equal(t, os.Stdout, cmdOptions.Stdout)
+			require.Equal(t, os.Stderr, cmdOptions.Stderr)
+			return &utils.Result{}, nil
+		},
+	}
+	mockProgramQuery := &osmanager.MoqProgramQuery{}
+
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModePassthrough)
+	requestedPackage := pkgmanager.RequestedPackageInfo{Name: "git"}
+
+	err := packageManager.InstallPackage(requestedPackage)
 
 	require.NoError(t, err)
 }
@@ -395,7 +454,7 @@ func Test_UninstallPackage_ReturnsError_WhenUninstallationFails(t *testing.T) {
 	}
 	mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 	packageInfo := pkgmanager.NewPackageInfo("git", "2.39.0")
 
 	err := packageManager.UninstallPackage(packageInfo)
@@ -456,7 +515,7 @@ func Test_ListInstalledPackages_HandlesPackageNamesWithVersionsInMultipleFormats
 			}
 			mockProgramQuery := &osmanager.MoqProgramQuery{}
 
-			packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew")
+			packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
 
 			packages, err := packageManager.ListInstalledPackages()
 

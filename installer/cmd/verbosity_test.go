@@ -3,6 +3,7 @@ package cmd
 import (
 	"testing"
 
+	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/stretchr/testify/require"
 )
@@ -142,6 +143,89 @@ func Test_ShouldShowProgress_Logic(t *testing.T) {
 			// Verify the result
 			actual := ShouldShowProgress()
 			require.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func Test_GetDisplayMode_Logic(t *testing.T) {
+	tests := []struct {
+		name                string
+		nonInteractiveFlag  bool
+		plainFlag           bool
+		verbosity           logger.VerbosityLevel
+		expectedDisplayMode utils.DisplayMode
+	}{
+		{
+			name:                "Progress_WhenDefaultSettings",
+			nonInteractiveFlag:  false,
+			plainFlag:           false,
+			verbosity:           logger.Normal,
+			expectedDisplayMode: utils.DisplayModeProgress,
+		},
+		{
+			name:                "Plain_WhenPlainFlagSet",
+			nonInteractiveFlag:  false,
+			plainFlag:           true,
+			verbosity:           logger.Normal,
+			expectedDisplayMode: utils.DisplayModePlain,
+		},
+		{
+			name:                "Passthrough_WhenNonInteractiveSet",
+			nonInteractiveFlag:  true,
+			plainFlag:           false,
+			verbosity:           logger.Normal,
+			expectedDisplayMode: utils.DisplayModePassthrough,
+		},
+		{
+			name:                "Passthrough_WhenVerboseSet",
+			nonInteractiveFlag:  false,
+			plainFlag:           false,
+			verbosity:           logger.Verbose,
+			expectedDisplayMode: utils.DisplayModePassthrough,
+		},
+		{
+			name:                "Passthrough_WhenExtraVerboseSet",
+			nonInteractiveFlag:  false,
+			plainFlag:           false,
+			verbosity:           logger.ExtraVerbose,
+			expectedDisplayMode: utils.DisplayModePassthrough,
+		},
+		{
+			name:                "Passthrough_WhenNonInteractiveAndPlainBothSet",
+			nonInteractiveFlag:  true,
+			plainFlag:           true,
+			verbosity:           logger.Normal,
+			expectedDisplayMode: utils.DisplayModePassthrough,
+		},
+		{
+			name:                "Passthrough_WhenNonInteractiveAndVerboseSet",
+			nonInteractiveFlag:  true,
+			plainFlag:           false,
+			verbosity:           logger.Verbose,
+			expectedDisplayMode: utils.DisplayModePassthrough,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Store original values
+			origNonInteractive := nonInteractive
+			origPlainFlag := plainFlag
+			origGlobalVerbosity := globalVerbosity
+
+			// Set test values
+			nonInteractive = tt.nonInteractiveFlag
+			plainFlag = tt.plainFlag
+			globalVerbosity = tt.verbosity
+
+			// Test the function
+			result := GetDisplayMode()
+			require.Equal(t, tt.expectedDisplayMode, result)
+
+			// Restore original values
+			nonInteractive = origNonInteractive
+			plainFlag = origPlainFlag
+			globalVerbosity = origGlobalVerbosity
 		})
 	}
 }

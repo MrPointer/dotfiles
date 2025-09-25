@@ -9,13 +9,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
-	"github.com/stretchr/testify/require"
 )
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -1339,4 +1340,194 @@ func Test_MultiUserBrew_InstallsFromScratch_WhenUserAlreadyExists(t *testing.T) 
 	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
 	require.Len(t, mockCommander.RunCommandCalls(), 2)
 	require.Len(t, mockFS.RemovePathCalls(), 1)
+}
+
+func Test_SingleUserBrew_Install_DiscardsOutput_WhenDisplayModeIsNotPassthrough(t *testing.T) {
+	mockLogger := &logger.NoopLogger{}
+	tempScriptPath := "/tmp/brew-install-12345.sh"
+	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
+
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			// Apply all provided options
+			for _, opt := range opts {
+				opt(&cmdOptions)
+			}
+
+			if name == "/bin/bash" && len(args) == 1 && args[0] == tempScriptPath {
+				// Verify that output was discarded (stdout/stderr should be different from original)
+				require.NotEqual(t, os.Stdout, cmdOptions.Stdout)
+				require.NotEqual(t, os.Stderr, cmdOptions.Stderr)
+				return &utils.Result{ExitCode: 0}, nil
+			}
+			if strings.Contains(name, "brew") && len(args) == 1 && args[0] == "--version" {
+				// Verify that validation command also discards output
+				require.NotEqual(t, os.Stdout, cmdOptions.Stdout)
+				require.NotEqual(t, os.Stderr, cmdOptions.Stderr)
+				return &utils.Result{ExitCode: 0}, nil
+			}
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
+		},
+	}
+
+	expectedBrewPath := "/opt/homebrew/bin/brew"
+
+	pathExistsCalls := 0
+	mockFS := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			pathExistsCalls++
+			if path == expectedBrewPath {
+				// First call: brew doesn't exist, second call: brew exists after install
+				return pathExistsCalls > 1, nil
+			}
+			if path == tempScriptPath {
+				return true, nil // Script exists
+			}
+			return false, nil
+		},
+		CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
+			return tempScriptPath, nil
+		},
+		WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
+			require.Equal(t, tempScriptPath, path)
+			return int64(len(installScript)), nil
+		},
+		RemovePathFunc: func(path string) error {
+			require.Equal(t, tempScriptPath, path)
+			return nil
+		},
+	}
+
+	mockHTTPClient := &httpclient.MoqHTTPClient{
+		GetFunc: func(url string) (*http.Response, error) {
+			resp := &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(installScript)),
+			}
+			return resp, nil
+		},
+	}
+
+	mockOsManager := &osmanager.MoqOsManager{
+		SetPermissionsFunc: func(path string, mode os.FileMode) error {
+			require.Equal(t, tempScriptPath, path)
+			return nil
+		},
+	}
+
+	opts := brew.Options{
+		Logger:          mockLogger,
+		SystemInfo:      &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"},
+		Commander:       mockCommander,
+		HTTPClient:      mockHTTPClient,
+		OsManager:       mockOsManager,
+		Fs:              mockFS,
+		MultiUserSystem: false,
+		DisplayMode:     utils.DisplayModeProgress, // Non-passthrough mode
+	}
+
+	installer := brew.NewBrewInstaller(opts)
+	err := installer.Install()
+
+	require.NoError(t, err)
+}
+
+func Test_SingleUserBrew_Install_DoesNotDiscardOutput_WhenDisplayModeIsPassthrough(t *testing.T) {
+	mockLogger := &logger.NoopLogger{}
+	tempScriptPath := "/tmp/brew-install-12345.sh"
+	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
+
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			cmdOptions := utils.Options{
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			// Apply all provided options
+			for _, opt := range opts {
+				opt(&cmdOptions)
+			}
+
+			if name == "/bin/bash" && len(args) == 1 && args[0] == tempScriptPath {
+				// Verify that output was not discarded (stdout/stderr should remain unchanged)
+				require.Equal(t, os.Stdout, cmdOptions.Stdout)
+				require.Equal(t, os.Stderr, cmdOptions.Stderr)
+				return &utils.Result{ExitCode: 0}, nil
+			}
+			if strings.Contains(name, "brew") && len(args) == 1 && args[0] == "--version" {
+				// Verify that validation command also preserves output
+				require.Equal(t, os.Stdout, cmdOptions.Stdout)
+				require.Equal(t, os.Stderr, cmdOptions.Stderr)
+				return &utils.Result{ExitCode: 0}, nil
+			}
+			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
+		},
+	}
+
+	expectedBrewPath := "/opt/homebrew/bin/brew"
+
+	pathExistsCalls := 0
+	mockFS := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			pathExistsCalls++
+			if path == expectedBrewPath {
+				// First call: brew doesn't exist, second call: brew exists after install
+				return pathExistsCalls > 1, nil
+			}
+			if path == tempScriptPath {
+				return true, nil // Script exists
+			}
+			return false, nil
+		},
+		CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
+			return tempScriptPath, nil
+		},
+		WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
+			require.Equal(t, tempScriptPath, path)
+			return int64(len(installScript)), nil
+		},
+		RemovePathFunc: func(path string) error {
+			require.Equal(t, tempScriptPath, path)
+			return nil
+		},
+	}
+
+	mockHTTPClient := &httpclient.MoqHTTPClient{
+		GetFunc: func(url string) (*http.Response, error) {
+			resp := &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(installScript)),
+			}
+			return resp, nil
+		},
+	}
+
+	mockOsManager := &osmanager.MoqOsManager{
+		SetPermissionsFunc: func(path string, mode os.FileMode) error {
+			require.Equal(t, tempScriptPath, path)
+			return nil
+		},
+	}
+
+	opts := brew.Options{
+		Logger:          mockLogger,
+		SystemInfo:      &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"},
+		Commander:       mockCommander,
+		HTTPClient:      mockHTTPClient,
+		OsManager:       mockOsManager,
+		Fs:              mockFS,
+		MultiUserSystem: false,
+		DisplayMode:     utils.DisplayModePassthrough, // Passthrough mode
+	}
+
+	installer := brew.NewBrewInstaller(opts)
+	err := installer.Install()
+
+	require.NoError(t, err)
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
+	"github.com/MrPointer/dotfiles/installer/utils"
 )
 
 func (c *ChezmoiManager) Install() error {
@@ -69,7 +70,13 @@ func (c *ChezmoiManager) tryManualInstall() error {
 	manualInstallDir := fmt.Sprintf("%s/.local/bin", userHomeDir)
 
 	c.logger.Trace("Executing downloaded binary through the shell")
-	result, err := c.commander.RunCommand("sh", []string{"-c", string(body), "--", "-b", manualInstallDir})
+
+	var discardOutputOption utils.Option = utils.EmptyOption()
+	if c.displayMode.ShouldDiscardOutput() {
+		discardOutputOption = utils.WithDiscardOutput()
+	}
+
+	result, err := c.commander.RunCommand("sh", []string{"-c", string(body), "--", "-b", manualInstallDir}, discardOutputOption)
 	if err != nil {
 		return err
 	}

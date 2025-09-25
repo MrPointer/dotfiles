@@ -95,6 +95,7 @@ type brewInstaller struct {
 	osManager        osmanager.OsManager
 	fs               utils.FileSystem
 	brewPathOverride string // for testing only
+	displayMode      utils.DisplayMode
 }
 
 var _ BrewInstaller = (*brewInstaller)(nil)
@@ -118,6 +119,7 @@ func NewBrewInstaller(opts Options) BrewInstaller {
 		osManager:        opts.OsManager,
 		fs:               opts.Fs,
 		brewPathOverride: opts.BrewPathOverride,
+		displayMode:      opts.DisplayMode,
 	}
 
 	if opts.MultiUserSystem {
@@ -214,7 +216,12 @@ func (b *brewInstaller) validateInstall() error {
 
 	// Try running 'brew --version' to verify it works
 	if b.commander != nil {
-		_, err = b.commander.RunCommand(brewPath, []string{"--version"})
+		var discardOutputOption utils.Option = utils.EmptyOption()
+		if b.displayMode != utils.DisplayModePassthrough {
+			discardOutputOption = utils.WithDiscardOutput()
+		}
+
+		_, err = b.commander.RunCommand(brewPath, []string{"--version"}, discardOutputOption)
 		if err != nil {
 			return fmt.Errorf("brew --version failed: %w", err)
 		}
@@ -362,7 +369,13 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 	// Execute the downloaded install script, optionally as a different user
 	if asUser != "" {
 		b.logger.Debug("Running Homebrew install script as %s", asUser)
-		_, err := b.commander.RunCommand("sudo", []string{"-Hu", asUser, "bash", installScriptPath})
+
+		var discardOutputOption utils.Option = utils.EmptyOption()
+		if b.displayMode != utils.DisplayModePassthrough {
+			discardOutputOption = utils.WithDiscardOutput()
+		}
+
+		_, err := b.commander.RunCommand("sudo", []string{"-Hu", asUser, "bash", installScriptPath}, discardOutputOption)
 		if err != nil {
 			return fmt.Errorf("failed running Homebrew install script as %s: %w", asUser, err)
 		}
@@ -370,7 +383,13 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 		b.logger.Debug("Successfully installed Homebrew for user %s", asUser)
 	} else {
 		b.logger.Debug("Running Homebrew install script")
-		_, err := b.commander.RunCommand("/bin/bash", []string{installScriptPath}, utils.WithEnv(map[string]string{"NONINTERACTIVE": "1"}))
+
+		var discardOutputOption utils.Option = utils.EmptyOption()
+		if b.displayMode != utils.DisplayModePassthrough {
+			discardOutputOption = utils.WithDiscardOutput()
+		}
+
+		_, err := b.commander.RunCommand("/bin/bash", []string{installScriptPath}, discardOutputOption, utils.WithEnv(map[string]string{"NONINTERACTIVE": "1"}))
 		if err != nil {
 			return err
 		}
@@ -444,6 +463,7 @@ type Options struct {
 	OsManager        osmanager.OsManager
 	Fs               utils.FileSystem
 	BrewPathOverride string
+	DisplayMode      utils.DisplayMode
 }
 
 // DefaultOptions returns the default options.
@@ -457,6 +477,7 @@ func DefaultOptions() *Options {
 		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, utils.NewDefaultCommander(logger.DefaultLogger), osmanager.IsRoot()),
 		Fs:               utils.NewDefaultFileSystem(),
 		BrewPathOverride: "",
+		DisplayMode:      utils.DisplayModeProgress,
 	}
 }
 
@@ -504,5 +525,11 @@ func (o *Options) WithOsManager(osMgr osmanager.OsManager) *Options {
 // WithFileSystem sets a custom FileSystem for Homebrew operations.
 func (o *Options) WithFileSystem(fs utils.FileSystem) *Options {
 	o.Fs = fs
+	return o
+}
+
+// WithDisplayMode sets the display mode for external tool output.
+func (o *Options) WithDisplayMode(mode utils.DisplayMode) *Options {
+	o.DisplayMode = mode
 	return o
 }

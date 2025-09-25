@@ -82,7 +82,7 @@ making it easier to get started with a new system.`,
 				installLogger.Error("Failed to install Homebrew: %v", err)
 				os.Exit(1)
 			}
-			globalPackageManager = brew.NewBrewPackageManager(installLogger, globalCommander, globalOsManager, brewPath)
+			globalPackageManager = brew.NewBrewPackageManager(installLogger, globalCommander, globalOsManager, brewPath, GetDisplayMode())
 		}
 
 		if err := installShell(installLogger); err != nil {
@@ -110,7 +110,7 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 	case "linux":
 		switch sysInfo.DistroName {
 		case "ubuntu", "debian":
-			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager))
+			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
 		default:
 			cliLogger.Warning("Unsupported Linux distribution for automatic package installation: %s", sysInfo.DistroName)
 			return nil
@@ -121,7 +121,7 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 			cliLogger.Error("Failed to detect Homebrew path: %v", err)
 			return nil
 		}
-		return brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager, brewPath)
+		return brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager, brewPath, GetDisplayMode())
 	default:
 		cliLogger.Warning("Unsupported operating system for automatic package installation: %s", sysInfo.OSName)
 		return nil
@@ -224,6 +224,7 @@ func installHomebrew(sysInfo compatibility.SystemInfo, log logger.Logger) (strin
 		OsManager:       globalOsManager,
 		Fs:              globalFilesystem,
 		MultiUserSystem: multiUserSystem,
+		DisplayMode:     GetDisplayMode(),
 	})
 
 	log.StartProgress("Checking Homebrew availability")
@@ -401,7 +402,7 @@ func installGpgClient(log logger.Logger) error {
 func setupDotfilesManager(log logger.Logger) error {
 	log.StartProgress("Setting up dotfiles manager")
 
-	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
+	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, GetDisplayMode(), chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
 	if err != nil {
 		log.FailProgress("Failed to create dotfiles manager", err)
 		return err

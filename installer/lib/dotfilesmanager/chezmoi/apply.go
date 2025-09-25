@@ -2,7 +2,6 @@ package chezmoi
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/MrPointer/dotfiles/installer/utils"
 )
@@ -26,7 +25,12 @@ func (c *ChezmoiManager) Apply() error {
 	}
 	chezmoiApplyCmdArgs = append(chezmoiApplyCmdArgs, c.chezmoiConfig.githubUsername)
 
-	result, err := c.commander.RunCommand("chezmoi", chezmoiApplyCmdArgs, utils.WithStdout(os.Stdout), utils.WithStderr(os.Stderr))
+	var discardOutputOption utils.Option = utils.EmptyOption()
+	if c.displayMode != utils.DisplayModePassthrough {
+		discardOutputOption = utils.WithDiscardOutput()
+	}
+
+	result, err := c.commander.RunCommand("chezmoi", chezmoiApplyCmdArgs, discardOutputOption)
 	if err != nil {
 		return err
 	}
