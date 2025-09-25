@@ -1,6 +1,7 @@
 package logger_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"testing"
@@ -11,11 +12,16 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
-func Test_CliLoggerImplementsLoggerInterface(t *testing.T) {
+func Test_CliLogger_ByDesign_ImplementsLoggerInterface(t *testing.T) {
 	var _ logger.Logger = (*logger.CliLogger)(nil)
 }
 
-func Test_NewCliLoggerCreatesValidInstanceWithCorrectVerbosity(t *testing.T) {
+func Test_NewProgressCliLogger_WhenCalled_CreatesValidInstance(t *testing.T) {
+	log := logger.NewProgressCliLogger(logger.Normal)
+	require.NotNil(t, log)
+}
+
+func Test_NewCliLogger_WithVerbosityLevels_CreatesValidInstance(t *testing.T) {
 	tests := []struct {
 		name      string
 		verbosity logger.VerbosityLevel
@@ -34,17 +40,16 @@ func Test_NewCliLoggerCreatesValidInstanceWithCorrectVerbosity(t *testing.T) {
 	}
 }
 
-func Test_NewProgressCliLoggerEnablesProgressFunctionality(t *testing.T) {
-	log := logger.NewProgressCliLogger(logger.Normal)
+func Test_NewCliLoggerWithOutput_WithProgressEnabled_EnablesProgressFunctionality(t *testing.T) {
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 	require.NotNil(t, log)
 }
 
-func Test_MultipleRapidProgressOperationsWork(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_MultipleRapidProgressOperations_WithQuickSuccession_Work(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	// Rapidly start and finish operations
 	for range 5 {
@@ -56,12 +61,10 @@ func Test_MultipleRapidProgressOperationsWork(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_DeeplyNestedProgressOperationsComplete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_DeeplyNestedProgressOperations_WithFiveLevels_Complete(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	// Create a deep hierarchy
 	log.StartProgress("Level 1")
@@ -82,12 +85,10 @@ func Test_DeeplyNestedProgressOperationsComplete(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_MixedSuccessAndFailureProgressOperationsDisplayCorrectly(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_MixedSuccessAndFailureProgressOperations_WithNestedStructure_DisplayCorrectly(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartProgress("Parent operation")
 
@@ -109,7 +110,8 @@ func Test_MixedSuccessAndFailureProgressOperationsDisplayCorrectly(t *testing.T)
 }
 
 func Test_UpdateProgress_WithoutActiveProgress_DoesNothing(t *testing.T) {
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	// This should not crash
 	log.UpdateProgress("No active progress")
@@ -118,7 +120,8 @@ func Test_UpdateProgress_WithoutActiveProgress_DoesNothing(t *testing.T) {
 }
 
 func Test_FinishProgress_WithoutActiveProgress_FallsBackToSuccessLogging(t *testing.T) {
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	// This should fall back to Success logging
 	log.FinishProgress("Never started")
@@ -127,7 +130,8 @@ func Test_FinishProgress_WithoutActiveProgress_FallsBackToSuccessLogging(t *test
 }
 
 func Test_FailProgress_WithoutActiveProgress_FallsBackToErrorLogging(t *testing.T) {
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	// This should fall back to Error logging
 	log.FailProgress("Never started", errors.New("test error"))
@@ -135,12 +139,10 @@ func Test_FailProgress_WithoutActiveProgress_FallsBackToErrorLogging(t *testing.
 	require.NotNil(t, log)
 }
 
-func Test_VeryShortDurationProgressOperationsDoNotShowTiming(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_VeryShortDurationProgressOperations_UnderThreshold_DoNotShowTiming(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartProgress("Quick operation")
 	// No sleep - immediate completion
@@ -149,12 +151,10 @@ func Test_VeryShortDurationProgressOperationsDoNotShowTiming(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_ProgressOperationsWithMessageUpdatesWork(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_ProgressOperations_WithMessageUpdates_Work(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartProgress("Downloading files")
 	time.Sleep(20 * time.Millisecond)
@@ -173,7 +173,7 @@ func Test_ProgressOperationsWithMessageUpdatesWork(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_VerbosityLevelsFilterMessagesCorrectly(t *testing.T) {
+func Test_VerbosityLevels_WithDifferentMessages_FilterCorrectly(t *testing.T) {
 	tests := []struct {
 		name      string
 		verbosity logger.VerbosityLevel
@@ -251,12 +251,10 @@ func Test_ProgressMethods_FallBackToRegularLogging_WhenProgressDisabled(t *testi
 	require.NotNil(t, log)
 }
 
-func Test_ConcurrentProgressOperationsAreThreadSafe(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_ConcurrentProgressOperations_WithMultipleGoroutines_AreThreadSafe(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	// Test concurrent access to ensure thread safety
 	done := make(chan bool, 2)
@@ -283,12 +281,10 @@ func Test_ConcurrentProgressOperationsAreThreadSafe(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_LongRunningOperationWithPeriodicUpdatesWorks(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_LongRunningOperation_WithPeriodicUpdates_Works(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartProgress("Long running operation")
 
@@ -303,13 +299,11 @@ func Test_LongRunningOperationWithPeriodicUpdatesWorks(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_HierarchicalProgressReportingWorksLikeNpm(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_HierarchicalProgressReporting_WithNestedOperations_WorksLikeNpm(t *testing.T) {
 
 	// Create a progress-enabled logger
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	// Simulate a hierarchical installation process
 	log.StartProgress("Installing dotfiles")
@@ -351,7 +345,7 @@ func Test_HierarchicalProgressReportingWorksLikeNpm(t *testing.T) {
 	require.True(t, true, "Hierarchical progress test completed")
 }
 
-func Test_AllVerbosityLevelsProduceAppropriateOutput(t *testing.T) {
+func Test_AllVerbosityLevels_WithDifferentMessages_ProduceAppropriateOutput(t *testing.T) {
 	tests := []struct {
 		name      string
 		verbosity logger.VerbosityLevel
@@ -379,12 +373,10 @@ func Test_AllVerbosityLevelsProduceAppropriateOutput(t *testing.T) {
 	}
 }
 
-func Test_ProgressWithMinimalVerbosityWorks(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_Progress_WithMinimalVerbosity_Works(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Minimal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Minimal, &buf, true)
 
 	log.StartProgress("Operation with minimal verbosity")
 	time.Sleep(50 * time.Millisecond)
@@ -393,7 +385,7 @@ func Test_ProgressWithMinimalVerbosityWorks(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_VerboseLoggingWithoutProgressWorks(t *testing.T) {
+func Test_VerboseLogging_WithoutProgress_Works(t *testing.T) {
 	log := logger.NewCliLogger(logger.Verbose)
 
 	log.StartProgress("This should appear as Info message")
@@ -403,12 +395,10 @@ func Test_VerboseLoggingWithoutProgressWorks(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_StartPersistentProgress_WithProgressEnabledWorks(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_StartPersistentProgress_WithProgressEnabled_Works(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartPersistentProgress("Installing components")
 	time.Sleep(50 * time.Millisecond)
@@ -427,11 +417,9 @@ func Test_StartPersistentProgress_WithoutProgress_FallsBackToInfoLogging(t *test
 }
 
 func Test_LogAccomplishment_WithProgressEnabled_ShowsPersistentMessage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartPersistentProgress("Installing packages")
 	time.Sleep(30 * time.Millisecond)
@@ -455,7 +443,8 @@ func Test_LogAccomplishment_WithoutProgress_FallsBackToSuccessLogging(t *testing
 }
 
 func Test_FinishPersistent_ProgressWithoutActiveProgress_FallsBackToSuccessLogging(t *testing.T) {
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.FinishPersistentProgress("Never started persistent progress")
 
@@ -463,19 +452,18 @@ func Test_FinishPersistent_ProgressWithoutActiveProgress_FallsBackToSuccessLoggi
 }
 
 func Test_FailPersistentProgress_WithoutActiveProgress_FallsBackToErrorLogging(t *testing.T) {
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.FailPersistentProgress("Never started persistent progress", errors.New("test error"))
 
 	require.NotNil(t, log)
 }
 
-func Test_PersistentProgressCanFailWithError(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_PersistentProgress_WhenFailed_ShowsErrorMessage(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartPersistentProgress("Installing critical component")
 	log.LogAccomplishment("Downloaded dependencies")
@@ -486,12 +474,10 @@ func Test_PersistentProgressCanFailWithError(t *testing.T) {
 	require.NotNil(t, log)
 }
 
-func Test_MixedPersistentAndRegularProgressOperationsWork(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
+func Test_MixedPersistentAndRegularProgressOperations_WithNestedStructure_Work(t *testing.T) {
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartPersistentProgress("Setting up development environment")
 	log.LogAccomplishment("Created project directory")
@@ -513,11 +499,9 @@ func Test_MixedPersistentAndRegularProgressOperationsWork(t *testing.T) {
 }
 
 func Test_PersistentProgress_WithMultipleAccomplishments_DisplaysCorrectly(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
 
-	log := logger.NewProgressCliLogger(logger.Normal)
+	var buf bytes.Buffer
+	log := logger.NewCliLoggerWithOutput(logger.Normal, &buf, true)
 
 	log.StartPersistentProgress("Deploying application")
 
@@ -541,7 +525,7 @@ func Test_PersistentProgress_WithMultipleAccomplishments_DisplaysCorrectly(t *te
 	require.NotNil(t, log)
 }
 
-func Test_StartPersistentProgress_CallsProgressReporterStartPersistent(t *testing.T) {
+func Test_StartPersistentProgress_WithMockReporter_CallsProgressReporterStartPersistent(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
 		StartPersistentFunc: func(message string) error { return nil },
 		IsActiveFunc:        func() bool { return true },
@@ -556,7 +540,7 @@ func Test_StartPersistentProgress_CallsProgressReporterStartPersistent(t *testin
 	require.Equal(t, "Test message", calls[0].Message)
 }
 
-func Test_StartPersistentProgress_FallsBackToInfo_WhenProgressNotActive(t *testing.T) {
+func Test_StartPersistentProgress_WithoutProgress_FallsBackToInfo(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
 		StartPersistentFunc: func(message string) error { return nil },
 		IsActiveFunc:        func() bool { return false },
@@ -571,7 +555,7 @@ func Test_StartPersistentProgress_FallsBackToInfo_WhenProgressNotActive(t *testi
 	require.Equal(t, "Test message", calls[0].Message)
 }
 
-func Test_LogAccomplishmentCalls_ProgressReporterLogAccomplishment(t *testing.T) {
+func Test_LogAccomplishment_WithMockReporter_CallsProgressReporterLogAccomplishment(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
 		LogAccomplishmentFunc: func(message string) error { return nil },
 		IsActiveFunc:          func() bool { return true },
@@ -601,7 +585,7 @@ func Test_LogAccomplishment_FallsBackToSuccess_WhenProgressNotActive(t *testing.
 	require.Equal(t, "Test accomplishment", calls[0].Message)
 }
 
-func Test_FinishPersistentProgress_CallsProgressReporterFinishPersistent(t *testing.T) {
+func Test_FinishPersistentProgress_WithMockReporter_CallsProgressReporterFinishPersistent(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
 		FinishPersistentFunc: func(message string) error { return nil },
 		IsActiveFunc:         func() bool { return true },
@@ -631,7 +615,7 @@ func Test_FinishPersistentProgress_FallsBackToSuccess_WhenProgressNotActive(t *t
 	require.Equal(t, "Test finished", calls[0].Message)
 }
 
-func Test_FailPersistentProgress_CallsProgressReporterFailPersistent(t *testing.T) {
+func Test_FailPersistentProgress_WithMockReporter_CallsProgressReporterFailPersistent(t *testing.T) {
 	testErr := errors.New("test error")
 	mockProgress := &logger.MoqProgressReporter{
 		FailPersistentFunc: func(message string, err error) error { return nil },
@@ -665,7 +649,7 @@ func Test_FailPersistentProgress_FallsBackToError_WhenProgressNotActive(t *testi
 	require.Equal(t, testErr, calls[0].Err)
 }
 
-func Test_Close_CallsProgressReporterClose(t *testing.T) {
+func Test_Close_WithMockReporter_CallsProgressReporterClose(t *testing.T) {
 	mockProgress := &logger.MoqProgressReporter{
 		CloseFunc: func() error { return nil },
 	}

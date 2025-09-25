@@ -12,18 +12,18 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
-func Test_NewProgressDisplayCreatesValidInstance(t *testing.T) {
+func Test_NewProgressDisplay_WithBuffer_CreatesValidInstance(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 	require.NotNil(t, display)
 }
 
-func Test_NewProgressDisplayUsesStdoutWhenOutputIsNil(t *testing.T) {
+func Test_NewProgressDisplay_WithNilOutput_UsesStdout(t *testing.T) {
 	display := logger.NewProgressDisplay(nil)
 	require.NotNil(t, display)
 }
 
-func Test_SingleProgressOperationCanBeStartedAndFinished(t *testing.T) {
+func Test_SingleProgressOperation_StartedAndFinished_ShowsSuccessMessage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -44,7 +44,7 @@ func Test_SingleProgressOperationCanBeStartedAndFinished(t *testing.T) {
 	require.Contains(t, output, "Test operation")
 }
 
-func Test_NestedProgressOperationsShowProperHierarchy(t *testing.T) {
+func Test_NestedProgressOperations_WithMultipleLevels_ShowProperHierarchy(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -75,7 +75,7 @@ func Test_NestedProgressOperationsShowProperHierarchy(t *testing.T) {
 	require.Contains(t, strings.Join(lines, "\n"), "✓")
 }
 
-func Test_ProgressMessageCanBeUpdatedAfterStart(t *testing.T) {
+func Test_ProgressMessage_UpdatedAfterStart_ShowsNewMessage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -92,7 +92,7 @@ func Test_ProgressMessageCanBeUpdatedAfterStart(t *testing.T) {
 	require.Contains(t, output, "Updated message")
 }
 
-func Test_ProgressOperationCanFailWithError(t *testing.T) {
+func Test_ProgressOperation_WhenFailed_ShowsErrorMessage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -112,7 +112,7 @@ func Test_ProgressOperationCanFailWithError(t *testing.T) {
 	require.Contains(t, output, "test error")
 }
 
-func Test_MixedSuccessAndFailureOperationsDisplayCorrectly(t *testing.T) {
+func Test_MixedSuccessAndFailureOperations_WithNestedStructure_DisplayCorrectly(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -141,7 +141,7 @@ func Test_MixedSuccessAndFailureOperationsDisplayCorrectly(t *testing.T) {
 	require.Contains(t, output, "✗")
 }
 
-func Test_DeeplyNestedOperationsShowCorrectIndentation(t *testing.T) {
+func Test_DeeplyNestedOperations_WithFiveLevels_ShowCorrectIndentation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -172,7 +172,7 @@ func Test_DeeplyNestedOperationsShowCorrectIndentation(t *testing.T) {
 	require.Contains(t, output, "Level 4")
 }
 
-func Test_LongRunningOperationsShowTimingInformation(t *testing.T) {
+func Test_LongRunningOperations_OverThreshold_ShowTimingInformation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -189,7 +189,7 @@ func Test_LongRunningOperationsShowTimingInformation(t *testing.T) {
 	require.Contains(t, output, "ms")
 }
 
-func Test_ShortOperationsDoNotShowTimingInformation(t *testing.T) {
+func Test_ShortOperations_UnderThreshold_DoNotShowTimingInformation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -205,7 +205,7 @@ func Test_ShortOperationsDoNotShowTimingInformation(t *testing.T) {
 	require.NotContains(t, output, "took")
 }
 
-func Test_ClearStopsAllActiveProgressOperations(t *testing.T) {
+func Test_Clear_WithActiveOperations_StopsAllOperations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -226,7 +226,7 @@ func Test_ClearStopsAllActiveProgressOperations(t *testing.T) {
 	display.Fail("Should be ignored", errors.New("test"))
 }
 
-func Test_UpdateWithoutActiveProgressDoesNothing(t *testing.T) {
+func Test_Update_WithoutActiveProgress_DoesNothing(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -234,7 +234,7 @@ func Test_UpdateWithoutActiveProgressDoesNothing(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_FinishWithoutActiveProgressDoesNothing(t *testing.T) {
+func Test_Finish_WithoutActiveProgress_DoesNothing(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -242,7 +242,7 @@ func Test_FinishWithoutActiveProgressDoesNothing(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_FailWithoutActiveProgressDoesNothing(t *testing.T) {
+func Test_Fail_WithoutActiveProgress_DoesNothing(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -250,11 +250,11 @@ func Test_FailWithoutActiveProgressDoesNothing(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_NoopProgressDisplayImplementsProgressReporterInterface(t *testing.T) {
+func Test_NoopProgressDisplay_ByDesign_ImplementsProgressReporterInterface(t *testing.T) {
 	var _ logger.ProgressReporter = (*logger.NoopProgressDisplay)(nil)
 }
 
-func Test_NoopProgressDisplayAllMethodsDoNothing(t *testing.T) {
+func Test_NoopProgressDisplay_AllMethods_DoNothing(t *testing.T) {
 	display := logger.NewNoopProgressDisplay()
 
 	// All these should not crash and should not do anything
@@ -274,7 +274,7 @@ func Test_NoopProgressDisplayAllMethodsDoNothing(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_ConcurrentProgressDisplayOperationsAreThreadSafe(t *testing.T) {
+func Test_ConcurrentProgressDisplayOperations_WithMultipleGoroutines_AreThreadSafe(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -311,7 +311,7 @@ func Test_ConcurrentProgressDisplayOperationsAreThreadSafe(t *testing.T) {
 	require.Contains(t, output, "Concurrent 2")
 }
 
-func Test_RapidSequentialOperationsWork(t *testing.T) {
+func Test_RapidSequentialOperations_WithQuickSuccession_Work(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -334,7 +334,7 @@ func Test_RapidSequentialOperationsWork(t *testing.T) {
 	require.Equal(t, 10, checkmarkCount)
 }
 
-func Test_StartPersistentProgressActivatesPersistentMode(t *testing.T) {
+func Test_StartPersistentProgress_WhenCalled_ActivatesPersistentMode(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -354,7 +354,7 @@ func Test_StartPersistentProgressActivatesPersistentMode(t *testing.T) {
 	require.Contains(t, output, "Installing packages")
 }
 
-func Test_LogAccomplishmentShowsVisibleAccomplishments(t *testing.T) {
+func Test_LogAccomplishment_WithPersistentProgress_ShowsVisibleAccomplishments(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -379,7 +379,7 @@ func Test_LogAccomplishmentShowsVisibleAccomplishments(t *testing.T) {
 	require.Contains(t, output, "Deploying application")
 }
 
-func Test_ProgressDisplayPersistentProgressCanFailWithError(t *testing.T) {
+func Test_ProgressDisplayPersistentProgress_WhenFailed_ShowsErrorMessage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -403,7 +403,7 @@ func Test_ProgressDisplayPersistentProgressCanFailWithError(t *testing.T) {
 	require.Contains(t, output, "permission denied")
 }
 
-func Test_ProgressDisplayMixedPersistentAndRegularProgressOperationsWork(t *testing.T) {
+func Test_ProgressDisplayMixed_PersistentAndRegularOperations_Work(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -432,7 +432,7 @@ func Test_ProgressDisplayMixedPersistentAndRegularProgressOperationsWork(t *test
 	require.Contains(t, output, "Setting up environment")
 }
 
-func Test_LogAccomplishmentWithoutActivePersistentProgressStillWorks(t *testing.T) {
+func Test_LogAccomplishment_WithoutActivePersistentProgress_StillWorks(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -443,7 +443,7 @@ func Test_LogAccomplishmentWithoutActivePersistentProgressStillWorks(t *testing.
 	require.Contains(t, output, "Standalone accomplishment")
 }
 
-func Test_FinishPersistentWithoutActiveProgressDoesNothing(t *testing.T) {
+func Test_FinishPersistent_WithoutActiveProgress_DoesNothing(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -451,7 +451,7 @@ func Test_FinishPersistentWithoutActiveProgressDoesNothing(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_FailPersistentWithoutActiveProgressDoesNothing(t *testing.T) {
+func Test_FailPersistent_WithoutActiveProgress_DoesNothing(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -459,7 +459,7 @@ func Test_FailPersistentWithoutActiveProgressDoesNothing(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_PersistentProgressShowsAccomplishmentsInRealTime(t *testing.T) {
+func Test_PersistentProgress_WithAccomplishments_ShowsInRealTime(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -491,7 +491,7 @@ func Test_PersistentProgressShowsAccomplishmentsInRealTime(t *testing.T) {
 	require.Contains(t, output, "Processing items")
 }
 
-func Test_NoopProgressDisplayPersistentMethodsDoNothing(t *testing.T) {
+func Test_NoopProgressDisplay_PersistentMethods_DoNothing(t *testing.T) {
 	display := logger.NewNoopProgressDisplay()
 
 	// All these should not crash and should not do anything
@@ -511,7 +511,7 @@ func Test_NoopProgressDisplayPersistentMethodsDoNothing(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_CloseStopsAllOperationsAndRestoresCursor(t *testing.T) {
+func Test_Close_WithActiveOperations_StopsAllAndRestoresCursor(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -532,7 +532,7 @@ func Test_CloseStopsAllOperationsAndRestoresCursor(t *testing.T) {
 	display.Fail("Should be ignored", errors.New("test"))
 }
 
-func Test_CloseCanBeCalledMultipleTimes(t *testing.T) {
+func Test_Close_CalledMultipleTimes_DoesNotCrash(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -547,7 +547,7 @@ func Test_CloseCanBeCalledMultipleTimes(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_CloseWithoutActiveOperationsDoesNotCrash(t *testing.T) {
+func Test_Close_WithoutActiveOperations_DoesNotCrash(t *testing.T) {
 	var buf bytes.Buffer
 	display := logger.NewProgressDisplay(&buf)
 
@@ -558,7 +558,7 @@ func Test_CloseWithoutActiveOperationsDoesNotCrash(t *testing.T) {
 	require.False(t, display.IsActive())
 }
 
-func Test_CloseAlsoRestoresCursor(t *testing.T) {
+func Test_Close_WithHiddenCursor_RestoresCursor(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -577,7 +577,7 @@ func Test_CloseAlsoRestoresCursor(t *testing.T) {
 	require.NotNil(t, display)
 }
 
-func Test_ProgressFailureSynchronizesCleanupAndPreventsHangingCursor(t *testing.T) {
+func Test_ProgressFailure_WithSynchronization_PreventsHangingCursor(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -613,7 +613,7 @@ func Test_ProgressFailureSynchronizesCleanupAndPreventsHangingCursor(t *testing.
 	require.Contains(t, buf.String(), "New operation after failure")
 }
 
-func Test_RapidFailureAndRecoveryMaintainsProperTerminalState(t *testing.T) {
+func Test_RapidFailureAndRecovery_WithQuickOperations_MaintainsProperTerminalState(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
