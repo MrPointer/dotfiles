@@ -530,8 +530,10 @@ func (p *ProgressDisplay) buildContextualMessage() string {
 
 // restoreCursor ensures the terminal cursor is visible.
 func (p *ProgressDisplay) restoreCursor() error {
+	// Only restore cursor if it was actually hidden
+	// If CompareAndSwap fails, it means cursor wasn't hidden, which is fine
 	if !p.cursorHidden.CompareAndSwap(1, 0) {
-		return errors.New("Failed to swap atomic variable representing cursor visibility")
+		return nil
 	}
 
 	if file, ok := p.output.(*os.File); ok {

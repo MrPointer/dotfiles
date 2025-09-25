@@ -643,3 +643,243 @@ func Test_RapidFailureAndRecoveryMaintainsProperTerminalState(t *testing.T) {
 	// Should not have any hanging operations
 	require.False(t, display.IsActive())
 }
+
+func Test_Pause_WithActiveSpinners_StopsAllOperations(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Operation 1")
+	display.Start("Operation 2")
+	time.Sleep(50 * time.Millisecond) // Allow spinners to start
+
+	require.True(t, display.IsActive())
+	require.False(t, display.IsPaused())
+
+	err := display.Pause()
+	require.NoError(t, err)
+
+	require.True(t, display.IsPaused())
+	require.True(t, display.IsActive()) // Operations still exist, just paused
+}
+
+func Test_Resume_AfterPause_RestartsSpinnerOperations(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Operation 1")
+	display.Start("Operation 2")
+	time.Sleep(50 * time.Millisecond) // Allow spinners to start
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+
+	err = display.Resume()
+	require.NoError(t, err)
+
+	require.False(t, display.IsPaused())
+	require.True(t, display.IsActive())
+}
+
+func Test_Pause_WithoutActiveOperations_DoesNotCrash(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	require.False(t, display.IsActive())
+	require.False(t, display.IsPaused())
+
+	err := display.Pause()
+	require.NoError(t, err)
+
+	require.True(t, display.IsPaused())
+	require.False(t, display.IsActive())
+}
+
+func Test_Resume_WithoutActiveOperations_DoesNotCrash(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+
+	err = display.Resume()
+	require.NoError(t, err)
+
+	require.False(t, display.IsPaused())
+	require.False(t, display.IsActive())
+}
+
+func Test_Pause_CalledMultipleTimes_IsSafe(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Test Operation")
+	time.Sleep(50 * time.Millisecond) // Allow spinner to start
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+
+	err = display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+}
+
+func Test_Resume_CalledMultipleTimes_IsSafe(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Test Operation")
+	time.Sleep(50 * time.Millisecond) // Allow spinner to start
+	display.Pause()
+
+	err := display.Resume()
+	require.NoError(t, err)
+	require.False(t, display.IsPaused())
+
+	err = display.Resume()
+	require.NoError(t, err)
+	require.False(t, display.IsPaused())
+}
+
+func Test_PauseAndResume_WithNestedOperations_WorksCorrectly(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Parent Operation")
+	display.Start("Child Operation 1")
+	display.Start("Child Operation 2")
+	time.Sleep(50 * time.Millisecond) // Allow spinners to start
+
+	require.True(t, display.IsActive())
+	require.False(t, display.IsPaused())
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+
+	err = display.Resume()
+	require.NoError(t, err)
+	require.False(t, display.IsPaused())
+	require.True(t, display.IsActive())
+}
+
+func Test_Pause_BeforeInteractiveInput_StopsSpinnerAndClearsOutput(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Processing files...")
+	time.Sleep(50 * time.Millisecond) // Let spinner start
+
+	initialOutput := output.String()
+	require.NotEmpty(t, initialOutput)
+
+	err := display.Pause()
+	require.NoError(t, err)
+
+	// Allow some time to ensure spinner has stopped
+	time.Sleep(100 * time.Millisecond)
+	outputAfterPause := output.String()
+
+	// Output should contain clear line sequence after pause
+	require.Contains(t, outputAfterPause, "\r")
+	require.True(t, display.IsPaused())
+	require.True(t, display.IsActive()) // Operations still exist, just paused
+}
+
+func Test_Resume_WithMultipleOperations_RestartsMostRecent(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Operation 1")
+	display.Start("Operation 2")
+	display.Start("Operation 3")
+	time.Sleep(50 * time.Millisecond) // Allow spinners to start
+
+	err := display.Pause()
+	require.NoError(t, err)
+
+	err = display.Resume()
+	require.NoError(t, err)
+
+	time.Sleep(50 * time.Millisecond)
+	output_content := output.String()
+
+	// Should show the most recent operation (Operation 3)
+	require.Contains(t, output_content, "Operation 3")
+}
+
+func Test_PausedState_WithNewOperations_StillAllowsOperationCreation(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Operation 1")
+	time.Sleep(50 * time.Millisecond) // Allow spinner to start
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+
+	// Starting new operation while paused should still work
+	display.Start("Operation 2")
+	require.True(t, display.IsActive())
+	require.True(t, display.IsPaused())
+
+	err = display.Resume()
+	require.NoError(t, err)
+	require.False(t, display.IsPaused())
+}
+
+func Test_PauseAndResume_WithPersistentProgress_WorksCorrectly(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.StartPersistent("Installing packages...")
+	display.LogAccomplishment("Package 1 installed")
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+
+	err = display.Resume()
+	require.NoError(t, err)
+	require.False(t, display.IsPaused())
+
+	display.LogAccomplishment("Package 2 installed")
+	display.FinishPersistent("All packages installed successfully")
+}
+
+func Test_Close_AfterPause_RestoresTerminalState(t *testing.T) {
+	var output bytes.Buffer
+	display := logger.NewProgressDisplay(&output)
+
+	display.Start("Test Operation")
+	time.Sleep(50 * time.Millisecond) // Allow spinner to start
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.True(t, display.IsPaused())
+
+	err = display.Close()
+	require.NoError(t, err)
+
+	// Should be able to close multiple times
+	err = display.Close()
+	require.NoError(t, err)
+}
+
+func Test_NoopProgressDisplay_PauseAndResumeMethods_DoNothing(t *testing.T) {
+	display := logger.NewNoopProgressDisplay()
+
+	require.False(t, display.IsActive())
+	require.False(t, display.IsPaused())
+
+	err := display.Pause()
+	require.NoError(t, err)
+	require.False(t, display.IsPaused())
+
+	err = display.Resume()
+	require.NoError(t, err)
+	require.False(t, display.IsPaused())
+}
