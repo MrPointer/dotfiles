@@ -97,7 +97,7 @@ uid                      Another User <another@example.com>`,
 			for _, call := range calls {
 				if call.Name == "gpg" && len(call.Args) > 0 && call.Args[0] == "--gen-key" {
 					gpgCall = true
-					require.Equal(t, []string{"--gen-key", "--pinentry-mode", "loopback", "--default-new-key-algo", "nistp256"}, call.Args)
+					require.Equal(t, []string{"--gen-key", "--default-new-key-algo", "nistp256"}, call.Args)
 					break
 				}
 			}
