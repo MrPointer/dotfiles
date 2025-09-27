@@ -84,7 +84,7 @@ func (b *BrewPackageManager) InstallPackage(requestedPackageInfo pkgmanager.Requ
 	b.logger.Debug("Installing package %s with Homebrew", requestedPackageInfo.Name)
 
 	if requestedPackageInfo.VersionConstraints != nil {
-		b.logger.Warning("Homebrew doesn't support version constraints, installing the latest version of package %s", requestedPackageInfo.Name)
+		b.logger.Debug("Homebrew doesn't support version constraints, installing the latest version of package %s", requestedPackageInfo.Name)
 	}
 
 	var discardOutputOption utils.Option = utils.EmptyOption()

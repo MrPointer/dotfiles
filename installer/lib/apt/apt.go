@@ -81,7 +81,7 @@ func (a *AptPackageManager) InstallPackage(requestedPackageInfo pkgmanager.Reque
 	a.logger.Debug("Installing package %s with apt", requestedPackageInfo.Name)
 
 	if requestedPackageInfo.VersionConstraints != nil {
-		a.logger.Warning("APT doesn't support version constraints, installing the latest version of package %s", requestedPackageInfo.Name)
+		a.logger.Debug("APT doesn't support version constraints, installing the latest version of package %s", requestedPackageInfo.Name)
 	}
 
 	// Update package list first to ensure we have the latest package information.
