@@ -59,9 +59,30 @@ making it easier to get started with a new system.`,
 		// Use the global logger (already configured with proper progress/verbosity settings)
 		installLogger := cliLogger
 
+		// Get basic system info first to determine if we need to install Homebrew early
+		osDetector := compatibility.NewDefaultOSDetector()
+		basicSysInfo, err := osDetector.DetectSystem()
+		if err != nil {
+			installLogger.Error("Failed to get basic system information: %v", err)
+			os.Exit(1)
+		}
+
+		// For macOS, install Homebrew BEFORE checking prerequisites if requested
+		// This solves the chicken-and-egg problem where we need Homebrew to install prerequisites
+		if basicSysInfo.OSName == "darwin" && installBrew {
+			brewPath, err := installHomebrew(basicSysInfo, installLogger)
+			if err != nil {
+				installLogger.Error("Failed to install Homebrew: %v", err)
+				os.Exit(1)
+			}
+			globalPackageManager = brew.NewBrewPackageManager(installLogger, globalCommander, globalOsManager, brewPath, GetDisplayMode())
+		}
+
 		// Check system compatibility and get system info.
 		config := GetCompatibilityConfig()
-		sysInfo, err := compatibility.CheckCompatibility(config, globalOsManager)
+
+		// Now check system compatibility and get full system info including prerequisites
+		sysInfo, err := compatibility.CheckCompatibilityWithDetector(config, osDetector, globalOsManager)
 		if err != nil {
 			if handlePrerequisiteInstallation(sysInfo, installLogger) {
 				// Prerequisites were installed, re-check compatibility
@@ -75,8 +96,8 @@ making it easier to get started with a new system.`,
 		}
 		installLogger.Success("System compatibility check passed")
 
-		// Install Homebrew if specified and not already available.
-		if installBrew {
+		// Install Homebrew for non-macOS systems or if not already installed
+		if installBrew && (basicSysInfo.OSName != "darwin" || globalPackageManager == nil) {
 			brewPath, err := installHomebrew(sysInfo, installLogger)
 			if err != nil {
 				installLogger.Error("Failed to install Homebrew: %v", err)
@@ -106,6 +127,11 @@ making it easier to get started with a new system.`,
 
 // createPackageManagerForSystem creates the appropriate package manager for the current system.
 func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager.PackageManager {
+	// If we already have a global package manager set up (e.g., Homebrew installed early for macOS), use it
+	if globalPackageManager != nil {
+		return globalPackageManager
+	}
+
 	switch sysInfo.OSName {
 	case "linux":
 		switch sysInfo.DistroName {
