@@ -106,7 +106,7 @@ func (u *UnixOsManager) UserExists(username string) (bool, error) {
 }
 
 func (u *UnixOsManager) AddUser(username string) error {
-	u.logger.Info("User '%s' does not exist, creating...", username)
+	u.logger.Debug("User '%s' does not exist, creating...", username)
 
 	// Try useradd, fallback to adduser.
 	useraddCmd := []string{"useradd", "-m", "-s", "/bin/bash", username}
@@ -132,7 +132,7 @@ func (u *UnixOsManager) AddUser(username string) error {
 }
 
 func (u *UnixOsManager) AddUserToGroup(username, group string) error {
-	u.logger.Info("Adding '%s' to %s group", username, group)
+	u.logger.Debug("Adding '%s' to %s group", username, group)
 	usermodCmd := []string{"usermod", "-aG", group, username}
 	if !u.isRoot {
 		usermodCmd = append([]string{"sudo"}, usermodCmd...)
@@ -175,7 +175,7 @@ func (u *UnixOsManager) AddSudoAccess(username string) error {
 }
 
 func (u *UnixOsManager) SetOwnership(path, username string) error {
-	u.logger.Info("Setting ownership of %s to %s", path, username)
+	u.logger.Debug("Setting ownership of %s to %s", path, username)
 	chownCmd := []string{"chown", "-R", fmt.Sprintf("%s:%s", username, username), path}
 	if !u.isRoot {
 		chownCmd = append([]string{"sudo"}, chownCmd...)
@@ -190,7 +190,7 @@ func (u *UnixOsManager) SetOwnership(path, username string) error {
 }
 
 func (u *UnixOsManager) SetPermissions(path string, mode os.FileMode) error {
-	u.logger.Info("Setting permissions of %s to %o", path, mode)
+	u.logger.Debug("Setting permissions of %s to %o", path, mode)
 	chmodCmd := []string{"chmod", fmt.Sprintf("%o", mode), path}
 	if !u.isRoot {
 		chmodCmd = append([]string{"sudo"}, chmodCmd...)
