@@ -172,6 +172,30 @@ load_custom_plugin "dotenv"
 unfunction load_custom_plugin
 unfunction load_zsh_function
 
+# Ensure zsh recognizes common Home/End sequences from any terminal emulator:
+bindkey '\e[H'  beginning-of-line   # ESC [ H
+bindkey '\e[1~' beginning-of-line   # ESC [ 1 ~
+bindkey '\eOH'  beginning-of-line   # ESC O H (application mode)
+
+bindkey '\e[F'  end-of-line         # ESC [ F
+bindkey '\e[4~' end-of-line         # ESC [ 4 ~
+bindkey '\eOF'  end-of-line         # ESC O F (application mode)
+
+# Additional mappings to match Rio macOS keybindings (matched to ZLE widgets):
+# - Cmd+Backspace -> ESC [ U  -> delete from cursor to beginning of line
+# - Cmd+Delete    -> ESC [ K  -> delete from cursor to end of line
+# - Option+Delete -> ESC d    -> delete/kill next word
+# - PageUp/PageDown -> ESC [ 5 ~ / ESC [ 6 ~ -> history navigation
+
+# Delete from cursor to beginning of line
+bindkey '\e[U' backward-kill-line   # ESC [ U
+
+# Delete from cursor to end of line
+bindkey '\e[K' kill-line            # ESC [ K
+
+# Option+Delete (Alt+Delete) => kill next word
+bindkey '\ed' kill-word             # ESC d
+
 # Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
 eval "$(sheldon source)"
 

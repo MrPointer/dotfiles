@@ -159,10 +159,10 @@ confirm-before-quit = false
 #
 # Example:
 [renderer]
-performance = "high"
+# performance = "high"
 # backend = "automatic"
 # disable-unfocused-render = false
-level = 1
+# level = 1
 # filters = []
 
 # Keyboard
@@ -336,30 +336,28 @@ divider = 2.1
 {{ if (eq .chezmoi.os "darwin" ) -}}
 [bindings]
 keys = [
-    # Map Home key to send the proper escape sequence
-    { key = "home", bytes = [1] }, # Sends "\x01" (Ctrl+A)
-
-    # Map End key to send the proper escape sequence
-    { key = "end", bytes = [5] }, # Sends "\x05" (Ctrl+E)
-
     # Map Cmd+Left to Home functionality
     # (In pure Mac keyboards, there is no Home key)
-    { key = "left", with = "super", bytes = [1] },
+    { key = "left", with = "super", esc = "\u001b[H" },
 
-    # Map Cmd+Right to End functionality 
+    # Map Cmd+Right to End functionality
     # (In pure Mac keyboards, there is no End key)
-    { key = "right", with = "super", bytes = [5] },
+    { key = "right", with = "super", esc = "\u001b[F" },
 
-    # Map Cmd+Backspace to delete the line until the beginning
-    # Sends "\x15" (Ctrl+U)
-    { key = "back", with = "super", bytes = [21] },
+    # Map Cmd+Backspace to delete from cursor until the beginning (ESC [ U)
+    { key = "back", with = "super", esc = "\u001b[U" },
 
-    # Map Cmd+Delete to delete the line until the end
-    # Sends "\x0b" (Ctrl+K)
-    { key = "delete", with = "super", bytes = [11] },
+    # Map Cmd+Delete to delete from cursor until the end (ESC [ K)
+    { key = "delete", with = "super", esc = "\u001b[K" },
 
-    # Map Option+Delete to forward delete a word
-    { key = "delete", with = "alt", bytes = [27, 100] },
+    # Map Option+Delete to forward delete a word (ESC d)
+    { key = "delete", with = "alt", esc = "\u001bd" },
+
+    # Page Up (ESC [ 5 ~)
+    { key = "PageUp", esc = "\u001b[5~" },
+
+    # Page Down (ESC [ 6 ~)
+    { key = "PageDown", esc = "\u001b[6~" },
 ]
 {{- end }}
 
