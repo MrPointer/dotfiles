@@ -122,12 +122,7 @@ if command -v task &>/dev/null; then
 fi
 
 if command -v jfrog &>/dev/null; then
-  # Register jfrog-cli completions
-  local jfrog_completions="~/.jfrog/jfrog_zsh_completions"
-  if [[ ! -f "${jfrog_completions}" ]]; then
-    jfrog completion zsh --install >/dev/null
-  fi
-  source ~/.jfrog/jfrog_zsh_completion
+  export JFROG_CLI_AVOID_NEW_VERSION_WARNING=false
 fi
 
 if command -v az &>/dev/null; then
