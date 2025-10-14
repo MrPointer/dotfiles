@@ -18,10 +18,6 @@ concurrency:
 
 permissions: {}
 
-defaults:
-  run:
-    working-directory: installer
-
 jobs:
   build:
     name: Build
@@ -51,12 +47,14 @@ jobs:
 
       - name: Download Dependencies
         run: go mod download
+        working-directory: installer
 
       - name: Run GoReleaser Build
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: build --clean --snapshot
+          workdir: installer
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
@@ -94,9 +92,11 @@ jobs:
 
       - name: Download Dependencies
         run: go mod download
+        working-directory: installer
 
       - name: Run Tests
         run: go test -race -v ./...
+        working-directory: installer
 
   e2e-test:
     name: E2E Tests
