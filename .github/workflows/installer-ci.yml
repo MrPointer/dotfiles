@@ -129,23 +129,11 @@ jobs:
           name: build-artifacts
           path: installer/dist/
 
-      - name: Set up Prerequisites (Ubuntu/Debian)
-        if: matrix.platform == 'ubuntu' || matrix.platform == 'debian'
-        run: |
-          if [ "${{ matrix.platform }}" = "debian" ]; then
-            apt-get update
-            apt-get install -y sudo curl git ca-certificates
-          fi
-
-          # Install minimal prerequisites for testing
-          sudo apt-get update
-          sudo apt-get install -y curl git
-
       - name: Set up Prerequisites (macOS)
         if: matrix.platform == 'macos'
         run: |
-          # Ensure git is available (should be pre-installed on GitHub runners)
-          which git || (echo "Git not found" && exit 1)
+          # Install coreutils for `timeout` command
+          brew install coreutils
 
       - name: Make Binary Executable
         run: |
