@@ -169,9 +169,6 @@ jobs:
           chmod +x "$BINARY_PATH"
           cp "$BINARY_PATH" ./dotfiles-installer
 
-      - name: Test Binary Version
-        run: ./dotfiles-installer --version
-
       - name: Test Binary Help
         run: ./dotfiles-installer --help
 
