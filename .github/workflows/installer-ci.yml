@@ -191,12 +191,11 @@ jobs:
           chmod 700 "$HOME/.gnupg"
 
           # Run the installer with minimal configuration that shouldn't require interaction
-          # We use git clone protocol https to avoid SSH key prompts
-          # We disable brew installation to speed up testing and avoid potential issues
+          # We use https as the git clone protocol to avoid SSH key prompts
           timeout 300 ./dotfiles-installer install \
             --non-interactive \
             --plain \
-            --install-brew=false \
+            --extra-verbose \
             --install-prerequisites=false \
             --git-clone-protocol=https \
             --work-env=false \
