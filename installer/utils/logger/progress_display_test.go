@@ -772,7 +772,7 @@ func Test_Pause_BeforeInteractiveInput_StopsSpinnerAndClearsOutput(t *testing.T)
 	display.Start("Processing files...")
 	time.Sleep(50 * time.Millisecond) // Let spinner start
 
-	initialOutput := output.String()
+	initialOutput := display.GetOutputSafely()
 	require.NotEmpty(t, initialOutput)
 
 	err := display.Pause()
@@ -780,7 +780,7 @@ func Test_Pause_BeforeInteractiveInput_StopsSpinnerAndClearsOutput(t *testing.T)
 
 	// Allow some time to ensure spinner has stopped
 	time.Sleep(100 * time.Millisecond)
-	outputAfterPause := output.String()
+	outputAfterPause := display.GetOutputSafely()
 
 	// Output should contain clear line sequence after pause
 	require.Contains(t, outputAfterPause, "\r")
@@ -804,7 +804,7 @@ func Test_Resume_WithMultipleOperations_RestartsMostRecent(t *testing.T) {
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)
-	output_content := output.String()
+	output_content := display.GetOutputSafely()
 
 	// Should show the most recent operation (Operation 3)
 	require.Contains(t, output_content, "Operation 3")

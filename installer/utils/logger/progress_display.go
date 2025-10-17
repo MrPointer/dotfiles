@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -76,9 +77,42 @@ type ProgressReporter interface {
 	IsPaused() bool
 }
 
+// synchronizedWriter wraps an io.Writer with a mutex to prevent concurrent writes.
+type synchronizedWriter struct {
+	writer io.Writer
+	mutex  sync.Mutex
+}
+
+func (sw *synchronizedWriter) Write(p []byte) (n int, err error) {
+	sw.mutex.Lock()
+	defer sw.mutex.Unlock()
+	return sw.writer.Write(p)
+}
+
+// safeBytesBuffer provides thread-safe access to a bytes.Buffer for both reads and writes.
+type safeBytesBuffer struct {
+	buf   *bytes.Buffer
+	mutex sync.RWMutex
+}
+
+func (sbb *safeBytesBuffer) Write(p []byte) (n int, err error) {
+	sbb.mutex.Lock()
+	defer sbb.mutex.Unlock()
+	return sbb.buf.Write(p)
+}
+
+// SafeString provides thread-safe read access to buffer content
+func (sbb *safeBytesBuffer) SafeString() string {
+	sbb.mutex.RLock()
+	defer sbb.mutex.RUnlock()
+	return sbb.buf.String()
+}
+
 // ProgressDisplay provides hierarchical progress reporting with npm-style output.
 type ProgressDisplay struct {
 	output              io.Writer
+	safeBuffer          *safeBytesBuffer // for thread-safe buffer access when using bytes.Buffer
+	rawOutput           io.Writer        // original output for direct access when needed
 	progressStack       []*ProgressOperation
 	activeSpinner       *ProgressOperation
 	operationInProgress atomic.Int32   // atomic counter
@@ -97,8 +131,22 @@ func NewProgressDisplay(output io.Writer) *ProgressDisplay {
 	if output == nil {
 		output = os.Stdout
 	}
+
+	var outputWriter io.Writer
+	var safeBuffer *safeBytesBuffer
+
+	// Special handling for *bytes.Buffer to ensure thread safety
+	if buf, ok := output.(*bytes.Buffer); ok {
+		safeBuffer = &safeBytesBuffer{buf: buf}
+		outputWriter = safeBuffer
+	} else {
+		outputWriter = &synchronizedWriter{writer: output}
+	}
+
 	pd := &ProgressDisplay{
-		output: output,
+		output:     outputWriter,
+		safeBuffer: safeBuffer,
+		rawOutput:  output,
 	}
 
 	// Ensure cursor is restored on program exit
@@ -305,7 +353,7 @@ func (p *ProgressDisplay) Pause() error {
 		return err
 	}
 
-	if file, ok := p.output.(*os.File); ok {
+	if file, ok := p.rawOutput.(*os.File); ok {
 		file.WriteString("\r" + clearLine)
 	} else {
 		fmt.Fprint(p.output, "\r"+clearLine)
@@ -446,7 +494,7 @@ func (p *ProgressDisplay) displayCompletion(operation *ProgressOperation, succes
 		}
 
 		// Write to stderr for errors, but use the configured output writer
-		if p.output == os.Stdout {
+		if p.rawOutput == os.Stdout {
 			_, err := fmt.Fprintf(os.Stderr, "%s\n", errorMsg)
 			if err != nil {
 				return err
@@ -536,19 +584,27 @@ func (p *ProgressDisplay) restoreCursor() error {
 		return nil
 	}
 
-	if file, ok := p.output.(*os.File); ok {
+	if file, ok := p.rawOutput.(*os.File); ok {
 		_, err := file.WriteString(showCursor)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err := fmt.Fprint(p.output, showCursor)
+		_, err := fmt.Fprint(p.rawOutput, showCursor)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// GetOutputSafely returns buffer content in a thread-safe manner when using bytes.Buffer.
+func (p *ProgressDisplay) GetOutputSafely() string {
+	if p.safeBuffer != nil {
+		return p.safeBuffer.SafeString()
+	}
+	return ""
 }
 
 // NoopProgressDisplay is a progress display that does nothing.
