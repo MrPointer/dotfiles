@@ -242,10 +242,44 @@ jobs:
               esac
             }
 
+      - name: Install expect tool
+        run: |
+          if [ "${{ matrix.platform }}" = "macos" ]; then
+            brew install expect
+          else
+            # For Ubuntu/Debian - check if sudo exists, otherwise run directly (containers)
+            if command -v sudo >/dev/null 2>&1; then
+              sudo apt-get update && sudo apt-get install -y expect
+            else
+              apt-get update && apt-get install -y expect
+            fi
+          fi
+
+      - name: Test Interactive GPG Installation
+        run: |
+          echo "Testing installer in interactive mode with expect automation..."
+
+          # Set up separate test environment for interactive test
+          export HOME="/tmp/test-interactive-home"
+          mkdir -p "$HOME"
+
+          # Create a fake GPG directory to simulate existing setup
+          mkdir -p "$HOME/.gnupg"
+          chmod 700 "$HOME/.gnupg"
+
+          # Run the expect script with test parameters
+          installer/test-interactive-gpg.exp \
+            "./dotfiles-installer" \
+            "test-user@example.com" \
+            "Test CI User" \
+            "test-ci-passphrase"
+
       - name: Verify Installation Artifacts (if created)
         run: |
           echo "Checking for any artifacts created during installation..."
           ls -la /tmp/test-home/ || echo "No test home directory created"
+          ls -la /tmp/test-interactive-home/ || echo "No interactive test home directory created"
 
           # Check if any dotfiles manager was initialized
           ls -la /tmp/test-home/.local/share/chezmoi/ 2>/dev/null || echo "No chezmoi directory found (expected in CI)"
+          ls -la /tmp/test-interactive-home/.local/share/chezmoi/ 2>/dev/null || echo "No interactive chezmoi directory found (expected in CI)"
