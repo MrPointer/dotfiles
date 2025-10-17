@@ -46,3 +46,6 @@
 
 # Custom Docker files
 !docker/**/*
+
+# Expect scripts
+!test-interactive-gpg.exp

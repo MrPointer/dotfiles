@@ -7,7 +7,7 @@ This directory contains Docker configurations for creating consistent testing en
 The Docker environment supports the following operating systems based on `../internal/config/compatibility.yaml`:
 
 - **Ubuntu Latest** - All prerequisites via `apt-get`
-- **Debian Latest** - All prerequisites via `apt-get` 
+- **Debian Latest** - All prerequisites via `apt-get`
 - **Fedora Latest** - All prerequisites via `dnf`
 
 Each OS includes:
@@ -106,7 +106,7 @@ docker/
 # Start your preferred OS environment
 task ubuntu:dev         # Ubuntu development
 # or
-task debian:dev         # Debian development  
+task debian:dev         # Debian development
 # or
 task fedora:dev         # Fedora development
 
@@ -147,7 +147,7 @@ task ubuntu:shell
 
 # Switch to Fedora for RPM-based testing
 task fedora:start
-task fedora:shell  
+task fedora:shell
 # ... test dnf/rpm behavior ...
 ```
 
@@ -166,7 +166,7 @@ task clean-all       # Clean everything and rebuild as needed
 
 ### Container Conflicts
 Each OS uses separate containers and volumes:
-- Ubuntu: `installer-test-ubuntu-env` 
+- Ubuntu: `installer-test-ubuntu-env`
 - Debian: `installer-test-debian-env`
 - Fedora: `installer-test-fedora-env`
 
@@ -175,12 +175,107 @@ Each OS uses separate containers and volumes:
 # Clean specific OS
 task ubuntu:clean
 
-# Clean everything  
+# Clean everything
 task clean-all
 
 # Nuclear option - remove all Docker artifacts
 docker system prune -a
 ```
+
+## Interactive GPG Testing
+
+⚠️ **SAFETY WARNING**: When testing locally, the scripts use isolated test environments (`/tmp/test-*-home`) to prevent any damage to your real system. Never run the installer directly on your system during development!
+
+This directory also contains tools for testing the dotfiles installer's interactive GPG setup functionality using automated expect scripts.
+
+### Prerequisites for Interactive Testing
+
+**Install expect:**
+
+macOS:
+```bash
+brew install expect
+```
+
+Ubuntu/Debian:
+```bash
+sudo apt-get install expect
+```
+
+### Interactive Testing Script
+
+The `./test-interactive-gpg.exp` script automates GPG key setup during interactive installation using the `expect` tool.
+
+**Basic Usage:**
+```bash
+# Use defaults (from installer directory)
+./test-interactive-gpg.exp
+
+# Specify custom parameters
+./test-interactive-gpg.exp [installer_path] [email] [name] [passphrase]
+```
+
+**Examples:**
+```bash
+# Test with default values
+./test-interactive-gpg.exp
+
+# Test with custom GPG info
+./test-interactive-gpg.exp \
+  "./dotfiles-installer" \
+  "your@email.com" \
+  "Your Full Name" \
+  "your-secure-passphrase"
+
+# Test with built binary in Docker environment
+./test-interactive-gpg.exp \
+  "./dist/dotfiles_installer_linux_amd64_v1/dotfiles-installer" \
+  "test@example.com" \
+  "Test User" \
+  "test-passphrase"
+```
+
+### GPG Prompts Handled
+
+The expect script handles these GPG-specific interactive prompts:
+
+- ✅ GPG email address input
+- ✅ GPG full name input
+- ✅ GPG passphrase input
+- ✅ GPG "okay" confirmation (sends "O" as required by GPG)
+- ✅ GPG key generation parameters (size, expiration)
+- ✅ GPG key type selection
+- ✅ GPG comment field
+
+### Interactive Testing Workflow
+
+1. **Build the installer:**
+   ```bash
+   cd installer
+   goreleaser build --skip before --snapshot --clean
+   ```
+2. **Start Container** (e.g. Ubuntu)
+   ```bash
+   task ubuntu:dev
+   ```
+3. **Run interactive test:**
+   ```bash
+   ./test-interactive-gpg.exp
+   ```
+
+### Troubleshooting Interactive Tests
+
+**Script hangs or times out:**
+- Enable debug mode by editing the script and setting `exp_internal 1`
+- Run manually and observe the exact GPG prompt text
+
+**GPG errors in containers:**
+- This is expected in containerized environments
+- The script handles these gracefully for CI testing
+
+**Custom GPG prompts not handled:**
+- Add new patterns to the `expect` block in the script
+- Use case-insensitive regex patterns: `(?i).*your_pattern`
 
 ## Development Tips
 
@@ -189,3 +284,5 @@ docker system prune -a
 - The validation script automatically detects the OS and runs appropriate tests
 - You can run multiple OS environments simultaneously for comparison testing
 - All environments mount the same installer code, so changes are immediately available
+- Interactive GPG testing works in both Docker environments and locally
+- The expect script uses a 5-minute timeout to prevent hanging in CI
