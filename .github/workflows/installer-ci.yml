@@ -63,7 +63,10 @@ jobs:
         with:
           name: build-artifacts
           path: installer/dist/
-          retention-days: 7
+          if-no-files-found: error # We expect build artifacts to be generated
+          retention-days: 1
+          compression-level: 0 # Binaries are hard to compress
+          overwrite: true
 
   test:
     name: Test Suite
