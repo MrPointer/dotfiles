@@ -4,8 +4,15 @@
 	{{ if (hasKey .personal "signing_key") -}}
 	signingkey = {{ .personal.signing_key }}
 	{{- end }}
+[branch]
+   sort = committerdate
 [pull]
 	rebase = true
+[rebase]
+   autosquash = true
+   autostash = true
+[merge]
+   conflictstyle = zdiff3
 [submodule]
 	recurse = true
 [core]
@@ -13,7 +20,10 @@
     editor = nvim
 	pager = diff-so-fancy | less --tabs=4 -RFX
 [diff]
+   algorithm = histogram
    external = difft
+[grep]
+   patternType = perl
 [alias]
 	exe = update-index --chmod=+x
 	root = rev-parse --show-toplevel
