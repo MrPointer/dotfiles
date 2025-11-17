@@ -358,6 +358,12 @@ keys = [
 
     # Page Down (ESC [ 6 ~)
     { key = "PageDown", esc = "\u001b[6~" },
+
+    # Change default pane bindings to not conflict with mission control
+    { key = "left", with = "super | control | shift", action = "MoveDividerLeft" },
+    { key = "up", with = "super | control | shift", action = "MoveDividerUp" },
+    { key = "right", with = "super | control | shift", action = "MoveDividerRight" },
+    { key = "down", with = "super | control | shift", action = "MoveDividerDown" },
 ]
 {{- end }}
 
