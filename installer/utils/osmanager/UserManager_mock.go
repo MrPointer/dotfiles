@@ -24,6 +24,9 @@ var _ UserManager = &MoqUserManager{}
 //			AddUserToGroupFunc: func(username string, group string) error {
 //				panic("mock out the AddUserToGroup method")
 //			},
+//			GetChezmoiConfigHomeFunc: func() (string, error) {
+//				panic("mock out the GetChezmoiConfigHome method")
+//			},
 //			GetConfigDirFunc: func() (string, error) {
 //				panic("mock out the GetConfigDir method")
 //			},
@@ -45,6 +48,9 @@ type MoqUserManager struct {
 
 	// AddUserToGroupFunc mocks the AddUserToGroup method.
 	AddUserToGroupFunc func(username string, group string) error
+
+	// GetChezmoiConfigHomeFunc mocks the GetChezmoiConfigHome method.
+	GetChezmoiConfigHomeFunc func() (string, error)
 
 	// GetConfigDirFunc mocks the GetConfigDir method.
 	GetConfigDirFunc func() (string, error)
@@ -69,6 +75,9 @@ type MoqUserManager struct {
 			// Group is the group argument value.
 			Group string
 		}
+		// GetChezmoiConfigHome holds details about calls to the GetChezmoiConfigHome method.
+		GetChezmoiConfigHome []struct {
+		}
 		// GetConfigDir holds details about calls to the GetConfigDir method.
 		GetConfigDir []struct {
 		}
@@ -81,11 +90,12 @@ type MoqUserManager struct {
 			Username string
 		}
 	}
-	lockAddUser        sync.RWMutex
-	lockAddUserToGroup sync.RWMutex
-	lockGetConfigDir   sync.RWMutex
-	lockGetHomeDir     sync.RWMutex
-	lockUserExists     sync.RWMutex
+	lockAddUser              sync.RWMutex
+	lockAddUserToGroup       sync.RWMutex
+	lockGetChezmoiConfigHome sync.RWMutex
+	lockGetConfigDir         sync.RWMutex
+	lockGetHomeDir           sync.RWMutex
+	lockUserExists           sync.RWMutex
 }
 
 // AddUser calls AddUserFunc.
@@ -153,6 +163,33 @@ func (mock *MoqUserManager) AddUserToGroupCalls() []struct {
 	mock.lockAddUserToGroup.RLock()
 	calls = mock.calls.AddUserToGroup
 	mock.lockAddUserToGroup.RUnlock()
+	return calls
+}
+
+// GetChezmoiConfigHome calls GetChezmoiConfigHomeFunc.
+func (mock *MoqUserManager) GetChezmoiConfigHome() (string, error) {
+	if mock.GetChezmoiConfigHomeFunc == nil {
+		panic("MoqUserManager.GetChezmoiConfigHomeFunc: method is nil but UserManager.GetChezmoiConfigHome was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetChezmoiConfigHome.Lock()
+	mock.calls.GetChezmoiConfigHome = append(mock.calls.GetChezmoiConfigHome, callInfo)
+	mock.lockGetChezmoiConfigHome.Unlock()
+	return mock.GetChezmoiConfigHomeFunc()
+}
+
+// GetChezmoiConfigHomeCalls gets all the calls that were made to GetChezmoiConfigHome.
+// Check the length with:
+//
+//	len(mockedUserManager.GetChezmoiConfigHomeCalls())
+func (mock *MoqUserManager) GetChezmoiConfigHomeCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetChezmoiConfigHome.RLock()
+	calls = mock.calls.GetChezmoiConfigHome
+	mock.lockGetChezmoiConfigHome.RUnlock()
 	return calls
 }
 

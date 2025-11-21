@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"syscall"
 
+	"path/filepath"
+
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
@@ -29,6 +31,10 @@ type UserManager interface {
 
 	// GetConfigDir returns the configuration directory of the current user.
 	GetConfigDir() (string, error)
+
+	// GetChezmoiConfigHome returns the configuration directory where chezmoi actually looks for its config.
+	// This is always ~/.config regardless of XDG specification on different platforms.
+	GetChezmoiConfigHome() (string, error)
 }
 
 // SudoManager defines operations for managing sudo permissions.
@@ -153,6 +159,14 @@ func (u *UnixOsManager) GetHomeDir() (string, error) {
 
 func (u *UnixOsManager) GetConfigDir() (string, error) {
 	return os.UserConfigDir()
+}
+
+func (u *UnixOsManager) GetChezmoiConfigHome() (string, error) {
+	homeDir, err := u.GetHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %w", err)
+	}
+	return filepath.Join(homeDir, ".config"), nil
 }
 
 func (u *UnixOsManager) AddSudoAccess(username string) error {

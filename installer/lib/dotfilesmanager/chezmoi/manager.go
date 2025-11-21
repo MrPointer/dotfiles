@@ -69,12 +69,11 @@ func NewChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userMa
 }
 
 func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, displayMode utils.DisplayMode, githubUsername string, cloneViaSSH bool) (*ChezmoiManager, error) {
-	userConfigDir, err := userManager.GetConfigDir()
+	chezmoiConfigHome, err := userManager.GetChezmoiConfigHome()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user config directory: %w", err)
+		return nil, fmt.Errorf("failed to get chezmoi config home directory: %w", err)
 	}
-
-	chezmoiConfigDir := fmt.Sprintf("%s/chezmoi", userConfigDir)
+	chezmoiConfigDir := fmt.Sprintf("%s/chezmoi", chezmoiConfigHome)
 	chezmoiConfigFilePath := fmt.Sprintf("%s/chezmoi.toml", chezmoiConfigDir)
 
 	userHomeDir, err := userManager.GetHomeDir()
