@@ -151,14 +151,12 @@ expect {
         set exit_code [lindex $result 3]
         puts "Exit code: $exit_code"
 
-        # In CI environment, we might expect certain failures
         if {$exit_code == 0} {
             puts "✅ Installation completed successfully!"
             exit 0
         } else {
-            puts "⚠️  Installation exited with code $exit_code (may be expected in CI)"
-            # Don't fail the test immediately - let CI decide based on context
-            exit 0
+            puts "❌ Installation failed with exit code: $exit_code"
+            exit $exit_code
         }
     }
 }

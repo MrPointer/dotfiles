@@ -219,28 +219,7 @@ jobs:
             --install-prerequisites=true \
             --git-clone-protocol=https \
             --work-env=false \
-            --multi-user-system=false \
-            || {
-              exit_code=$?
-              echo "Installation failed with exit code: $exit_code"
-
-              # For now, we'll allow certain expected failures in CI environment
-              # since we don't have a full system setup
-              case $exit_code in
-                1)
-                  echo "Installation failed, but this might be expected in CI environment"
-                  echo "Checking if it failed gracefully..."
-                  ;;
-                124)
-                  echo "Installation timed out after 5 minutes"
-                  exit 1
-                  ;;
-                *)
-                  echo "Unexpected exit code: $exit_code"
-                  exit $exit_code
-                  ;;
-              esac
-            }
+            --multi-user-system=false
 
       - name: Install expect tool
         run: |
