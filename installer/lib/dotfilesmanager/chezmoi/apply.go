@@ -30,6 +30,9 @@ func (c *ChezmoiManager) Apply() error {
 		discardOutputOption = utils.WithDiscardOutput()
 	}
 
+	// Add explicit config flag to chezmoi command to bypass path resolution issues
+	chezmoiApplyCmdArgs = append(chezmoiApplyCmdArgs, "--config", c.chezmoiConfig.chezmoiConfigFilePath)
+
 	result, err := c.commander.RunCommand("chezmoi", chezmoiApplyCmdArgs, discardOutputOption)
 	if err != nil {
 		return err

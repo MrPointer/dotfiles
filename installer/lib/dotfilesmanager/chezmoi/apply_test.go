@@ -74,7 +74,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithBasicArgs(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
-		require.Equal(t, []string{"init", "--apply", "MrPointer"}, args)
+		require.Equal(t, []string{"init", "--apply", "MrPointer", "--config", "/home/user/.config/chezmoi/chezmoi.toml"}, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
 
@@ -102,7 +102,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithSourceDir(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
-		expectedArgs := []string{"init", "--apply", "--source", "/home/user/.local/share/chezmoi", "MrPointer"}
+		expectedArgs := []string{"init", "--apply", "--source", "/home/user/.local/share/chezmoi", "MrPointer", "--config", "/home/user/.config/chezmoi/chezmoi.toml"}
 		require.Equal(t, expectedArgs, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
@@ -131,7 +131,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithSSHCloningPreference(t *testing.
 	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
-		expectedArgs := []string{"init", "--apply", "--source", "/home/user/.local/share/chezmoi", "--ssh", "testuser"}
+		expectedArgs := []string{"init", "--apply", "--source", "/home/user/.local/share/chezmoi", "--ssh", "testuser", "--config", "/home/user/.config/chezmoi/chezmoi.toml"}
 		require.Equal(t, expectedArgs, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
@@ -166,7 +166,7 @@ func Test_Apply_RunsChezmoiInitApplyCommand_WithCustomUsername(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
-		require.Equal(t, []string{"init", "--apply", "customuser"}, args)
+		require.Equal(t, []string{"init", "--apply", "customuser", "--config", "/home/user/.config/chezmoi/chezmoi.toml"}, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
 
@@ -257,7 +257,7 @@ func Test_Apply_SucceedsWithAllParametersCombined(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
 	mockCommander.RunCommandFunc = func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 		require.Equal(t, "chezmoi", name)
-		expectedArgs := []string{"init", "--apply", "--source", "/custom/clone/dir", "--ssh", "testuser123"}
+		expectedArgs := []string{"init", "--apply", "--source", "/custom/clone/dir", "--ssh", "testuser123", "--config", "/home/user/.config/chezmoi/chezmoi.toml"}
 		require.Equal(t, expectedArgs, args)
 		return &utils.Result{ExitCode: 0}, nil
 	}
