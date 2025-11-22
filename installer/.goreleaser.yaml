@@ -5,6 +5,7 @@ project_name: dotfiles-installer
 before:
   hooks:
     - go mod tidy
+    - go generate ./...
 
 builds:
   - id: dotfiles_installer
@@ -15,6 +16,10 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+      - -X main.builtBy=goreleaser
     env:
       - CGO_ENABLED=0
     goos:
@@ -23,23 +28,11 @@ builds:
     goarch:
       - amd64
       - arm64
-
-brews:
-  - repository:
-      owner: MrPointer
-      name: homebrew-tap
-      token: "{{.Env.HOMEBREW_TAP_TOKEN}}"
-    directory: Formula
-    commit_author:
-      name: Timor Gruber
-      email: timor.gruber@gmail.com
-    homepage: https://github.com/MrPointer/dotfiles
-    description: The installer of my dotfiles, used to bootstrap the system
-    license: MIT License
-    install: |
-      bin.install "dotfiles-installer"
-    test: |
-      "#{bin}/dotfiles-installer --version"
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: darwin
+        goarch: amd64
 
 archives:
   - id: dotfiles_installer
@@ -50,6 +43,86 @@ archives:
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - LICENSE
+
+release:
+  # Customize the release notes
+  header: |
+    ## Dotfiles Installer {{.Tag}}
+
+    This release contains prebuilt binaries for the dotfiles installer.
+
+    ### Quick Install
+
+    **macOS (Apple Silicon):**
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --version {{.Tag}}
+    ```
+
+    **Or download manually:**
+    ```bash
+    curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/download/{{.Tag}}/dotfiles-installer-{{.Version}}-darwin-arm64.tar.gz
+    tar -xzf dotfiles-installer.tar.gz
+    chmod +x dotfiles-installer
+    ```
+
+
+
+    **Linux (x86_64):**
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --version {{.Tag}}
+    ```
+
+    **Linux (ARM64):**
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --version {{.Tag}}
+    ```
+
+    **Or download manually:**
+    ```bash
+    # Linux x86_64
+    curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/download/{{.Tag}}/dotfiles-installer-{{.Version}}-linux-x86_64.tar.gz
+    tar -xzf dotfiles-installer.tar.gz && chmod +x dotfiles-installer
+
+    # Linux ARM64
+    curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/download/{{.Tag}}/dotfiles-installer-{{.Version}}-linux-arm64.tar.gz
+    tar -xzf dotfiles-installer.tar.gz && chmod +x dotfiles-installer
+    ```
+
+  footer: |
+    ### One-Command Setup
+
+    For immediate dotfiles installation:
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --run --version {{.Tag}}
+    ```
+
+    ### Verification
+
+    All binaries are signed with cosign and checksums are provided in `checksums.txt`.
+
+    **Full Changelog**: https://github.com/MrPointer/dotfiles/compare/{{.PreviousTag}}...{{.Tag}}
+
+  # Don't create a release for pre-release tags
+  prerelease: auto
+
+  # Make the release a draft initially so you can review it
+  draft: false
+
+  # Replace existing release if it exists (useful for testing)
+  replace_existing_draft: true
+
+  # Include release notes from git log
+  disable: false
+
+  # Name template for the release
+  name_template: "{{.ProjectName}} {{.Version}}"
 
 sboms:
   - id: dotfiles_installer
@@ -65,10 +138,23 @@ sboms:
 
 checksum:
   name_template: checksums.txt
+  algorithm: sha256
 
 snapshot:
   version_template: "{{ .Tag }}-dev{{ .ShortCommit }}"
 
 changelog:
-  # The changelog is handled by release drafter
+  # We'll handle changelogs manually or through GitHub's release drafter
   disable: true
+
+# Sign the binaries and archives
+signs:
+  - cmd: cosign
+    args:
+      - sign-blob
+      - --oidc-issuer=https://token.actions.githubusercontent.com
+      - --output-signature=${signature}
+      - --output-certificate=${certificate}
+      - ${artifact}
+    artifacts: binary
+    output: true
