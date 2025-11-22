@@ -6,8 +6,6 @@ import (
 )
 
 // HTTPClient defines the interface for an HTTP client.
-//
-//go:generate moq -out httpclient_moq.go . HTTPClient
 type HTTPClient interface {
 	Get(url string) (*http.Response, error)
 	Post(url, contentType string, body io.Reader) (*http.Response, error)
