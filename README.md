@@ -11,6 +11,54 @@ managing both home and office/work environments.
 
 The dotfiles are installed using a dedicated Go binary that handles system setup and configuration.
 
+### Quick Setup (Recommended)
+
+Use our get script to download the installer binary:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash
+```
+
+**One-command download and install dotfiles:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --run
+```
+
+**Download and install dotfiles with custom options:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --run -- --work-env --install-prerequisites
+```
+
+**Download to custom directory:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --dir /usr/local/bin
+```
+
+### Manual Download
+
+Download pre-built binaries from [GitHub Releases](https://github.com/MrPointer/dotfiles/releases):
+
+**macOS (Apple Silicon):**
+```bash
+curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/latest/download/dotfiles-installer-*-darwin-arm64.tar.gz
+tar -xzf dotfiles-installer.tar.gz
+chmod +x dotfiles-installer
+```
+
+**Linux (x86_64):**
+```bash
+curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/latest/download/dotfiles-installer-*-linux-x86_64.tar.gz
+tar -xzf dotfiles-installer.tar.gz
+chmod +x dotfiles-installer
+```
+
+**Linux (ARM64):**
+```bash
+curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/latest/download/dotfiles-installer-*-linux-arm64.tar.gz
+tar -xzf dotfiles-installer.tar.gz
+chmod +x dotfiles-installer
+```
+
 ### Build from Source
 
 Clone the repository and build the installer:
@@ -27,14 +75,9 @@ go build -o dotfiles-installer .
 If you have Go installed:
 
 ```bash
-go install github.com/MrPointer/dotfiles/installer@main
+go install github.com/MrPointer/dotfiles/installer@latest
 dotfiles-installer install
 ```
-
-### Pre-built Releases
-
-Pre-built binaries will be available in GitHub releases once the first version is tagged.
-Until then, use the build-from-source method above.
 
 ## Usage
 
@@ -75,19 +118,19 @@ These options work with any command:
 
 ### Example Usage
 
-**Basic installation:**
+**Basic setup:**
 
 ```bash
 ./dotfiles-installer install
 ```
 
-**Work environment setup:**
+**Work environment installation:**
 
 ```bash
 ./dotfiles-installer install --work-env --work-email your.email@company.com
 ```
 
-**Non-interactive installation with prerequisites:**
+**Non-interactive dotfiles installation with prerequisites:**
 
 ```bash
 ./dotfiles-installer install --non-interactive --install-prerequisites --git-clone-protocol=https
