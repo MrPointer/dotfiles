@@ -26,7 +26,7 @@ tasks:
           echo "❌ Docker Compose is not installed or not in PATH"
           exit 1
         fi
-        if ! docker info &> /dev/null; then
+        if ! docker info --format "{{`{{.Name}}`}}" &> /dev/null; then
           echo "❌ Docker daemon is not running"
           exit 1
         fi
@@ -130,13 +130,13 @@ tasks:
     deps: [check]
     dir: ubuntu
     cmds:
-      - echo "🧹 Cleaning up Ubuntu environment..."
-      - docker-compose down
       - |
-        if docker images | grep -q "ubuntu_installer-test-ubuntu"; then
-          docker rmi ubuntu_installer-test-ubuntu 2>/dev/null || true
+        echo "🧹 Cleaning up Ubuntu environment..."
+        docker-compose down || true
+        if docker images --format "{{`{{.Repository}}`}}" | grep -q "ubuntu-installer-test-ubuntu"; then
+          docker rmi ubuntu-installer-test-ubuntu 2>/dev/null || true
         fi
-      - echo "✅ Ubuntu environment cleaned up"
+        echo "✅ Ubuntu environment cleaned up"
 
   # Debian tasks
   debian:build:
@@ -222,13 +222,13 @@ tasks:
     deps: [check]
     dir: debian
     cmds:
-      - echo "🧹 Cleaning up Debian environment..."
-      - docker-compose down
       - |
-        if docker images | grep -q "debian_installer-test-debian"; then
-          docker rmi debian_installer-test-debian 2>/dev/null || true
+        echo "🧹 Cleaning up Debian environment..."
+        docker-compose down || true
+        if docker images --format "{{`{{.Repository}}`}}" | grep -q "debian-installer-test-debian"; then
+          docker rmi debian-installer-test-debian 2>/dev/null || true
         fi
-      - echo "✅ Debian environment cleaned up"
+        echo "✅ Debian environment cleaned up"
 
   # Fedora tasks
   fedora:build:
@@ -314,13 +314,13 @@ tasks:
     deps: [check]
     dir: fedora
     cmds:
-      - echo "🧹 Cleaning up Fedora environment..."
-      - docker-compose down
       - |
-        if docker images | grep -q "fedora_installer-test-fedora"; then
-          docker rmi fedora_installer-test-fedora 2>/dev/null || true
+        echo "🧹 Cleaning up Fedora environment..."
+        docker-compose down || true
+        if docker images --format "{{`{{.Repository}}`}}" | grep -q "fedora-installer-test-fedora"; then
+          docker rmi fedora-installer-test-fedora 2>/dev/null || true
         fi
-      - echo "✅ Fedora environment cleaned up"
+        echo "✅ Fedora environment cleaned up"
 
   # Utility tasks
   status:
@@ -332,21 +332,21 @@ tasks:
         echo "============================="
         echo ""
         echo "🐧 Ubuntu:"
-        if docker ps | grep -q "installer-test-ubuntu-env"; then
+        if docker ps --format "{{`{{.Names}}`}}" | grep -q "installer-test-ubuntu-env"; then
           echo "  ✅ Running"
         else
           echo "  ❌ Stopped"
         fi
         echo ""
         echo "🐧 Debian:"
-        if docker ps | grep -q "installer-test-debian-env"; then
+        if docker ps --format "{{`{{.Names}}`}}" | grep -q "installer-test-debian-env"; then
           echo "  ✅ Running"
         else
           echo "  ❌ Stopped"
         fi
         echo ""
         echo "🐧 Fedora:"
-        if docker ps | grep -q "installer-test-fedora-env"; then
+        if docker ps --format "{{`{{.Names}}`}}" | grep -q "installer-test-fedora-env"; then
           echo "  ✅ Running"
         else
           echo "  ❌ Stopped"
