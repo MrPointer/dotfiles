@@ -1,0 +1,74 @@
+version: 2
+
+project_name: dotfiles-installer
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: dotfiles_installer
+    dir: "."
+    main: "."
+    binary: dotfiles-installer
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+brews:
+  - repository:
+      owner: MrPointer
+      name: homebrew-tap
+      token: "{{.Env.HOMEBREW_TAP_TOKEN}}"
+    directory: Formula
+    commit_author:
+      name: Timor Gruber
+      email: timor.gruber@gmail.com
+    homepage: https://github.com/MrPointer/dotfiles
+    description: The installer of my dotfiles, used to bootstrap the system
+    license: MIT License
+    install: |
+      bin.install "dotfiles-installer"
+    test: |
+      "#{bin}/dotfiles-installer --version"
+
+archives:
+  - id: dotfiles_installer
+    name_template: >-
+      {{ .ProjectName }}-
+      {{- .Version }}-
+      {{- .Os }}-
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+
+sboms:
+  - id: dotfiles_installer
+    artifacts: archive
+    documents:
+      - >-
+        {{ .ProjectName }}-
+        {{- .Version }}-
+        {{- .Os }}-
+        {{- if eq .Arch "amd64" }}x86_64
+        {{- else if eq .Arch "386" }}i386
+        {{- else }}{{ .Arch }}{{ end }}.sbom
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ .Tag }}-dev{{ .ShortCommit }}"
+
+changelog:
+  # The changelog is handled by release drafter
+  disable: true

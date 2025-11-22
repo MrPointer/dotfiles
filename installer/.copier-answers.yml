@@ -1,0 +1,12 @@
+# Changes here will be overwritten by Copier
+_commit: v0.44.0
+_src_path: gh:FollowTheProcess/go_copier
+author_email: timor.gruber@gmail.com
+author_name: Timor Gruber
+description: My personal dotfiles installer
+github_url: https://github.com/MrPointer/dotfiles
+github_username: MrPointer
+license: MIT License
+project_name: dotfiles-installer
+project_slug: dotfiles_installer
+project_type: binary

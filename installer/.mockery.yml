@@ -1,0 +1,19 @@
+all: true
+dir: "{{.InterfaceDir}}"
+filename: "{{.InterfaceName}}_mock.go"
+force-file-write: true
+formatter: goimports
+log-level: info
+structname: "Moq{{.InterfaceName}}"
+pkgname: "{{.SrcPackageName}}"
+recursive: true
+require-template-schema-exists: true
+template: matryer
+template-schema: "{{.Template}}.schema.json"
+packages:
+  github.com/MrPointer/dotfiles/installer:
+    config:
+      all: true
+  github.com/MrPointer/dotfiles/installer/cli:
+    config:
+      all: false

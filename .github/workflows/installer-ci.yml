@@ -1,0 +1,264 @@
+name: Installer CI
+
+on:
+  pull_request:
+    paths:
+      - "installer/**"
+      - ".github/workflows/installer-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "installer/**"
+      - ".github/workflows/installer-ci.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: installer/go.mod
+
+      - name: Cache Go Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('installer/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download Dependencies
+        run: go mod download
+        working-directory: installer
+
+      - name: Run GoReleaser Build
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: build --clean --snapshot
+          workdir: installer
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: installer/dist/
+          if-no-files-found: error # We expect build artifacts to be generated
+          retention-days: 1
+          compression-level: 0 # Binaries are hard to compress
+          overwrite: true
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: installer/go.mod
+
+      - name: Cache Go Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('installer/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download Dependencies
+        run: go mod download
+        working-directory: installer
+
+      - name: Run Tests
+        run: go test -race -v ./...
+        working-directory: installer
+
+  e2e-test:
+    name: E2E Tests
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: ubuntu
+          - os: ubuntu-latest
+            platform: debian
+            container: debian:bookworm
+          - os: macos-latest
+            platform: macos
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: installer/dist/
+
+      - name: Set up Prerequisites (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          # Install coreutils for `timeout` command
+          brew install coreutils
+
+      - name: Make Binary Executable
+        run: |
+          # Find the correct binary for the current platform
+          if [ "${{ matrix.platform }}" = "macos" ]; then
+            if [ "$(uname -m)" = "arm64" ]; then
+              BINARY_PATH="installer/dist/dotfiles_installer_darwin_arm64_v8.0/dotfiles-installer"
+            else
+              BINARY_PATH="installer/dist/dotfiles_installer_darwin_amd64_v1/dotfiles-installer"
+            fi
+          else
+            # Linux platforms
+            if [ "$(uname -m)" = "aarch64" ]; then
+              BINARY_PATH="installer/dist/dotfiles_installer_linux_arm64_v8.0/dotfiles-installer"
+            else
+              BINARY_PATH="installer/dist/dotfiles_installer_linux_amd64_v1/dotfiles-installer"
+            fi
+          fi
+
+          echo "Using binary: $BINARY_PATH"
+          chmod +x "$BINARY_PATH"
+          cp "$BINARY_PATH" ./dotfiles-installer
+
+      - name: Test Binary Help
+        run: ./dotfiles-installer --help
+
+      - name: Test Install Command Help
+        run: ./dotfiles-installer install --help
+
+      - name: Run Compatibility Check
+        run: |
+          # Create temporary file to capture output while showing it in real-time
+          temp_output=$(mktemp)
+
+          echo "Running compatibility check..."
+
+          # Use tee to both display output and capture it, handle exit code properly
+          set +e  # Don't exit on command failure
+          ./dotfiles-installer check-compatibility --non-interactive --plain 2>&1 | tee "$temp_output"
+          exit_code=$?
+          set -e  # Re-enable exit on error
+
+          echo "Exit code: $exit_code"
+
+          # Read the captured output
+          output=$(cat "$temp_output")
+          rm -f "$temp_output"
+
+          # Check if output contains "missing prerequisites" - this is expected and should pass
+          if echo "$output" | grep -i "missing prerequisites" >/dev/null 2>&1; then
+            echo "✅ Found 'missing prerequisites' in output - this is expected behavior"
+            exit 0
+          fi
+
+          # If exit code is 0, that's also a pass
+          if [ $exit_code -eq 0 ]; then
+            echo "✅ Compatibility check passed with exit code 0"
+            exit 0
+          fi
+
+          # Any other scenario is unexpected
+          echo "❌ Unexpected compatibility check result - exit code: $exit_code"
+          exit $exit_code
+
+      - name: Test Non-Interactive Installation
+        run: |
+          echo "Testing installer in non-interactive mode..."
+
+          # Set up test environment
+          export HOME="/tmp/test-home"
+          mkdir -p "$HOME"
+
+          # Create a fake GPG directory to simulate existing setup
+          mkdir -p "$HOME/.gnupg"
+          chmod 700 "$HOME/.gnupg"
+
+          # Run the installer with minimal configuration that shouldn't require interaction
+          # We use https as the git clone protocol to avoid SSH key prompts
+          timeout 300 ./dotfiles-installer install \
+            --non-interactive \
+            --plain \
+            --extra-verbose \
+            --install-prerequisites=true \
+            --git-clone-protocol=https \
+            --work-env=false \
+            --multi-user-system=false
+
+      - name: Install expect tool
+        run: |
+          if [ "${{ matrix.platform }}" = "macos" ]; then
+            brew install expect
+          else
+            # For Ubuntu/Debian - check if sudo exists, otherwise run directly (containers)
+            if command -v sudo >/dev/null 2>&1; then
+              sudo apt-get update && sudo apt-get install -y expect
+            else
+              apt-get update && apt-get install -y expect
+            fi
+          fi
+
+      - name: Test Interactive GPG Installation
+        run: |
+          echo "Testing installer in interactive mode with expect automation..."
+
+          # Set up separate test environment for interactive test
+          export HOME="/tmp/test-interactive-home"
+          mkdir -p "$HOME"
+
+          # Create a fake GPG directory to simulate existing setup
+          mkdir -p "$HOME/.gnupg"
+          chmod 700 "$HOME/.gnupg"
+
+          # Run the expect script with test parameters
+          installer/test-interactive-gpg.exp \
+            "./dotfiles-installer" \
+            "test-user@example.com" \
+            "Test CI User" \
+            "test-ci-passphrase"
+
+      - name: Verify Installation Artifacts (if created)
+        run: |
+          echo "Checking for any artifacts created during installation..."
+          ls -la /tmp/test-home/ || echo "No test home directory created"
+          ls -la /tmp/test-interactive-home/ || echo "No interactive test home directory created"
+
+          # Check if any dotfiles manager was initialized
+          ls -la /tmp/test-home/.local/share/chezmoi/ 2>/dev/null || echo "No chezmoi directory found (expected in CI)"
+          ls -la /tmp/test-interactive-home/.local/share/chezmoi/ 2>/dev/null || echo "No interactive chezmoi directory found (expected in CI)"

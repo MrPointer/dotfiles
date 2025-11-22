@@ -1,0 +1,256 @@
+package gpg_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/MrPointer/dotfiles/installer/lib/gpg"
+	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
+	"github.com/MrPointer/dotfiles/installer/utils"
+	"github.com/MrPointer/dotfiles/installer/utils/logger"
+	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func Test_GpgIsReportedAsUnavailable_WhenGpgIsNotInstalled(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+
+	osManagerMock := &osmanager.MoqOsManager{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			if program == "gpg" {
+				return false, nil
+			}
+			return true, nil
+		},
+	}
+
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	available, err := installer.IsAvailable()
+
+	// Assert
+	require.NoError(t, err)
+	assert.False(t, available)
+	assert.Len(t, osManagerMock.ProgramExistsCalls(), 1)
+	assert.Equal(t, "gpg", osManagerMock.ProgramExistsCalls()[0].Program)
+	// Warning call assertion removed as we're using DefaultLogger
+}
+
+func Test_GpgAvailabilityCheckFails_WhenGpgProgramExistsFails(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+
+	osManagerMock := &osmanager.MoqOsManager{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return false, assert.AnError
+		},
+	}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	available, err := installer.IsAvailable()
+
+	// Assert
+	require.Error(t, err)
+	assert.False(t, available)
+	assert.Len(t, osManagerMock.ProgramExistsCalls(), 1)
+	assert.Equal(t, "gpg", osManagerMock.ProgramExistsCalls()[0].Program)
+}
+
+func Test_GpgIsReportedAsUnavailable_WhenGpgVersionIsIncompatible(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+
+	osManagerMock := &osmanager.MoqOsManager{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return true, nil
+		},
+		GetProgramVersionFunc: func(program string, versionExtractor osmanager.VersionExtractor, queryArgs ...string) (string, error) {
+			return "2.1.0", nil
+		},
+	}
+
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	available, err := installer.IsAvailable()
+
+	// Assert
+	require.NoError(t, err)
+	assert.False(t, available)
+	assert.Len(t, osManagerMock.ProgramExistsCalls(), 1)
+	assert.Len(t, osManagerMock.GetProgramVersionCalls(), 1)
+	assert.Equal(t, "gpg", osManagerMock.GetProgramVersionCalls()[0].Program)
+	// Warning call assertion removed as we're using DefaultLogger
+}
+
+func Test_GpgAvailabilityCheckFails_WhenGetProgramVersionFails(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+
+	osManagerMock := &osmanager.MoqOsManager{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return true, nil
+		},
+		GetProgramVersionFunc: func(program string, versionExtractor osmanager.VersionExtractor, queryArgs ...string) (string, error) {
+			return "", assert.AnError
+		},
+	}
+
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	available, err := installer.IsAvailable()
+
+	// Assert
+	require.Error(t, err)
+	assert.False(t, available)
+	assert.Len(t, osManagerMock.ProgramExistsCalls(), 1)
+	assert.Len(t, osManagerMock.GetProgramVersionCalls(), 1)
+}
+
+func Test_GpgIsReportedAsUnavailable_WhenGpgAgentIsNotInstalled(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+
+	osManagerMock := &osmanager.MoqOsManager{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			if program == "gpg-agent" {
+				return false, nil
+			}
+			return true, nil
+		},
+		GetProgramVersionFunc: func(program string, versionExtractor osmanager.VersionExtractor, queryArgs ...string) (string, error) {
+			return "2.3.0", nil
+		},
+	}
+
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	available, err := installer.IsAvailable()
+
+	// Assert
+	require.NoError(t, err)
+	assert.False(t, available)
+	assert.Len(t, osManagerMock.ProgramExistsCalls(), 2)
+	assert.Equal(t, "gpg-agent", osManagerMock.ProgramExistsCalls()[1].Program)
+	// Warning call assertion removed as we're using DefaultLogger
+}
+
+func Test_GpgAvailabilityCheckFails_WhenGpgAgentProgramExistsFails(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+
+	callCount := 0
+	osManagerMock := &osmanager.MoqOsManager{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			callCount++
+			if callCount == 1 {
+				return true, nil // First call for gpg
+			}
+			return false, assert.AnError // Second call for gpg-agent
+		},
+		GetProgramVersionFunc: func(program string, versionExtractor osmanager.VersionExtractor, queryArgs ...string) (string, error) {
+			return "2.3.0", nil
+		},
+	}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	available, err := installer.IsAvailable()
+
+	// Assert
+	require.Error(t, err)
+	assert.False(t, available)
+	assert.Len(t, osManagerMock.ProgramExistsCalls(), 2)
+	assert.Equal(t, "gpg", osManagerMock.ProgramExistsCalls()[0].Program)
+	assert.Equal(t, "gpg-agent", osManagerMock.ProgramExistsCalls()[1].Program)
+}
+
+func Test_GpgIsReportedAsAvailable_WhenAllRequirementsAreMet(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+
+	osManagerMock := &osmanager.MoqOsManager{
+		ProgramExistsFunc: func(program string) (bool, error) {
+			return true, nil
+		},
+		GetProgramVersionFunc: func(program string, versionExtractor osmanager.VersionExtractor, queryArgs ...string) (string, error) {
+			return "2.4.0", nil
+		},
+	}
+
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	available, err := installer.IsAvailable()
+
+	// Assert
+	require.NoError(t, err)
+	assert.True(t, available)
+	assert.Len(t, osManagerMock.ProgramExistsCalls(), 2)
+	assert.Equal(t, "gpg", osManagerMock.ProgramExistsCalls()[0].Program)
+	assert.Equal(t, "gpg-agent", osManagerMock.ProgramExistsCalls()[1].Program)
+}
+
+func Test_GpgInstallationFails_WhenPackageManagerFails(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+	osManagerMock := &osmanager.MoqOsManager{}
+
+	pkgManagerMock := &pkgmanager.MoqPackageManager{
+		InstallPackageFunc: func(pkg pkgmanager.RequestedPackageInfo) error {
+			return assert.AnError
+		},
+	}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	err := installer.Install(context.Background())
+
+	// Assert
+	require.Error(t, err)
+	assert.Len(t, pkgManagerMock.InstallPackageCalls(), 1)
+	assert.Equal(t, "gpg", pkgManagerMock.InstallPackageCalls()[0].RequestedPackageInfo.Name)
+}
+
+func Test_GpgIsInstalledSuccessfully_WhenAllRequirementsAreMet(t *testing.T) {
+	// Arrange
+	commanderMock := &utils.MoqCommander{}
+	osManagerMock := &osmanager.MoqOsManager{}
+
+	pkgManagerMock := &pkgmanager.MoqPackageManager{
+		InstallPackageFunc: func(pkg pkgmanager.RequestedPackageInfo) error {
+			return nil
+		},
+	}
+
+	installer := gpg.NewGpgInstaller(logger.DefaultLogger, commanderMock, osManagerMock, pkgManagerMock)
+
+	// Act
+	err := installer.Install(context.Background())
+
+	// Assert
+	require.NoError(t, err)
+	assert.Len(t, pkgManagerMock.InstallPackageCalls(), 1)
+	assert.Equal(t, "gpg", pkgManagerMock.InstallPackageCalls()[0].RequestedPackageInfo.Name)
+}

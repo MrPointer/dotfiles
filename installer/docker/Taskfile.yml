@@ -1,0 +1,379 @@
+# https://taskfile.dev
+# Multi-OS Docker development environment management
+
+version: "3"
+silent: true
+
+vars:
+  SUPPORTED_OS: ubuntu,debian,fedora
+  DEFAULT_OS: ubuntu
+
+tasks:
+  default:
+    desc: List all available Docker environment tasks
+    cmds:
+      - task --list
+
+  check:
+    desc: Check if Docker and Docker Compose are available
+    cmds:
+      - |
+        if ! command -v docker &> /dev/null; then
+          echo "❌ Docker is not installed or not in PATH"
+          exit 1
+        fi
+        if ! command -v docker-compose &> /dev/null; then
+          echo "❌ Docker Compose is not installed or not in PATH"
+          exit 1
+        fi
+        if ! docker info &> /dev/null; then
+          echo "❌ Docker daemon is not running"
+          exit 1
+        fi
+        echo "✅ Docker environment is ready"
+
+  list:
+    desc: List all supported operating systems
+    cmds:
+      - |
+        echo "🐧 Supported operating systems:"
+        echo "  • ubuntu  - Ubuntu Latest"
+        echo "  • debian  - Debian Latest"
+        echo "  • fedora  - Fedora Latest"
+        echo ""
+        echo "Usage examples:"
+        echo "  task ubuntu:start    # Start Ubuntu environment"
+        echo "  task debian:dev      # Start Debian environment and enter shell"
+        echo "  task fedora:validate # Validate Fedora environment"
+
+  # Ubuntu tasks
+  ubuntu:build:
+    desc: Build Ubuntu Docker image
+    deps: [check]
+    dir: ubuntu
+    cmds:
+      - echo "🔨 Building Ubuntu Docker image..."
+      - docker-compose build
+      - echo "✅ Ubuntu image built successfully"
+
+  ubuntu:start:
+    desc: Build and start Ubuntu testing environment
+    deps: [check]
+    dir: ubuntu
+    cmds:
+      - |
+        if docker-compose ps | grep -q "installer-test-ubuntu-env.*Up"; then
+          echo "⚠️  Ubuntu environment is already running"
+        else
+          echo "🚀 Starting Ubuntu testing environment..."
+          docker-compose up -d
+          echo "✅ Ubuntu environment started successfully"
+          echo "💡 Use 'task ubuntu:shell' to enter the container"
+        fi
+
+  ubuntu:stop:
+    desc: Stop Ubuntu testing environment
+    deps: [check]
+    dir: ubuntu
+    cmds:
+      - echo "⏹️  Stopping Ubuntu testing environment..."
+      - docker-compose down
+      - echo "✅ Ubuntu environment stopped"
+
+  ubuntu:shell:
+    desc: Enter Ubuntu container shell
+    deps: [check]
+    dir: ubuntu
+    cmds:
+      - |
+        if ! docker-compose ps | grep -q "installer-test-ubuntu-env.*Up"; then
+          echo "⚠️  Ubuntu environment is not running. Starting it now..."
+          task ubuntu:start
+          sleep 2
+        fi
+        echo "🐚 Entering Ubuntu container shell..."
+        docker-compose exec --user testuser installer-test-ubuntu bash
+
+  ubuntu:dev:
+    desc: Start Ubuntu environment and enter shell
+    deps: [check]
+    cmds:
+      - task: ubuntu:start
+      - task: ubuntu:shell
+
+  ubuntu:validate:
+    desc: Run validation tests in Ubuntu container
+    deps: [check]
+    dir: ubuntu
+    cmds:
+      - |
+        if ! docker-compose ps | grep -q "installer-test-ubuntu-env.*Up"; then
+          echo "⚠️  Ubuntu environment is not running. Starting it now..."
+          task ubuntu:start
+          sleep 2
+        fi
+        echo "🧪 Running Ubuntu validation tests..."
+        docker-compose exec -T --user testuser installer-test-ubuntu /workspace/installer/docker/validate.sh
+
+  ubuntu:rebuild:
+    desc: Rebuild Ubuntu Docker image from scratch
+    deps: [check]
+    dir: ubuntu
+    cmds:
+      - echo "🔄 Rebuilding Ubuntu environment from scratch..."
+      - docker-compose down
+      - docker-compose build --no-cache
+      - echo "✅ Ubuntu environment rebuilt successfully"
+
+  ubuntu:clean:
+    desc: Stop Ubuntu containers and remove images
+    deps: [check]
+    dir: ubuntu
+    cmds:
+      - echo "🧹 Cleaning up Ubuntu environment..."
+      - docker-compose down
+      - |
+        if docker images | grep -q "ubuntu_installer-test-ubuntu"; then
+          docker rmi ubuntu_installer-test-ubuntu 2>/dev/null || true
+        fi
+      - echo "✅ Ubuntu environment cleaned up"
+
+  # Debian tasks
+  debian:build:
+    desc: Build Debian Docker image
+    deps: [check]
+    dir: debian
+    cmds:
+      - echo "🔨 Building Debian Docker image..."
+      - docker-compose build
+      - echo "✅ Debian image built successfully"
+
+  debian:start:
+    desc: Build and start Debian testing environment
+    deps: [check]
+    dir: debian
+    cmds:
+      - |
+        if docker-compose ps | grep -q "installer-test-debian-env.*Up"; then
+          echo "⚠️  Debian environment is already running"
+        else
+          echo "🚀 Starting Debian testing environment..."
+          docker-compose up -d
+          echo "✅ Debian environment started successfully"
+          echo "💡 Use 'task debian:shell' to enter the container"
+        fi
+
+  debian:stop:
+    desc: Stop Debian testing environment
+    deps: [check]
+    dir: debian
+    cmds:
+      - echo "⏹️  Stopping Debian testing environment..."
+      - docker-compose down
+      - echo "✅ Debian environment stopped"
+
+  debian:shell:
+    desc: Enter Debian container shell
+    deps: [check]
+    dir: debian
+    cmds:
+      - |
+        if ! docker-compose ps | grep -q "installer-test-debian-env.*Up"; then
+          echo "⚠️  Debian environment is not running. Starting it now..."
+          task debian:start
+          sleep 2
+        fi
+        echo "🐚 Entering Debian container shell..."
+        docker-compose exec --user testuser installer-test-debian bash
+
+  debian:dev:
+    desc: Start Debian environment and enter shell
+    deps: [check]
+    cmds:
+      - task: debian:start
+      - task: debian:shell
+
+  debian:validate:
+    desc: Run validation tests in Debian container
+    deps: [check]
+    dir: debian
+    cmds:
+      - |
+        if ! docker-compose ps | grep -q "installer-test-debian-env.*Up"; then
+          echo "⚠️  Debian environment is not running. Starting it now..."
+          task debian:start
+          sleep 2
+        fi
+        echo "🧪 Running Debian validation tests..."
+        docker-compose exec -T --user testuser installer-test-debian /workspace/installer/docker/validate.sh
+
+  debian:rebuild:
+    desc: Rebuild Debian Docker image from scratch
+    deps: [check]
+    dir: debian
+    cmds:
+      - echo "🔄 Rebuilding Debian environment from scratch..."
+      - docker-compose down
+      - docker-compose build --no-cache
+      - echo "✅ Debian environment rebuilt successfully"
+
+  debian:clean:
+    desc: Stop Debian containers and remove images
+    deps: [check]
+    dir: debian
+    cmds:
+      - echo "🧹 Cleaning up Debian environment..."
+      - docker-compose down
+      - |
+        if docker images | grep -q "debian_installer-test-debian"; then
+          docker rmi debian_installer-test-debian 2>/dev/null || true
+        fi
+      - echo "✅ Debian environment cleaned up"
+
+  # Fedora tasks
+  fedora:build:
+    desc: Build Fedora Docker image
+    deps: [check]
+    dir: fedora
+    cmds:
+      - echo "🔨 Building Fedora Docker image..."
+      - docker-compose build
+      - echo "✅ Fedora image built successfully"
+
+  fedora:start:
+    desc: Build and start Fedora testing environment
+    deps: [check]
+    dir: fedora
+    cmds:
+      - |
+        if docker-compose ps | grep -q "installer-test-fedora-env.*Up"; then
+          echo "⚠️  Fedora environment is already running"
+        else
+          echo "🚀 Starting Fedora testing environment..."
+          docker-compose up -d
+          echo "✅ Fedora environment started successfully"
+          echo "💡 Use 'task fedora:shell' to enter the container"
+        fi
+
+  fedora:stop:
+    desc: Stop Fedora testing environment
+    deps: [check]
+    dir: fedora
+    cmds:
+      - echo "⏹️  Stopping Fedora testing environment..."
+      - docker-compose down
+      - echo "✅ Fedora environment stopped"
+
+  fedora:shell:
+    desc: Enter Fedora container shell
+    deps: [check]
+    dir: fedora
+    cmds:
+      - |
+        if ! docker-compose ps | grep -q "installer-test-fedora-env.*Up"; then
+          echo "⚠️  Fedora environment is not running. Starting it now..."
+          task fedora:start
+          sleep 2
+        fi
+        echo "🐚 Entering Fedora container shell..."
+        docker-compose exec --user testuser installer-test-fedora bash
+
+  fedora:dev:
+    desc: Start Fedora environment and enter shell
+    deps: [check]
+    cmds:
+      - task: fedora:start
+      - task: fedora:shell
+
+  fedora:validate:
+    desc: Run validation tests in Fedora container
+    deps: [check]
+    dir: fedora
+    cmds:
+      - |
+        if ! docker-compose ps | grep -q "installer-test-fedora-env.*Up"; then
+          echo "⚠️  Fedora environment is not running. Starting it now..."
+          task fedora:start
+          sleep 2
+        fi
+        echo "🧪 Running Fedora validation tests..."
+        docker-compose exec -T --user testuser installer-test-fedora /workspace/installer/docker/validate.sh
+
+  fedora:rebuild:
+    desc: Rebuild Fedora Docker image from scratch
+    deps: [check]
+    dir: fedora
+    cmds:
+      - echo "🔄 Rebuilding Fedora environment from scratch..."
+      - docker-compose down
+      - docker-compose build --no-cache
+      - echo "✅ Fedora environment rebuilt successfully"
+
+  fedora:clean:
+    desc: Stop Fedora containers and remove images
+    deps: [check]
+    dir: fedora
+    cmds:
+      - echo "🧹 Cleaning up Fedora environment..."
+      - docker-compose down
+      - |
+        if docker images | grep -q "fedora_installer-test-fedora"; then
+          docker rmi fedora_installer-test-fedora 2>/dev/null || true
+        fi
+      - echo "✅ Fedora environment cleaned up"
+
+  # Utility tasks
+  status:
+    desc: Show status of all Docker environments
+    deps: [check]
+    cmds:
+      - |
+        echo "📊 Docker Environment Status"
+        echo "============================="
+        echo ""
+        echo "🐧 Ubuntu:"
+        if docker ps | grep -q "installer-test-ubuntu-env"; then
+          echo "  ✅ Running"
+        else
+          echo "  ❌ Stopped"
+        fi
+        echo ""
+        echo "🐧 Debian:"
+        if docker ps | grep -q "installer-test-debian-env"; then
+          echo "  ✅ Running"
+        else
+          echo "  ❌ Stopped"
+        fi
+        echo ""
+        echo "🐧 Fedora:"
+        if docker ps | grep -q "installer-test-fedora-env"; then
+          echo "  ✅ Running"
+        else
+          echo "  ❌ Stopped"
+        fi
+
+  stop-all:
+    desc: Stop all Docker environments
+    deps: [check]
+    cmds:
+      - task: ubuntu:stop
+      - task: debian:stop
+      - task: fedora:stop
+
+  clean-all:
+    desc: Clean up all Docker environments
+    deps: [check]
+    cmds:
+      - task: ubuntu:clean
+      - task: debian:clean
+      - task: fedora:clean
+
+  validate-all:
+    desc: Run validation tests on all environments
+    deps: [check]
+    cmds:
+      - echo "🧪 Running validation on all environments..."
+      - task: ubuntu:validate
+      - task: debian:validate
+      - task: fedora:validate
+      - echo "✅ All validations completed"

@@ -1,0 +1,318 @@
+# Taskfile for Spinner Demo Application
+# Consolidates build, test, and development tasks for the logger spinner demo
+
+version: "3"
+
+vars:
+  DEMO_BINARY: spinner-demo
+  DEFAULT_COUNT: 3
+  DEFAULT_FAIL_RATE: 25
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list-all
+
+  build:
+    desc: Build the demo application
+    cmds:
+      - echo "🔨 Building spinner demo..."
+      - go build -o {{.DEMO_BINARY}} ./
+      - echo "✅ Build complete"
+    generates:
+      - "{{.DEMO_BINARY}}"
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - echo "🧹 Cleaning build artifacts..."
+      - rm -f {{.DEMO_BINARY}}
+      - echo "✅ Clean complete"
+
+  run:
+    desc: Run demo with default settings
+    deps: [build]
+    cmds:
+      - echo "🎯 Running default demo..."
+      - ./{{.DEMO_BINARY}}
+
+  # Individual demo types
+  simple:
+    desc: Run simple sequential demo
+    deps: [build]
+    cmds:
+      - echo "1️⃣ Running simple demo..."
+      - ./{{.DEMO_BINARY}} --type simple --count {{.DEFAULT_COUNT}}
+
+  nested:
+    desc: Run hierarchical nested demo
+    deps: [build]
+    cmds:
+      - echo "2️⃣ Running nested demo..."
+      - ./{{.DEMO_BINARY}} --type nested --count {{.DEFAULT_COUNT}}
+
+  mixed:
+    desc: Run mixed success/failure demo
+    deps: [build]
+    cmds:
+      - echo "3️⃣ Running mixed demo..."
+      - ./{{.DEMO_BINARY}} --type mixed --count {{.DEFAULT_COUNT}} --fail-rate {{.DEFAULT_FAIL_RATE}}
+
+  concurrent:
+    desc: Run concurrent operations demo
+    deps: [build]
+    cmds:
+      - echo "4️⃣ Running concurrent demo..."
+      - ./{{.DEMO_BINARY}} --type concurrent --count 5
+
+  long:
+    desc: Run long-running installation demo
+    deps: [build]
+    cmds:
+      - echo "5️⃣ Running long demo..."
+      - ./{{.DEMO_BINARY}} --type long
+
+  persistent:
+    desc: Run persistent progress demo (like cargo/npm)
+    deps: [build]
+    cmds:
+      - echo "6️⃣ Running persistent demo..."
+      - ./{{.DEMO_BINARY}} --type persistent
+
+  interactive:
+    desc: Run interactive demo (tests spinner pause/resume)
+    deps: [build]
+    cmds:
+      - echo "7️⃣ Running interactive demo..."
+      - ./{{.DEMO_BINARY}} --type interactive
+
+  interactive-stress:
+    desc: Run stress test demo (rapid pause/resume cycles)
+    deps: [build]
+    cmds:
+      - echo "🔥 Running stress test demo..."
+      - ./{{.DEMO_BINARY}} --type stress
+
+  # Comparison and testing
+  compare:
+    desc: Compare progress vs plain output modes
+    deps: [build]
+    cmds:
+      - echo "📊 Comparing output modes..."
+      - echo ""
+      - echo "🎪 With Progress Display:"
+      - ./{{.DEMO_BINARY}} --type simple --count 2 --progress
+      - echo ""
+      - echo "📝 With Plain Text Output:"
+      - ./{{.DEMO_BINARY}} --type simple --count 2 --progress=false
+
+  all-demos:
+    desc: Run all demo types interactively
+    deps: [build]
+    cmds:
+      - |
+        echo "🎭 Running all demo types..."
+        echo ""
+        echo "Press Enter after each demo to continue..."
+        echo ""
+      - task: simple
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: nested
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: mixed
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: concurrent
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: long
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: interactive
+      - |
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          read -n1 -r -p "Press any key to continue..."
+        else
+          read -p "Press Enter to continue..."
+        fi
+      - task: stress
+      - echo ""
+      - echo "🎉 All demos completed!"
+
+  # Development and testing tasks
+  quick-test:
+    desc: Quick test of all demo types (non-interactive)
+    deps: [build]
+    cmds:
+      - echo "⚡ Quick test of all demo types..."
+      - ./{{.DEMO_BINARY}} --type simple --count 2
+      - ./{{.DEMO_BINARY}} --type nested --count 2
+      - ./{{.DEMO_BINARY}} --type mixed --count 2 --fail-rate {{.DEFAULT_FAIL_RATE}}
+      - ./{{.DEMO_BINARY}} --type concurrent --count 3
+      - ./{{.DEMO_BINARY}} --type long
+      - ./{{.DEMO_BINARY}} --type persistent
+      - ./{{.DEMO_BINARY}} --type interactive
+      - ./{{.DEMO_BINARY}} --type stress
+
+  verbose:
+    desc: Run with verbose logging for debugging
+    deps: [build]
+    cmds:
+      - echo "🔍 Running with verbose output..."
+      - ./{{.DEMO_BINARY}} --type nested --verbosity verbose --count 2
+
+  stress:
+    desc: Stress test with many concurrent operations
+    deps: [build]
+    cmds:
+      - echo "⚡ Stress testing with concurrent operations..."
+      - ./{{.DEMO_BINARY}} --type concurrent --count 15 --fail-rate 20
+
+  failures:
+    desc: Test with high failure rate
+    deps: [build]
+    cmds:
+      - echo "💥 Testing with high failure rate..."
+      - ./{{.DEMO_BINARY}} --type mixed --count 5 --fail-rate 60
+
+  # Development workflow tasks
+  dev-test:
+    desc: Development testing workflow
+    deps: [build]
+    cmds:
+      - echo "🔧 Running development test workflow..."
+      - task: verbose
+      - task: compare
+      - task: failures
+
+  # Verification and validation
+  check:
+    desc: Verify demo setup and functionality
+    cmds:
+      - echo "🔍 Checking demo setup..."
+      - |
+        if [ ! -f "../go.mod" ]; then
+          echo "❌ Error: Run from installer directory"
+          exit 1
+        fi
+      - go build -o {{.DEMO_BINARY}} ./
+      - echo "✅ Build successful"
+      - ./{{.DEMO_BINARY}} --type simple --count 1
+      - echo "✅ Runtime successful"
+      - rm -f {{.DEMO_BINARY}}
+      - echo "✅ Demo check complete"
+
+  # Custom scenarios
+  custom:
+    desc: Run custom demo scenario (interactive)
+    deps: [build]
+    interactive: true
+    cmds:
+      - |
+        echo "🎨 Custom Demo Configuration"
+        echo "Available types: simple, nested, mixed, concurrent, long"
+        echo "Enter demo configuration or press Enter for defaults:"
+
+        read -p "Type (simple): " TYPE
+        TYPE=${TYPE:-simple}
+
+        read -p "Count (3): " COUNT
+        COUNT=${COUNT:-3}
+
+        read -p "Fail rate % (0): " FAIL_RATE
+        FAIL_RATE=${FAIL_RATE:-0}
+
+        read -p "Verbosity (normal): " VERBOSITY
+        VERBOSITY=${VERBOSITY:-normal}
+
+        read -p "Progress display [Y/n]: " PROGRESS
+        if [[ "$PROGRESS" =~ ^[Nn] ]]; then
+          PROGRESS_FLAG="--progress=false"
+        else
+          PROGRESS_FLAG="--progress"
+        fi
+
+        echo ""
+        echo "Running: ./{{.DEMO_BINARY}} --type $TYPE --count $COUNT --fail-rate $FAIL_RATE --verbosity $VERBOSITY $PROGRESS_FLAG"
+        ./{{.DEMO_BINARY}} --type $TYPE --count $COUNT --fail-rate $FAIL_RATE --verbosity $VERBOSITY $PROGRESS_FLAG
+
+  # Performance and benchmarking
+  benchmark:
+    desc: Run performance benchmarks
+    deps: [build]
+    cmds:
+      - echo "📈 Running performance benchmarks..."
+      - echo "Timing concurrent operations:"
+      - time ./{{.DEMO_BINARY}} --type concurrent --count 50
+      - echo ""
+      - echo "Memory usage for long operations:"
+      - |
+        if command -v /usr/bin/time > /dev/null; then
+          /usr/bin/time -v ./{{.DEMO_BINARY}} --type long 2>&1 | grep -E "(Maximum|User|System)" || true
+        else
+          echo "Memory profiling not available on this system"
+        fi
+
+  # Help and documentation
+  help:
+    desc: Show detailed help and examples
+    cmds:
+      - |
+        cat << 'EOF'
+        🎪 Spinner Demo Taskfile Help
+        ============================
+
+        📋 Common Tasks:
+          task run         - Run default demo
+          task all-demos   - Run all demos interactively
+          task quick-test  - Run all demos quickly
+          task compare     - Compare progress vs plain output
+          task custom      - Interactive custom configuration
+
+        🎯 Individual Demo Types:
+          task simple      - Sequential operations
+          task nested      - Hierarchical operations
+          task mixed       - Success/failure mix
+          task concurrent  - Thread-safe operations
+          task long        - Installation simulation
+          task persistent  - Persistent progress (like cargo/npm)
+
+        🔧 Development Tasks:
+          task dev-test    - Development workflow
+          task verbose     - Debug with verbose output
+          task stress      - Stress test concurrency
+          task failures    - Test error handling
+          task benchmark   - Performance testing
+
+        📚 Usage Examples:
+          task simple      # Basic demo
+          task nested      # Hierarchical demo
+          task mixed       # With some failures
+          task custom      # Interactive config
+
+        💡 Direct Usage:
+          task build && ./spinner-demo --type nested --count 5 --fail-rate 30
+        EOF

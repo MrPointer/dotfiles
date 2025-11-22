@@ -1,0 +1,51 @@
+# Allowlisting gitignore template for GO projects prevents us
+# from adding various unwanted local files, such as generated
+# files, developer configurations or IDE-specific files etc.
+
+# Ignore everything
+*
+
+# Except these...
+
+# Git/GitHub
+!/.gitignore
+!/.gitattributes
+!/.github/**/*
+
+# Go
+!*.go
+!go.sum
+!go.mod
+!.goreleaser.yaml
+!.golangci.yml
+
+# CodeCov
+!codecov.yml
+
+# General
+!README.md
+!LICENSE
+!img/**/*
+!docs/img/**/*
+
+# Typos
+!.typos.toml
+
+# Task
+!Taskfile.yml
+
+# Copier
+!*.jinja
+
+# ...even if they are in subdirectories
+!*/
+
+# Embedded config files
+!internal/config/*.yaml
+!internal/config/*.yml
+
+# Custom Docker files
+!docker/**/*
+
+# Expect scripts
+!test-interactive-gpg.exp
