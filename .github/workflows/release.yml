@@ -39,11 +39,6 @@ jobs:
         run: go mod download
         working-directory: installer
 
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: "v2.2.2"
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -66,4 +61,4 @@ jobs:
           echo "- Linux x86_64" >> $GITHUB_STEP_SUMMARY
           echo "- Linux ARM64" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ✅ All binaries have been signed with cosign" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ All binaries include checksums for verification" >> $GITHUB_STEP_SUMMARY

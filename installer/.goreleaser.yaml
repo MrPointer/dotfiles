@@ -105,7 +105,7 @@ release:
 
     ### Verification
 
-    All binaries are signed with cosign and checksums are provided in `checksums.txt`.
+    SHA256 checksums are provided in `checksums.txt` for binary verification.
 
     **Full Changelog**: https://github.com/MrPointer/dotfiles/compare/{{.PreviousTag}}...{{.Tag}}
 
@@ -124,18 +124,6 @@ release:
   # Name template for the release
   name_template: "{{.ProjectName}} {{.Version}}"
 
-sboms:
-  - id: dotfiles_installer
-    artifacts: archive
-    documents:
-      - >-
-        {{ .ProjectName }}-
-        {{- .Version }}-
-        {{- .Os }}-
-        {{- if eq .Arch "amd64" }}x86_64
-        {{- else if eq .Arch "386" }}i386
-        {{- else }}{{ .Arch }}{{ end }}.sbom
-
 checksum:
   name_template: checksums.txt
   algorithm: sha256
@@ -146,15 +134,3 @@ snapshot:
 changelog:
   # We'll handle changelogs manually or through GitHub's release drafter
   disable: true
-
-# Sign the binaries and archives
-signs:
-  - cmd: cosign
-    args:
-      - sign-blob
-      - --oidc-issuer=https://token.actions.githubusercontent.com
-      - --output-signature=${signature}
-      - --output-certificate=${certificate}
-      - ${artifact}
-    artifacts: binary
-    output: true

@@ -160,7 +160,8 @@ This solves the "pass custom options" problem by allowing users to specify insta
 
 ## Security Considerations
 
-- All binaries are automatically signed with cosign using GitHub's OIDC provider
-- Checksums are generated for all assets to enable verification
-- The release process runs in a secure GitHub Actions environment
+- All binaries are built in a secure GitHub Actions environment with reproducible builds
+- SHA256 checksums are generated for all assets to enable verification
+- The release process runs with minimal required permissions
 - No secrets are required for the standard release process
+- Builds are deterministic and traceable through GitHub Actions logs

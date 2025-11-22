@@ -113,21 +113,16 @@ go build -o dotfiles-installer .
 dotfiles-installer version
 ```
 
-### Verify Binary Signature (Optional)
+### Verify Binary Checksums (Optional)
 
-All release binaries are signed with cosign. To verify:
+All release binaries include SHA256 checksums for verification:
 
 ```bash
-# Install cosign first
-# macOS: brew install cosign
-# Linux: See https://docs.sigstore.dev/cosign/installation
+# Download checksums file
+curl -L -o checksums.txt https://github.com/MrPointer/dotfiles/releases/latest/download/checksums.txt
 
-# Verify the binary
-cosign verify-blob \
-  --certificate-identity-regexp 'https://github.com/MrPointer/dotfiles' \
-  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
-  --bundle dotfiles-installer.bundle \
-  dotfiles-installer
+# Verify your downloaded binary
+shasum -a 256 -c checksums.txt --ignore-missing
 ```
 
 ## Usage
@@ -230,8 +225,8 @@ Note: This only removes the installer binary, not your installed dotfiles themse
 ## Security
 
 - All binaries are built in GitHub Actions with reproducible builds
-- Binaries are signed with cosign using GitHub's OIDC provider
-- Checksums are provided for all releases
+- SHA256 checksums are provided for all releases for verification
 - Source code is available for audit
+- Builds are deterministic and traceable
 
 For security concerns, please see our [security policy](../SECURITY.md).
