@@ -216,7 +216,6 @@ jobs:
             --install-prerequisites=true \
             --git-clone-protocol=https \
             --work-env=false \
-            --multi-user-system=false
 
       - name: Install expect tool
         run: |
