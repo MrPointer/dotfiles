@@ -65,32 +65,14 @@ func Test_DetectBrewPath_UsesOverride_WhenProvided(t *testing.T) {
 /* Installer Constructor Tests                                                                                        */
 /* ------------------------------------------------------------------------------------------------------------------ */
 
-func Test_NewBrewInstaller_CreatesMultiUserImplementation_WhenOptionIsEnabled(t *testing.T) {
-	opts := brew.Options{
-		MultiUserSystem: true,
-		Logger:          logger.DefaultLogger,
-		SystemInfo:      &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:       nil,
-	}
-	installer := brew.NewBrewInstaller(opts)
-	require.NotNil(t, installer)
-
-	_, isMultiUser := installer.(*brew.MultiUserBrewInstaller)
-	require.True(t, isMultiUser)
-}
-
 func Test_NewBrewInstaller_CreatesSingleUserImplementation_ByDefault(t *testing.T) {
 	opts := brew.Options{
-		MultiUserSystem: false,
-		Logger:          logger.DefaultLogger,
-		SystemInfo:      &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:       nil,
+		Logger:     logger.DefaultLogger,
+		SystemInfo: &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
+		Commander:  nil,
 	}
 	installer := brew.NewBrewInstaller(opts)
 	require.NotNil(t, installer)
-
-	_, isMultiUser := installer.(*brew.MultiUserBrewInstaller)
-	require.False(t, isMultiUser)
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -121,7 +103,6 @@ func Test_SingleUserBrew_ReportsAvailable_WhenPathExists(t *testing.T) {
 		HTTPClient:       mockHTTP,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: expectedBrewPath,
 	}
 
@@ -156,7 +137,6 @@ func Test_SingleUserBrew_ReportsUnavailable_WhenPathDoesNotExist(t *testing.T) {
 		HTTPClient:       mockHTTP,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: expectedBrewPath,
 	}
 
@@ -198,7 +178,6 @@ func Test_SingleUserBrew_IsNotReinstalled_WhenAvailable(t *testing.T) {
 		HTTPClient:       mockHTTP,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: expectedBrewPath,
 	}
 
@@ -290,7 +269,6 @@ func Test_SingleUserBrew_InstallsSuccessfully_WhenNotAvailable(t *testing.T) {
 		HTTPClient:       mockHTTP,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: expectedBrewPath,
 	}
 
@@ -368,7 +346,6 @@ func Test_SingleUserBrew_FailsInstallation_WhenDownloadingInstallationScriptFail
 				HTTPClient:       mockHTTP,
 				OsManager:        mockOsManager,
 				Fs:               mockFS,
-				MultiUserSystem:  false,
 				BrewPathOverride: "/opt/homebrew/bin/brew",
 			}
 
@@ -414,7 +391,6 @@ func Test_SingleUserBrew_FailsInstallation_WhenFailingToCreateTempFileHoldingDow
 		HTTPClient:       mockHTTP,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: "/opt/homebrew/bin/brew",
 	}
 
@@ -504,7 +480,6 @@ func Test_SingleUserBrew_FailsInstallation_WhenFailingToCopyDownloadedScriptFrom
 				HTTPClient:       mockHTTP,
 				OsManager:        mockOsManager,
 				Fs:               mockFS,
-				MultiUserSystem:  false,
 				BrewPathOverride: expectedBrewPath,
 			}
 
@@ -530,7 +505,7 @@ func Test_DefaultOptions_CreatesNonEmptyConfiguration(t *testing.T) {
 	require.NotNil(t, opts.HTTPClient)
 	require.NotNil(t, opts.OsManager)
 	require.NotNil(t, opts.Fs)
-	require.False(t, opts.MultiUserSystem)
+
 	require.Nil(t, opts.SystemInfo)
 	require.Empty(t, opts.BrewPathOverride)
 }
@@ -539,26 +514,30 @@ func Test_OptionsBuilderPattern_ConfiguresAllOptions(t *testing.T) {
 	customLogger := &logger.NoopLogger{}
 	customSystemInfo := &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"}
 	customCommander := &utils.MoqCommander{}
-	customHTTP := &httpclient.MoqHTTPClient{}
+	customHTTPClient := &httpclient.MoqHTTPClient{}
 	customOsManager := &osmanager.MoqOsManager{}
 	customFS := &utils.MoqFileSystem{}
+	customBrewPathOverride := "/custom/path/to/brew"
+	customDisplayMode := utils.DisplayModePassthrough
 
 	opts := brew.DefaultOptions().
 		WithLogger(customLogger).
-		WithMultiUserSystem(true).
 		WithSystemInfo(customSystemInfo).
 		WithCommander(customCommander).
-		WithHTTPClient(customHTTP).
+		WithHTTPClient(customHTTPClient).
 		WithOsManager(customOsManager).
-		WithFileSystem(customFS)
+		WithFileSystem(customFS).
+		WithBrewPathOverride(customBrewPathOverride).
+		WithDisplayMode(customDisplayMode)
 
 	require.Equal(t, customLogger, opts.Logger)
-	require.True(t, opts.MultiUserSystem)
 	require.Equal(t, customSystemInfo, opts.SystemInfo)
 	require.Equal(t, customCommander, opts.Commander)
-	require.Equal(t, customHTTP, opts.HTTPClient)
+	require.Equal(t, customHTTPClient, opts.HTTPClient)
 	require.Equal(t, customOsManager, opts.OsManager)
 	require.Equal(t, customFS, opts.Fs)
+	require.Equal(t, customBrewPathOverride, opts.BrewPathOverride)
+	require.Equal(t, customDisplayMode, opts.DisplayMode)
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -612,7 +591,6 @@ func Test_SingleUserBrew_HandlesEmptyInstallScript(t *testing.T) {
 		HTTPClient:       mockHTTP,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: "/opt/homebrew/bin/brew",
 	}
 
@@ -698,7 +676,6 @@ func Test_SingleUserBrew_CanHandleLargeInstallScript(t *testing.T) {
 		HTTPClient:       mockHTTP,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: "/opt/homebrew/bin/brew",
 	}
 
@@ -780,7 +757,6 @@ func Test_SingleUserBrew_Install_UpdatesPath_AfterSuccessfulInstallation(t *test
 		HTTPClient:       mockHTTPClient,
 		OsManager:        mockOsManager,
 		Fs:               mockFS,
-		MultiUserSystem:  false,
 		BrewPathOverride: brewPath,
 	}
 
@@ -894,453 +870,8 @@ func Test_UpdatePathWithBrewBinaries_UsesPlatformPathSeparator(t *testing.T) {
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
-/* Multi-User Brew Installer Tests                                                                                    */
+/* Display Mode Tests                                                                                                  */
 /* ------------------------------------------------------------------------------------------------------------------ */
-
-func Test_MultiUserBrew_ReportsAvailable_WhenBrewExistsForBrewUser(t *testing.T) {
-	expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
-
-	// Create mock dependencies
-	mockLogger := &logger.NoopLogger{}
-	mockCommander := &utils.MoqCommander{}
-	mockFS := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			if path == expectedBrewPath {
-				return true, nil // Simulate that brew exists for the brew user
-			}
-			return false, nil // Other paths do not exist
-		},
-	}
-	mockHTTP := &httpclient.MoqHTTPClient{}
-	mockOsManager := &osmanager.MoqOsManager{
-		GetFileOwnerFunc: func(path string) (string, error) {
-			if path == expectedBrewPath {
-				return brew.BrewUserOnMultiUserSystem, nil // Simulate that the brew user owns the brew binary
-			}
-			return "", fmt.Errorf("unexpected path: %s", path)
-		},
-	}
-
-	opts := brew.Options{
-		Logger:           mockLogger,
-		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:        mockCommander,
-		HTTPClient:       mockHTTP,
-		OsManager:        mockOsManager,
-		Fs:               mockFS,
-		MultiUserSystem:  true,
-		BrewPathOverride: expectedBrewPath,
-	}
-
-	installer := brew.NewBrewInstaller(opts)
-	available, err := installer.IsAvailable()
-
-	require.NoError(t, err)
-	require.True(t, available)
-}
-
-func Test_MultiUserBrew_ReportsUnavailable_WhenBrewDoesNotExistForBrewUser(t *testing.T) {
-	expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
-
-	// Create mock dependencies
-	mockLogger := &logger.NoopLogger{}
-	mockCommander := &utils.MoqCommander{}
-	mockFS := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			if path == expectedBrewPath {
-				return true, nil // Simulate that brew path exists
-			}
-			return true, nil // Other paths exist
-		},
-	}
-	mockHTTP := &httpclient.MoqHTTPClient{}
-	mockOsManager := &osmanager.MoqOsManager{
-		GetFileOwnerFunc: func(path string) (string, error) {
-			if path == expectedBrewPath {
-				return "someotheruser", nil // Simulate that the brew binary is owned by a different user
-			}
-			return "", fmt.Errorf("unexpected path: %s", path)
-		},
-	}
-
-	opts := brew.Options{
-		Logger:           mockLogger,
-		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:        mockCommander,
-		HTTPClient:       mockHTTP,
-		OsManager:        mockOsManager,
-		Fs:               mockFS,
-		MultiUserSystem:  true,
-		BrewPathOverride: expectedBrewPath,
-	}
-
-	installer := brew.NewBrewInstaller(opts)
-	available, err := installer.IsAvailable()
-
-	require.NoError(t, err)
-	require.False(t, available)
-}
-
-func Test_MultiUserBrew_ReportedUnavailable_WhenBrewPathDoesNotExist(t *testing.T) {
-	expectedBrewPath := "/nonexistent/brew"
-
-	// Create mock dependencies
-	mockLogger := &logger.NoopLogger{}
-	mockCommander := &utils.MoqCommander{}
-	mockFS := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			if path == expectedBrewPath {
-				return false, nil // Simulate that brew does not exist
-			}
-			return true, nil // Other paths exist
-		},
-	}
-	mockHTTP := &httpclient.MoqHTTPClient{}
-	mockOsManager := &osmanager.MoqOsManager{}
-
-	opts := brew.Options{
-		Logger:           mockLogger,
-		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:        mockCommander,
-		HTTPClient:       mockHTTP,
-		OsManager:        mockOsManager,
-		Fs:               mockFS,
-		MultiUserSystem:  true,
-		BrewPathOverride: expectedBrewPath,
-	}
-
-	installer := brew.NewBrewInstaller(opts)
-	available, err := installer.IsAvailable()
-
-	require.NoError(t, err)     // Multi-user installation should error on non-existent path
-	require.False(t, available) // Brew should be reported as unavailable
-}
-
-func Test_MultiUserBrew_DoesNotReinstall_WhenAlreadyAvailable(t *testing.T) {
-	expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
-
-	// Create mock dependencies
-	mockLogger := &logger.NoopLogger{}
-	mockCommander := &utils.MoqCommander{
-		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-				return &utils.Result{ExitCode: 0}, nil // Validation successful
-			}
-			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
-		},
-	}
-	mockFS := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			if path == expectedBrewPath {
-				return true, nil // Simulate that brew exists for the brew user
-			}
-			return false, nil // Other paths do not exist
-		},
-	}
-	mockHTTP := &httpclient.MoqHTTPClient{}
-	mockOsManager := &osmanager.MoqOsManager{
-		AddUserFunc: func(username string) error {
-			if username == brew.BrewUserOnMultiUserSystem {
-				return nil // Simulate successful user addition
-			}
-			return fmt.Errorf("unexpected user: %s", username)
-		},
-		UserExistsFunc: func(username string) (bool, error) {
-			if username == brew.BrewUserOnMultiUserSystem {
-				return true, nil // Simulate that the brew user exists
-			}
-			return false, nil // Other users do not exist
-		},
-		GetFileOwnerFunc: func(path string) (string, error) {
-			if path == expectedBrewPath {
-				return brew.BrewUserOnMultiUserSystem, nil // Simulate that the brew user owns the brew binary
-			}
-			return "", fmt.Errorf("unexpected path: %s", path)
-		},
-	}
-
-	opts := brew.Options{
-		Logger:           mockLogger,
-		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:        mockCommander,
-		HTTPClient:       mockHTTP,
-		OsManager:        mockOsManager,
-		Fs:               mockFS,
-		MultiUserSystem:  true,
-		BrewPathOverride: expectedBrewPath,
-	}
-
-	installer := brew.NewBrewInstaller(opts)
-	err := installer.Install()
-
-	require.NoError(t, err)
-
-	// Verify no HTTP requests were made (no download should happen)
-	require.Empty(t, mockHTTP.GetCalls())
-	// Verify no user management operations were performed
-	require.Empty(t, mockOsManager.UserExistsCalls())
-	require.Empty(t, mockOsManager.AddUserCalls())
-}
-
-//gocognit:ignore
-//nolint:cyclop // This test is complex due to the multi-user setup and various checks involved.
-func Test_MultiUserBrew_InstallsFromScratch_WhenUserDoesNotExist(t *testing.T) {
-	expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
-	tempScriptPath := "/tmp/brew-install-12345.sh"
-	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
-
-	mockCommander := &utils.MoqCommander{
-		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "sudo" && len(args) == 4 && args[0] == "-Hu" &&
-				args[1] == brew.BrewUserOnMultiUserSystem &&
-				args[2] == "bash" && args[3] == tempScriptPath {
-				return &utils.Result{ExitCode: 0}, nil
-			}
-			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-				return &utils.Result{ExitCode: 0}, nil
-			}
-			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
-		},
-	}
-
-	pathExistsCalls := 0
-	mockFS := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			pathExistsCalls++
-			if path == expectedBrewPath {
-				return pathExistsCalls > 1, nil
-			}
-			if path == tempScriptPath {
-				return true, nil
-			}
-			return false, nil
-		},
-		CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
-			return tempScriptPath, nil
-		},
-		WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
-			if path == tempScriptPath {
-				return int64(len(installScript)), nil
-			}
-			return 0, fmt.Errorf("unexpected path: %s", path)
-		},
-		RemovePathFunc: func(path string) error {
-			return nil
-		},
-	}
-
-	mockHTTP := &httpclient.MoqHTTPClient{
-		GetFunc: func(url string) (*http.Response, error) {
-			if url == "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" {
-				return &http.Response{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(bytes.NewBufferString(installScript)),
-				}, nil
-			}
-			return nil, fmt.Errorf("unexpected URL: %s", url)
-		},
-	}
-
-	mockOsManager := &osmanager.MoqOsManager{
-		UserExistsFunc: func(username string) (bool, error) {
-			if username == brew.BrewUserOnMultiUserSystem {
-				return false, nil // User does not exist
-			}
-			return false, fmt.Errorf("unexpected user check: %s", username)
-		},
-		AddUserFunc: func(username string) error {
-			if username == brew.BrewUserOnMultiUserSystem {
-				return nil
-			}
-			return fmt.Errorf("unexpected user add: %s", username)
-		},
-		AddUserToGroupFunc: func(username, group string) error {
-			if username == brew.BrewUserOnMultiUserSystem && group == "sudo" {
-				return nil
-			}
-			return fmt.Errorf("unexpected user/group add: %s/%s", username, group)
-		},
-		AddSudoAccessFunc: func(username string) error {
-			if username == brew.BrewUserOnMultiUserSystem {
-				return nil
-			}
-			return fmt.Errorf("unexpected sudo access for: %s", username)
-		},
-		SetOwnershipFunc: func(path, username string) error {
-			if path == "/home/linuxbrew" && username == brew.BrewUserOnMultiUserSystem {
-				return nil
-			}
-			return fmt.Errorf("unexpected ownership set: %s for %s", path, username)
-		},
-		SetPermissionsFunc: func(path string, perms os.FileMode) error {
-			if path == tempScriptPath && perms == 0o755 {
-				return nil
-			}
-			return fmt.Errorf("unexpected permission call: %s %o", path, perms)
-		},
-		GetFileOwnerFunc: func(path string) (string, error) {
-			if path == expectedBrewPath {
-				return brew.BrewUserOnMultiUserSystem, nil
-			}
-			return "", fmt.Errorf("unexpected get owner for: %s", path)
-		},
-	}
-
-	opts := brew.Options{
-		Logger:           &logger.NoopLogger{},
-		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:        mockCommander,
-		HTTPClient:       mockHTTP,
-		OsManager:        mockOsManager,
-		Fs:               mockFS,
-		MultiUserSystem:  true,
-		BrewPathOverride: expectedBrewPath,
-	}
-
-	installer := brew.NewBrewInstaller(opts)
-	err := installer.Install()
-
-	require.NoError(t, err)
-	require.Len(t, mockOsManager.UserExistsCalls(), 1)
-	require.Len(t, mockOsManager.AddUserCalls(), 1) // User should be added
-	require.Len(t, mockOsManager.AddUserToGroupCalls(), 1)
-	require.Len(t, mockOsManager.AddSudoAccessCalls(), 1)
-	require.Len(t, mockOsManager.SetOwnershipCalls(), 1)
-	require.Len(t, mockHTTP.GetCalls(), 1)
-	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
-	require.Len(t, mockFS.WriteFileCalls(), 1)
-	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
-	require.Len(t, mockCommander.RunCommandCalls(), 2)
-	require.Len(t, mockFS.RemovePathCalls(), 1)
-}
-
-//nolint:cyclop // This test is complex due to the multi-user setup and various checks involved.
-func Test_MultiUserBrew_InstallsFromScratch_WhenUserAlreadyExists(t *testing.T) {
-	expectedBrewPath := "/home/linuxbrew/.linuxbrew/bin/brew"
-	tempScriptPath := "/tmp/brew-install-12345.sh"
-	installScript := "#!/bin/bash\necho 'Installing Homebrew...'"
-
-	mockCommander := &utils.MoqCommander{
-		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "sudo" && len(args) == 4 && args[0] == "-Hu" &&
-				args[1] == brew.BrewUserOnMultiUserSystem &&
-				args[2] == "bash" && args[3] == tempScriptPath {
-				return &utils.Result{ExitCode: 0}, nil
-			}
-			if name == expectedBrewPath && len(args) == 1 && args[0] == "--version" {
-				return &utils.Result{ExitCode: 0}, nil
-			}
-			return nil, fmt.Errorf("unexpected command: %s %v", name, args)
-		},
-	}
-
-	pathExistsCalls := 0
-	mockFS := &utils.MoqFileSystem{
-		PathExistsFunc: func(path string) (bool, error) {
-			pathExistsCalls++
-			if path == expectedBrewPath {
-				return pathExistsCalls > 1, nil
-			}
-			if path == tempScriptPath {
-				return true, nil
-			}
-			return false, nil
-		},
-		CreateTemporaryFileFunc: func(dir, pattern string) (string, error) {
-			return tempScriptPath, nil
-		},
-		WriteFileFunc: func(path string, reader io.Reader) (int64, error) {
-			if path == tempScriptPath {
-				return int64(len(installScript)), nil
-			}
-			return 0, fmt.Errorf("unexpected path: %s", path)
-		},
-		RemovePathFunc: func(path string) error {
-			return nil
-		},
-	}
-
-	mockHTTP := &httpclient.MoqHTTPClient{
-		GetFunc: func(url string) (*http.Response, error) {
-			if url == "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" {
-				return &http.Response{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(bytes.NewBufferString(installScript)),
-				}, nil
-			}
-			return nil, fmt.Errorf("unexpected URL: %s", url)
-		},
-	}
-
-	mockOsManager := &osmanager.MoqOsManager{
-		UserExistsFunc: func(username string) (bool, error) {
-			if username == brew.BrewUserOnMultiUserSystem {
-				return true, nil // User already exists
-			}
-			return false, fmt.Errorf("unexpected user check: %s", username)
-		},
-		AddUserFunc: func(username string) error {
-			return fmt.Errorf("unexpected user add: %s", username) // Should not be called
-		},
-		AddUserToGroupFunc: func(username, group string) error {
-			if username == brew.BrewUserOnMultiUserSystem && group == "sudo" {
-				return nil
-			}
-			return fmt.Errorf("unexpected user/group add: %s/%s", username, group)
-		},
-		AddSudoAccessFunc: func(username string) error {
-			if username == brew.BrewUserOnMultiUserSystem {
-				return nil
-			}
-			return fmt.Errorf("unexpected sudo access for: %s", username)
-		},
-		SetOwnershipFunc: func(path, username string) error {
-			if path == "/home/linuxbrew" && username == brew.BrewUserOnMultiUserSystem {
-				return nil
-			}
-			return fmt.Errorf("unexpected ownership set: %s for %s", path, username)
-		},
-		SetPermissionsFunc: func(path string, perms os.FileMode) error {
-			if path == tempScriptPath && perms == 0o755 {
-				return nil
-			}
-			return fmt.Errorf("unexpected permission call: %s %o", path, perms)
-		},
-		GetFileOwnerFunc: func(path string) (string, error) {
-			if path == expectedBrewPath {
-				return brew.BrewUserOnMultiUserSystem, nil
-			}
-			return "", fmt.Errorf("unexpected get owner for: %s", path)
-		},
-	}
-
-	opts := brew.Options{
-		Logger:           &logger.NoopLogger{},
-		SystemInfo:       &compatibility.SystemInfo{OSName: "linux", Arch: "amd64"},
-		Commander:        mockCommander,
-		HTTPClient:       mockHTTP,
-		OsManager:        mockOsManager,
-		Fs:               mockFS,
-		MultiUserSystem:  true,
-		BrewPathOverride: expectedBrewPath,
-	}
-
-	installer := brew.NewBrewInstaller(opts)
-	err := installer.Install()
-
-	require.NoError(t, err)
-	require.Len(t, mockOsManager.UserExistsCalls(), 1)
-	require.Empty(t, mockOsManager.AddUserCalls()) // User should not be added
-	require.Len(t, mockOsManager.AddUserToGroupCalls(), 1)
-	require.Len(t, mockOsManager.AddSudoAccessCalls(), 1)
-	require.Len(t, mockOsManager.SetOwnershipCalls(), 1)
-	require.Len(t, mockHTTP.GetCalls(), 1)
-	require.Len(t, mockFS.CreateTemporaryFileCalls(), 1)
-	require.Len(t, mockFS.WriteFileCalls(), 1)
-	require.Len(t, mockOsManager.SetPermissionsCalls(), 1)
-	require.Len(t, mockCommander.RunCommandCalls(), 2)
-	require.Len(t, mockFS.RemovePathCalls(), 1)
-}
 
 func Test_SingleUserBrew_Install_DiscardsOutput_WhenDisplayModeIsNotPassthrough(t *testing.T) {
 	mockLogger := &logger.NoopLogger{}
@@ -1421,14 +952,13 @@ func Test_SingleUserBrew_Install_DiscardsOutput_WhenDisplayModeIsNotPassthrough(
 	}
 
 	opts := brew.Options{
-		Logger:          mockLogger,
-		SystemInfo:      &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"},
-		Commander:       mockCommander,
-		HTTPClient:      mockHTTPClient,
-		OsManager:       mockOsManager,
-		Fs:              mockFS,
-		MultiUserSystem: false,
-		DisplayMode:     utils.DisplayModeProgress, // Non-passthrough mode
+		Logger:      mockLogger,
+		SystemInfo:  &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"},
+		Commander:   mockCommander,
+		HTTPClient:  mockHTTPClient,
+		OsManager:   mockOsManager,
+		Fs:          mockFS,
+		DisplayMode: utils.DisplayModeProgress, // Non-passthrough mode
 	}
 
 	installer := brew.NewBrewInstaller(opts)
@@ -1516,14 +1046,13 @@ func Test_SingleUserBrew_Install_DoesNotDiscardOutput_WhenDisplayModeIsPassthrou
 	}
 
 	opts := brew.Options{
-		Logger:          mockLogger,
-		SystemInfo:      &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"},
-		Commander:       mockCommander,
-		HTTPClient:      mockHTTPClient,
-		OsManager:       mockOsManager,
-		Fs:              mockFS,
-		MultiUserSystem: false,
-		DisplayMode:     utils.DisplayModePassthrough, // Passthrough mode
+		Logger:      mockLogger,
+		SystemInfo:  &compatibility.SystemInfo{OSName: "darwin", Arch: "arm64"},
+		Commander:   mockCommander,
+		HTTPClient:  mockHTTPClient,
+		OsManager:   mockOsManager,
+		Fs:          mockFS,
+		DisplayMode: utils.DisplayModePassthrough, // Passthrough mode
 	}
 
 	installer := brew.NewBrewInstaller(opts)

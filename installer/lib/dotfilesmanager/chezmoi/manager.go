@@ -20,15 +20,17 @@ type ChezmoiConfig struct {
 	chezmoiCloneDir       string
 	githubUsername        string
 	cloneViaSSH           bool
+	branch                string
 }
 
-func NewChezmoiConfig(configDir, configFilePath, cloneDir, githubUsername string, cloneViaSSH bool) ChezmoiConfig {
+func NewChezmoiConfig(configDir, configFilePath, cloneDir, githubUsername string, cloneViaSSH bool, branch string) ChezmoiConfig {
 	return ChezmoiConfig{
 		chezmoiConfigDir:      configDir,
 		chezmoiConfigFilePath: configFilePath,
 		chezmoiCloneDir:       cloneDir,
 		githubUsername:        githubUsername,
 		cloneViaSSH:           cloneViaSSH,
+		branch:                branch,
 	}
 }
 
@@ -39,6 +41,7 @@ func DefaultChezmoiConfig(chezmoiConfigFilePath string, chezmoiCloneDir string) 
 		chezmoiCloneDir:       chezmoiCloneDir,
 		githubUsername:        "MrPointer",
 		cloneViaSSH:           false,
+		branch:                "",
 	}
 }
 
@@ -68,7 +71,7 @@ func NewChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userMa
 	}
 }
 
-func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, displayMode utils.DisplayMode, githubUsername string, cloneViaSSH bool) (*ChezmoiManager, error) {
+func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, displayMode utils.DisplayMode, githubUsername string, cloneViaSSH bool, branch string) (*ChezmoiManager, error) {
 	chezmoiConfigHome, err := userManager.GetChezmoiConfigHome()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get chezmoi config home directory: %w", err)
@@ -97,10 +100,11 @@ func TryStandardChezmoiManager(logger logger.Logger, filesystem utils.FileSystem
 			chezmoiCloneDir,
 			githubUsername,
 			cloneViaSSH,
+			branch,
 		),
 	), nil
 }
 
 func TryStandardChezmoiManagerWithDefaults(logger logger.Logger, filesystem utils.FileSystem, userManager osmanager.UserManager, commander utils.Commander, pkgManager pkgmanager.PackageManager, httpClient httpclient.HTTPClient, displayMode utils.DisplayMode) (*ChezmoiManager, error) {
-	return TryStandardChezmoiManager(logger, filesystem, userManager, commander, pkgManager, httpClient, displayMode, DefaultGitHubUsername, false)
+	return TryStandardChezmoiManager(logger, filesystem, userManager, commander, pkgManager, httpClient, displayMode, DefaultGitHubUsername, false, "")
 }

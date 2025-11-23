@@ -23,6 +23,9 @@ func (c *ChezmoiManager) Apply() error {
 	if c.chezmoiConfig.cloneViaSSH {
 		chezmoiApplyCmdArgs = append(chezmoiApplyCmdArgs, "--ssh")
 	}
+	if c.chezmoiConfig.branch != "" {
+		chezmoiApplyCmdArgs = append(chezmoiApplyCmdArgs, "--branch", c.chezmoiConfig.branch)
+	}
 	chezmoiApplyCmdArgs = append(chezmoiApplyCmdArgs, c.chezmoiConfig.githubUsername)
 
 	var discardOutputOption utils.Option = utils.EmptyOption()

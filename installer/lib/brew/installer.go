@@ -18,9 +18,6 @@ import (
 )
 
 const (
-	// BrewUserOnMultiUserSystem is the username used for Homebrew on multi-user systems.
-	BrewUserOnMultiUserSystem = "linuxbrew-manager"
-
 	// LinuxBrewPath is the default installation path for Homebrew on Linux.
 	LinuxBrewPath = "/home/linuxbrew/.linuxbrew/bin/brew"
 
@@ -100,18 +97,9 @@ type brewInstaller struct {
 
 var _ BrewInstaller = (*brewInstaller)(nil)
 
-// MultiUserBrewInstaller implements BrewInstaller for multi-user systems.
-// It composes a regular brewInstaller and adds multi-user logic.
-type MultiUserBrewInstaller struct {
-	*brewInstaller
-	brewUser string
-}
-
-var _ BrewInstaller = (*MultiUserBrewInstaller)(nil)
-
 // NewBrewInstaller creates a new BrewInstaller with the given options.
 func NewBrewInstaller(opts Options) BrewInstaller {
-	base := &brewInstaller{
+	return &brewInstaller{
 		logger:           opts.Logger,
 		systemInfo:       opts.SystemInfo,
 		commander:        opts.Commander,
@@ -121,15 +109,6 @@ func NewBrewInstaller(opts Options) BrewInstaller {
 		brewPathOverride: opts.BrewPathOverride,
 		displayMode:      opts.DisplayMode,
 	}
-
-	if opts.MultiUserSystem {
-		return &MultiUserBrewInstaller{
-			brewInstaller: base,
-			brewUser:      BrewUserOnMultiUserSystem,
-		}
-	}
-
-	return base
 }
 
 // DetectBrewPath returns the appropriate brew binary path based on the system information.
@@ -154,7 +133,7 @@ func (b *brewInstaller) IsAvailable() (bool, error) {
 	return exists, nil
 }
 
-// Install installs Homebrew if not already installed (single-user).
+// Install installs Homebrew if not already installed.
 func (b *brewInstaller) Install() error {
 	isAvailable, err := b.IsAvailable()
 	if err != nil {
@@ -177,7 +156,7 @@ func (b *brewInstaller) Install() error {
 	}
 
 	b.logger.Debug("Installing Homebrew")
-	err = b.installHomebrew("")
+	err = b.installHomebrew()
 	if err != nil {
 		return err
 	}
@@ -230,124 +209,8 @@ func (b *brewInstaller) validateInstall() error {
 	return nil
 }
 
-// Install installs Homebrew if not already installed (multi-user).
-func (m *MultiUserBrewInstaller) Install() error {
-	isAvailable, err := m.IsAvailable()
-	if err != nil {
-		return fmt.Errorf("failed checking Homebrew availability: %w", err)
-	}
-
-	if isAvailable {
-		m.logger.Debug("Homebrew is already installed (multi-user)")
-
-		// Update PATH to include brew binaries so installed tools can be found
-		brewPath, err := m.DetectBrewPath()
-		if err != nil {
-			return fmt.Errorf("failed to detect brew path for PATH update: %w", err)
-		}
-		if err := UpdatePathWithBrewBinaries(brewPath); err != nil {
-			m.logger.Warning("Failed to update PATH with brew binaries: %v", err)
-		}
-
-		return nil
-	}
-
-	m.logger.Debug("Installing Homebrew (multi-user)")
-	if m.systemInfo.OSName == "darwin" {
-		return fmt.Errorf("multi-user Homebrew installation is not supported on macOS, please install manually")
-	}
-
-	err = m.installMultiUserLinux()
-	if err != nil {
-		return err
-	}
-
-	// Self-validation: check that brew is available and works
-	if err := m.validateInstall(); err != nil {
-		return fmt.Errorf("brew self-validation failed: %w", err)
-	}
-
-	// Update PATH to include brew binaries so installed tools can be found
-	brewPath, err := m.DetectBrewPath()
-	if err != nil {
-		return fmt.Errorf("failed to detect brew path for PATH update: %w", err)
-	}
-	if err := UpdatePathWithBrewBinaries(brewPath); err != nil {
-		m.logger.Warning("Failed to update PATH with brew binaries: %v", err)
-	}
-
-	return nil
-}
-
-// Multi-user overrides.
-// IsAvailable checks if Homebrew is already installed and available (multi-user).
-func (m *MultiUserBrewInstaller) IsAvailable() (bool, error) {
-	m.logger.Debug("Checking if Homebrew is available")
-
-	brewPath, err := m.DetectBrewPath()
-	if err != nil {
-		return false, err
-	}
-
-	exists, err := m.fs.PathExists(brewPath)
-	if err != nil {
-		return false, err
-	}
-	if !exists {
-		return false, nil
-	}
-
-	// For Linux multi-user systems, check file ownership
-	if m.systemInfo.OSName == "linux" {
-		brewPathOwner, err := m.osManager.GetFileOwner(brewPath)
-		if err != nil {
-			return false, fmt.Errorf("failed to get owner of brew binary: %w", err)
-		}
-
-		return brewPathOwner == m.brewUser, nil
-	}
-
-	return true, nil
-}
-
-// installMultiUserLinux installs Homebrew in a multi-user configuration on Linux.
-func (m *MultiUserBrewInstaller) installMultiUserLinux() error {
-	brewUser := BrewUserOnMultiUserSystem
-	brewHome := "/home/linuxbrew"
-
-	// 1. Check if user exists and create if needed
-	exists, err := m.osManager.UserExists(brewUser)
-	if err != nil {
-		return fmt.Errorf("error checking if user '%s' exists: %w", brewUser, err)
-	}
-
-	if !exists {
-		if err := m.osManager.AddUser(brewUser); err != nil {
-			return fmt.Errorf("error creating user '%s': %w", brewUser, err)
-		}
-	}
-
-	// 2. Add user to sudo group
-	if err := m.osManager.AddUserToGroup(brewUser, "sudo"); err != nil {
-		m.logger.Debug("Note: Failed to add user to sudo group, continuing anyway")
-	}
-
-	// 3. Add passwordless sudo for brew user
-	if err := m.osManager.AddSudoAccess(brewUser); err != nil {
-		return fmt.Errorf("failed to add sudo access for user '%s': %w", brewUser, err)
-	}
-
-	// 4. Set ownership of homebrew directory
-	if err := m.osManager.SetOwnership(brewHome, brewUser); err != nil {
-		return fmt.Errorf("failed to set ownership of '%s' to '%s': %w", brewHome, brewUser, err)
-	}
-
-	// 5. Install Homebrew as the brew user
-	return m.installHomebrew(brewUser)
-}
-
-// installHomebrew handles both regular and multi-user Homebrew installations.
-func (b *brewInstaller) installHomebrew(asUser string) error {
+// installHomebrew handles Homebrew installation.
+func (b *brewInstaller) installHomebrew() error {
 	// Download and prepare the installation script
 	installScriptPath, cleanup, err := b.downloadAndPrepareInstallScript()
 	if err != nil {
@@ -366,36 +229,20 @@ func (b *brewInstaller) installHomebrew(asUser string) error {
 	b.logger.Debug("Successfully downloaded Homebrew install script")
 	b.logger.Trace("Homebrew install script downloaded to %s", installScriptPath)
 
-	// Execute the downloaded install script, optionally as a different user
-	if asUser != "" {
-		b.logger.Debug("Running Homebrew install script as %s", asUser)
+	// Execute the downloaded install script
+	b.logger.Debug("Running Homebrew install script")
 
-		var discardOutputOption utils.Option = utils.EmptyOption()
-		if b.displayMode != utils.DisplayModePassthrough {
-			discardOutputOption = utils.WithDiscardOutput()
-		}
-
-		_, err := b.commander.RunCommand("sudo", []string{"-Hu", asUser, "bash", installScriptPath}, discardOutputOption)
-		if err != nil {
-			return fmt.Errorf("failed running Homebrew install script as %s: %w", asUser, err)
-		}
-
-		b.logger.Debug("Successfully installed Homebrew for user %s", asUser)
-	} else {
-		b.logger.Debug("Running Homebrew install script")
-
-		var discardOutputOption utils.Option = utils.EmptyOption()
-		if b.displayMode != utils.DisplayModePassthrough {
-			discardOutputOption = utils.WithDiscardOutput()
-		}
-
-		_, err := b.commander.RunCommand("/bin/bash", []string{installScriptPath}, discardOutputOption, utils.WithEnv(map[string]string{"NONINTERACTIVE": "1"}))
-		if err != nil {
-			return err
-		}
-
-		b.logger.Debug("Homebrew installed successfully")
+	var discardOutputOption utils.Option = utils.EmptyOption()
+	if b.displayMode != utils.DisplayModePassthrough {
+		discardOutputOption = utils.WithDiscardOutput()
 	}
+
+	_, err = b.commander.RunCommand("/bin/bash", []string{installScriptPath}, discardOutputOption, utils.WithEnv(map[string]string{"NONINTERACTIVE": "1"}))
+	if err != nil {
+		return err
+	}
+
+	b.logger.Debug("Homebrew installed successfully")
 
 	return nil
 }
@@ -456,7 +303,6 @@ func (b *brewInstaller) downloadAndPrepareInstallScript() (string, func(), error
 // Options holds configuration options for Homebrew operations.
 type Options struct {
 	Logger           logger.Logger
-	MultiUserSystem  bool
 	SystemInfo       *compatibility.SystemInfo
 	Commander        utils.Commander
 	HTTPClient       httpclient.HTTPClient
@@ -469,7 +315,6 @@ type Options struct {
 // DefaultOptions returns the default options.
 func DefaultOptions() *Options {
 	return &Options{
-		MultiUserSystem:  false,
 		Logger:           logger.DefaultLogger,
 		SystemInfo:       nil,
 		Commander:        utils.NewDefaultCommander(logger.DefaultLogger),
@@ -489,12 +334,6 @@ func (o *Options) WithBrewPathOverride(path string) *Options {
 // WithLogger sets a custom logger for the brew operations.
 func (o *Options) WithLogger(log logger.Logger) *Options {
 	o.Logger = log
-	return o
-}
-
-// WithMultiUserSystem configures for multi-user system operation.
-func (o *Options) WithMultiUserSystem(multiUser bool) *Options {
-	o.MultiUserSystem = multiUser
 	return o
 }
 

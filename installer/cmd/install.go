@@ -30,8 +30,9 @@ var (
 	shellName            string
 	installBrew          bool
 	installShellWithBrew bool
-	multiUserSystem      bool
+
 	gitCloneProtocol     string
+	gitBranch            string
 	verbose              bool
 	installPrerequisites bool
 )
@@ -243,14 +244,13 @@ func installHomebrew(sysInfo compatibility.SystemInfo, log logger.Logger) (strin
 
 	// Create BrewInstaller using the new API.
 	installer := brew.NewBrewInstaller(brew.Options{
-		SystemInfo:      &sysInfo,
-		Logger:          cliLogger,
-		Commander:       globalCommander,
-		HTTPClient:      globalHttpClient,
-		OsManager:       globalOsManager,
-		Fs:              globalFilesystem,
-		MultiUserSystem: multiUserSystem,
-		DisplayMode:     GetDisplayMode(),
+		SystemInfo:  &sysInfo,
+		Logger:      cliLogger,
+		Commander:   globalCommander,
+		HTTPClient:  globalHttpClient,
+		OsManager:   globalOsManager,
+		Fs:          globalFilesystem,
+		DisplayMode: GetDisplayMode(),
 	})
 
 	log.StartProgress("Checking Homebrew availability")
@@ -428,7 +428,7 @@ func installGpgClient(log logger.Logger) error {
 func setupDotfilesManager(log logger.Logger) error {
 	log.StartProgress("Setting up dotfiles manager")
 
-	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, GetDisplayMode(), chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
+	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, GetDisplayMode(), chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh", gitBranch)
 	if err != nil {
 		log.FailProgress("Failed to create dotfiles manager", err)
 		return err
@@ -466,9 +466,7 @@ func initDotfilesManagerData(dm dotfilesmanager.DotfilesManager) error {
 		LastName:  "Gruber",
 		Email:     "timor.gruber@gmail.com",
 		SystemData: mo.Some(dotfilesmanager.DotfilesSystemData{
-			Shell:           shellName,
-			MultiUserSystem: multiUserSystem,
-			BrewMultiUser:   "linuxbrew-manager",
+			Shell: shellName,
 		}),
 	}
 
@@ -515,11 +513,11 @@ func init() {
 		"Install brew if not already installed")
 	installCmd.Flags().BoolVar(&installShellWithBrew, "install-shell-with-brew", true,
 		"Install shell with brew if not already installed")
-	installCmd.Flags().BoolVar(&multiUserSystem, "multi-user-system", false,
-		"Treat this system as a multi-user system (affects some dotfiles)")
 	installCmd.Flags().StringVar(&gitCloneProtocol, "git-clone-protocol", "https",
 		"Use the given git clone protocol (ssh or https) for git operations")
-
+	installCmd.Flags().StringVar(&gitBranch, "git-branch", "",
+		"Use the given git branch for dotfiles repository operations (defaults to repository's default branch). "+
+			"Useful for testing changes in feature branches or when running in CI/CD pipelines.")
 	installCmd.Flags().BoolVar(&installPrerequisites, "install-prerequisites", false,
 		"Automatically install missing prerequisites")
 
@@ -529,8 +527,8 @@ func init() {
 	viper.BindPFlag("shell", installCmd.Flags().Lookup("shell"))
 	viper.BindPFlag("install-brew", installCmd.Flags().Lookup("install-brew"))
 	viper.BindPFlag("install-shell-with-brew", installCmd.Flags().Lookup("install-shell-with-brew"))
-	viper.BindPFlag("multi-user-system", installCmd.Flags().Lookup("multi-user-system"))
 	viper.BindPFlag("git-clone-protocol", installCmd.Flags().Lookup("git-clone-protocol"))
+	viper.BindPFlag("git-branch", installCmd.Flags().Lookup("git-branch"))
 
 	viper.BindPFlag("install-prerequisites", installCmd.Flags().Lookup("install-prerequisites"))
 }

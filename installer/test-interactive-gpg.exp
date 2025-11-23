@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 #
 # Interactive GPG Testing Script for Dotfiles Installer
-# Usage: ./test-interactive-gpg.exp [installer_path] [email] [name] [passphrase]
+# Usage: ./test-interactive-gpg.exp [installer_path] [email] [name] [passphrase] [branch]
 #
 # This script automates GPG key setup during interactive installation
 # for both CI testing and local development.
@@ -14,7 +14,8 @@ set installer_path [lindex $argv 0]
 set email [lindex $argv 1]
 set name [lindex $argv 2]
 set passphrase [lindex $argv 3]
-set verbosity [lindex $argv 4]
+set branch [lindex $argv 4]
+set verbosity [lindex $argv 5]
 
 # Use defaults if not provided
 if {$installer_path eq ""} {
@@ -28,6 +29,9 @@ if {$name eq ""} {
 }
 if {$passphrase eq ""} {
     set passphrase "test-ci-passphrase"
+}
+if {$branch eq ""} {
+    set branch ""
 }
 if {$verbosity eq ""} {
     set verbosity ""
@@ -45,10 +49,20 @@ puts "  Installer: $installer_path"
 puts "  Email: $email"
 puts "  Name: $name"
 puts "  Passphrase: [string repeat "*" [string length $passphrase]]"
+puts "  Branch: $branch"
 puts "  Verbosity: $verbosity"
 puts ""
 
-spawn $installer_path install --plain --install-prerequisites=true --git-clone-protocol=https "$verbosity"
+# Build command with optional branch parameter
+set cmd_args [list "install" "--plain" "--install-prerequisites=true" "--git-clone-protocol=https"]
+if {$branch ne ""} {
+    lappend cmd_args "--git-branch=$branch"
+}
+if {$verbosity ne ""} {
+    lappend cmd_args $verbosity
+}
+
+spawn $installer_path {*}$cmd_args
 
 # Main interaction loop - Only handle GPG-specific prompts
 expect {

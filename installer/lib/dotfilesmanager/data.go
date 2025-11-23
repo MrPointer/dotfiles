@@ -20,8 +20,6 @@ type DotfilesWorkEnvData struct {
 
 type DotfilesSystemData struct {
 	Shell               string            `mapstructure:"shell"`
-	MultiUserSystem     bool              `mapstructure:"multi_user_system"`
-	BrewMultiUser       string            `mapstructure:"brew_multi_user"`
 	GenericWorkProfile  mo.Option[string] `mapstructure:"generic_work_profile"`
 	SpecificWorkProfile mo.Option[string] `mapstructure:"specific_work_profile"`
 }
