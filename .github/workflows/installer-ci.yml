@@ -207,14 +207,29 @@ jobs:
           mkdir -p "$HOME/.gnupg"
           chmod 700 "$HOME/.gnupg"
 
+          # Get current branch name for testing with fallbacks
+          # GITHUB_HEAD_REF is set for pull requests, GITHUB_REF for pushes
+          # If both fail, default to main branch to prevent CI failures
+          if [ -n "$GITHUB_HEAD_REF" ]; then
+            CURRENT_BRANCH="$GITHUB_HEAD_REF"
+          elif [ -n "$GITHUB_REF" ]; then
+            CURRENT_BRANCH="${GITHUB_REF#refs/heads/}"
+          else
+            CURRENT_BRANCH="main"
+            echo "Warning: Could not detect branch, defaulting to main"
+          fi
+          echo "Using branch: $CURRENT_BRANCH"
+
           # Run the installer with minimal configuration that shouldn't require interaction
           # We use https as the git clone protocol to avoid SSH key prompts
+          # We use the current branch to test branch-specific changes
           timeout 300 ./dotfiles-installer install \
             --non-interactive \
             --plain \
             --extra-verbose \
             --install-prerequisites=true \
             --git-clone-protocol=https \
+            --git-branch="$CURRENT_BRANCH" \
             --work-env=false \
 
       - name: Install expect tool
@@ -242,12 +257,25 @@ jobs:
           mkdir -p "$HOME/.gnupg"
           chmod 700 "$HOME/.gnupg"
 
-          # Run the expect script with test parameters
+          # Get current branch name for testing with fallbacks
+          # This ensures we test against the same branch as the installer changes
+          if [ -n "$GITHUB_HEAD_REF" ]; then
+            CURRENT_BRANCH="$GITHUB_HEAD_REF"
+          elif [ -n "$GITHUB_REF" ]; then
+            CURRENT_BRANCH="${GITHUB_REF#refs/heads/}"
+          else
+            CURRENT_BRANCH="main"
+            echo "Warning: Could not detect branch, defaulting to main"
+          fi
+          echo "Using branch: $CURRENT_BRANCH"
+
+          # Run the expect script with test parameters and current branch
           installer/test-interactive-gpg.exp \
             "./dotfiles-installer" \
             "test-user@example.com" \
             "Test CI User" \
-            "test-ci-passphrase"
+            "test-ci-passphrase" \
+            "$CURRENT_BRANCH"
 
       - name: Verify Installation Artifacts (if created)
         run: |

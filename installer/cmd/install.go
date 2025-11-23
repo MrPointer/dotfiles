@@ -32,6 +32,7 @@ var (
 	installShellWithBrew bool
 
 	gitCloneProtocol     string
+	gitBranch            string
 	verbose              bool
 	installPrerequisites bool
 )
@@ -427,7 +428,7 @@ func installGpgClient(log logger.Logger) error {
 func setupDotfilesManager(log logger.Logger) error {
 	log.StartProgress("Setting up dotfiles manager")
 
-	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, GetDisplayMode(), chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh")
+	dm, err := chezmoi.TryStandardChezmoiManager(log, globalFilesystem, globalOsManager, globalCommander, globalPackageManager, globalHttpClient, GetDisplayMode(), chezmoi.DefaultGitHubUsername, gitCloneProtocol == "ssh", gitBranch)
 	if err != nil {
 		log.FailProgress("Failed to create dotfiles manager", err)
 		return err
@@ -514,6 +515,9 @@ func init() {
 		"Install shell with brew if not already installed")
 	installCmd.Flags().StringVar(&gitCloneProtocol, "git-clone-protocol", "https",
 		"Use the given git clone protocol (ssh or https) for git operations")
+	installCmd.Flags().StringVar(&gitBranch, "git-branch", "",
+		"Use the given git branch for dotfiles repository operations (defaults to repository's default branch). "+
+			"Useful for testing changes in feature branches or when running in CI/CD pipelines.")
 	installCmd.Flags().BoolVar(&installPrerequisites, "install-prerequisites", false,
 		"Automatically install missing prerequisites")
 
@@ -524,6 +528,7 @@ func init() {
 	viper.BindPFlag("install-brew", installCmd.Flags().Lookup("install-brew"))
 	viper.BindPFlag("install-shell-with-brew", installCmd.Flags().Lookup("install-shell-with-brew"))
 	viper.BindPFlag("git-clone-protocol", installCmd.Flags().Lookup("git-clone-protocol"))
+	viper.BindPFlag("git-branch", installCmd.Flags().Lookup("git-branch"))
 
 	viper.BindPFlag("install-prerequisites", installCmd.Flags().Lookup("install-prerequisites"))
 }
