@@ -32,10 +32,6 @@ if [[ ! -v BREW_LOADED || "$BREW_LOADED" == "false" ]]; then
         load_brew_env
         {{- end -}}
         {{- end -}}
-        {{- if .system.multi_user_system }}
-        # Impersonate brew management user
-        alias brew="sudo -Hu {{ .system.brew_multi_user }} $BREW_BINARY"
-        {{- end }}
     fi
 
     BREW_LOADED=true
