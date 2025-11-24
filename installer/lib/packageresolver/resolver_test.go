@@ -531,3 +531,56 @@ func Test_Resolve_HandlesPackageWithVersionConstraints_UsingRealWorldStructure(t
 	require.True(t, result.VersionConstraints.Check(version200))
 	require.False(t, result.VersionConstraints.Check(version100))
 }
+
+func Test_Resolve_HandlesPackageType_WhenSpecified(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: map[string]packageresolver.PackageMapping{
+			"build-tools": {
+				"apt": packageresolver.ManagerSpecificMapping{Name: "build-essential"},
+				"dnf": packageresolver.ManagerSpecificMapping{Name: "Development Tools", Type: "group"},
+			},
+		},
+	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{
+		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+			return pkgmanager.PackageManagerInfo{Name: "dnf", Version: "4.0.0"}, nil
+		},
+	}
+
+	resolver, err := packageresolver.NewResolver(mappings, mockPackageManager)
+	require.NoError(t, err)
+
+	result, err := resolver.Resolve("build-tools", "")
+
+	require.NoError(t, err)
+	require.Equal(t, "Development Tools", result.Name)
+	require.Equal(t, "group", result.Type)
+	require.Nil(t, result.VersionConstraints)
+}
+
+func Test_Resolve_HandlesEmptyPackageType_WhenNotSpecified(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: map[string]packageresolver.PackageMapping{
+			"git": {
+				"apt": packageresolver.ManagerSpecificMapping{Name: "git"},
+			},
+		},
+	}
+
+	mockPackageManager := &pkgmanager.MoqPackageManager{
+		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+			return pkgmanager.PackageManagerInfo{Name: "apt", Version: "2.0.0"}, nil
+		},
+	}
+
+	resolver, err := packageresolver.NewResolver(mappings, mockPackageManager)
+	require.NoError(t, err)
+
+	result, err := resolver.Resolve("git", "")
+
+	require.NoError(t, err)
+	require.Equal(t, "git", result.Name)
+	require.Equal(t, "", result.Type) // Empty type for regular packages
+	require.Nil(t, result.VersionConstraints)
+}

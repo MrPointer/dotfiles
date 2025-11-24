@@ -14,4 +14,7 @@ type PackageMapping map[string]ManagerSpecificMapping
 type ManagerSpecificMapping struct {
 	// Name is the package name as recognized by the specific package manager.
 	Name string `mapstructure:"name"`
+
+	// Type is the package type (e.g., "group", "pattern"). Empty means regular package.
+	Type string `mapstructure:"type,omitempty"`
 }

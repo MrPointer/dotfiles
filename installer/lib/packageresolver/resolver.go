@@ -67,15 +67,18 @@ func (r *Resolver) Resolve(
 		// Consider logging a warning here that a direct mapping was not found.
 		return pkgmanager.RequestedPackageInfo{
 			Name:               genericPackageCode, // Use the code as the name
+			Type:               "",                 // No type information available for unmapped packages
 			VersionConstraints: constraints,
 		}, nil
 	}
 
 	var specificPackageName string
+	var packageType string
 	managerSpecificCfg, managerFound := packageMapping[r.packageManagerName]
 
 	if managerFound && managerSpecificCfg.Name != "" {
 		specificPackageName = managerSpecificCfg.Name
+		packageType = managerSpecificCfg.Type
 	} else {
 		// No specific name for this manager, fall back to generic code
 		specificPackageName = genericPackageCode
@@ -94,6 +97,7 @@ func (r *Resolver) Resolve(
 
 	return pkgmanager.RequestedPackageInfo{
 		Name:               specificPackageName,
+		Type:               packageType,
 		VersionConstraints: constraints, // This will be nil if versionConstraintString was empty
 	}, nil
 }

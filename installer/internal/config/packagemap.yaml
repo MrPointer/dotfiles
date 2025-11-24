@@ -5,6 +5,8 @@ packages:
       name: git
     brew:
       name: git
+    dnf:
+      name: git
   gpg:
     apt:
       name: gnupg2 # Debian/Ubuntu often use gnupg2
@@ -17,8 +19,34 @@ packages:
       name: neovim
     brew:
       name: neovim
+    dnf:
+      name: neovim
   zsh:
     apt:
       name: zsh
     brew:
       name: zsh
+    dnf:
+      name: zsh
+  build-essential:
+    apt:
+      name: build-essential
+      # APT meta-package - no special type needed, installs like regular package
+    dnf:
+      name: "Development Tools"
+      type: group
+    # Note: Other package managers would define their equivalents here
+  curl:
+    apt:
+      name: curl
+    brew:
+      name: curl
+    dnf:
+      name: curl
+  file:
+    apt:
+      name: file
+    brew:
+      name: file
+    dnf:
+      name: file
