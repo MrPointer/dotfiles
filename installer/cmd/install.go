@@ -10,6 +10,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/apt"
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/lib/dnf"
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager/chezmoi"
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
@@ -138,6 +139,8 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 		switch sysInfo.DistroName {
 		case "ubuntu", "debian":
 			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
+		case "fedora", "centos", "rhel", "rocky", "almalinux":
+			return dnf.NewDnfPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
 		default:
 			cliLogger.Warning("Unsupported Linux distribution for automatic package installation: %s", sysInfo.DistroName)
 			return nil
