@@ -113,6 +113,12 @@ jobs:
           - os: ubuntu-latest
             platform: debian
             container: debian:bookworm
+          - os: ubuntu-latest
+            platform: fedora
+            container: fedora:41
+          - os: ubuntu-latest
+            platform: centos
+            container: quay.io/centos/centos:stream9
           - os: macos-latest
             platform: macos
 
@@ -236,6 +242,9 @@ jobs:
         run: |
           if [ "${{ matrix.platform }}" = "macos" ]; then
             brew install expect
+          elif [ "${{ matrix.platform }}" = "fedora" ] || [ "${{ matrix.platform }}" = "centos" ]; then
+            # For Fedora/CentOS - install expect via dnf
+            dnf install -y expect
           else
             # For Ubuntu/Debian - check if sudo exists, otherwise run directly (containers)
             if command -v sudo >/dev/null 2>&1; then
