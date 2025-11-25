@@ -31,7 +31,7 @@ if [[ ! -v BREW_LOADED || "$BREW_LOADED" == "false" ]]; then
         {{- else }}
         load_brew_env
         {{- end -}}
-        {{- end -}}
+        {{- end }}
     fi
 
     BREW_LOADED=true

@@ -16,7 +16,7 @@ if [[ ! -v BREW_LOADED || "$BREW_LOADED" == "false" ]]; then
         {{- else }}
         # Load (home)brew
         eval "$("$BREW_BINARY" shellenv)"
-        {{- end -}}
+        {{- end }}
     fi
 
     BREW_LOADED=true
