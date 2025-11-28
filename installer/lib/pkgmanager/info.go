@@ -30,6 +30,9 @@ type PackageInfo struct {
 
 	// Version of the package.
 	Version string `json:"version"`
+
+	// Type of the package (e.g., "group", "pattern"). Empty means regular package.
+	Type string `json:"type,omitempty"`
 }
 
 func NewPackageInfo(name, version string) PackageInfo {
@@ -39,9 +42,20 @@ func NewPackageInfo(name, version string) PackageInfo {
 	}
 }
 
+func NewPackageInfoWithType(name, version, packageType string) PackageInfo {
+	return PackageInfo{
+		Name:    name,
+		Version: version,
+		Type:    packageType,
+	}
+}
+
 type RequestedPackageInfo struct {
 	// Name of the package.
 	Name string `json:"name"`
+
+	// Type of the package (e.g., "group", "pattern"). Empty means regular package.
+	Type string `json:"type,omitempty"`
 
 	// VersionConstraints defines the semver constraints for the requested package.
 	// It's a pointer to allow for nil (no constraints).
@@ -51,6 +65,14 @@ type RequestedPackageInfo struct {
 func NewRequestedPackageInfo(name string, versionConstraints *semver.Constraints) RequestedPackageInfo {
 	return RequestedPackageInfo{
 		Name:               name,
+		VersionConstraints: versionConstraints,
+	}
+}
+
+func NewRequestedPackageInfoWithType(name, packageType string, versionConstraints *semver.Constraints) RequestedPackageInfo {
+	return RequestedPackageInfo{
+		Name:               name,
+		Type:               packageType,
 		VersionConstraints: versionConstraints,
 	}
 }

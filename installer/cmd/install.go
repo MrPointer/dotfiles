@@ -10,9 +10,11 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/apt"
 	"github.com/MrPointer/dotfiles/installer/lib/brew"
 	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
+	"github.com/MrPointer/dotfiles/installer/lib/dnf"
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/dotfilesmanager/chezmoi"
 	"github.com/MrPointer/dotfiles/installer/lib/gpg"
+	"github.com/MrPointer/dotfiles/installer/lib/packageresolver"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/shell"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
@@ -138,6 +140,8 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 		switch sysInfo.DistroName {
 		case "ubuntu", "debian":
 			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
+		case "fedora", "centos", "rhel":
+			return dnf.NewDnfPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
 		default:
 			cliLogger.Warning("Unsupported Linux distribution for automatic package installation: %s", sysInfo.DistroName)
 			return nil
@@ -153,6 +157,23 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 		cliLogger.Warning("Unsupported operating system for automatic package installation: %s", sysInfo.OSName)
 		return nil
 	}
+}
+
+// createPackageResolverForSystem creates a package resolver for the given system.
+func createPackageResolverForSystem(packageManager pkgmanager.PackageManager, sysInfo *compatibility.SystemInfo) *packageresolver.Resolver {
+	// Load package mappings
+	mappings, err := packageresolver.LoadPackageMappings(viper.GetViper(), "")
+	if err != nil {
+		return nil
+	}
+
+	// Create and return resolver
+	resolver, err := packageresolver.NewResolver(mappings, packageManager, sysInfo)
+	if err != nil {
+		return nil
+	}
+
+	return resolver
 }
 
 // handlePrerequisiteInstallation handles automatic installation of missing prerequisites.
@@ -212,14 +233,32 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo, log logger
 
 	// Install each selected prerequisite
 	installed := false
+
+	// Create package resolver to get proper package info including types
+	resolver := createPackageResolverForSystem(packageManager, &sysInfo)
+	if resolver == nil {
+		log.Warning("Cannot resolve package information for this system")
+		return false
+	}
+
 	for _, name := range prerequisitesToInstall {
 		if detail, exists := sysInfo.Prerequisites.Details[name]; exists {
 			log.StartProgress(fmt.Sprintf("Installing %s", detail.Description))
 
-			// Use the prerequisite name directly as the package name
-			packageInfo := pkgmanager.NewRequestedPackageInfo(name, nil)
+			// Resolve the prerequisite to get proper package name and type
+			resolvedPackage, err := resolver.Resolve(name, "")
+			if err != nil {
+				log.FailProgress(fmt.Sprintf("Failed to resolve package %s", name), err)
+				return false
+			}
 
-			err := packageManager.InstallPackage(packageInfo)
+			// Create package info with resolved name and type
+			packageInfo := pkgmanager.NewRequestedPackageInfoWithType(
+				resolvedPackage.Name,
+				resolvedPackage.Type,
+				resolvedPackage.VersionConstraints)
+
+			err = packageManager.InstallPackage(packageInfo)
 			if err != nil {
 				log.FailProgress(fmt.Sprintf("Failed to install %s", detail.Description), err)
 				return false

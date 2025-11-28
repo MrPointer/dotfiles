@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/packageresolver"
+	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 )
@@ -156,4 +158,71 @@ func Test_LoadPackageMappings_HandlesLargeConfigFile(t *testing.T) {
 	pkg49 := mappings.Packages["package49"]
 	require.Len(t, pkg49, len(packageManagers))
 	require.Equal(t, "apt-pkg-49", pkg49["apt"].Name)
+}
+
+func Test_Resolver_DistroSpecificMapping_WorksWithActualConfig(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	tempDir := t.TempDir()
+	configFile := filepath.Join(tempDir, "distro-config.yaml")
+
+	// Test with the actual distro-specific structure we implemented
+	configContent := `packages:
+  build-essential:
+    apt:
+      name: build-essential
+    dnf:
+      type: group
+      name:
+        fedora: development-tools
+        centos: "Development Tools"
+        rhel: "Development Tools"`
+
+	err := os.WriteFile(configFile, []byte(configContent), 0644)
+	require.NoError(t, err)
+
+	v := viper.New()
+	mappings, err := packageresolver.LoadPackageMappings(v, configFile)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		distroName   string
+		expectedName string
+	}{
+		{"fedora", "development-tools"},
+		{"centos", "Development Tools"},
+		{"rhel", "Development Tools"},
+	}
+
+	for _, tc := range testCases {
+		t.Run("resolves for "+tc.distroName, func(t *testing.T) {
+			// Create system info for the distro
+			sysInfo := &compatibility.SystemInfo{
+				OSName:     "linux",
+				DistroName: tc.distroName,
+				Arch:       "amd64",
+			}
+
+			// Create mock package manager
+			mockPM := &pkgmanager.MoqPackageManager{
+				GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+					return pkgmanager.PackageManagerInfo{Name: "dnf"}, nil
+				},
+			}
+
+			// Create resolver
+			resolver, err := packageresolver.NewResolver(mappings, mockPM, sysInfo)
+			require.NoError(t, err)
+
+			// Resolve the package
+			result, err := resolver.Resolve("build-essential", "")
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedName, result.Name)
+			require.Equal(t, "group", result.Type)
+			require.Nil(t, result.VersionConstraints)
+		})
+	}
 }
