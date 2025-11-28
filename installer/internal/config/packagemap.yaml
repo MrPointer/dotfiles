@@ -31,7 +31,6 @@ packages:
   build-essential:
     apt:
       name: build-essential
-      # APT meta-package - no special type needed, installs like regular package
     dnf:
       name: "Development Tools"
       type: group
@@ -51,17 +50,6 @@ packages:
     dnf:
       name: file
   procps:
-    apt:
-      name: procps
-    dnf:
-      name: procps-ng
-  development-tools:
-    apt:
-      name: build-essential
-    dnf:
-      name: "Development Tools"
-      type: group
-  procps-ng:
     apt:
       name: procps
     dnf:

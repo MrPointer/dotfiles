@@ -58,14 +58,17 @@ operatingSystems:
             description: "Git version control system"
             install_hint: "sudo apt-get install git"
       fedora:
-        supported: false
-        notes: "Support planned for future release"
+        supported: true
+        version_constraint: ">= 35"
+        notes: "Fedora 35 or newer"
         prerequisites:
-          - name: "development-tools"
+          # Use same name as Ubuntu because this acts as a key, resolved later by the package-resolver
+          - name: "build-essential"
             command: "gcc"
             description: "Development tools group including gcc, make, and other build tools"
             install_hint: "sudo dnf group install 'Development Tools'"
-          - name: "procps-ng"
+          # Use same name as Ubuntu because this acts as a key, resolved later by the package-resolver
+          - name: "procps"
             command: "ps"
             description: "Process utilities"
             install_hint: "sudo dnf install procps-ng"
@@ -82,14 +85,17 @@ operatingSystems:
             description: "Git version control system"
             install_hint: "sudo dnf install git"
       centos:
-        supported: false
-        notes: "Support planned for future release"
+        supported: true
+        notes: "CentOS 6 or newer"
+        version_constraint: ">= 6"
         prerequisites:
-          - name: "development-tools"
+          # Use same name as Ubuntu because this acts as a key, resolved later by the package-resolver
+          - name: "build-essential"
             command: "gcc"
             description: "Development tools group including gcc, make, and other build tools"
             install_hint: "sudo dnf group install 'Development Tools'"
-          - name: "procps-ng"
+          # Use same name as Ubuntu because this acts as a key, resolved later by the package-resolver
+          - name: "procps"
             command: "ps"
             description: "Process utilities"
             install_hint: "sudo dnf install procps-ng"
@@ -106,14 +112,17 @@ operatingSystems:
             description: "Git version control system"
             install_hint: "sudo dnf install git"
       redhat:
-        supported: false
-        notes: "Support planned for future release"
+        supported: true
+        notes: "Red Hat Enterprise Linux 6 or newer"
+        version_constraint: ">= 6"
         prerequisites:
-          - name: "development-tools"
+          # Use same name as Ubuntu because this acts as a key, resolved later by the package-resolver
+          - name: "build-essential"
             command: "gcc"
             description: "Development tools group including gcc, make, and other build tools"
             install_hint: "sudo dnf group install 'Development Tools'"
-          - name: "procps-ng"
+          # Use same name as Ubuntu because this acts as a key, resolved later by the package-resolver
+          - name: "procps"
             command: "ps"
             description: "Process utilities"
             install_hint: "sudo dnf install procps-ng"
@@ -135,7 +144,7 @@ operatingSystems:
       # Add more Linux distributions here as needed
   darwin:
     supported: true
-    notes: "macOS 10.15 or newer recommended"
+    notes: "macOS 12 or newer"
     prerequisites:
       - name: "xcode-command-line-tools"
         command: "xcode-select"
