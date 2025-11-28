@@ -115,10 +115,10 @@ jobs:
             container: debian:bookworm
           - os: ubuntu-latest
             platform: fedora
-            container: fedora:41
+            container: fedora:latest
           - os: ubuntu-latest
             platform: centos
-            container: quay.io/centos/centos:stream9
+            container: quay.io/centos/centos:latest
           - os: macos-latest
             platform: macos
 

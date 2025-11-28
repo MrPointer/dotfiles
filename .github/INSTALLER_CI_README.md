@@ -16,6 +16,8 @@ This directory contains GitHub Actions workflows for the dotfiles installer proj
 **Platforms Tested**:
 - Ubuntu (latest)
 - Debian (bookworm container)
+- Fedora (latest)
+- CentOS (latest)
 - macOS (latest)
 
 ## Build Process
