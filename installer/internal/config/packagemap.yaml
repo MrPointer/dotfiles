@@ -32,8 +32,11 @@ packages:
     apt:
       name: build-essential
     dnf:
-      name: "Development Tools"
       type: group
+      name:
+        fedora: development-tools
+        centos: "Development Tools"
+        rhel: "Development Tools"
     # Note: Other package managers would define their equivalents here
   curl:
     apt:

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/semver"
+	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 )
 
@@ -11,21 +12,27 @@ import (
 type Resolver struct {
 	mappings           *PackageMappingCollection
 	packageManagerName string // Normalized name like "apt", "brew"
+	systemInfo         *compatibility.SystemInfo
 }
 
 var _ PackageManagerResolver = (*Resolver)(nil)
 
 // NewResolver creates a new package resolver.
-// It requires the loaded package mappings and an active PackageManager to determine the current manager.
+// It requires the loaded package mappings, an active PackageManager to determine the current manager,
+// and system information for distro-specific mappings.
 func NewResolver(
 	mappings *PackageMappingCollection,
 	pm pkgmanager.PackageManager,
+	sysInfo *compatibility.SystemInfo,
 ) (*Resolver, error) {
 	if mappings == nil {
 		return nil, fmt.Errorf("package mappings cannot be nil")
 	}
 	if pm == nil {
 		return nil, fmt.Errorf("package manager cannot be nil")
+	}
+	if sysInfo == nil {
+		return nil, fmt.Errorf("system info cannot be nil")
 	}
 
 	pmInfo, err := pm.GetInfo()
@@ -36,6 +43,7 @@ func NewResolver(
 	return &Resolver{
 		mappings:           mappings,
 		packageManagerName: pmInfo.Name,
+		systemInfo:         sysInfo,
 	}, nil
 }
 
@@ -53,37 +61,31 @@ func (r *Resolver) Resolve(
 
 	packageMapping, ok := r.mappings.Packages[genericPackageCode]
 	if !ok {
-		// If no direct mapping, try to use the generic code as the package name itself.
-		// This allows users to specify packages not in the map, assuming the name is consistent.
-		// No version constraints can be applied in this case unless the package manager handles it.
-		var constraints *semver.Constraints
-		var err error
-		if versionConstraintString != "" {
-			constraints, err = semver.NewConstraint(versionConstraintString)
-			if err != nil {
-				return pkgmanager.RequestedPackageInfo{}, fmt.Errorf("invalid version constraint string '%s' for package '%s': %w", versionConstraintString, genericPackageCode, err)
-			}
-		}
-		// Consider logging a warning here that a direct mapping was not found.
-		return pkgmanager.RequestedPackageInfo{
-			Name:               genericPackageCode, // Use the code as the name
-			Type:               "",                 // No type information available for unmapped packages
-			VersionConstraints: constraints,
-		}, nil
+		// No mapping found for this package
+		return pkgmanager.RequestedPackageInfo{}, fmt.Errorf("no package mapping found for package '%s'", genericPackageCode)
 	}
 
 	var specificPackageName string
 	var packageType string
 	managerSpecificCfg, managerFound := packageMapping[r.packageManagerName]
 
-	if managerFound && managerSpecificCfg.Name != "" {
-		specificPackageName = managerSpecificCfg.Name
-		packageType = managerSpecificCfg.Type
+	if managerFound {
+		resolvedName, found := managerSpecificCfg.ResolvePackageName(r.systemInfo.DistroName)
+		if found && resolvedName != "" {
+			specificPackageName = resolvedName
+			packageType = managerSpecificCfg.Type
+		} else {
+			// Check if this package has distro-specific mappings
+			if r.hasDistroSpecificMappings(managerSpecificCfg) {
+				// Package requires specific distro handling but current distro is not mapped
+				return pkgmanager.RequestedPackageInfo{}, fmt.Errorf("package '%s' requires distro-specific mapping for '%s' distribution, but no mapping is defined", genericPackageCode, r.systemInfo.DistroName)
+			}
+			// No distro-specific mappings exist, but still no mapping for this package manager
+			return pkgmanager.RequestedPackageInfo{}, fmt.Errorf("no package mapping found for package '%s' on package manager '%s'", genericPackageCode, r.packageManagerName)
+		}
 	} else {
-		// No specific name for this manager, fall back to generic code
-		specificPackageName = genericPackageCode
-		// Consider logging a warning here that a specific mapping was not found,
-		// and the generic code is being used as the package name.
+		// No mapping for this package manager
+		return pkgmanager.RequestedPackageInfo{}, fmt.Errorf("no package mapping found for package '%s' on package manager '%s'", genericPackageCode, r.packageManagerName)
 	}
 
 	var constraints *semver.Constraints
@@ -100,6 +102,24 @@ func (r *Resolver) Resolve(
 		Type:               packageType,
 		VersionConstraints: constraints, // This will be nil if versionConstraintString was empty
 	}, nil
+}
+
+// hasDistroSpecificMappings checks if the ManagerSpecificMapping uses distro-specific name mappings.
+func (r *Resolver) hasDistroSpecificMappings(cfg ManagerSpecificMapping) bool {
+	switch nameValue := cfg.Name.(type) {
+	case string:
+		// Simple string case - no distro-specific mappings
+		return false
+	case map[string]interface{}:
+		// Map case - has distro-specific mappings
+		return len(nameValue) > 0
+	case NameMapping:
+		// Direct NameMapping case - has distro-specific mappings
+		return len(nameValue) > 0
+	default:
+		// Unsupported type - assume no distro-specific mappings
+		return false
+	}
 }
 
 // PackageManagerResolver defines the interface for resolving package information.

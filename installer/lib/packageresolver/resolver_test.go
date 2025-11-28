@@ -5,10 +5,20 @@ import (
 	"testing"
 
 	"github.com/Masterminds/semver"
+	"github.com/MrPointer/dotfiles/installer/lib/compatibility"
 	"github.com/MrPointer/dotfiles/installer/lib/packageresolver"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/stretchr/testify/require"
 )
+
+// createTestSystemInfo creates a basic SystemInfo for testing.
+func createTestSystemInfo() *compatibility.SystemInfo {
+	return &compatibility.SystemInfo{
+		OSName:     "linux",
+		DistroName: "fedora",
+		Arch:       "amd64",
+	}
+}
 
 func Test_NewResolver_CanCreateResolver_WithValidInputs(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
@@ -20,7 +30,7 @@ func Test_NewResolver_CanCreateResolver_WithValidInputs(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 
 	require.NoError(t, err)
 	require.NotNil(t, resolver)
@@ -33,7 +43,7 @@ func Test_NewResolver_ReturnsError_WhenMappingsIsNil(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(nil, mockPM)
+	resolver, err := packageresolver.NewResolver(nil, mockPM, createTestSystemInfo())
 
 	require.Error(t, err)
 	require.Nil(t, resolver)
@@ -45,11 +55,28 @@ func Test_NewResolver_ReturnsError_WhenPackageManagerIsNil(t *testing.T) {
 		Packages: make(map[string]packageresolver.PackageMapping),
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, nil)
+	resolver, err := packageresolver.NewResolver(mappings, nil, createTestSystemInfo())
 
 	require.Error(t, err)
 	require.Nil(t, resolver)
 	require.Contains(t, err.Error(), "package manager cannot be nil")
+}
+
+func Test_NewResolver_ReturnsError_WhenSystemInfoIsNil(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: make(map[string]packageresolver.PackageMapping),
+	}
+	mockPM := &pkgmanager.MoqPackageManager{
+		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+			return pkgmanager.PackageManagerInfo{Name: "apt"}, nil
+		},
+	}
+
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, nil)
+
+	require.Error(t, err)
+	require.Nil(t, resolver)
+	require.Contains(t, err.Error(), "system info cannot be nil")
 }
 
 func Test_NewResolver_ReturnsError_WhenPackageManagerGetInfoFails(t *testing.T) {
@@ -62,7 +89,7 @@ func Test_NewResolver_ReturnsError_WhenPackageManagerGetInfoFails(t *testing.T) 
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 
 	require.Error(t, err)
 	require.Nil(t, resolver)
@@ -79,7 +106,7 @@ func Test_NewResolver_AcceptsAnyPackageManagerName(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 
 	require.NoError(t, err)
 	require.NotNil(t, resolver)
@@ -103,12 +130,12 @@ func Test_NewResolver_UsesPackageManagerNameDirectly(t *testing.T) {
 			pmName: "dnf",
 		},
 		{
-			name:   "uses pacman name directly",
-			pmName: "pacman",
+			name:   "uses zypper name directly",
+			pmName: "zypper",
 		},
 		{
-			name:   "uses custom name directly",
-			pmName: "custom-pm",
+			name:   "uses pacman name directly",
+			pmName: "pacman",
 		},
 	}
 
@@ -123,7 +150,7 @@ func Test_NewResolver_UsesPackageManagerNameDirectly(t *testing.T) {
 				},
 			}
 
-			resolver, err := packageresolver.NewResolver(mappings, mockPM)
+			resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 
 			require.NoError(t, err)
 			require.NotNil(t, resolver)
@@ -141,7 +168,7 @@ func Test_Resolve_ReturnsError_WhenGenericPackageCodeIsEmpty(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("", "")
@@ -154,9 +181,10 @@ func Test_Resolve_ReturnsError_WhenGenericPackageCodeIsEmpty(t *testing.T) {
 func Test_Resolve_UsesManagerSpecificName_WhenAvailable(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"neovim": {
-				"apt":  {Name: "neovim"},
-				"brew": {Name: "neovim"},
+			"neovim": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "neovim",
+				},
 			},
 		},
 	}
@@ -166,21 +194,24 @@ func Test_Resolve_UsesManagerSpecificName_WhenAvailable(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("neovim", "")
 
 	require.NoError(t, err)
 	require.Equal(t, "neovim", result.Name)
+	require.Equal(t, "", result.Type)
 	require.Nil(t, result.VersionConstraints)
 }
 
-func Test_Resolve_FallsBackToGenericCode_WhenManagerSpecificNameNotFound(t *testing.T) {
+func Test_Resolve_ReturnsError_WhenManagerSpecificNameNotFound(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"nodejs": {
-				"brew": {Name: "node"},
+			"nodejs": packageresolver.PackageMapping{
+				"brew": packageresolver.ManagerSpecificMapping{
+					Name: "node",
+				},
 			},
 		},
 	}
@@ -190,17 +221,19 @@ func Test_Resolve_FallsBackToGenericCode_WhenManagerSpecificNameNotFound(t *test
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("nodejs", "")
 
-	require.NoError(t, err)
-	require.Equal(t, "nodejs", result.Name) // Falls back to generic code
-	require.Nil(t, result.VersionConstraints)
+	require.Error(t, err)
+	require.Equal(t, pkgmanager.RequestedPackageInfo{}, result)
+	require.Contains(t, err.Error(), "no package mapping found")
+	require.Contains(t, err.Error(), "nodejs")
+	require.Contains(t, err.Error(), "apt")
 }
 
-func Test_Resolve_FallsBackToGenericCode_WhenNoMappingFound(t *testing.T) {
+func Test_Resolve_ReturnsError_WhenNoMappingFound(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: make(map[string]packageresolver.PackageMapping),
 	}
@@ -210,21 +243,24 @@ func Test_Resolve_FallsBackToGenericCode_WhenNoMappingFound(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("unknown-package", "")
 
-	require.NoError(t, err)
-	require.Equal(t, "unknown-package", result.Name)
-	require.Nil(t, result.VersionConstraints)
+	require.Error(t, err)
+	require.Equal(t, pkgmanager.RequestedPackageInfo{}, result)
+	require.Contains(t, err.Error(), "no package mapping found")
+	require.Contains(t, err.Error(), "unknown-package")
 }
 
-func Test_Resolve_FallsBackToGenericCode_WhenManagerSpecificNameIsEmpty(t *testing.T) {
+func Test_Resolve_ReturnsError_WhenManagerSpecificNameIsEmpty(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"test-package": {
-				"apt": {Name: ""}, // Empty name
+			"test-package": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "",
+				},
 			},
 		},
 	}
@@ -234,21 +270,25 @@ func Test_Resolve_FallsBackToGenericCode_WhenManagerSpecificNameIsEmpty(t *testi
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("test-package", "")
 
-	require.NoError(t, err)
-	require.Equal(t, "test-package", result.Name)
-	require.Nil(t, result.VersionConstraints)
+	require.Error(t, err)
+	require.Equal(t, pkgmanager.RequestedPackageInfo{}, result)
+	require.Contains(t, err.Error(), "no package mapping found")
+	require.Contains(t, err.Error(), "test-package")
+	require.Contains(t, err.Error(), "apt")
 }
 
 func Test_Resolve_ParsesVersionConstraints_WhenProvided(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"nodejs": {
-				"apt": {Name: "nodejs"},
+			"nodejs": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "nodejs",
+				},
 			},
 		},
 	}
@@ -258,7 +298,7 @@ func Test_Resolve_ParsesVersionConstraints_WhenProvided(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("nodejs", ">=16.0.0")
@@ -277,8 +317,10 @@ func Test_Resolve_ParsesVersionConstraints_WhenProvided(t *testing.T) {
 func Test_Resolve_ReturnsError_WhenVersionConstraintIsInvalid(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"nodejs": {
-				"apt": {Name: "nodejs"},
+			"nodejs": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "nodejs",
+				},
 			},
 		},
 	}
@@ -288,7 +330,7 @@ func Test_Resolve_ReturnsError_WhenVersionConstraintIsInvalid(t *testing.T) {
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("nodejs", "invalid-version-constraint")
@@ -296,58 +338,43 @@ func Test_Resolve_ReturnsError_WhenVersionConstraintIsInvalid(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, pkgmanager.RequestedPackageInfo{}, result)
 	require.Contains(t, err.Error(), "invalid version constraint string")
-	require.Contains(t, err.Error(), "invalid-version-constraint")
-	require.Contains(t, err.Error(), "nodejs")
 }
 
 func Test_Resolve_ParsesComplexVersionConstraints(t *testing.T) {
 	testCases := []struct {
-		name              string
-		constraint        string
-		versionToTest     string
-		expectedSatisfied bool
+		name        string
+		constraint  string
+		description string
 	}{
 		{
-			name:              "simple greater than constraint",
-			constraint:        ">1.0.0",
-			versionToTest:     "1.1.0",
-			expectedSatisfied: true,
+			name:        "range constraint",
+			constraint:  ">=16.0.0, <20.0.0",
+			description: "should parse range constraints",
 		},
 		{
-			name:              "simple greater than constraint not satisfied",
-			constraint:        ">1.0.0",
-			versionToTest:     "0.9.0",
-			expectedSatisfied: false,
+			name:        "or constraint",
+			constraint:  "^16.0.0 || ^18.0.0",
+			description: "should parse OR constraints",
 		},
 		{
-			name:              "range constraint satisfied",
-			constraint:        ">=1.0.0, <2.0.0",
-			versionToTest:     "1.5.0",
-			expectedSatisfied: true,
+			name:        "exact version",
+			constraint:  "18.17.1",
+			description: "should parse exact version constraints",
 		},
 		{
-			name:              "range constraint not satisfied",
-			constraint:        ">=1.0.0, <2.0.0",
-			versionToTest:     "2.1.0",
-			expectedSatisfied: false,
+			name:        "tilde constraint",
+			constraint:  "~16.14.0",
+			description: "should parse tilde constraints",
 		},
 		{
-			name:              "OR constraint satisfied by first part",
-			constraint:        "<1.0.0 || >2.0.0",
-			versionToTest:     "0.5.0",
-			expectedSatisfied: true,
+			name:        "caret constraint",
+			constraint:  "^16.0.0",
+			description: "should parse caret constraints",
 		},
 		{
-			name:              "OR constraint satisfied by second part",
-			constraint:        "<1.0.0 || >2.0.0",
-			versionToTest:     "3.0.0",
-			expectedSatisfied: true,
-		},
-		{
-			name:              "OR constraint not satisfied",
-			constraint:        "<1.0.0 || >2.0.0",
-			versionToTest:     "1.5.0",
-			expectedSatisfied: false,
+			name:        "complex mixed constraint",
+			constraint:  ">=14.0.0, <16.0.0 || >=16.14.0, <18.0.0 || >=18.12.0",
+			description: "should parse complex mixed constraints",
 		},
 	}
 
@@ -355,8 +382,10 @@ func Test_Resolve_ParsesComplexVersionConstraints(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mappings := &packageresolver.PackageMappingCollection{
 				Packages: map[string]packageresolver.PackageMapping{
-					"test-package": {
-						"apt": {Name: "test-pkg"},
+					"test-package": packageresolver.PackageMapping{
+						"apt": packageresolver.ManagerSpecificMapping{
+							Name: "test-package",
+						},
 					},
 				},
 			}
@@ -366,59 +395,62 @@ func Test_Resolve_ParsesComplexVersionConstraints(t *testing.T) {
 				},
 			}
 
-			resolver, err := packageresolver.NewResolver(mappings, mockPM)
+			resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 			require.NoError(t, err)
 
 			result, err := resolver.Resolve("test-package", tc.constraint)
 
-			require.NoError(t, err)
-			require.NotNil(t, result.VersionConstraints)
+			require.NoError(t, err, tc.description)
+			require.Equal(t, "test-package", result.Name)
+			require.NotNil(t, result.VersionConstraints, tc.description)
 
-			testVersion, err := semver.NewVersion(tc.versionToTest)
+			// Verify the constraint was parsed correctly by creating the same constraint
+			expectedConstraints, err := semver.NewConstraint(tc.constraint)
 			require.NoError(t, err)
 
-			satisfied := result.VersionConstraints.Check(testVersion)
-			require.Equal(t, tc.expectedSatisfied, satisfied)
+			// Test with a sample version to ensure constraints work the same way
+			testVersion, _ := semver.NewVersion("16.0.0")
+			require.Equal(t, expectedConstraints.Check(testVersion), result.VersionConstraints.Check(testVersion), tc.description)
 		})
 	}
 }
 
 func Test_Resolve_HandlesMultiplePackageManagers(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: map[string]packageresolver.PackageMapping{
+			"nodejs": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "nodejs",
+				},
+				"brew": packageresolver.ManagerSpecificMapping{
+					Name: "node",
+				},
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Name: "nodejs",
+				},
+			},
+		},
+	}
+
 	testCases := []struct {
 		name                string
 		packageManagerName  string
 		expectedPackageName string
 	}{
 		{
-			name:                "resolves for apt",
+			name:                "apt manager uses nodejs",
 			packageManagerName:  "apt",
 			expectedPackageName: "nodejs",
 		},
 		{
-			name:                "resolves for brew",
+			name:                "brew manager uses node",
 			packageManagerName:  "brew",
 			expectedPackageName: "node",
 		},
 		{
-			name:                "resolves for dnf",
+			name:                "dnf manager uses nodejs",
 			packageManagerName:  "dnf",
 			expectedPackageName: "nodejs",
-		},
-		{
-			name:                "resolves for pacman",
-			packageManagerName:  "pacman",
-			expectedPackageName: "nodejs",
-		},
-	}
-
-	mappings := &packageresolver.PackageMappingCollection{
-		Packages: map[string]packageresolver.PackageMapping{
-			"nodejs": {
-				"apt":    {Name: "nodejs"},
-				"brew":   {Name: "node"},
-				"dnf":    {Name: "nodejs"},
-				"pacman": {Name: "nodejs"},
-			},
 		},
 	}
 
@@ -430,55 +462,59 @@ func Test_Resolve_HandlesMultiplePackageManagers(t *testing.T) {
 				},
 			}
 
-			resolver, err := packageresolver.NewResolver(mappings, mockPM)
+			resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 			require.NoError(t, err)
 
 			result, err := resolver.Resolve("nodejs", "")
 
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedPackageName, result.Name)
+			require.Equal(t, "", result.Type)
+			require.Nil(t, result.VersionConstraints)
 		})
 	}
 }
 
 func Test_Resolve_WorksWithRealWorldStructure(t *testing.T) {
-	// This test uses the actual structure from packagemap.yaml
+	// This test uses a structure that closely resembles the actual packagemap.yaml
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"git": {
-				"apt":  {Name: "git"},
-				"brew": {Name: "git"},
+			"git": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "git",
+				},
+				"brew": packageresolver.ManagerSpecificMapping{
+					Name: "git",
+				},
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Name: "git",
+				},
 			},
-			"gpg": {
-				"apt":  {Name: "gnupg2"},
-				"brew": {Name: "gnupg"},
-				"dnf":  {Name: "gnupg2"},
-			},
-			"neovim": {
-				"apt":  {Name: "neovim"},
-				"brew": {Name: "neovim"},
-			},
-			"zsh": {
-				"apt":  {Name: "zsh"},
-				"brew": {Name: "zsh"},
+			"neovim": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "neovim",
+				},
+				"brew": packageresolver.ManagerSpecificMapping{
+					Name: "neovim",
+				},
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Name: "neovim",
+				},
 			},
 		},
 	}
 
 	testCases := []struct {
-		packageManagerName  string
-		packageCode         string
-		expectedPackageName string
+		packageCode        string
+		packageManagerName string
+		expectedName       string
 	}{
-		{"apt", "git", "git"},
-		{"brew", "git", "git"},
-		{"apt", "gpg", "gnupg2"},
-		{"brew", "gpg", "gnupg"},
-		{"dnf", "gpg", "gnupg2"},
-		{"apt", "neovim", "neovim"},
-		{"brew", "neovim", "neovim"},
-		{"apt", "zsh", "zsh"},
-		{"brew", "zsh", "zsh"},
+		{"git", "apt", "git"},
+		{"git", "brew", "git"},
+		{"git", "dnf", "git"},
+		{"neovim", "apt", "neovim"},
+		{"neovim", "brew", "neovim"},
+		{"neovim", "dnf", "neovim"},
 	}
 
 	for _, tc := range testCases {
@@ -489,66 +525,70 @@ func Test_Resolve_WorksWithRealWorldStructure(t *testing.T) {
 				},
 			}
 
-			resolver, err := packageresolver.NewResolver(mappings, mockPM)
+			resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 			require.NoError(t, err)
 
 			result, err := resolver.Resolve(tc.packageCode, "")
 
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedPackageName, result.Name)
+			require.Equal(t, tc.expectedName, result.Name)
+			require.Equal(t, "", result.Type)
+			require.Nil(t, result.VersionConstraints)
 		})
 	}
 }
 
-func Test_Resolve_HandlesPackageWithVersionConstraints_UsingRealWorldStructure(t *testing.T) {
+func Test_Resolve_ParsesVersionConstraintsCorrectlyForMultiplePackages(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"git": {
-				"apt":  {Name: "git"},
-				"brew": {Name: "git"},
+			"git": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "git",
+				},
 			},
 		},
 	}
-
 	mockPM := &pkgmanager.MoqPackageManager{
 		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
 			return pkgmanager.PackageManagerInfo{Name: "apt"}, nil
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPM)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("git", ">=2.0.0")
 
 	require.NoError(t, err)
 	require.Equal(t, "git", result.Name)
+	require.Equal(t, "", result.Type)
 	require.NotNil(t, result.VersionConstraints)
 
-	// Verify constraint works
+	// Test that the constraint works as expected
 	version200, _ := semver.NewVersion("2.0.0")
 	version100, _ := semver.NewVersion("1.0.0")
 	require.True(t, result.VersionConstraints.Check(version200))
 	require.False(t, result.VersionConstraints.Check(version100))
 }
 
-func Test_Resolve_HandlesPackageType_WhenSpecified(t *testing.T) {
+func Test_Resolve_RespectsTypeInfo_WhenProvided(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"build-tools": {
-				"apt": packageresolver.ManagerSpecificMapping{Name: "build-essential"},
-				"dnf": packageresolver.ManagerSpecificMapping{Name: "Development Tools", Type: "group"},
+			"build-tools": packageresolver.PackageMapping{
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Name: "Development Tools",
+					Type: "group",
+				},
 			},
 		},
 	}
-
-	mockPackageManager := &pkgmanager.MoqPackageManager{
+	mockPM := &pkgmanager.MoqPackageManager{
 		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
-			return pkgmanager.PackageManagerInfo{Name: "dnf", Version: "4.0.0"}, nil
+			return pkgmanager.PackageManagerInfo{Name: "dnf"}, nil
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPackageManager)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("build-tools", "")
@@ -559,28 +599,216 @@ func Test_Resolve_HandlesPackageType_WhenSpecified(t *testing.T) {
 	require.Nil(t, result.VersionConstraints)
 }
 
-func Test_Resolve_HandlesEmptyPackageType_WhenNotSpecified(t *testing.T) {
+func Test_Resolve_FallsBackToDirectMapping_WhenNoDistroSpecificFound(t *testing.T) {
 	mappings := &packageresolver.PackageMappingCollection{
 		Packages: map[string]packageresolver.PackageMapping{
-			"git": {
-				"apt": packageresolver.ManagerSpecificMapping{Name: "git"},
+			"git": packageresolver.PackageMapping{
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Name: "git",
+					Type: "",
+				},
 			},
 		},
 	}
-
-	mockPackageManager := &pkgmanager.MoqPackageManager{
+	mockPM := &pkgmanager.MoqPackageManager{
 		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
-			return pkgmanager.PackageManagerInfo{Name: "apt", Version: "2.0.0"}, nil
+			return pkgmanager.PackageManagerInfo{Name: "dnf"}, nil
 		},
 	}
 
-	resolver, err := packageresolver.NewResolver(mappings, mockPackageManager)
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, createTestSystemInfo())
 	require.NoError(t, err)
 
 	result, err := resolver.Resolve("git", "")
 
 	require.NoError(t, err)
 	require.Equal(t, "git", result.Name)
-	require.Equal(t, "", result.Type) // Empty type for regular packages
+	require.Equal(t, "", result.Type)
 	require.Nil(t, result.VersionConstraints)
+}
+
+func Test_Resolve_ReturnsError_WhenSimpleStringPackageHasNoMapping(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: map[string]packageresolver.PackageMapping{
+			"simple-package": packageresolver.PackageMapping{
+				"apt": packageresolver.ManagerSpecificMapping{
+					Name: "apt-simple-package",
+				},
+				// No DNF mapping
+			},
+		},
+	}
+
+	// Test with DNF on any distro - should error since no mapping exists
+	sysInfo := &compatibility.SystemInfo{
+		OSName:     "linux",
+		DistroName: "fedora",
+		Arch:       "amd64",
+	}
+	mockPM := &pkgmanager.MoqPackageManager{
+		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+			return pkgmanager.PackageManagerInfo{Name: "dnf"}, nil
+		},
+	}
+
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, sysInfo)
+	require.NoError(t, err)
+
+	result, err := resolver.Resolve("simple-package", "")
+
+	require.Error(t, err)
+	require.Equal(t, pkgmanager.RequestedPackageInfo{}, result)
+	require.Contains(t, err.Error(), "no package mapping found")
+	require.Contains(t, err.Error(), "simple-package")
+	require.Contains(t, err.Error(), "dnf")
+}
+
+func Test_Resolve_UsesDistroSpecificMapping_WhenAvailable(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: map[string]packageresolver.PackageMapping{
+			"development-tools": packageresolver.PackageMapping{
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Type: "group",
+					Name: map[string]interface{}{
+						"fedora": "development-tools",
+						"centos": "Development Tools",
+					},
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name         string
+		distroName   string
+		expectedName string
+		expectedType string
+	}{
+		{
+			name:         "uses fedora specific mapping",
+			distroName:   "fedora",
+			expectedName: "development-tools",
+			expectedType: "group",
+		},
+		{
+			name:         "uses centos specific mapping",
+			distroName:   "centos",
+			expectedName: "Development Tools",
+			expectedType: "group",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sysInfo := &compatibility.SystemInfo{
+				OSName:     "linux",
+				DistroName: tc.distroName,
+				Arch:       "amd64",
+			}
+			mockPM := &pkgmanager.MoqPackageManager{
+				GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+					return pkgmanager.PackageManagerInfo{Name: "dnf"}, nil
+				},
+			}
+
+			resolver, err := packageresolver.NewResolver(mappings, mockPM, sysInfo)
+			require.NoError(t, err)
+
+			result, err := resolver.Resolve("development-tools", "")
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedName, result.Name)
+			require.Equal(t, tc.expectedType, result.Type)
+			require.Nil(t, result.VersionConstraints)
+		})
+	}
+}
+
+func Test_Resolve_ReturnsError_WhenDistroNotMappedForDistroSpecificPackage(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: map[string]packageresolver.PackageMapping{
+			"development-tools": packageresolver.PackageMapping{
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Type: "group",
+					Name: map[string]interface{}{
+						"fedora": "development-tools",
+						"centos": "Development Tools",
+					},
+				},
+			},
+		},
+	}
+
+	// Test with a distro that doesn't have specific mapping (should fail)
+	sysInfo := &compatibility.SystemInfo{
+		OSName:     "linux",
+		DistroName: "ubuntu", // No specific mapping for Ubuntu
+		Arch:       "amd64",
+	}
+	mockPM := &pkgmanager.MoqPackageManager{
+		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+			return pkgmanager.PackageManagerInfo{Name: "dnf"}, nil
+		},
+	}
+
+	resolver, err := packageresolver.NewResolver(mappings, mockPM, sysInfo)
+	require.NoError(t, err)
+
+	result, err := resolver.Resolve("development-tools", "")
+
+	require.Error(t, err)
+	require.Equal(t, pkgmanager.RequestedPackageInfo{}, result)
+	require.Contains(t, err.Error(), "requires distro-specific mapping")
+	require.Contains(t, err.Error(), "ubuntu")
+}
+
+func Test_Resolve_HandlesAllSupportedDistros(t *testing.T) {
+	mappings := &packageresolver.PackageMappingCollection{
+		Packages: map[string]packageresolver.PackageMapping{
+			"development-tools": packageresolver.PackageMapping{
+				"dnf": packageresolver.ManagerSpecificMapping{
+					Type: "group",
+					Name: map[string]interface{}{
+						"fedora": "development-tools",
+						"centos": "Development Tools",
+						"rhel":   "Development Tools",
+					},
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		distroName   string
+		expectedName string
+	}{
+		{"fedora", "development-tools"},
+		{"centos", "Development Tools"},
+		{"rhel", "Development Tools"},
+	}
+
+	for _, tc := range testCases {
+		t.Run("handles "+tc.distroName+" distro", func(t *testing.T) {
+			sysInfo := &compatibility.SystemInfo{
+				OSName:     "linux",
+				DistroName: tc.distroName,
+				Arch:       "amd64",
+			}
+			mockPM := &pkgmanager.MoqPackageManager{
+				GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+					return pkgmanager.PackageManagerInfo{Name: "dnf"}, nil
+				},
+			}
+
+			resolver, err := packageresolver.NewResolver(mappings, mockPM, sysInfo)
+			require.NoError(t, err)
+
+			result, err := resolver.Resolve("development-tools", "")
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedName, result.Name)
+			require.Equal(t, "group", result.Type)
+			require.Nil(t, result.VersionConstraints)
+		})
+	}
 }

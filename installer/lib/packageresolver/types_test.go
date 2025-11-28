@@ -152,3 +152,179 @@ func Test_PackageMappingCollection_SupportsRealWorldStructure(t *testing.T) {
 	require.Equal(t, "neovim", neovimMapping["apt"].Name)
 	require.Equal(t, "neovim", neovimMapping["brew"].Name)
 }
+
+func Test_NameMapping_GetNameForDistro_ReturnsExactMatch_WhenDistroExists(t *testing.T) {
+	nameMapping := packageresolver.NameMapping{
+		"fedora": "development-tools",
+		"centos": "Development Tools",
+		"ubuntu": "build-essential",
+	}
+
+	name, found := nameMapping.GetNameForDistro("fedora")
+	require.True(t, found)
+	require.Equal(t, "development-tools", name)
+
+	name, found = nameMapping.GetNameForDistro("centos")
+	require.True(t, found)
+	require.Equal(t, "Development Tools", name)
+
+	name, found = nameMapping.GetNameForDistro("ubuntu")
+	require.True(t, found)
+	require.Equal(t, "build-essential", name)
+}
+
+func Test_NameMapping_GetNameForDistro_ReturnsNotFound_WhenDistroNotMapped(t *testing.T) {
+	nameMapping := packageresolver.NameMapping{
+		"fedora": "development-tools",
+		"centos": "Development Tools",
+	}
+
+	// Should return not found for unmapped distro
+	name, found := nameMapping.GetNameForDistro("rhel")
+	require.False(t, found)
+	require.Equal(t, "", name)
+
+	name, found = nameMapping.GetNameForDistro("unknown")
+	require.False(t, found)
+	require.Equal(t, "", name)
+}
+
+func Test_NameMapping_GetNameForDistro_ReturnsNotFound_WhenNoMatchOrDefault(t *testing.T) {
+	nameMapping := packageresolver.NameMapping{
+		"fedora": "development-tools",
+		"centos": "Development Tools",
+	}
+
+	name, found := nameMapping.GetNameForDistro("unknown-distro")
+	require.False(t, found)
+	require.Equal(t, "", name)
+}
+
+func Test_NameMapping_GetNameForDistro_ReturnsExactMatchOnly(t *testing.T) {
+	nameMapping := packageresolver.NameMapping{
+		"fedora": "development-tools",
+		"centos": "Development Tools",
+	}
+
+	// Should return exact matches only
+	name, found := nameMapping.GetNameForDistro("fedora")
+	require.True(t, found)
+	require.Equal(t, "development-tools", name)
+
+	name, found = nameMapping.GetNameForDistro("centos")
+	require.True(t, found)
+	require.Equal(t, "Development Tools", name)
+}
+
+func Test_ManagerSpecificMapping_ResolvePackageName_HandlesStringName(t *testing.T) {
+	mapping := packageresolver.ManagerSpecificMapping{
+		Name: "git",
+		Type: "",
+	}
+
+	name, found := mapping.ResolvePackageName("fedora")
+	require.True(t, found)
+	require.Equal(t, "git", name)
+
+	name, found = mapping.ResolvePackageName("centos")
+	require.True(t, found)
+	require.Equal(t, "git", name)
+}
+
+func Test_ManagerSpecificMapping_ResolvePackageName_HandlesMapName(t *testing.T) {
+	mapping := packageresolver.ManagerSpecificMapping{
+		Name: map[string]interface{}{
+			"fedora": "development-tools",
+			"centos": "Development Tools",
+		},
+		Type: "group",
+	}
+
+	name, found := mapping.ResolvePackageName("fedora")
+	require.True(t, found)
+	require.Equal(t, "development-tools", name)
+
+	name, found = mapping.ResolvePackageName("centos")
+	require.True(t, found)
+	require.Equal(t, "Development Tools", name)
+}
+
+func Test_ManagerSpecificMapping_ResolvePackageName_HandlesMapNameWithoutFallback(t *testing.T) {
+	mapping := packageresolver.ManagerSpecificMapping{
+		Name: map[string]interface{}{
+			"fedora": "development-tools",
+			"centos": "Development Tools",
+		},
+		Type: "group",
+	}
+
+	name, found := mapping.ResolvePackageName("fedora")
+	require.True(t, found)
+	require.Equal(t, "development-tools", name)
+
+	// Should not find unmapped distro
+	name, found = mapping.ResolvePackageName("rhel")
+	require.False(t, found)
+	require.Equal(t, "", name)
+}
+
+func Test_ManagerSpecificMapping_ResolvePackageName_ReturnsNotFound_WhenNoMatch(t *testing.T) {
+	mapping := packageresolver.ManagerSpecificMapping{
+		Name: map[string]interface{}{
+			"fedora": "development-tools",
+			"centos": "Development Tools",
+		},
+		Type: "group",
+	}
+
+	name, found := mapping.ResolvePackageName("unknown-distro")
+	require.False(t, found)
+	require.Equal(t, "", name)
+}
+
+func Test_ManagerSpecificMapping_ResolvePackageName_HandlesEmptyString(t *testing.T) {
+	mapping := packageresolver.ManagerSpecificMapping{
+		Name: "",
+		Type: "",
+	}
+
+	name, found := mapping.ResolvePackageName("fedora")
+	require.False(t, found)
+	require.Equal(t, "", name)
+}
+
+func Test_ManagerSpecificMapping_ResolvePackageName_HandlesNilName(t *testing.T) {
+	mapping := packageresolver.ManagerSpecificMapping{
+		Name: nil,
+		Type: "",
+	}
+
+	name, found := mapping.ResolvePackageName("fedora")
+	require.False(t, found)
+	require.Equal(t, "", name)
+}
+
+func Test_ManagerSpecificMapping_ResolvePackageName_HandlesDirectNameMapping(t *testing.T) {
+	nameMapping := packageresolver.NameMapping{
+		"fedora": "development-tools",
+		"centos": "Development Tools",
+	}
+
+	mapping := packageresolver.ManagerSpecificMapping{
+		Name: nameMapping,
+		Type: "group",
+	}
+
+	name, found := mapping.ResolvePackageName("fedora")
+	require.True(t, found)
+	require.Equal(t, "development-tools", name)
+
+	name, found = mapping.ResolvePackageName("centos")
+	require.True(t, found)
+	require.Equal(t, "Development Tools", name)
+
+	// Should not find unmapped distro
+	name, found = mapping.ResolvePackageName("rhel")
+	require.False(t, found)
+	require.Equal(t, "", name)
+}

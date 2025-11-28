@@ -160,7 +160,7 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 }
 
 // createPackageResolverForSystem creates a package resolver for the given system.
-func createPackageResolverForSystem(packageManager pkgmanager.PackageManager) *packageresolver.Resolver {
+func createPackageResolverForSystem(packageManager pkgmanager.PackageManager, sysInfo *compatibility.SystemInfo) *packageresolver.Resolver {
 	// Load package mappings
 	mappings, err := packageresolver.LoadPackageMappings(viper.GetViper(), "")
 	if err != nil {
@@ -168,7 +168,7 @@ func createPackageResolverForSystem(packageManager pkgmanager.PackageManager) *p
 	}
 
 	// Create and return resolver
-	resolver, err := packageresolver.NewResolver(mappings, packageManager)
+	resolver, err := packageresolver.NewResolver(mappings, packageManager, sysInfo)
 	if err != nil {
 		return nil
 	}
@@ -235,7 +235,7 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo, log logger
 	installed := false
 
 	// Create package resolver to get proper package info including types
-	resolver := createPackageResolverForSystem(packageManager)
+	resolver := createPackageResolverForSystem(packageManager, &sysInfo)
 	if resolver == nil {
 		log.Warning("Cannot resolve package information for this system")
 		return false
