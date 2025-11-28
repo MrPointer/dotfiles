@@ -50,3 +50,19 @@ packages:
       name: file
     dnf:
       name: file
+  procps:
+    apt:
+      name: procps
+    dnf:
+      name: procps-ng
+  development-tools:
+    apt:
+      name: build-essential
+    dnf:
+      name: "Development Tools"
+      type: group
+  procps-ng:
+    apt:
+      name: procps
+    dnf:
+      name: procps-ng

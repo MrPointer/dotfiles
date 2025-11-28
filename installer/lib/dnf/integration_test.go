@@ -1,5 +1,3 @@
-//go:build integration
-
 package dnf_test
 
 import (
@@ -21,8 +19,8 @@ func Test_DnfPackageManager_CanCheckIfPackageExists_Integration(t *testing.T) {
 		t.Skip("DNF not available on this system")
 	}
 
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewDefaultOsManager()
+	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
@@ -42,8 +40,8 @@ func Test_DnfPackageManager_CanCheckIfGroupExists_Integration(t *testing.T) {
 		t.Skip("DNF not available on this system")
 	}
 
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewDefaultOsManager()
+	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
@@ -62,8 +60,8 @@ func Test_DnfPackageManager_CanListInstalledPackages_Integration(t *testing.T) {
 		t.Skip("DNF not available on this system")
 	}
 
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewDefaultOsManager()
+	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
@@ -91,8 +89,8 @@ func Test_DnfPackageManager_CanGetManagerInfo_Integration(t *testing.T) {
 		t.Skip("DNF not available on this system")
 	}
 
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewDefaultOsManager()
+	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
@@ -116,8 +114,8 @@ func Test_DnfPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 		t.Skip("This test requires root privileges or sudo access")
 	}
 
-	defaultCommander := utils.NewDefaultCommander()
-	defaultOsManager := osmanager.NewDefaultOsManager()
+	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
+	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
@@ -164,14 +162,14 @@ func Test_DnfPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 
 // isDnfAvailable checks if DNF is available on the system
 func isDnfAvailable() bool {
-	commander := utils.NewDefaultCommander()
+	commander := utils.NewDefaultCommander(logger.DefaultLogger)
 	_, err := commander.RunCommand("which", []string{"dnf"}, utils.WithCaptureOutput())
 	return err == nil
 }
 
 // hasSudoAccess checks if the current user has sudo access
 func hasSudoAccess() bool {
-	commander := utils.NewDefaultCommander()
+	commander := utils.NewDefaultCommander(logger.DefaultLogger)
 	_, err := commander.RunCommand("sudo", []string{"-n", "true"}, utils.WithCaptureOutput())
 	return err == nil
 }
