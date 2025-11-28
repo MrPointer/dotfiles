@@ -138,6 +138,12 @@ operatingSystems:
             command: "git"
             description: "Git version control system"
             install_hint: "sudo dnf install git"
+      rocky:
+        supported: false
+        notes: "No current plans for support"
+      almalinux:
+        supported: false
+        notes: "No current plans for support"
       suse:
         supported: false
         notes: "No current plans for support"

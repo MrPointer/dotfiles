@@ -110,7 +110,7 @@ func (r *Resolver) hasDistroSpecificMappings(cfg ManagerSpecificMapping) bool {
 	case string:
 		// Simple string case - no distro-specific mappings
 		return false
-	case map[string]interface{}:
+	case map[string]any:
 		// Map case - has distro-specific mappings
 		return len(nameValue) > 0
 	case NameMapping:

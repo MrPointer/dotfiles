@@ -233,7 +233,7 @@ func Test_ManagerSpecificMapping_ResolvePackageName_HandlesStringName(t *testing
 
 func Test_ManagerSpecificMapping_ResolvePackageName_HandlesMapName(t *testing.T) {
 	mapping := packageresolver.ManagerSpecificMapping{
-		Name: map[string]interface{}{
+		Name: map[string]any{
 			"fedora": "development-tools",
 			"centos": "Development Tools",
 		},
@@ -251,7 +251,7 @@ func Test_ManagerSpecificMapping_ResolvePackageName_HandlesMapName(t *testing.T)
 
 func Test_ManagerSpecificMapping_ResolvePackageName_HandlesMapNameWithoutFallback(t *testing.T) {
 	mapping := packageresolver.ManagerSpecificMapping{
-		Name: map[string]interface{}{
+		Name: map[string]any{
 			"fedora": "development-tools",
 			"centos": "Development Tools",
 		},
@@ -270,7 +270,7 @@ func Test_ManagerSpecificMapping_ResolvePackageName_HandlesMapNameWithoutFallbac
 
 func Test_ManagerSpecificMapping_ResolvePackageName_ReturnsNotFound_WhenNoMatch(t *testing.T) {
 	mapping := packageresolver.ManagerSpecificMapping{
-		Name: map[string]interface{}{
+		Name: map[string]any{
 			"fedora": "development-tools",
 			"centos": "Development Tools",
 		},

@@ -669,7 +669,7 @@ func Test_Resolve_UsesDistroSpecificMapping_WhenAvailable(t *testing.T) {
 			"development-tools": packageresolver.PackageMapping{
 				"dnf": packageresolver.ManagerSpecificMapping{
 					Type: "group",
-					Name: map[string]interface{}{
+					Name: map[string]any{
 						"fedora": "development-tools",
 						"centos": "Development Tools",
 					},
@@ -730,7 +730,7 @@ func Test_Resolve_ReturnsError_WhenDistroNotMappedForDistroSpecificPackage(t *te
 			"development-tools": packageresolver.PackageMapping{
 				"dnf": packageresolver.ManagerSpecificMapping{
 					Type: "group",
-					Name: map[string]interface{}{
+					Name: map[string]any{
 						"fedora": "development-tools",
 						"centos": "Development Tools",
 					},
@@ -768,7 +768,7 @@ func Test_Resolve_HandlesAllSupportedDistros(t *testing.T) {
 			"development-tools": packageresolver.PackageMapping{
 				"dnf": packageresolver.ManagerSpecificMapping{
 					Type: "group",
-					Name: map[string]interface{}{
+					Name: map[string]any{
 						"fedora": "development-tools",
 						"centos": "Development Tools",
 						"rhel":   "Development Tools",

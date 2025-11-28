@@ -140,7 +140,7 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 		switch sysInfo.DistroName {
 		case "ubuntu", "debian":
 			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
-		case "fedora", "centos", "rhel", "rocky", "almalinux":
+		case "fedora", "centos", "rhel":
 			return dnf.NewDnfPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
 		default:
 			cliLogger.Warning("Unsupported Linux distribution for automatic package installation: %s", sysInfo.DistroName)

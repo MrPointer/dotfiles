@@ -16,7 +16,7 @@ type ManagerSpecificMapping struct {
 	// Name can be either:
 	// - A string: single package name used for all distributions
 	// - A NameMapping: map of distribution-specific names
-	Name interface{} `mapstructure:"name"`
+	Name any `mapstructure:"name"`
 
 	// Type is the package type (e.g., "group", "pattern"). Empty means regular package.
 	Type string `mapstructure:"type,omitempty"`
@@ -45,7 +45,7 @@ func (msm *ManagerSpecificMapping) ResolvePackageName(distroName string) (string
 	case string:
 		// Simple string case - same name for all distros
 		return nameValue, nameValue != ""
-	case map[string]interface{}:
+	case map[string]any:
 		// Convert to NameMapping for processing
 		nameMapping := make(NameMapping)
 		for k, v := range nameValue {
