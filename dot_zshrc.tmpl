@@ -127,6 +127,7 @@ fi
     command -v chezmoi &>/dev/null && cache_completion "chezmoi" "chezmoi completion zsh"
     command -v npm &>/dev/null && cache_completion "npm" "npm completion"
     command -v task &>/dev/null && cache_completion "task" "task --completion zsh"
+    command -v pip &>/dev/null && cache_completion "pip" "pip completion --zsh"
 } &!
 
 # Load dotnet completions if available

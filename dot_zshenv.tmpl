@@ -1,7 +1,9 @@
 export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
 
-# Ensure gpg can prompt input from an available tty
-export GPG_TTY=$(tty)
+# Cache GPG_TTY to avoid subprocess on every shell invocation
+if [[ -z "$GPG_TTY" ]]; then
+    export GPG_TTY=$(tty)
+fi
 
 function load_brew_env() {
     # Load (home)brew
@@ -38,11 +40,9 @@ if [[ ! -v BREW_LOADED || "$BREW_LOADED" == "false" ]]; then
 fi
 
 {{ if (eq .chezmoi.os "linux") -}}
-if command -v cargo &>/dev/null; then
-    if command -v mold &>/dev/null; then
-        # Always prefer to use mold as the linker on Linux
-        export RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold"
-    fi
+if [[ -x "$HOME/.cargo/bin/cargo" ]] && command -v mold &>/dev/null; then
+    # Always prefer to use mold as the linker on Linux
+    export RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold"
 fi
 {{- end }}
 
@@ -56,11 +56,16 @@ fi
 {{- end -}}
 
 {{ if .personal.work_env -}}
-# Load work-generic profile
-source {{ .system.work_generic_dotfiles_profile }}
+# Load work environment with caching
+if [[ -z "$WORK_ENV_LOADED" ]]; then
+    if [[ -r "{{ .system.work_generic_dotfiles_profile }}" ]]; then
+        source {{ .system.work_generic_dotfiles_profile }}
+    fi
 
-# Load work-generic env file if exists
-if [[ -v "WORK_ZSH_ENV_EXTENSION" && -f "$WORK_ZSH_ENV_EXTENSION" ]]; then
-  source "$WORK_ZSH_ENV_EXTENSION"
+    if [[ -n "$WORK_ZSH_ENV_EXTENSION" && -r "$WORK_ZSH_ENV_EXTENSION" ]]; then
+        source "$WORK_ZSH_ENV_EXTENSION"
+    fi
+
+    export WORK_ENV_LOADED=true
 fi
 {{- end }}
