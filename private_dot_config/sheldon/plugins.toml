@@ -9,44 +9,83 @@
 # - `sheldon remove` to remove a plugin from the config file
 #
 # See the documentation for more https://github.com/rossmacarthur/sheldon#readme
+#
+# Optimized Sheldon Configuration for Fast Startup
+# =================================================
+# This configuration prioritizes shell responsiveness by:
+# - Loading only essential plugins immediately
+# - Deferring non-critical plugins for background loading
+# - Using efficient defer templates
 
 shell = "zsh"
 
 [plugins]
 
+# =============================================================================
+# CRITICAL PLUGINS (Load Immediately)
+# =============================================================================
+# These plugins are essential for core shell functionality and must load first
+
 [plugins.zsh-defer]
 github = "romkatv/zsh-defer"
+# MUST be first - provides defer functionality for other plugins
 
 [plugins.powerlevel10k]
 github = "romkatv/powerlevel10k"
+# MUST load early for instant prompt to work
+
+[plugins.zsh-completions]
+github = "zsh-users/zsh-completions"
+# Load immediately - provides essential completions
+
+[plugins.fzf-tab]
+github = "Aloxaf/fzf-tab"
+# Load immediately - critical for interactive tab completion
+
+# =============================================================================
+# DEFERRED PLUGINS (Background Loading)
+# =============================================================================
+# These plugins enhance the experience but don't need to block startup
 
 [plugins.zsh-syntax-highlighting]
 github = "zsh-users/zsh-syntax-highlighting"
 apply = ["defer"]
+# Visual enhancement - can load in background
 
 [plugins.zsh-autosuggestions]
 github = "zsh-users/zsh-autosuggestions"
 apply = ["defer"]
-
-[plugins.zsh-completions]
-github = "zsh-users/zsh-completions"
+# Convenience feature - can load in background
 
 [plugins.git-clean-branch]
 github = "gobriansteele/git-clean-branch"
 apply = ["defer"]
+# Utility command - not needed immediately
 
 [plugins.zsh-diff-so-fancy]
 github = "so-fancy/diff-so-fancy"
 apply = ["defer"]
+# Visual enhancement - can wait
 
 [plugins.zsh-sudo]
 github = "none9632/zsh-sudo"
+apply = ["defer"]
+# Convenience feature - can load later
 
 [plugins.zsh-eza-ls]
 github = "birdhackor/zsh-eza-ls-plugin"
+apply = ["defer"]
+# Visual enhancement - not critical for startup
 
-[plugins.fzf-tab]
-github = "Aloxaf/fzf-tab"
+# =============================================================================
+# TEMPLATES
+# =============================================================================
 
 [templates]
-defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
+# Optimized defer template using zsh-defer -c for cleaner execution
+defer = """{{ hooks?.pre | nl }}{% for file in files %}zsh-defer -c 'source "{{ file }}"'
+{% endfor %}{{ hooks?.post | nl }}"""
+
+# Alternative defer template with timing (uncomment for debugging)
+# defer-timed = """{{ hooks?.pre | nl }}{% for file in files %}zsh-defer -t 0.1 source "{{ file }}"
+# {% endfor %}{{ hooks?.post | nl }}"""

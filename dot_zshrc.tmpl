@@ -5,15 +5,13 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Use VIM as default editor
+# Essential environment setup
 export VISUAL=vim
 export EDITOR="$VISUAL"
-
-# You may need to manually set your language environment
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
-# Ensure history is respected
+# History configuration
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
@@ -21,60 +19,69 @@ setopt appendhistory
 
 # Setup some stuff for oh-my-zsh plugins
 export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/"
-
 zstyle ':completion:*' menu select
 mkdir -p ~/.zfunc &>/dev/null
 fpath+=~/.zfunc
 
-autoload -U +X compinit && compinit
-autoload -U +X bashcompinit && bashcompinit
-
-autoload -U select-word-style
+# OPTIMIZED: Single compinit call with caching
+# Only do expensive compinit if dump is older than 24h or missing
+autoload -Uz compinit
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
+    compinit
+else
+    compinit -C  # Skip security check for faster loading
+fi
+autoload -Uz bashcompinit && bashcompinit
+autoload -Uz select-word-style
 select-word-style bash
 
+# Load brew environment if deferred from zshenv
 if [[ -v DEFER_BREW_LOAD && "$DEFER_BREW_LOAD" == "true" ]]; then
   load_brew_env
 fi
 
-# Enable homebrew completions
+# Enable homebrew completions (fast fpath addition)
 if command -v brew &>/dev/null; then
   FPATH="$BREW_HOME/share/zsh/site-functions:$FPATH"
 fi
 
-# Custom git aliases
+# Fast aliases (no command execution)
 alias gmv="git mv"
-
 if command -v nvim &>/dev/null; then
   alias vi="nvim"
   alias vim="nvim"
 fi
 
+# Lazy pyenv loading
 if [[ -d "$HOME/.pyenv" ]]; then
-    # Enable pyenv
-    eval "$(pyenv init --path)"
     export PYENV_ROOT="$HOME/.pyenv"
     export PATH="$PYENV_ROOT/bin:$PATH"
-    eval "$(pyenv init - zsh)"
-    eval "$(pyenv virtualenv-init - zsh)"
+
+    # Create lazy initialization function
+    _init_pyenv() {
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init - zsh)"
+        eval "$(pyenv virtualenv-init - zsh)"
+        # Remove the lazy wrappers after initialization
+        unfunction _init_pyenv python pip pyenv 2>/dev/null
+    }
+
+    # Lazy wrappers that initialize pyenv only when these commands are used
+    python() { _init_pyenv; python "$@"; }
+    pip() { _init_pyenv; pip "$@"; }
+    pyenv() { _init_pyenv; pyenv "$@"; }
 fi
 
+# Fast PATH additions (no expensive operations)
 if command -v cargo &>/dev/null; then
-    # Add Cargo's bin dir to make cargo (rust) execs available
     export PATH="$PATH:$HOME/.cargo/bin"
-
-    # Register cargo completions via rustup (if available)
-    if command -v rustup &>/dev/null; then
-        rustup completions zsh cargo > ~/.zfunc/_cargo
-    fi
 fi
 
 if command -v go &>/dev/null; then
-    # Add Go's bin dir to make go execs available
     export PATH="$PATH:$HOME/go/bin"
 fi
 
 if [[ -d "$BREW_HOME/lib/ruby" ]]; then
-    # Add Ruby's exec dir to make Ruby execs available
     export PATH="$PATH:$BREW_HOME/lib/ruby/gems/3.1.0/bin"
 fi
 
@@ -82,48 +89,59 @@ if [[ -d "$BREW_HOME/opt/clang-format" ]]; then
     export PATH="$BREW_HOME/opt/clang-format/bin:$PATH"
 fi
 
-if command -v pipx &>/dev/null; then
-  # Register pipx completions
-  eval "$(register-python-argcomplete pipx)"
-fi
-
-if command -v poetry &>/dev/null; then
-  # Register poetry completions
-  poetry completions zsh > ~/.zfunc/_poetry
-fi
-
-if command -v chezmoi &>/dev/null; then
-  # Register chezmoi completions
-  chezmoi completion zsh --output ~/.zfunc/_chezmoi
-fi
-
-if command -v npm &>/dev/null; then
-  # Register npm completions
-  npm completion > ~/.zfunc/_npm
-fi
-
-if command -v dotnet &>/dev/null; then
-  # Load dotnet completions
-  . ~/.zfunc/_dotnet
-fi
-
 if command -v bun &>/dev/null; then
-    # Ensure bun is in the PATH
     export PATH="$HOME/.bun/bin:$PATH"
 fi
 
-if command -v task &>/dev/null; then
-  # Register go-task completions
-  eval "$(task --completion zsh)"
+# COMPLETION CACHING SYSTEM: Generate completion functions to files (cacheable)
+# =============================================================================
+# These tools output completion function definitions that can be cached to files.
+# This avoids regenerating the same completion code on every shell startup.
+{
+    # Cache directory for completions
+    local comp_cache_dir="$HOME/.cache/zsh-completions"
+    mkdir -p "$comp_cache_dir"
+
+    # Function to cache completions (only if older than 7 days or missing)
+    cache_completion() {
+        local tool="$1"
+        local cmd="$2"
+        local cache_file="$comp_cache_dir/_${tool}"
+        local target_file="$HOME/.zfunc/_${tool}"
+
+        # Skip if cache exists and is fresh (less than 7 days old)
+        if [[ -f "$cache_file" && -n "$(find "$cache_file" -mtime -7 2>/dev/null)" ]]; then
+            [[ ! -f "$target_file" || "$cache_file" -nt "$target_file" ]] && cp "$cache_file" "$target_file" 2>/dev/null
+            return 0
+        fi
+
+        # Generate new completion
+        if eval "$cmd" > "$cache_file" 2>/dev/null; then
+            cp "$cache_file" "$target_file" 2>/dev/null
+        fi
+    }
+
+    # Cache completion functions for tools that output static completion definitions
+    command -v rustup &>/dev/null && cache_completion "cargo" "rustup completions zsh cargo"
+    command -v poetry &>/dev/null && cache_completion "poetry" "poetry completions zsh"
+    command -v chezmoi &>/dev/null && cache_completion "chezmoi" "chezmoi completion zsh"
+    command -v npm &>/dev/null && cache_completion "npm" "npm completion"
+    command -v task &>/dev/null && cache_completion "task" "task --completion zsh"
+} &!
+
+# Load dotnet completions if available
+if command -v dotnet &>/dev/null; then
+  [[ -f ~/.zfunc/_dotnet ]] && . ~/.zfunc/_dotnet
 fi
 
+# DEFERRED ENVIRONMENT SETUP: Tools that need runtime evaluation (non-cacheable)
+# =============================================================================
+# These tools require environment setup or runtime evaluation that cannot be cached.
+# NOTE: pipx and az completions moved to after sheldon loads (need zsh-defer)
+
+# Other environment variables (fast)
 if command -v jfrog &>/dev/null; then
   export JFROG_CLI_AVOID_NEW_VERSION_WARNING=false
-fi
-
-if command -v az &>/dev/null; then
-  # Register Azure-DevOps completions
-  source $(brew --prefix)/etc/bash_completion.d/az
 fi
 
 # Setup custom aliases
@@ -132,23 +150,20 @@ alias gpg-unlock='gpg --sign --local-user {{ .personal.signing_key }} --output /
 {{- end }}
 
 {{ if .personal.work_env -}}
-source "$WORK_ZSH_RC_EXTENSION"
+[[ -f "$WORK_ZSH_RC_EXTENSION" ]] && source "$WORK_ZSH_RC_EXTENSION"
 {{- end }}
 
+# Load custom functions and plugins (fast local file operations)
 function load_zsh_function {
   local func_name="$1"
   local func_path="$HOME/.local/share/zsh/functions/${func_name}.zsh"
-  if [[ -f "${func_path}" ]]; then
-    source "${func_path}"
-  fi
+  [[ -f "${func_path}" ]] && source "${func_path}"
 }
 
 function load_custom_plugin {
   local plugin_name="$1"
   local plugin_path="$HOME/.local/share/zsh/plugins/${plugin_name}"
-  if [[ -d "${plugin_path}" ]]; then
-    source "${plugin_path}/${plugin_name}.plugin.zsh"
-  fi
+  [[ -d "${plugin_path}" ]] && source "${plugin_path}/${plugin_name}.plugin.zsh"
 }
 
 # Load some oh-my-zsh functions
@@ -159,9 +174,8 @@ load_custom_plugin "key-bindings"
 load_custom_plugin "git"
 load_custom_plugin "dotenv"
 
-# Don't pollute the global namespace with a function that isn't necessary anymore
-unfunction load_custom_plugin
-unfunction load_zsh_function
+# Clean up namespace
+unfunction load_custom_plugin load_zsh_function
 
 # Ensure zsh recognizes common Home/End sequences from any terminal emulator:
 bindkey '\e[H'  beginning-of-line   # ESC [ H
@@ -193,6 +207,26 @@ eval "$(sheldon source)"
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# DEFERRED LOADING: Now that zsh-defer is available, load heavy tools in background
+# =============================================================================
+
+# Load NVM with deferral to avoid blocking startup
+if [[ -f "$BREW_HOME/opt/nvm/nvm.sh" ]]; then
+    zsh-defer source "$BREW_HOME/opt/nvm/nvm.sh"
+    zsh-defer -c 'autoload -U add-zsh-hook; add-zsh-hook chpwd nvm_auto_use; nvm_auto_use'
+fi
+
+# Deferred completion setup for tools requiring runtime evaluation
+if command -v pipx &>/dev/null; then
+  # pipx uses Python argcomplete which needs runtime environment setup
+  zsh-defer eval "$(register-python-argcomplete pipx)"
+fi
+
+if command -v az &>/dev/null; then
+  # Azure CLI uses existing bash completion files
+  zsh-defer source "$(brew --prefix)/etc/bash_completion.d/az"
+fi
+
 # Configure fzf stuff, including fzf-tab
 local fzf_path
 fzf_path="$(command -v fzf)"
@@ -210,9 +244,12 @@ if [[ -n "$fzf_path" ]]; then
   fi
 
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-  source <(fzf --zsh)
+  # Use pre-generated .fzf.zsh instead of dynamic command substitution
+  [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 fi
 unset fzf_path
+
+# FZF configuration
 
 # disable sort when completing `git checkout`
 zstyle ':completion:*:git-checkout:*' sort false
@@ -241,39 +278,32 @@ if [[ "$TERM_PROGRAM" == "vscode" ]]; then
   # Disable suggestions (for now)
   export VSCODE_SUGGEST=0
   {{ if (eq .chezmoi.os "darwin") -}}
-  . "/Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-rc.zsh"
+  local vscode_script="/Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-rc.zsh"
+  [[ -f "$vscode_script" ]] && source "$vscode_script"
   {{- else -}}
   if command -v code &>/dev/null; then
-    . "$(code --locate-shell-integration-path zsh)"
+    local integration_path="$(code --locate-shell-integration-path zsh 2>/dev/null)"
+    [[ -f "$integration_path" ]] && source "$integration_path"
   fi
   {{- end }}
 fi
 
-# Reload zsh completions
-compinit
-
+# NVM setup with background loading to avoid blocking startup
 function nvm_auto_use() {
-    local node_version="$(nvm version)"
-    local nvmrc_path="$(nvm_find_nvmrc)"
+    # Only run if nvm is loaded
+    local node_version="$(nvm version 2>/dev/null)"
+    local nvmrc_path="$(nvm_find_nvmrc 2>/dev/null)"
 
-    if [ -n "$nvmrc_path" ]; then
-        local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+    if [[ -n "$nvmrc_path" ]]; then
+       local nvmrc_node_version="$(nvm version "$(cat "${nvmrc_path}")" 2>/dev/null)"
 
-        if [ "$nvmrc_node_version" = "N/A" ]; then
-            nvm install
-        elif [ "$nvmrc_node_version" != "$node_version" ]; then
-            nvm use
-        fi
-    elif [ "$node_version" != "$(nvm version default)" ]; then
-        echo "Reverting to nvm default version"
-        nvm use default
+       if [[ "$nvmrc_node_version" = "N/A" ]]; then
+             nvm install
+       elif [[ "$nvmrc_node_version" != "$node_version" ]]; then
+             nvm use
+       fi
+    elif [[ "$node_version" != "$(nvm version default 2>/dev/null)" ]]; then
+       echo "Reverting to nvm default version"
+       nvm use default 2>/dev/null
     fi
 }
-
-if [[ -f "$BREW_HOME/opt/nvm/nvm.sh" ]]; then
-    source "$BREW_HOME/opt/nvm/nvm.sh"
-
-    autoload -U add-zsh-hook
-    add-zsh-hook chpwd nvm_auto_use
-    nvm_auto_use
-fi
