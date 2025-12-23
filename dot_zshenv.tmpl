@@ -1,9 +1,5 @@
 export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
-
-# Cache GPG_TTY to avoid subprocess on every shell invocation
-if [[ -z "$GPG_TTY" ]]; then
-    export GPG_TTY=$(tty)
-fi
+export GPG_TTY=$(tty)
 
 function load_brew_env() {
     # Load (home)brew
