@@ -93,42 +93,21 @@ if command -v bun &>/dev/null; then
     export PATH="$HOME/.bun/bin:$PATH"
 fi
 
-# COMPLETION CACHING SYSTEM: Generate completion functions to files (cacheable)
-# =============================================================================
-# These tools output completion function definitions that can be cached to files.
-# This avoids regenerating the same completion code on every shell startup.
-{
-    # Cache directory for completions
-    local comp_cache_dir="$HOME/.cache/zsh-completions"
-    mkdir -p "$comp_cache_dir"
+# COMPLETION CACHING: Generate completion functions synchronously but only when needed
+# Cache directory for completions
+local comp_cache_dir="$HOME/.cache/zsh-completions"
+mkdir -p "$comp_cache_dir"
 
-    # Function to cache completions (only if older than 7 days or missing)
-    cache_completion() {
-        local tool="$1"
-        local cmd="$2"
-        local cache_file="$comp_cache_dir/_${tool}"
-        local target_file="$HOME/.zfunc/_${tool}"
+# Fast completion setup - only generate if missing or old
+[[ -x "$(command -v rustup)" && ( ! -f "$HOME/.zfunc/_cargo" || -n "$(find "$HOME/.zfunc/_cargo" -mtime +7 2>/dev/null)" ) ]] && rustup completions zsh cargo > "$HOME/.zfunc/_cargo" 2>/dev/null
 
-        # Skip if cache exists and is fresh (less than 7 days old)
-        if [[ -f "$cache_file" && -n "$(find "$cache_file" -mtime -7 2>/dev/null)" ]]; then
-            [[ ! -f "$target_file" || "$cache_file" -nt "$target_file" ]] && cp "$cache_file" "$target_file" 2>/dev/null
-            return 0
-        fi
+[[ -x "$(command -v poetry)" && ( ! -f "$HOME/.zfunc/_poetry" || -n "$(find "$HOME/.zfunc/_poetry" -mtime +7 2>/dev/null)" ) ]] && poetry completions zsh > "$HOME/.zfunc/_poetry" 2>/dev/null
 
-        # Generate new completion
-        if eval "$cmd" > "$cache_file" 2>/dev/null; then
-            cp "$cache_file" "$target_file" 2>/dev/null
-        fi
-    }
+[[ -x "$(command -v chezmoi)" && ( ! -f "$HOME/.zfunc/_chezmoi" || -n "$(find "$HOME/.zfunc/_chezmoi" -mtime +7 2>/dev/null)" ) ]] && chezmoi completion zsh > "$HOME/.zfunc/_chezmoi" 2>/dev/null
 
-    # Cache completion functions for tools that output static completion definitions
-    command -v rustup &>/dev/null && cache_completion "cargo" "rustup completions zsh cargo"
-    command -v poetry &>/dev/null && cache_completion "poetry" "poetry completions zsh"
-    command -v chezmoi &>/dev/null && cache_completion "chezmoi" "chezmoi completion zsh"
-    command -v npm &>/dev/null && cache_completion "npm" "npm completion"
-    command -v task &>/dev/null && cache_completion "task" "task --completion zsh"
-    command -v pip &>/dev/null && cache_completion "pip" "pip completion --zsh"
-} &!
+[[ -x "$(command -v npm)" && ( ! -f "$HOME/.zfunc/_npm" || -n "$(find "$HOME/.zfunc/_npm" -mtime +7 2>/dev/null)" ) ]] && npm completion > "$HOME/.zfunc/_npm" 2>/dev/null
+
+[[ -x "$(command -v pip)" && ( ! -f "$HOME/.zfunc/_pip" || -n "$(find "$HOME/.zfunc/_pip" -mtime +7 2>/dev/null)" ) ]] && pip completion --zsh > "$HOME/.zfunc/_pip" 2>/dev/null
 
 # Load dotnet completions if available
 if command -v dotnet &>/dev/null; then
@@ -226,6 +205,12 @@ fi
 if command -v az &>/dev/null; then
   # Azure CLI uses existing bash completion files
   zsh-defer source "$(brew --prefix)/etc/bash_completion.d/az"
+fi
+
+# Task completion requires eval (not file caching) because it generates executable code
+if command -v task &>/dev/null; then
+  # Register go-task completions - deferred to ensure compinit is complete
+  zsh-defer eval "$(task --completion zsh)"
 fi
 
 # Configure fzf stuff, including fzf-tab
