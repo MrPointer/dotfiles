@@ -3,25 +3,9 @@ name: go-installer-dev
 description: Go development guide for the dotfiles-installer project. Use when writing Go code, adding features, fixing bugs, creating tests, working with package managers (brew, apt, dnf), implementing interfaces, using the commander/logger/filesystem utilities, handling privilege escalation, or understanding the codebase architecture. Covers coding patterns, testing conventions, interface design, error handling, and project structure.
 ---
 
-# Go Installer Developer Guide
+# Go Installer Development
 
-## Purpose
-
-Comprehensive development guide for contributing to the dotfiles-installer Go codebase. Covers architecture, patterns, testing, and conventions.
-
-## When to Use This Skill
-
-Activates when working on:
-- Go code in the installer directory
-- Adding new features or packages
-- Writing or modifying tests
-- Implementing interfaces
-- Working with package managers (brew, apt, dnf)
-- Using commander, logger, or filesystem utilities
-- Handling privilege escalation
-- Understanding codebase architecture
-
----
+Development guide for the dotfiles-installer Go codebase.
 
 ## Project Structure
 
@@ -56,57 +40,11 @@ installer/
 └── .goreleaser.yaml          # Release configuration
 ```
 
----
+## Key Interfaces
 
-## Core Patterns
+### Commander (utils/commander.go)
 
-### 1. Interface-Driven Design
-
-All major components are defined as interfaces for testability:
-
-```go
-// Define interface
-type PackageManager interface {
-    InstallPackage(ctx context.Context, pkg RequestedPackageInfo) error
-    IsPackageInstalled(ctx context.Context, name string) (bool, error)
-    GetInfo(ctx context.Context) (PackageManagerInfo, error)
-}
-
-// Implement
-type BrewPackageManager struct {
-    logger    logger.Logger
-    commander Commander
-    // ...
-}
-
-func (b *BrewPackageManager) InstallPackage(ctx context.Context, pkg RequestedPackageInfo) error {
-    // implementation
-}
-```
-
-### 2. Dependency Injection
-
-Pass dependencies via constructors:
-
-```go
-func NewBrewPackageManager(
-    logger logger.Logger,
-    commander Commander,
-    osManager osmanager.OsManager,
-    brewPath string,
-) *BrewPackageManager {
-    return &BrewPackageManager{
-        logger:    logger,
-        commander: commander,
-        osManager: osManager,
-        brewPath:  brewPath,
-    }
-}
-```
-
-### 3. Functional Options Pattern
-
-For flexible command execution:
+Execute system commands with functional options:
 
 ```go
 result, err := commander.RunCommand(ctx, "brew", []string{"install", pkg},
@@ -118,17 +56,45 @@ result, err := commander.RunCommand(ctx, "brew", []string{"install", pkg},
 
 Available options: `WithEnv()`, `WithDir()`, `WithInput()`, `WithCaptureOutput()`, `WithDiscardOutput()`, `WithInteractive()`, `WithTimeout()`, `WithStdout()`, `WithStderr()`
 
-### 4. Error Handling
+### Logger (utils/logger/)
 
-Wrap errors with context:
+Logging with progress tracking:
 
 ```go
-if err != nil {
-    return fmt.Errorf("failed to install package %s: %w", pkg.Name, err)
-}
+logger.StartProgress("Installing packages")
+logger.UpdateProgress("Installing git")
+logger.FinishProgress()
+// or
+logger.FailProgress(err)
 ```
 
-### 5. Optional Types
+Methods: `Trace`, `Debug`, `Info`, `Success`, `Warning`, `Error`
+
+### FileSystem (utils/filesystem.go)
+
+File operations interface for testability:
+
+```go
+exists, err := fs.PathExists(path)
+data, err := fs.ReadFile(path)
+err = fs.WriteFile(path, data, 0644)
+err = fs.CreateDirectory(path)
+```
+
+### OsManager (utils/osmanager/)
+
+OS-level operations (user management, environment, program queries, permissions).
+
+### Privilege Escalator (utils/privilege/)
+
+Smart privilege escalation (prefers sudo, falls back to doas):
+
+```go
+escalatedCmd, escalatedArgs, err := escalator.EscalateCommand("apt-get", []string{"install", "git"})
+isRoot := escalator.IsRunningAsRoot()
+```
+
+### Optional Types
 
 Use `samber/mo` for safer nil handling:
 
@@ -139,157 +105,59 @@ type Config struct {
     Shell mo.Option[string]
 }
 
-// Usage
 if shell, ok := config.Shell.Get(); ok {
     // use shell
 }
 ```
 
----
+## Code Style & Testing
 
-## Key Interfaces
+**For all coding conventions and patterns:** See [Code Style Reference][code-style]
 
-### Commander (utils/commander.go)
-
-Execute system commands:
-
-```go
-type Commander interface {
-    RunCommand(ctx context.Context, name string, args []string, opts ...Option) (Result, error)
-}
-
-// Result contains stdout, stderr, exit code, duration
-```
-
-### Logger (utils/logger/)
-
-Logging with progress display:
-
-```go
-type Logger interface {
-    Trace(format string, args ...any)
-    Debug(format string, args ...any)
-    Info(format string, args ...any)
-    Success(format string, args ...any)
-    Warning(format string, args ...any)
-    Error(format string, args ...any)
-    
-    StartProgress(task string)
-    UpdateProgress(message string)
-    FinishProgress()
-    FailProgress(err error)
-}
-```
-
-### FileSystem (utils/filesystem.go)
-
-File operations:
-
-```go
-type FileSystem interface {
-    PathExists(path string) (bool, error)
-    ReadFile(path string) ([]byte, error)
-    WriteFile(path string, data []byte, perm os.FileMode) error
-    CreateDirectory(path string) error
-}
-```
-
-### OsManager (utils/osmanager/)
-
-OS operations:
-
-```go
-type OsManager interface {
-    UserManager
-    EnvironmentManager
-    ProgramQuery
-    FilePermissionManager
-}
-
-type ProgramQuery interface {
-    ProgramExists(name string) bool
-    GetProgramVersion(name string) (string, error)
-}
-```
-
-### Privilege Escalator (utils/privilege/)
-
-Smart privilege escalation:
-
-```go
-type Escalator interface {
-    EscalateCommand(cmd string, args []string) (string, []string, error)
-    IsRunningAsRoot() bool
-}
-```
-
----
-
-## Testing Conventions
-
-Tests are co-located with source files (`brew.go` → `brew_test.go`).
-
-For detailed testing guidelines, see **[Test Style Reference](references/test-style.md)**, which covers:
-- Test naming conventions (literate names with `Test_` prefix)
-- Table-driven test patterns
-- Error assertion best practices
-- Unit tests vs integration tests
-- Mock usage with mockery/moq
-
-### Running Tests
-
-```bash
-task test      # Run all tests with race detection
-task cov       # Generate coverage report
-task bench     # Run benchmarks
-```
-
----
+**For all testing conventions:** See [Test Style Reference][test-style]
 
 ## Development Commands
 
-```bash
-task build     # Build binary via goreleaser
-task test      # Run tests with race detection
-task fmt       # Format code (gofumpt, goimports, golines)
-task lint      # Run golangci-lint and typos
-task check     # Run tests + lint
-task sloc      # Print lines of code stats
-```
+| Command | Purpose |
+|---------|---------|
+| `task build` | Build binary via goreleaser |
+| `task test` | Run tests with race detection |
+| `task fmt` | Format code (gofumpt, goimports, golines) |
+| `task lint` | Run golangci-lint and typos |
+| `task check` | Run tests + lint |
+| `task cov` | Generate coverage report |
+| `task bench` | Run benchmarks |
+| `task sloc` | Print lines of code stats |
 
----
+## Adding Features
 
-## Adding New Features
-
-### Adding a New Package Manager
+### New Package Manager
 
 1. Create package in `lib/{managername}/`
-2. Implement `PackageManager` interface
-3. Add installer interface if installation is needed
-4. Add integration tests
-5. Update `packagemap.yaml` for package name mappings
+2. Implement `PackageManager` interface (see lib/pkgmanager/pkgmanager.go)
+3. Add installer interface if installation needed
+4. Add unit and integration tests (see [Test Style Reference][test-style])
+5. Update `internal/config/packagemap.yaml` for package name mappings
 
-### Adding a New Utility
+### New Utility Interface
 
 1. Define interface in `utils/`
-2. Create implementation
-3. Add mock file for testing
+2. Create implementation with constructor (see [Code Style Reference][code-style])
+3. Generate mock: run `mockery` in project root
 4. Inject via constructors where needed
 
-### Adding a New Command
+### New CLI Command
 
 1. Create file in `cmd/`
-2. Define cobra.Command
+2. Define `cobra.Command` with flags
 3. Register in `root.go` init()
-4. Add flags and run logic
-
----
+4. Implement run logic using injected dependencies
 
 ## Configuration Files
 
-### compatibility.yaml
+### compatibility.yaml (internal/config/)
 
-Defines supported OS/distros and prerequisites:
+Defines supported OS/distros, architectures, and prerequisites:
 
 ```yaml
 supported_os:
@@ -301,7 +169,7 @@ supported_os:
         prerequisites: [git, curl]
 ```
 
-### packagemap.yaml
+### packagemap.yaml (internal/config/)
 
 Maps generic package codes to manager-specific names:
 
@@ -317,65 +185,10 @@ packages:
     dnf: neovim
 ```
 
----
+## Reference Files
 
-## Code Style
+- [Code Style Reference][code-style] - All Go coding conventions, formatting rules, patterns
+- [Test Style Reference][test-style] - All testing patterns, naming conventions, mock usage
 
-For detailed coding conventions, see **[Code Style Reference](references/code-style.md)**, which covers:
-- Interface implementation verification (`var _ Interface = (*Struct)(nil)`)
-- Constructor naming and placement
-- Code formatting and alignment
-- Documentation conventions
-- Performance best practices (pre-allocation)
-- Dependency injection patterns
-
-### Linting Rules (from .golangci.yml)
-
-- Max cyclomatic complexity: 20
-- Max function arguments: 5
-- No naked returns
-- Prefer named returns
-- nolint directives require explanation
-
-### Formatting
-
-Run before committing:
-```bash
-task fmt
-```
-
-Uses: gofumpt, goimports, golines
-
----
-
-## Quick Reference
-
-| Task | Command |
-|------|---------|
-| Build | `task build` |
-| Test | `task test` |
-| Format | `task fmt` |
-| Lint | `task lint` |
-| Full check | `task check` |
-| Coverage | `task cov` |
-
-| Pattern | Usage |
-|---------|-------|
-| Interface | Define behavior contracts |
-| DI | Pass deps via constructors |
-| Functional options | Flexible command config |
-| Table-driven tests | Multiple test cases |
-| Error wrapping | `fmt.Errorf("...: %w", err)` |
-| Optional types | `mo.Option[T]` for nullable |
-
-## Related Files
-
-**Skill References:**
-- [Code Style Reference](references/code-style.md) - Detailed Go coding conventions
-- [Test Style Reference](references/test-style.md) - Testing patterns and mock usage
-
-**Project Configuration:**
-- `Taskfile.yml` - All development tasks
-- `.golangci.yml` - Linting configuration
-- `.goreleaser.yaml` - Release configuration
-- `internal/config/*.yaml` - Embedded configurations
+[code-style]: references/code-style.md
+[test-style]: references/test-style.md
