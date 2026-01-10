@@ -1,9 +1,9 @@
 ---
 name: dotfiles-installer-dev
-description: Development guide for the dotfiles-installer project. Use when writing Go code, adding features, fixing bugs, creating tests, working with package managers (brew, apt, dnf), implementing interfaces, using the commander/logger/filesystem utilities, handling privilege escalation, or understanding the codebase architecture. Covers coding patterns, testing conventions, interface design, error handling, and project structure.
+description: Development guide for the dotfiles-installer project. Use when working with package managers (brew, apt, dnf), implementing interfaces, using the commander/logger/filesystem utilities, handling privilege escalation, or understanding the codebase architecture. Covers project structure, key interfaces, configuration files, and development commands. For general Go coding conventions and testing patterns, use the go-dev skill.
 ---
 
-# Go Installer Development
+# Dotfiles Installer Development
 
 Development guide for the dotfiles-installer Go codebase.
 
@@ -94,28 +94,6 @@ escalatedCmd, escalatedArgs, err := escalator.EscalateCommand("apt-get", []strin
 isRoot := escalator.IsRunningAsRoot()
 ```
 
-### Optional Types
-
-Use `samber/mo` for safer nil handling:
-
-```go
-import "github.com/samber/mo"
-
-type Config struct {
-    Shell mo.Option[string]
-}
-
-if shell, ok := config.Shell.Get(); ok {
-    // use shell
-}
-```
-
-## Code Style & Testing
-
-**For all coding conventions and patterns:** See [Code Style Reference][code-style]
-
-**For all testing conventions:** See [Test Style Reference][test-style]
-
 ## Development Commands
 
 | Command | Purpose |
@@ -136,13 +114,13 @@ if shell, ok := config.Shell.Get(); ok {
 1. Create package in `lib/{managername}/`
 2. Implement `PackageManager` interface (see lib/pkgmanager/pkgmanager.go)
 3. Add installer interface if installation needed
-4. Add unit and integration tests (see [Test Style Reference][test-style])
+4. Add unit and integration tests
 5. Update `internal/config/packagemap.yaml` for package name mappings
 
 ### New Utility Interface
 
 1. Define interface in `utils/`
-2. Create implementation with constructor (see [Code Style Reference][code-style])
+2. Create implementation with constructor
 3. Generate mock: run `mockery` in project root
 4. Inject via constructors where needed
 
@@ -184,11 +162,3 @@ packages:
     apt: neovim
     dnf: neovim
 ```
-
-## Reference Files
-
-- [Code Style Reference][code-style] - All Go coding conventions, formatting rules, patterns
-- [Test Style Reference][test-style] - All testing patterns, naming conventions, mock usage
-
-[code-style]: references/code-style.md
-[test-style]: references/test-style.md
