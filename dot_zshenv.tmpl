@@ -35,6 +35,23 @@ if [[ ! -v BREW_LOADED || "$BREW_LOADED" == "false" ]]; then
     BREW_LOADED=true
 fi
 
+# pyenv: make shims available in all shells (fast; no eval)
+if [[ -d "$HOME/.pyenv" ]]; then
+    export PYENV_ROOT="$HOME/.pyenv"
+
+    # Put pyenv shims first so `python`/`pip` resolve via pyenv when configured.
+    case ":$PATH:" in
+        *":$PYENV_ROOT/shims:"*) ;;
+        *) export PATH="$PYENV_ROOT/shims:$PATH" ;;
+    esac
+
+    # Ensure the pyenv binary is on PATH as well.
+    case ":$PATH:" in
+        *":$PYENV_ROOT/bin:"*) ;;
+        *) export PATH="$PYENV_ROOT/bin:$PATH" ;;
+    esac
+fi
+
 {{ if (eq .chezmoi.os "linux") -}}
 if [[ -x "$HOME/.cargo/bin/cargo" ]] && command -v mold &>/dev/null; then
     # Always prefer to use mold as the linker on Linux
