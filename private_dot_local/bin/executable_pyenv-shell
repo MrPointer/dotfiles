@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+# Shim for `pyenv shell` when shell integration isn't loaded.
+#
+# Some tools invoke `/opt/homebrew/bin/pyenv shell ...` directly. The pyenv
+# dispatcher expects shell integration for `pyenv shell` and otherwise prints:
+#   "pyenv: shell integration not enabled..."
+#
+# This shim provides a `pyenv-shell` command so `pyenv shell ...` no longer
+# errors. When stdout is a TTY (interactive terminal), it stays silent to avoid
+# polluting startup. When stdout isn't a TTY (typically used with `eval "$(...)"`),
+# it delegates to `pyenv sh-shell` which prints the required export/unset code.
+
+if [ -t 1 ]; then
+  exit 0
+fi
+
+exec pyenv sh-shell "$@"
