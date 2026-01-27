@@ -1,12 +1,15 @@
 package osmanager
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
+	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"path/filepath"
@@ -35,6 +38,16 @@ type UserManager interface {
 	// GetChezmoiConfigHome returns the configuration directory where chezmoi actually looks for its config.
 	// This is always ~/.config regardless of XDG specification on different platforms.
 	GetChezmoiConfigHome() (string, error)
+
+	// GetCurrentUsername returns the current user's username.
+	GetCurrentUsername() (string, error)
+
+	// GetUserShell returns the default login shell for the specified user.
+	GetUserShell(username string) (string, error)
+
+	// SetUserShell sets the default login shell for the specified user.
+	// On Linux, uses usermod -s. On macOS, uses dscl.
+	SetUserShell(username, shellPath string) error
 }
 
 // SudoManager defines operations for managing sudo permissions.
@@ -278,6 +291,113 @@ func (u *UnixOsManager) GetProgramVersion(
 
 func (u *UnixOsManager) Getenv(key string) string {
 	return os.Getenv(key)
+}
+
+// GetCurrentUsername returns the current user's username.
+func (u *UnixOsManager) GetCurrentUsername() (string, error) {
+	currentUser, err := user.Current()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current user: %w", err)
+	}
+	return currentUser.Username, nil
+}
+
+// GetUserShell returns the default login shell for the specified user.
+// On macOS, uses dscl. On Linux, reads /etc/passwd.
+func (u *UnixOsManager) GetUserShell(username string) (string, error) {
+	// Try to get shell from user.Lookup first (works on both platforms).
+	lookedUpUser, err := user.Lookup(username)
+	if err != nil {
+		return "", fmt.Errorf("failed to lookup user %s: %w", username, err)
+	}
+
+	// On Unix systems, we can try to get the shell from /etc/passwd via the user package.
+	// However, the user.User struct doesn't expose the shell directly.
+	// We need platform-specific approaches.
+
+	// For macOS, use dscl.
+	if isDarwin() {
+		result, err := u.commander.RunCommand("dscl", []string{
+			".", "-read",
+			fmt.Sprintf("/Users/%s", username),
+			"UserShell",
+		}, utils.WithCaptureOutput())
+		if err != nil {
+			return "", fmt.Errorf("failed to read UserShell via dscl: %w", err)
+		}
+
+		// Output format: "UserShell: /path/to/shell"
+		output := strings.TrimSpace(string(result.Stdout))
+		parts := strings.SplitN(output, ":", 2)
+		if len(parts) != 2 {
+			return "", fmt.Errorf("unexpected dscl output format: %s", output)
+		}
+
+		return strings.TrimSpace(parts[1]), nil
+	}
+
+	// For Linux, parse /etc/passwd.
+	// The user's home directory from Lookup gives us a hint that user exists.
+	_ = lookedUpUser
+
+	passwdFile, err := os.Open("/etc/passwd")
+	if err != nil {
+		return "", fmt.Errorf("failed to open /etc/passwd: %w", err)
+	}
+	defer passwdFile.Close()
+
+	scanner := bufio.NewScanner(passwdFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, username+":") {
+			fields := strings.Split(line, ":")
+			if len(fields) >= 7 {
+				return fields[6], nil
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("error reading /etc/passwd: %w", err)
+	}
+
+	return "", fmt.Errorf("user %s not found in /etc/passwd", username)
+}
+
+// SetUserShell sets the default login shell for the specified user.
+// On macOS, uses dscl. On Linux, uses usermod -s.
+func (u *UnixOsManager) SetUserShell(username, shellPath string) error {
+	if isDarwin() {
+		// dscl . -create /Users/username UserShell /path/to/shell
+		_, err := u.commander.RunCommand("dscl", []string{
+			".", "-create",
+			fmt.Sprintf("/Users/%s", username),
+			"UserShell",
+			shellPath,
+		}, utils.WithCaptureOutput())
+		if err != nil {
+			return fmt.Errorf("failed to set shell via dscl: %w", err)
+		}
+		return nil
+	}
+
+	// Linux: usermod -s /path/to/shell username
+	usermodCmd := []string{"usermod", "-s", shellPath, username}
+	if !u.isRoot {
+		usermodCmd = append([]string{"sudo"}, usermodCmd...)
+	}
+
+	_, err := u.commander.RunCommand(usermodCmd[0], usermodCmd[1:])
+	if err != nil {
+		return fmt.Errorf("failed to set shell via usermod: %w", err)
+	}
+
+	return nil
+}
+
+// isDarwin returns true if the current OS is macOS.
+func isDarwin() bool {
+	return runtime.GOOS == "darwin"
 }
 
 // IsRoot returns true if the current user is root.

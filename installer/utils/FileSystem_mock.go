@@ -35,11 +35,17 @@ var _ FileSystem = &MoqFileSystem{}
 //			CreateTemporaryFileFunc: func(dir string, pattern string) (string, error) {
 //				panic("mock out the CreateTemporaryFile method")
 //			},
+//			IsExecutableFunc: func(path string) (bool, error) {
+//				panic("mock out the IsExecutable method")
+//			},
 //			PathExistsFunc: func(path string) (bool, error) {
 //				panic("mock out the PathExists method")
 //			},
 //			ReadFileFunc: func(path string, receiver io.Writer) (int64, error) {
 //				panic("mock out the ReadFile method")
+//			},
+//			ReadFileContentsFunc: func(path string) ([]byte, error) {
+//				panic("mock out the ReadFileContents method")
 //			},
 //			RemovePathFunc: func(path string) error {
 //				panic("mock out the RemovePath method")
@@ -69,11 +75,17 @@ type MoqFileSystem struct {
 	// CreateTemporaryFileFunc mocks the CreateTemporaryFile method.
 	CreateTemporaryFileFunc func(dir string, pattern string) (string, error)
 
+	// IsExecutableFunc mocks the IsExecutable method.
+	IsExecutableFunc func(path string) (bool, error)
+
 	// PathExistsFunc mocks the PathExists method.
 	PathExistsFunc func(path string) (bool, error)
 
 	// ReadFileFunc mocks the ReadFile method.
 	ReadFileFunc func(path string, receiver io.Writer) (int64, error)
+
+	// ReadFileContentsFunc mocks the ReadFileContents method.
+	ReadFileContentsFunc func(path string) ([]byte, error)
 
 	// RemovePathFunc mocks the RemovePath method.
 	RemovePathFunc func(path string) error
@@ -112,6 +124,11 @@ type MoqFileSystem struct {
 			// Pattern is the pattern argument value.
 			Pattern string
 		}
+		// IsExecutable holds details about calls to the IsExecutable method.
+		IsExecutable []struct {
+			// Path is the path argument value.
+			Path string
+		}
 		// PathExists holds details about calls to the PathExists method.
 		PathExists []struct {
 			// Path is the path argument value.
@@ -123,6 +140,11 @@ type MoqFileSystem struct {
 			Path string
 			// Receiver is the receiver argument value.
 			Receiver io.Writer
+		}
+		// ReadFileContents holds details about calls to the ReadFileContents method.
+		ReadFileContents []struct {
+			// Path is the path argument value.
+			Path string
 		}
 		// RemovePath holds details about calls to the RemovePath method.
 		RemovePath []struct {
@@ -142,8 +164,10 @@ type MoqFileSystem struct {
 	lockCreateFile                     sync.RWMutex
 	lockCreateTemporaryDirectory       sync.RWMutex
 	lockCreateTemporaryFile            sync.RWMutex
+	lockIsExecutable                   sync.RWMutex
 	lockPathExists                     sync.RWMutex
 	lockReadFile                       sync.RWMutex
+	lockReadFileContents               sync.RWMutex
 	lockRemovePath                     sync.RWMutex
 	lockWriteFile                      sync.RWMutex
 }
@@ -316,6 +340,38 @@ func (mock *MoqFileSystem) CreateTemporaryFileCalls() []struct {
 	return calls
 }
 
+// IsExecutable calls IsExecutableFunc.
+func (mock *MoqFileSystem) IsExecutable(path string) (bool, error) {
+	if mock.IsExecutableFunc == nil {
+		panic("MoqFileSystem.IsExecutableFunc: method is nil but FileSystem.IsExecutable was just called")
+	}
+	callInfo := struct {
+		Path string
+	}{
+		Path: path,
+	}
+	mock.lockIsExecutable.Lock()
+	mock.calls.IsExecutable = append(mock.calls.IsExecutable, callInfo)
+	mock.lockIsExecutable.Unlock()
+	return mock.IsExecutableFunc(path)
+}
+
+// IsExecutableCalls gets all the calls that were made to IsExecutable.
+// Check the length with:
+//
+//	len(mockedFileSystem.IsExecutableCalls())
+func (mock *MoqFileSystem) IsExecutableCalls() []struct {
+	Path string
+} {
+	var calls []struct {
+		Path string
+	}
+	mock.lockIsExecutable.RLock()
+	calls = mock.calls.IsExecutable
+	mock.lockIsExecutable.RUnlock()
+	return calls
+}
+
 // PathExists calls PathExistsFunc.
 func (mock *MoqFileSystem) PathExists(path string) (bool, error) {
 	if mock.PathExistsFunc == nil {
@@ -381,6 +437,38 @@ func (mock *MoqFileSystem) ReadFileCalls() []struct {
 	mock.lockReadFile.RLock()
 	calls = mock.calls.ReadFile
 	mock.lockReadFile.RUnlock()
+	return calls
+}
+
+// ReadFileContents calls ReadFileContentsFunc.
+func (mock *MoqFileSystem) ReadFileContents(path string) ([]byte, error) {
+	if mock.ReadFileContentsFunc == nil {
+		panic("MoqFileSystem.ReadFileContentsFunc: method is nil but FileSystem.ReadFileContents was just called")
+	}
+	callInfo := struct {
+		Path string
+	}{
+		Path: path,
+	}
+	mock.lockReadFileContents.Lock()
+	mock.calls.ReadFileContents = append(mock.calls.ReadFileContents, callInfo)
+	mock.lockReadFileContents.Unlock()
+	return mock.ReadFileContentsFunc(path)
+}
+
+// ReadFileContentsCalls gets all the calls that were made to ReadFileContents.
+// Check the length with:
+//
+//	len(mockedFileSystem.ReadFileContentsCalls())
+func (mock *MoqFileSystem) ReadFileContentsCalls() []struct {
+	Path string
+} {
+	var calls []struct {
+		Path string
+	}
+	mock.lockReadFileContents.RLock()
+	calls = mock.calls.ReadFileContents
+	mock.lockReadFileContents.RUnlock()
 	return calls
 }
 
