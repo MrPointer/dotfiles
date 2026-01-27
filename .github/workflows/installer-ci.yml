@@ -295,3 +295,45 @@ jobs:
           # Check if any dotfiles manager was initialized
           ls -la /tmp/test-home/.local/share/chezmoi/ 2>/dev/null || echo "No chezmoi directory found (expected in CI)"
           ls -la /tmp/test-interactive-home/.local/share/chezmoi/ 2>/dev/null || echo "No interactive chezmoi directory found (expected in CI)"
+
+      - name: Verify zsh is installed
+        run: |
+          ZSH_PATH=$(which zsh || echo "")
+          if [ -z "$ZSH_PATH" ]; then
+            echo "ERROR: zsh not found in PATH"
+            exit 1
+          fi
+          echo "Found zsh at: $ZSH_PATH"
+          "$ZSH_PATH" --version
+
+      - name: Verify default shell is zsh
+        run: |
+          if [ "${{ matrix.platform }}" = "macos" ]; then
+            CURRENT_SHELL=$(dscl . -read /Users/$(whoami) UserShell 2>/dev/null | awk '{print $2}' || echo "")
+          else
+            # Read /etc/passwd directly - more portable than getent in containers
+            CURRENT_SHELL=$(grep "^$(id -un):" /etc/passwd 2>/dev/null | cut -d: -f7 || echo "")
+          fi
+
+          if [ -z "$CURRENT_SHELL" ]; then
+            echo "WARNING: Could not verify default shell (may be expected in minimal containers)"
+            # Don't fail - some containers may not support this verification
+          elif echo "$CURRENT_SHELL" | grep -q zsh; then
+            echo "SUCCESS: Default shell is zsh ($CURRENT_SHELL)"
+          else
+            echo "ERROR: Default shell is $CURRENT_SHELL, expected zsh"
+            exit 1
+          fi
+
+      - name: Verify zsh works with dotfiles
+        run: |
+          # Use the test home directory
+          export HOME="/tmp/test-home"
+
+          # Verify zsh can source the dotfiles (if they exist)
+          if [ -f "$HOME/.zshenv" ]; then
+            zsh -c 'source ~/.zshenv && echo "Dotfiles loaded successfully"'
+          else
+            echo "No .zshenv found (expected if chezmoi apply was skipped)"
+            zsh -c 'echo "zsh works correctly"'
+          fi
