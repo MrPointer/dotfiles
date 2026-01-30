@@ -1,1 +1,1 @@
-/Users/timorgruber/.local/share/chezmoi/AGENTS.md
+AGENTS.md
