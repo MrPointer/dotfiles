@@ -1,9 +1,15 @@
 README.md
+RELEASING.md
 AGENTS.md
-install.sh
-install-impl.sh
+CLAUDE.md
+get.sh
+installer/
+
 *.code-workspace
 .vscode/
+.zed/
+.claude/
+cspell.json
 
 {{- if not .personal.work_env }}
 .work/ # only manage work state on work machines
