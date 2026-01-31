@@ -366,15 +366,17 @@ func (u *UnixOsManager) GetUserShell(username string) (string, error) {
 
 // SetUserShell sets the default login shell for the specified user.
 // On macOS, uses dscl. On Linux, uses usermod -s.
+// Both require root privileges, so sudo is used when not running as root.
 func (u *UnixOsManager) SetUserShell(username, shellPath string) error {
 	if isDarwin() {
 		// dscl . -create /Users/username UserShell /path/to/shell
-		_, err := u.commander.RunCommand("dscl", []string{
-			".", "-create",
-			fmt.Sprintf("/Users/%s", username),
-			"UserShell",
-			shellPath,
-		}, utils.WithCaptureOutput())
+		// Requires root privileges on macOS
+		dsclCmd := []string{"dscl", ".", "-create", fmt.Sprintf("/Users/%s", username), "UserShell", shellPath}
+		if !u.isRoot {
+			dsclCmd = append([]string{"sudo"}, dsclCmd...)
+		}
+
+		_, err := u.commander.RunCommand(dsclCmd[0], dsclCmd[1:], utils.WithCaptureOutput())
 		if err != nil {
 			return fmt.Errorf("failed to set shell via dscl: %w", err)
 		}

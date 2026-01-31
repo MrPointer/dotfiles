@@ -531,7 +531,6 @@ func Test_SetAsDefault_AddsToEtcShells_WhenBrewInstalled(t *testing.T) {
 			// Capture tee call for /etc/shells
 			if name == "sudo" && len(args) > 0 && args[0] == "tee" {
 				teeCalled = true
-				return &utils.Result{ExitCode: 0}, nil
 			}
 			return &utils.Result{ExitCode: 0}, nil
 		},
@@ -623,6 +622,14 @@ func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
 	escalatorMock := &privilege.MoqEscalator{
 		IsRunningAsRootFunc: func() (bool, error) {
 			return false, nil
+		},
+		EscalateCommandFunc: func(baseCmd string, baseArgs []string) (privilege.EscalationResult, error) {
+			return privilege.EscalationResult{
+				Method:          privilege.EscalationSudo,
+				Command:         "sudo",
+				Args:            append([]string{baseCmd}, baseArgs...),
+				NeedsEscalation: true,
+			}, nil
 		},
 	}
 
