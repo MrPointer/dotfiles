@@ -10,7 +10,6 @@ dist/
 *.code-workspace
 .vscode/
 .zed/
-.claude/
 cspell.json
 
 {{- if not .personal.work_env }}
