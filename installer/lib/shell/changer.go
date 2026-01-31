@@ -61,36 +61,33 @@ func NewDefaultShellChanger(
 }
 
 // GetShellPath returns the full path to the shell binary.
-// If installed via brew, returns the brew-installed shell path.
-// Otherwise, uses GetProgramPath to find the shell in PATH.
+// Checks system PATH first (which includes brew if PATH is configured),
+// then falls back to checking brew's bin directory directly.
 func (c *DefaultShellChanger) GetShellPath() (string, error) {
-	if c.brewPath != "" {
-		// Shell was installed via Homebrew - use brew prefix to find it
-		brewBinDir := filepath.Dir(c.brewPath)
-		shellPath := filepath.Join(brewBinDir, c.shellName)
-
-		c.logger.Debug("Looking for brew-installed shell at: %s", shellPath)
-
-		if err := c.validateShellPath(shellPath); err != nil {
-			return "", fmt.Errorf("brew-installed shell not found at %s: %w", shellPath, err)
-		}
-
-		return shellPath, nil
-	}
-
-	// Shell was installed via system package manager - use GetProgramPath to find it
-	c.logger.Debug("Looking for system-installed shell using GetProgramPath(%s)", c.shellName)
-
+	// First check system PATH (includes brew if PATH is configured)
 	shellPath, err := c.osManager.GetProgramPath(c.shellName)
-	if err != nil {
-		return "", fmt.Errorf("failed to find %s in PATH: %w", c.shellName, err)
+	if err == nil {
+		if err := c.validateShellPath(shellPath); err == nil {
+			c.logger.Debug("Found %s in PATH at: %s", c.shellName, shellPath)
+			return shellPath, nil
+		}
+		c.logger.Debug("Shell found in PATH at %s but validation failed", shellPath)
 	}
 
-	if err := c.validateShellPath(shellPath); err != nil {
-		return "", err
+	// If brew is available, check brew's bin directory directly as fallback
+	// This handles cases where brew installed the shell but PATH isn't updated yet
+	if c.brewPath != "" {
+		brewBinDir := filepath.Dir(c.brewPath)
+		brewShellPath := filepath.Join(brewBinDir, c.shellName)
+		c.logger.Debug("Checking brew bin directory for %s at: %s", c.shellName, brewShellPath)
+
+		if err := c.validateShellPath(brewShellPath); err == nil {
+			c.logger.Debug("Found %s in brew bin at: %s", c.shellName, brewShellPath)
+			return brewShellPath, nil
+		}
 	}
 
-	return shellPath, nil
+	return "", fmt.Errorf("could not find %s: not in PATH and not in brew bin directory", c.shellName)
 }
 
 // IsCurrentDefault checks if the shell is already the user's default.
@@ -193,8 +190,8 @@ func (c *DefaultShellChanger) ensureShellInEtcShells(shellPath string) error {
 	}
 
 	// Check if already present
-	lines := strings.Split(string(content), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(string(content), "\n")
+	for line := range lines {
 		if strings.TrimSpace(line) == shellPath {
 			c.logger.Debug("Shell %s already in /etc/shells", shellPath)
 			return nil

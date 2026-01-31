@@ -71,6 +71,5 @@ func (d *DefaultShellInstaller) Install(ctx context.Context) error {
 
 // SetAsDefault sets the shell as the user's default login shell.
 func (d *DefaultShellInstaller) SetAsDefault(ctx context.Context) error {
-	d.logger.Debug("Setting %s as default shell", d.shellName)
 	return d.shellChanger.SetAsDefault(ctx)
 }

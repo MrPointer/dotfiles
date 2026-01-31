@@ -16,38 +16,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_GetShellPath_ReturnsBrewPath_WhenBrewPathProvided(t *testing.T) {
+func Test_GetShellPath_ReturnsPathFromOsManager_WhenShellExistsInPath(t *testing.T) {
 	// Arrange
 	shellName := "zsh"
+	expectedPath := "/usr/bin/zsh"
 
-	// Create a temporary directory to simulate brew bin
-	tempDir := t.TempDir()
-	brewBinDir := filepath.Join(tempDir, "bin")
-	err := os.MkdirAll(brewBinDir, 0755)
-	require.NoError(t, err)
-
-	// Create a fake shell binary
-	shellPath := filepath.Join(brewBinDir, shellName)
-	err = os.WriteFile(shellPath, []byte("#!/bin/sh\n"), 0755)
-	require.NoError(t, err)
-
-	brewPath := filepath.Join(brewBinDir, "brew")
-
-	osManagerMock := &osmanager.MoqOsManager{}
+	osManagerMock := &osmanager.MoqOsManager{
+		GetProgramPathFunc: func(program string) (string, error) {
+			if program == shellName {
+				return expectedPath, nil
+			}
+			return "", assert.AnError
+		},
+	}
 	fileSystemMock := &utils.MoqFileSystem{
 		PathExistsFunc: func(path string) (bool, error) {
-			return path == shellPath, nil
+			return path == expectedPath, nil
 		},
 		IsExecutableFunc: func(path string) (bool, error) {
-			return path == shellPath, nil
+			return path == expectedPath, nil
 		},
 	}
 	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
+	// Even with brew path set, should prefer PATH
 	changer := shell.NewDefaultShellChanger(
 		shellName,
-		brewPath,
+		"/opt/homebrew/bin/brew", // brew path is set
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
@@ -60,7 +56,9 @@ func Test_GetShellPath_ReturnsBrewPath_WhenBrewPathProvided(t *testing.T) {
 
 	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, shellPath, path)
+	assert.Equal(t, expectedPath, path)
+	assert.Len(t, osManagerMock.GetProgramPathCalls(), 1)
+	assert.Equal(t, shellName, osManagerMock.GetProgramPathCalls()[0].Program)
 }
 
 func Test_GetShellPath_UsesOsManager_WhenNoBrewPath(t *testing.T) {
@@ -112,6 +110,143 @@ func Test_GetShellPath_UsesOsManager_WhenNoBrewPath(t *testing.T) {
 	assert.Equal(t, shellName, osManagerMock.GetProgramPathCalls()[0].Program)
 }
 
+func Test_GetShellPath_ReturnsBrewPath_WhenShellNotInPathButExistsInBrewBin(t *testing.T) {
+	// Arrange
+	shellName := "zsh"
+	tempDir := t.TempDir()
+	brewBinDir := filepath.Join(tempDir, "bin")
+	err := os.MkdirAll(brewBinDir, 0755)
+	require.NoError(t, err)
+
+	shellPath := filepath.Join(brewBinDir, shellName)
+	err = os.WriteFile(shellPath, []byte("#!/bin/sh\n"), 0755)
+	require.NoError(t, err)
+
+	brewPath := filepath.Join(brewBinDir, "brew")
+
+	osManagerMock := &osmanager.MoqOsManager{
+		GetProgramPathFunc: func(program string) (string, error) {
+			return "", assert.AnError // Shell not in PATH
+		},
+	}
+	fileSystemMock := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			return path == shellPath, nil
+		},
+		IsExecutableFunc: func(path string) (bool, error) {
+			return path == shellPath, nil
+		},
+	}
+	commanderMock := &utils.MoqCommander{}
+	escalatorMock := &privilege.MoqEscalator{}
+
+	changer := shell.NewDefaultShellChanger(
+		shellName,
+		brewPath,
+		logger.DefaultLogger,
+		osManagerMock,
+		fileSystemMock,
+		commanderMock,
+		escalatorMock,
+	)
+
+	// Act
+	path, err := changer.GetShellPath()
+
+	// Assert
+	require.NoError(t, err)
+	assert.Equal(t, shellPath, path)
+}
+
+func Test_GetShellPath_PrefersPathOverBrewBin_WhenBothExist(t *testing.T) {
+	// Arrange
+	shellName := "zsh"
+	systemShellPath := "/usr/bin/zsh"
+
+	tempDir := t.TempDir()
+	brewBinDir := filepath.Join(tempDir, "bin")
+	err := os.MkdirAll(brewBinDir, 0755)
+	require.NoError(t, err)
+
+	brewShellPath := filepath.Join(brewBinDir, shellName)
+	err = os.WriteFile(brewShellPath, []byte("#!/bin/sh\n"), 0755)
+	require.NoError(t, err)
+
+	brewPath := filepath.Join(brewBinDir, "brew")
+
+	osManagerMock := &osmanager.MoqOsManager{
+		GetProgramPathFunc: func(program string) (string, error) {
+			return systemShellPath, nil // Shell found in PATH
+		},
+	}
+	fileSystemMock := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			return path == systemShellPath || path == brewShellPath, nil
+		},
+		IsExecutableFunc: func(path string) (bool, error) {
+			return path == systemShellPath || path == brewShellPath, nil
+		},
+	}
+	commanderMock := &utils.MoqCommander{}
+	escalatorMock := &privilege.MoqEscalator{}
+
+	changer := shell.NewDefaultShellChanger(
+		shellName,
+		brewPath, // Brew path is set
+		logger.DefaultLogger,
+		osManagerMock,
+		fileSystemMock,
+		commanderMock,
+		escalatorMock,
+	)
+
+	// Act
+	path, err := changer.GetShellPath()
+
+	// Assert
+	require.NoError(t, err)
+	assert.Equal(t, systemShellPath, path, "Should prefer shell from PATH over brew bin")
+}
+
+func Test_GetShellPath_ReturnsError_WhenShellNotFoundAnywhere(t *testing.T) {
+	// Arrange
+	shellName := "zsh"
+	tempDir := t.TempDir()
+	brewBinDir := filepath.Join(tempDir, "bin")
+	brewPath := filepath.Join(brewBinDir, "brew")
+
+	osManagerMock := &osmanager.MoqOsManager{
+		GetProgramPathFunc: func(program string) (string, error) {
+			return "", assert.AnError // Not in PATH
+		},
+	}
+	fileSystemMock := &utils.MoqFileSystem{
+		PathExistsFunc: func(path string) (bool, error) {
+			return false, nil // Not in brew bin either
+		},
+	}
+	commanderMock := &utils.MoqCommander{}
+	escalatorMock := &privilege.MoqEscalator{}
+
+	changer := shell.NewDefaultShellChanger(
+		shellName,
+		brewPath,
+		logger.DefaultLogger,
+		osManagerMock,
+		fileSystemMock,
+		commanderMock,
+		escalatorMock,
+	)
+
+	// Act
+	path, err := changer.GetShellPath()
+
+	// Assert
+	require.Error(t, err)
+	assert.Empty(t, path)
+	assert.Contains(t, err.Error(), "could not find")
+}
+
 func Test_GetShellPath_ReturnsError_WhenProgramNotFound(t *testing.T) {
 	// Arrange
 	shellName := "nonexistent"
@@ -141,7 +276,7 @@ func Test_GetShellPath_ReturnsError_WhenProgramNotFound(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Empty(t, path)
-	assert.Contains(t, err.Error(), "failed to find")
+	assert.Contains(t, err.Error(), "could not find")
 }
 
 func Test_IsCurrentDefault_ReturnsTrue_WhenShellMatches(t *testing.T) {
@@ -361,6 +496,10 @@ func Test_SetAsDefault_AddsToEtcShells_WhenBrewInstalled(t *testing.T) {
 	etcShellsContent := "/bin/sh\n/bin/bash\n/bin/zsh\n"
 
 	osManagerMock := &osmanager.MoqOsManager{
+		GetProgramPathFunc: func(program string) (string, error) {
+			// Shell not in PATH (requires brew bin fallback)
+			return "", assert.AnError
+		},
 		GetCurrentUsernameFunc: func() (string, error) {
 			return username, nil
 		},
@@ -443,6 +582,10 @@ func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
 	etcShellsContent := "/bin/sh\n/bin/bash\n" + shellPath + "\n"
 
 	osManagerMock := &osmanager.MoqOsManager{
+		GetProgramPathFunc: func(program string) (string, error) {
+			// Shell not in PATH (requires brew bin fallback)
+			return "", assert.AnError
+		},
 		GetCurrentUsernameFunc: func() (string, error) {
 			return username, nil
 		},
