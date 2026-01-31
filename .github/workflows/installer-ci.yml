@@ -338,6 +338,15 @@ jobs:
           # Use the test home directory
           export HOME="/tmp/test-home"
 
+          # Add brew paths to PATH if they exist (needed for brew-installed zsh on Linux)
+          # In real usage, the user's shell RC files (managed by chezmoi) would do this
+          if [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
+            export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+          fi
+          if [ -d "/opt/homebrew/bin" ]; then
+            export PATH="/opt/homebrew/bin:$PATH"
+          fi
+
           # Verify zsh can source the dotfiles (if they exist)
           if [ -f "$HOME/.zshenv" ]; then
             zsh -c 'source ~/.zshenv && echo "Dotfiles loaded successfully"'
