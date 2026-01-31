@@ -4,6 +4,8 @@ AGENTS.md
 CLAUDE.md
 get.sh
 installer/
+docs/
+dist/
 
 *.code-workspace
 .vscode/
