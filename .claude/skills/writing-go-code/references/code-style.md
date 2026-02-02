@@ -1,13 +1,46 @@
 # Go Code Style Guidelines
 
-## General Principles
+## Table of Contents
 
-- Use the Go standard library whenever possible. Only use third-party libraries when necessary.
-- Limit line length to 120 characters.
-- Write code that is easy to test:
-  - Use interfaces to decouple components and improve testability.
-  - Use dependency injection to pass dependencies into functions and methods.
-  - Wrap even basic operations (such as OS functions and file operations) in interfaces to make them easier to mock and test.
+- [Dependency Injection](#dependency-injection)
+- [Struct Definitions](#struct-definitions)
+- [Constructors](#constructors)
+- [Mocks](#mocks)
+- [General Principles](#general-principles)
+- [Code Formatting](#code-formatting)
+- [Documentation](#documentation)
+- [Performance](#performance)
+
+---
+
+## Dependency Injection
+
+Always prefer to use dependency injection to pass dependencies into constructors.
+
+```go
+// Good: dependencies injected
+func NewHandler(
+    logger Logger,
+    service Service,
+    validator Validator,
+) *Handler {
+    return &Handler{
+        logger:    logger,
+        service:   service,
+        validator: validator,
+    }
+}
+
+// Bad: dependencies created internally
+func NewHandler() *Handler {
+    return &Handler{
+        logger:    NewDefaultLogger(),  // Don't do this
+        service:   NewService(),        // Don't do this
+    }
+}
+```
+
+---
 
 ## Struct Definitions
 
@@ -17,11 +50,13 @@ After each struct definition, verify interface implementation by adding:
 var _ InterfaceName = (*StructName)(nil)
 ```
 
+---
+
 ## Constructors
 
 Provide a constructor function for each struct, named `NewStructName`.
 
-- Place this function immediately after the struct definition and the interface assertion line (if present).
+Place this function immediately after the struct definition and the interface assertion line (if present).
 
 ```go
 type MyService struct {
@@ -38,6 +73,31 @@ func NewMyService(logger Logger, fs FileSystem) *MyService {
     }
 }
 ```
+
+---
+
+## Mocks
+
+Never edit mock files directly. Instead, regenerate them by running the `mockery` command in the Go module root directory:
+
+```bash
+mockery
+```
+
+Run without any arguments to regenerate all mocks.
+
+---
+
+## General Principles
+
+- Use the Go standard library whenever possible. Only use third-party libraries when necessary.
+- Limit line length to 120 characters.
+- Write code that is easy to test:
+  - Use interfaces to decouple components and improve testability.
+  - Use dependency injection to pass dependencies into functions and methods.
+  - Wrap even basic operations (such as OS functions and file operations) in interfaces to make them easier to mock and test.
+
+---
 
 ## Code Formatting
 
@@ -87,42 +147,5 @@ for _, v := range input {
 lookup := make(map[string]int, len(keys))
 for i, k := range keys {
     lookup[k] = i
-}
-```
-
-## Mocks
-
-Never edit mock files directly. Instead, regenerate them by running the `mockery` command in the Go module root directory:
-
-```bash
-mockery
-```
-
-Run without any arguments to regenerate all mocks.
-
-## Dependency Injection
-
-Always prefer to use dependency injection to pass dependencies into constructors.
-
-```go
-// Good: dependencies injected
-func NewHandler(
-    logger Logger,
-    service Service,
-    validator Validator,
-) *Handler {
-    return &Handler{
-        logger:    logger,
-        service:   service,
-        validator: validator,
-    }
-}
-
-// Bad: dependencies created internally
-func NewHandler() *Handler {
-    return &Handler{
-        logger:    NewDefaultLogger(),  // Don't do this
-        service:   NewService(),        // Don't do this
-    }
 }
 ```
