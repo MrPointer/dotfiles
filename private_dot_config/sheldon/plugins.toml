@@ -42,6 +42,10 @@ github = "zsh-users/zsh-completions"
 github = "Aloxaf/fzf-tab"
 # Load immediately - critical for interactive tab completion
 
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions"
+# Load immediately - inline suggestions should be available ASAP
+
 # =============================================================================
 # DEFERRED PLUGINS (Background Loading)
 # =============================================================================
@@ -51,11 +55,6 @@ github = "Aloxaf/fzf-tab"
 github = "zsh-users/zsh-syntax-highlighting"
 apply = ["defer"]
 # Visual enhancement - can load in background
-
-[plugins.zsh-autosuggestions]
-github = "zsh-users/zsh-autosuggestions"
-apply = ["defer"]
-# Convenience feature - can load in background
 
 [plugins.git-clean-branch]
 github = "gobriansteele/git-clean-branch"
