@@ -1,11 +1,8 @@
----
-name: dotfiles-installer-dev
-description: Development guide for the dotfiles-installer project. Use when working with package managers (brew, apt, dnf), implementing interfaces, using the commander/logger/filesystem utilities, handling privilege escalation, or understanding the codebase architecture. Covers project structure, key interfaces, configuration files, and development commands. For general Go coding conventions and testing patterns, use the go-dev skill.
----
-
 # Dotfiles Installer Development
 
 Development guide for the dotfiles-installer Go codebase.
+
+For general Go coding conventions and testing patterns, see the `writing-go-code` skill.
 
 ## Project Structure
 

@@ -49,3 +49,7 @@
 
 # Expect scripts
 !test-interactive-gpg.exp
+
+# Agent rules
+!AGENTS.md
+!CLAUDE.md
