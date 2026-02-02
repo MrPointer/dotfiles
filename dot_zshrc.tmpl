@@ -252,13 +252,13 @@ fi
 
 if command -v az &>/dev/null; then
   # Azure CLI uses existing bash completion files
-  zsh-defer source "$(brew --prefix)/etc/bash_completion.d/az"
+  zsh-defer -c 'source "$(brew --prefix)/etc/bash_completion.d/az"'
 fi
 
 # Task completion requires eval (not file caching) because it generates executable code
 if command -v task &>/dev/null; then
   # Register go-task completions - deferred to ensure compinit is complete
-  zsh-defer eval "$(task --completion zsh)"
+  zsh-defer -c 'eval "$(task --completion zsh)"'
 fi
 
 # Configure fzf stuff, including fzf-tab
