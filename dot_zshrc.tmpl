@@ -23,6 +23,11 @@ zstyle ':completion:*' menu select
 mkdir -p ~/.zfunc &>/dev/null
 fpath+=~/.zfunc
 
+# Enable homebrew completions (must be before compinit)
+if [[ -n "$BREW_HOME" && -d "$BREW_HOME/share/zsh/site-functions" ]]; then
+  fpath=("$BREW_HOME/share/zsh/site-functions" $fpath)
+fi
+
 # OPTIMIZED: Single compinit call with caching
 # Only do expensive compinit if dump is older than 24h or missing
 autoload -Uz compinit
@@ -38,11 +43,6 @@ select-word-style bash
 # Load brew environment if deferred from zshenv
 if [[ -v DEFER_BREW_LOAD && "$DEFER_BREW_LOAD" == "true" ]]; then
   load_brew_env
-fi
-
-# Enable homebrew completions (fast fpath addition)
-if command -v brew &>/dev/null; then
-  FPATH="$BREW_HOME/share/zsh/site-functions:$FPATH"
 fi
 
 # Fast aliases (no command execution)
