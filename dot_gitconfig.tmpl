@@ -1,42 +1,42 @@
 [user]
-	name = {{ .personal.full_name }}
-	email = {{ .personal.email }}
-	{{ if (hasKey .personal "signing_key") -}}
-	signingkey = {{ .personal.signing_key }}
+   name = {{ .personal.full_name }}
+   email = {{ .personal.email }}
+	{{- if (hasKey .personal "signing_key") }}
+   signingkey = {{ .personal.signing_key }}
 	{{- end }}
 [branch]
    sort = committerdate
 [pull]
-	rebase = true
+   rebase = true
 [rebase]
    autosquash = true
    autostash = true
 [merge]
    conflictstyle = zdiff3
 [submodule]
-	recurse = true
+   recurse = true
 [core]
-	autocrlf = input
-    editor = nvim
-	pager = diff-so-fancy | less --tabs=4 -RFX
+   autocrlf = input
+   editor = nvim
+   pager = diff-so-fancy | less --tabs=4 -RFX
 [diff]
    algorithm = histogram
    external = difft
 [grep]
    patternType = perl
 [alias]
-	exe = update-index --chmod=+x
-	root = rev-parse --show-toplevel
+   exe = update-index --chmod=+x
+   root = rev-parse --show-toplevel
 
-	# `git log` with patches shown with difftastic.
-    dl = -c diff.external=difft log -p --ext-diff
+   # `git log` with patches shown with difftastic.
+   dl = -c diff.external=difft log -p --ext-diff
 
-    # Show the most recent commit with difftastic.
-    ds = -c diff.external=difft show --ext-diff
+   # Show the most recent commit with difftastic.
+   ds = -c diff.external=difft show --ext-diff
 
-    # `git diff` with difftastic.
-    dft = -c diff.external=difft diff
+   # `git diff` with difftastic.
+   dft = -c diff.external=difft diff
 [commit]
-	gpgSign = true
+   gpgSign = true
 [gpg]
-	program = gpg
+   program = gpg
