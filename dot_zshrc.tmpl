@@ -28,14 +28,11 @@ if [[ -n "$BREW_HOME" && -d "$BREW_HOME/share/zsh/site-functions" ]]; then
   fpath=("$BREW_HOME/share/zsh/site-functions" $fpath)
 fi
 
-# OPTIMIZED: Single compinit call with caching
-# Only do expensive compinit if dump is older than 24h or missing
+# OPTIMIZED: Single compinit call - always use cache for fast startup
+# Cache is invalidated by the brew wrapper below when packages change
 autoload -Uz compinit
-if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
-    compinit
-else
-    compinit -C  # Skip security check for faster loading
-fi
+compinit -C
+
 autoload -Uz bashcompinit && bashcompinit
 autoload -Uz select-word-style
 select-word-style bash
@@ -51,6 +48,20 @@ if command -v nvim &>/dev/null; then
   alias vi="nvim"
   alias vim="nvim"
 fi
+
+# Brew wrapper: invalidate completion cache after package changes
+function brew() {
+  command brew "$@"
+  local ret=$?
+  case "$1" in
+    install|uninstall|remove|rm|upgrade)
+      echo "Invalidating zsh completion cache..."
+      rm -f ~/.zcompdump
+      compinit
+      ;;
+  esac
+  return $ret
+}
 
 # Lazy pyenv shell integration (interactive only)
 # - Keep startup fast by avoiding `pyenv init` during shell start.
@@ -140,21 +151,18 @@ if command -v bun &>/dev/null; then
     export PATH="$HOME/.bun/bin:$PATH"
 fi
 
-# COMPLETION CACHING: Generate completion functions synchronously but only when needed
-# Cache directory for completions
-local comp_cache_dir="$HOME/.cache/zsh-completions"
-mkdir -p "$comp_cache_dir"
+# COMPLETION CACHING: Generate completion functions only when missing or stale (>7 days)
+# NOTE: chezmoi, npm, az, task completions are provided by brew - no need to cache those
 
 # Fast completion setup - only generate if missing or old
 [[ -x "$(command -v rustup)" && ( ! -f "$HOME/.zfunc/_cargo" || -n "$(find "$HOME/.zfunc/_cargo" -mtime +7 2>/dev/null)" ) ]] && rustup completions zsh cargo > "$HOME/.zfunc/_cargo" 2>/dev/null
 
 [[ -x "$(command -v poetry)" && ( ! -f "$HOME/.zfunc/_poetry" || -n "$(find "$HOME/.zfunc/_poetry" -mtime +7 2>/dev/null)" ) ]] && poetry completions zsh > "$HOME/.zfunc/_poetry" 2>/dev/null
 
-[[ -x "$(command -v chezmoi)" && ( ! -f "$HOME/.zfunc/_chezmoi" || -n "$(find "$HOME/.zfunc/_chezmoi" -mtime +7 2>/dev/null)" ) ]] && chezmoi completion zsh > "$HOME/.zfunc/_chezmoi" 2>/dev/null
-
-[[ -x "$(command -v npm)" && ( ! -f "$HOME/.zfunc/_npm" || -n "$(find "$HOME/.zfunc/_npm" -mtime +7 2>/dev/null)" ) ]] && npm completion > "$HOME/.zfunc/_npm" 2>/dev/null
-
 [[ -x "$(command -v pip)" && ( ! -f "$HOME/.zfunc/_pip" || -n "$(find "$HOME/.zfunc/_pip" -mtime +7 2>/dev/null)" ) ]] && pip completion --zsh > "$HOME/.zfunc/_pip" 2>/dev/null
+
+# pipx uses argcomplete - cache the generated completion
+[[ -x "$(command -v pipx)" && ( ! -f "$HOME/.zfunc/_pipx" || -n "$(find "$HOME/.zfunc/_pipx" -mtime +7 2>/dev/null)" ) ]] && register-python-argcomplete pipx > "$HOME/.zfunc/_pipx" 2>/dev/null
 
 # Load dotnet completions if available
 if command -v dotnet &>/dev/null; then
