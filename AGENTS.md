@@ -4,17 +4,17 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 
 ## Available Skills
 
-| Skill                        | Use When                                                         |
-| ---------------------------- | ---------------------------------------------------------------- |
-| `writing-go-code`            | Writing/editing Go code, tests, mocks, interfaces                |
-| `managing-chezmoi`           | chezmoi add/apply/diff, templates, .chezmoiignore, source naming |
-| `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                      |
-| `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                          |
+| Skill                        | Use When                                                                    |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `writing-go-code`            | Writing/editing Go code, tests, mocks, interfaces                           |
+| `managing-chezmoi`           | Editing `dot_*`, `private_dot_*`, or `.tmpl` files; chezmoi commands        |
+| `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                                 |
+| `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                                     |
 
 ## Workflow
 
 1. **Read files first** - Understand the current state and what needs to change
-2. **Load relevant skills** - Before editing, load the matching skill from the table above based on the files involved
+2. **Load relevant skills** - Before editing, load ALL matching skills from the table above (match on file patterns and task type)
 3. **Plan the approach** - Briefly reason about what changes are needed and how they fit with existing patterns
 4. **Make targeted changes** - Follow conventions from the loaded skill
 
@@ -30,8 +30,6 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 ├── private_dot_ssh/            # ~/.ssh (private files)
 └── .chezmoiignore              # Files to ignore during apply
 ```
-
-For chezmoi source naming conventions (`dot_`, `private_`, `.tmpl`), load the `managing-chezmoi` skill.
 
 ## Key Conventions
 
