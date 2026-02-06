@@ -16,6 +16,7 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
+	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 )
 
 // UserManager defines operations for managing system users.
@@ -102,18 +103,40 @@ type OsManager interface {
 type UnixOsManager struct {
 	logger    logger.Logger
 	commander utils.Commander
-	isRoot    bool
+	escalator privilege.Escalator
 }
 
 var _ OsManager = (*UnixOsManager)(nil)
 
 // NewUnixOsManager creates a new UnixOsManager.
 func NewUnixOsManager(logger logger.Logger, commander utils.Commander, isRoot bool) *UnixOsManager {
+	_ = isRoot
+
+	u := &UnixOsManager{
+		logger:    logger,
+		commander: commander,
+	}
+	// UnixOsManager implements privilege.ProgramQuery via ProgramExists.
+	u.escalator = privilege.NewDefaultEscalator(logger, commander, u)
+	return u
+}
+
+// NewUnixOsManagerWithEscalator creates a new UnixOsManager with an injected Escalator.
+// Intended for deterministic unit tests.
+func NewUnixOsManagerWithEscalator(logger logger.Logger, commander utils.Commander, escalator privilege.Escalator) *UnixOsManager {
 	return &UnixOsManager{
 		logger:    logger,
 		commander: commander,
-		isRoot:    isRoot,
+		escalator: escalator,
 	}
+}
+
+func (u *UnixOsManager) runPrivileged(cmd string, args []string, opts ...utils.Option) (*utils.Result, error) {
+	escalated, err := u.escalator.EscalateCommand(cmd, args)
+	if err != nil {
+		return nil, err
+	}
+	return u.commander.RunCommand(escalated.Command, escalated.Args, opts...)
 }
 
 func (u *UnixOsManager) UserExists(username string) (bool, error) {
@@ -129,19 +152,11 @@ func (u *UnixOsManager) AddUser(username string) error {
 
 	// Try useradd, fallback to adduser.
 	useraddCmd := []string{"useradd", "-m", "-s", "/bin/bash", username}
-	if !u.isRoot {
-		useraddCmd = append([]string{"sudo"}, useraddCmd...)
-	}
-
-	_, err := u.commander.RunCommand(useraddCmd[0], useraddCmd[1:])
+	_, err := u.runPrivileged(useraddCmd[0], useraddCmd[1:])
 	if err != nil {
 		// Try adduser as fallback.
 		adduserCmd := []string{"adduser", "--disabled-password", "--gecos", "''", username}
-		if !u.isRoot {
-			adduserCmd = append([]string{"sudo"}, adduserCmd...)
-		}
-
-		_, err = u.commander.RunCommand(adduserCmd[0], adduserCmd[1:])
+		_, err = u.runPrivileged(adduserCmd[0], adduserCmd[1:])
 		if err != nil {
 			return fmt.Errorf("failed to create user '%s' with useradd/adduser: %w", username, err)
 		}
@@ -153,11 +168,7 @@ func (u *UnixOsManager) AddUser(username string) error {
 func (u *UnixOsManager) AddUserToGroup(username, group string) error {
 	u.logger.Debug("Adding '%s' to %s group", username, group)
 	usermodCmd := []string{"usermod", "-aG", group, username}
-	if !u.isRoot {
-		usermodCmd = append([]string{"sudo"}, usermodCmd...)
-	}
-
-	_, err := u.commander.RunCommand(usermodCmd[0], usermodCmd[1:])
+	_, err := u.runPrivileged(usermodCmd[0], usermodCmd[1:])
 	// Often we don't care if the user is already in the group.
 	if err != nil {
 		u.logger.Debug("Note: User might already be in the %s group", group)
@@ -185,15 +196,12 @@ func (u *UnixOsManager) GetChezmoiConfigHome() (string, error) {
 func (u *UnixOsManager) AddSudoAccess(username string) error {
 	sudoersFile := fmt.Sprintf("/etc/sudoers.d/%s", username)
 	sudoersLine := fmt.Sprintf("%s ALL=(ALL) NOPASSWD:ALL", username)
-
-	var sudoPrefix string
-	if !u.isRoot {
-		sudoPrefix = "sudo "
-	}
-
-	// Use shell to echo and tee the line into the sudoers file.
-	shCmd := []string{"sh", "-c", fmt.Sprintf("echo '%s' | %stee %s", sudoersLine, sudoPrefix, sudoersFile)}
-	_, err := u.commander.RunCommand(shCmd[0], shCmd[1:])
+	_, err := u.runPrivileged(
+		"tee",
+		[]string{sudoersFile},
+		utils.WithCaptureOutput(),
+		utils.WithInputString(sudoersLine+"\n"),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to add passwordless sudo for '%s': %w", username, err)
 	}
@@ -204,11 +212,7 @@ func (u *UnixOsManager) AddSudoAccess(username string) error {
 func (u *UnixOsManager) SetOwnership(path, username string) error {
 	u.logger.Debug("Setting ownership of %s to %s", path, username)
 	chownCmd := []string{"chown", "-R", fmt.Sprintf("%s:%s", username, username), path}
-	if !u.isRoot {
-		chownCmd = append([]string{"sudo"}, chownCmd...)
-	}
-
-	_, err := u.commander.RunCommand(chownCmd[0], chownCmd[1:])
+	_, err := u.runPrivileged(chownCmd[0], chownCmd[1:])
 	if err != nil {
 		return fmt.Errorf("failed to chown %s: %w", path, err)
 	}
@@ -219,11 +223,7 @@ func (u *UnixOsManager) SetOwnership(path, username string) error {
 func (u *UnixOsManager) SetPermissions(path string, mode os.FileMode) error {
 	u.logger.Debug("Setting permissions of %s to %o", path, mode)
 	chmodCmd := []string{"chmod", fmt.Sprintf("%o", mode), path}
-	if !u.isRoot {
-		chmodCmd = append([]string{"sudo"}, chmodCmd...)
-	}
-
-	_, err := u.commander.RunCommand(chmodCmd[0], chmodCmd[1:])
+	_, err := u.runPrivileged(chmodCmd[0], chmodCmd[1:])
 	if err != nil {
 		return fmt.Errorf("failed to chmod %s: %w", path, err)
 	}
@@ -366,17 +366,12 @@ func (u *UnixOsManager) GetUserShell(username string) (string, error) {
 
 // SetUserShell sets the default login shell for the specified user.
 // On macOS, uses dscl. On Linux, uses usermod -s.
-// Both require root privileges, so sudo is used when not running as root.
 func (u *UnixOsManager) SetUserShell(username, shellPath string) error {
 	if isDarwin() {
 		// dscl . -create /Users/username UserShell /path/to/shell
 		// Requires root privileges on macOS
 		dsclCmd := []string{"dscl", ".", "-create", fmt.Sprintf("/Users/%s", username), "UserShell", shellPath}
-		if !u.isRoot {
-			dsclCmd = append([]string{"sudo"}, dsclCmd...)
-		}
-
-		_, err := u.commander.RunCommand(dsclCmd[0], dsclCmd[1:], utils.WithCaptureOutput())
+		_, err := u.runPrivileged(dsclCmd[0], dsclCmd[1:], utils.WithCaptureOutput())
 		if err != nil {
 			return fmt.Errorf("failed to set shell via dscl: %w", err)
 		}
@@ -385,11 +380,7 @@ func (u *UnixOsManager) SetUserShell(username, shellPath string) error {
 
 	// Linux: usermod -s /path/to/shell username
 	usermodCmd := []string{"usermod", "-s", shellPath, username}
-	if !u.isRoot {
-		usermodCmd = append([]string{"sudo"}, usermodCmd...)
-	}
-
-	_, err := u.commander.RunCommand(usermodCmd[0], usermodCmd[1:])
+	_, err := u.runPrivileged(usermodCmd[0], usermodCmd[1:])
 	if err != nil {
 		return fmt.Errorf("failed to set shell via usermod: %w", err)
 	}
