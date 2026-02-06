@@ -243,6 +243,12 @@ eval "$(sheldon source)"
 # Lazy NVM loading (see ~/.local/share/zsh/scripts/nvm-lazy.zsh for details)
 source "$HOME/.local/share/zsh/scripts/nvm-lazy.zsh"
 
+# wt (worktunk) has to be evaluated in a non-deferred manner
+# shouldn't be costly as it's lazy internally
+if command -v wt >/dev/null 2>&1; then
+  eval "$(command wt config shell init zsh)"
+fi
+
 # Configure fzf stuff, including fzf-tab
 local fzf_path
 fzf_path="$(command -v fzf)"
