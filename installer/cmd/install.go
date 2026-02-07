@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/MrPointer/dotfiles/installer/cli"
 	"github.com/MrPointer/dotfiles/installer/lib/apt"
@@ -26,12 +27,12 @@ import (
 
 // Options and flags for the install command.
 var (
-	workEnvironment      bool
-	workName             string
-	workEmail            string
-	shellName            string
-	installBrew          bool
-	installShellWithBrew bool
+	workEnvironment bool
+	workName        string
+	workEmail       string
+	shellName       string
+	shellSource     string
+	installBrew     bool
 
 	gitCloneProtocol     string
 	gitBranch            string
@@ -43,6 +44,7 @@ var (
 var (
 	globalPackageManager pkgmanager.PackageManager = nil // set later based on passed flags
 	globalBrewPath       string                          // path to brew binary, set if brew is installed/used
+	globalSysInfo        compatibility.SystemInfo        // system information, set after compatibility check
 )
 
 // output variables stored in global context
@@ -99,6 +101,7 @@ making it easier to get started with a new system.`,
 				HandleCompatibilityError(err, sysInfo, installLogger)
 			}
 		}
+		globalSysInfo = sysInfo
 		installLogger.Success("System compatibility check passed")
 
 		// Install Homebrew for non-macOS systems or if not already installed
@@ -129,6 +132,28 @@ making it easier to get started with a new system.`,
 
 		installLogger.Success("Installation completed successfully")
 	},
+}
+
+// createNativePackageManager creates the native package manager for the OS (apt, dnf, etc).
+func createNativePackageManager(osName, distroName string) pkgmanager.PackageManager {
+	switch osName {
+	case "linux":
+		switch distroName {
+		case "ubuntu", "debian":
+			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalProgramQuery), GetDisplayMode())
+		case "fedora", "centos", "rhel":
+			return dnf.NewDnfPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalProgramQuery), GetDisplayMode())
+		default:
+			cliLogger.Warning("Unsupported Linux distribution for automatic package installation: %s", distroName)
+			return nil
+		}
+	case "darwin":
+		// macOS doesn't have a native package manager
+		return nil
+	default:
+		cliLogger.Warning("Unsupported operating system for automatic package installation: %s", osName)
+		return nil
+	}
 }
 
 // createPackageManagerForSystem creates the appropriate package manager for the current system.
@@ -347,23 +372,93 @@ func installHomebrew(sysInfo compatibility.SystemInfo, log logger.Logger) (strin
 	return brewPath, nil
 }
 
+// resolveShellInstallStrategy determines which package manager and shell resolver to use
+// based on the shellSource flag and system configuration.
+func resolveShellInstallStrategy() (pkgmanager.PackageManager, shell.ShellResolver, error) {
+	source := shell.ShellSource(shellSource)
+
+	// Validate the shell source value
+	switch source {
+	case shell.ShellSourceAuto, shell.ShellSourceBrew, shell.ShellSourceSystem:
+		// valid
+	default:
+		return nil, nil, fmt.Errorf("invalid shell-source value: %s (must be 'auto', 'brew', or 'system')", shellSource)
+	}
+
+	// Create resolver
+	// Note: globalBrewPath is the full path to brew binary (e.g., /home/linuxbrew/.linuxbrew/bin/brew)
+	// But resolver needs the brew prefix (e.g., /home/linuxbrew/.linuxbrew)
+	brewPrefix := ""
+	if globalBrewPath != "" {
+		// Extract prefix from /path/to/prefix/bin/brew -> /path/to/prefix
+		brewPrefix = filepath.Dir(filepath.Dir(globalBrewPath))
+	}
+
+	resolver := shell.NewDefaultShellResolver(
+		shellName,
+		source,
+		brewPrefix,
+		globalSysInfo.OSName,
+		globalOsManager,
+		globalFilesystem,
+		cliLogger,
+	)
+
+	// Determine package manager based on source
+	var pkgMgr pkgmanager.PackageManager
+
+	switch source {
+	case shell.ShellSourceBrew:
+		if globalBrewPath == "" {
+			return nil, nil, fmt.Errorf("shell-source is 'brew' but homebrew is not installed")
+		}
+		pkgMgr = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager, globalBrewPath, GetDisplayMode())
+
+	case shell.ShellSourceSystem:
+		pkgMgr = createNativePackageManager(globalSysInfo.OSName, globalSysInfo.DistroName)
+		if pkgMgr == nil {
+			return nil, nil, fmt.Errorf("no native package manager available for this system")
+		}
+
+	case shell.ShellSourceAuto:
+		// Try brew first if available
+		if globalBrewPath != "" {
+			pkgMgr = brew.NewBrewPackageManager(cliLogger, globalCommander, globalOsManager, globalBrewPath, GetDisplayMode())
+		} else {
+			// Fall back to native package manager
+			pkgMgr = createNativePackageManager(globalSysInfo.OSName, globalSysInfo.DistroName)
+			if pkgMgr == nil {
+				return nil, nil, fmt.Errorf("no package manager available (neither brew nor native)")
+			}
+		}
+	}
+
+	return pkgMgr, resolver, nil
+}
+
 func installShell(log logger.Logger) error {
 	log.StartProgress(fmt.Sprintf("Setting up %s shell", shellName))
+
+	// Resolve shell install strategy based on --shell-source flag
+	pkgMgr, resolver, err := resolveShellInstallStrategy()
+	if err != nil {
+		log.FailProgress(fmt.Sprintf("Failed to resolve shell install strategy"), err)
+		return err
+	}
 
 	// Create privilege escalator for shell operations
 	escalator := privilege.NewDefaultEscalator(log, globalCommander, globalProgramQuery)
 
-	// Create shell changer - pass brew path if shell was/will be installed via brew
+	// Create shell changer with resolver
 	shellChanger := shell.NewDefaultShellChanger(
 		shellName,
-		globalBrewPath, // empty if not using brew
+		resolver,
 		log,
 		globalOsManager,
-		globalFilesystem,
 		escalator,
 	)
 
-	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager, shellChanger, log)
+	shellInstaller := shell.NewDefaultShellInstaller(shellName, resolver, pkgMgr, shellChanger, log)
 
 	log.StartProgress(fmt.Sprintf("Checking %s shell availability", shellName))
 	isAvailable, err := shellInstaller.IsAvailable()
@@ -571,10 +666,10 @@ func init() {
 		"Use the given email address as work's email address")
 	installCmd.Flags().StringVar(&shellName, "shell", "zsh",
 		"Install given shell if required and set it as user's default")
+	installCmd.Flags().StringVar(&shellSource, "shell-source", "auto",
+		"Where to find the shell binary: 'auto' (try brew, then system), 'brew' (homebrew only), or 'system' (system package manager only)")
 	installCmd.Flags().BoolVar(&installBrew, "install-brew", true,
 		"Install brew if not already installed")
-	installCmd.Flags().BoolVar(&installShellWithBrew, "install-shell-with-brew", true,
-		"Install shell with brew if not already installed")
 	installCmd.Flags().StringVar(&gitCloneProtocol, "git-clone-protocol", "https",
 		"Use the given git clone protocol (ssh or https) for git operations")
 	installCmd.Flags().StringVar(&gitBranch, "git-branch", "",
@@ -587,8 +682,8 @@ func init() {
 	viper.BindPFlag("work-name", installCmd.Flags().Lookup("work-name"))
 	viper.BindPFlag("work-email", installCmd.Flags().Lookup("work-email"))
 	viper.BindPFlag("shell", installCmd.Flags().Lookup("shell"))
+	viper.BindPFlag("shell-source", installCmd.Flags().Lookup("shell-source"))
 	viper.BindPFlag("install-brew", installCmd.Flags().Lookup("install-brew"))
-	viper.BindPFlag("install-shell-with-brew", installCmd.Flags().Lookup("install-shell-with-brew"))
 	viper.BindPFlag("git-clone-protocol", installCmd.Flags().Lookup("git-clone-protocol"))
 	viper.BindPFlag("git-branch", installCmd.Flags().Lookup("git-branch"))
 

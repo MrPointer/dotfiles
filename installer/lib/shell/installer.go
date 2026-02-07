@@ -5,7 +5,6 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
-	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
 // ShellInstaller provides functionality to install a shell and set it as default.
@@ -23,7 +22,7 @@ type ShellInstaller interface {
 // DefaultShellInstaller implements ShellInstaller.
 type DefaultShellInstaller struct {
 	shellName    string
-	programQuery osmanager.ProgramQuery
+	resolver     ShellResolver
 	pkgManager   pkgmanager.PackageManager
 	shellChanger ShellChanger
 	logger       logger.Logger
@@ -34,14 +33,14 @@ var _ ShellInstaller = (*DefaultShellInstaller)(nil)
 // NewDefaultShellInstaller creates a new DefaultShellInstaller instance.
 func NewDefaultShellInstaller(
 	shellName string,
-	programQuery osmanager.ProgramQuery,
+	resolver ShellResolver,
 	pkgManager pkgmanager.PackageManager,
 	shellChanger ShellChanger,
 	logger logger.Logger,
 ) *DefaultShellInstaller {
 	return &DefaultShellInstaller{
 		shellName:    shellName,
-		programQuery: programQuery,
+		resolver:     resolver,
 		pkgManager:   pkgManager,
 		shellChanger: shellChanger,
 		logger:       logger,
@@ -50,18 +49,7 @@ func NewDefaultShellInstaller(
 
 func (d *DefaultShellInstaller) IsAvailable() (bool, error) {
 	d.logger.Debug("Checking if %s is available", d.shellName)
-
-	shellAvailable, err := d.programQuery.ProgramExists(d.shellName)
-	if err != nil {
-		return false, err
-	}
-
-	if shellAvailable {
-		d.logger.Debug("%s is available", d.shellName)
-	} else {
-		d.logger.Debug("%s is not available", d.shellName)
-	}
-	return shellAvailable, nil
+	return d.resolver.IsAvailable()
 }
 
 func (d *DefaultShellInstaller) Install(ctx context.Context) error {

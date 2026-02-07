@@ -3,9 +3,7 @@ package shell
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
-	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/MrPointer/dotfiles/installer/utils/privilege"
@@ -25,65 +23,35 @@ type ShellChanger interface {
 
 // DefaultShellChanger implements ShellChanger with platform-specific logic.
 type DefaultShellChanger struct {
-	shellName  string
-	brewPath   string // path to brew binary, empty if not installed via brew
-	logger     logger.Logger
-	osManager  osmanager.OsManager
-	fileSystem utils.FileSystem
-	escalator  privilege.Escalator
+	shellName string
+	resolver  ShellResolver
+	logger    logger.Logger
+	osManager osmanager.OsManager
+	escalator privilege.Escalator
 }
 
 var _ ShellChanger = (*DefaultShellChanger)(nil)
 
 // NewDefaultShellChanger creates a new DefaultShellChanger instance.
-// brewPath should be the path to the brew binary if the shell was installed via Homebrew,
-// or empty string if installed via system package manager.
 func NewDefaultShellChanger(
 	shellName string,
-	brewPath string,
+	resolver ShellResolver,
 	logger logger.Logger,
 	osManager osmanager.OsManager,
-	fileSystem utils.FileSystem,
 	escalator privilege.Escalator,
 ) *DefaultShellChanger {
 	return &DefaultShellChanger{
-		shellName:  shellName,
-		brewPath:   brewPath,
-		logger:     logger,
-		osManager:  osManager,
-		fileSystem: fileSystem,
-		escalator:  escalator,
+		shellName: shellName,
+		resolver:  resolver,
+		logger:    logger,
+		osManager: osManager,
+		escalator: escalator,
 	}
 }
 
 // GetShellPath returns the full path to the shell binary.
-// Checks system PATH first (which includes brew if PATH is configured),
-// then falls back to checking brew's bin directory directly.
 func (c *DefaultShellChanger) GetShellPath() (string, error) {
-	// First check system PATH (includes brew if PATH is configured)
-	shellPath, err := c.osManager.GetProgramPath(c.shellName)
-	if err == nil {
-		if err := c.validateShellPath(shellPath); err == nil {
-			c.logger.Debug("Found %s in PATH at: %s", c.shellName, shellPath)
-			return shellPath, nil
-		}
-		c.logger.Debug("Shell found in PATH at %s but validation failed", shellPath)
-	}
-
-	// If brew is available, check brew's bin directory directly as fallback
-	// This handles cases where brew installed the shell but PATH isn't updated yet
-	if c.brewPath != "" {
-		brewBinDir := filepath.Dir(c.brewPath)
-		brewShellPath := filepath.Join(brewBinDir, c.shellName)
-		c.logger.Debug("Checking brew bin directory for %s at: %s", c.shellName, brewShellPath)
-
-		if err := c.validateShellPath(brewShellPath); err == nil {
-			c.logger.Debug("Found %s in brew bin at: %s", c.shellName, brewShellPath)
-			return brewShellPath, nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find %s: not in PATH and not in brew bin directory", c.shellName)
+	return c.resolver.GetShellPath()
 }
 
 // IsCurrentDefault checks if the shell is already the user's default.
@@ -131,11 +99,9 @@ func (c *DefaultShellChanger) SetAsDefault(ctx context.Context) error {
 		c.logger.Warning("Running as root - shell change will affect root user's default shell")
 	}
 
-	// Ensure shell is in /etc/shells (only needed for Homebrew installations)
-	if c.brewPath != "" {
-		if err := c.osManager.EnsureShellInEtcShells(shellPath); err != nil {
-			return fmt.Errorf("failed to add shell to /etc/shells: %w", err)
-		}
+	// Ensure shell is in /etc/shells
+	if err := c.osManager.EnsureShellInEtcShells(shellPath); err != nil {
+		return fmt.Errorf("failed to add shell to /etc/shells: %w", err)
 	}
 
 	// Set default shell using OsManager
@@ -148,27 +114,6 @@ func (c *DefaultShellChanger) SetAsDefault(ctx context.Context) error {
 
 	if err := c.osManager.SetUserShell(username, shellPath); err != nil {
 		return fmt.Errorf("failed to set default shell: %w", err)
-	}
-
-	return nil
-}
-
-// validateShellPath verifies that the shell binary exists and is executable.
-func (c *DefaultShellChanger) validateShellPath(shellPath string) error {
-	exists, err := c.fileSystem.PathExists(shellPath)
-	if err != nil {
-		return fmt.Errorf("failed to check shell binary at %s: %w", shellPath, err)
-	}
-	if !exists {
-		return fmt.Errorf("shell binary not found at %s", shellPath)
-	}
-
-	executable, err := c.fileSystem.IsExecutable(shellPath)
-	if err != nil {
-		return fmt.Errorf("failed to check if shell binary is executable at %s: %w", shellPath, err)
-	}
-	if !executable {
-		return fmt.Errorf("shell binary at %s is not executable", shellPath)
 	}
 
 	return nil
