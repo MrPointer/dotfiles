@@ -28,11 +28,17 @@ var _ OsManager = &MoqOsManager{}
 //			AddUserToGroupFunc: func(username string, group string) error {
 //				panic("mock out the AddUserToGroup method")
 //			},
+//			EnsureShellInEtcShellsFunc: func(shellPath string) error {
+//				panic("mock out the EnsureShellInEtcShells method")
+//			},
 //			GetChezmoiConfigHomeFunc: func() (string, error) {
 //				panic("mock out the GetChezmoiConfigHome method")
 //			},
 //			GetConfigDirFunc: func() (string, error) {
 //				panic("mock out the GetConfigDir method")
+//			},
+//			GetCurrentUsernameFunc: func() (string, error) {
+//				panic("mock out the GetCurrentUsername method")
 //			},
 //			GetFileOwnerFunc: func(path string) (string, error) {
 //				panic("mock out the GetFileOwner method")
@@ -46,6 +52,9 @@ var _ OsManager = &MoqOsManager{}
 //			GetProgramVersionFunc: func(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error) {
 //				panic("mock out the GetProgramVersion method")
 //			},
+//			GetUserShellFunc: func(username string) (string, error) {
+//				panic("mock out the GetUserShell method")
+//			},
 //			GetenvFunc: func(key string) string {
 //				panic("mock out the Getenv method")
 //			},
@@ -57,6 +66,9 @@ var _ OsManager = &MoqOsManager{}
 //			},
 //			SetPermissionsFunc: func(path string, mode os.FileMode) error {
 //				panic("mock out the SetPermissions method")
+//			},
+//			SetUserShellFunc: func(username string, shellPath string) error {
+//				panic("mock out the SetUserShell method")
 //			},
 //			UserExistsFunc: func(username string) (bool, error) {
 //				panic("mock out the UserExists method")
@@ -77,11 +89,17 @@ type MoqOsManager struct {
 	// AddUserToGroupFunc mocks the AddUserToGroup method.
 	AddUserToGroupFunc func(username string, group string) error
 
+	// EnsureShellInEtcShellsFunc mocks the EnsureShellInEtcShells method.
+	EnsureShellInEtcShellsFunc func(shellPath string) error
+
 	// GetChezmoiConfigHomeFunc mocks the GetChezmoiConfigHome method.
 	GetChezmoiConfigHomeFunc func() (string, error)
 
 	// GetConfigDirFunc mocks the GetConfigDir method.
 	GetConfigDirFunc func() (string, error)
+
+	// GetCurrentUsernameFunc mocks the GetCurrentUsername method.
+	GetCurrentUsernameFunc func() (string, error)
 
 	// GetFileOwnerFunc mocks the GetFileOwner method.
 	GetFileOwnerFunc func(path string) (string, error)
@@ -95,6 +113,9 @@ type MoqOsManager struct {
 	// GetProgramVersionFunc mocks the GetProgramVersion method.
 	GetProgramVersionFunc func(program string, versionExtractor VersionExtractor, queryArgs ...string) (string, error)
 
+	// GetUserShellFunc mocks the GetUserShell method.
+	GetUserShellFunc func(username string) (string, error)
+
 	// GetenvFunc mocks the Getenv method.
 	GetenvFunc func(key string) string
 
@@ -106,6 +127,9 @@ type MoqOsManager struct {
 
 	// SetPermissionsFunc mocks the SetPermissions method.
 	SetPermissionsFunc func(path string, mode os.FileMode) error
+
+	// SetUserShellFunc mocks the SetUserShell method.
+	SetUserShellFunc func(username string, shellPath string) error
 
 	// UserExistsFunc mocks the UserExists method.
 	UserExistsFunc func(username string) (bool, error)
@@ -129,11 +153,19 @@ type MoqOsManager struct {
 			// Group is the group argument value.
 			Group string
 		}
+		// EnsureShellInEtcShells holds details about calls to the EnsureShellInEtcShells method.
+		EnsureShellInEtcShells []struct {
+			// ShellPath is the shellPath argument value.
+			ShellPath string
+		}
 		// GetChezmoiConfigHome holds details about calls to the GetChezmoiConfigHome method.
 		GetChezmoiConfigHome []struct {
 		}
 		// GetConfigDir holds details about calls to the GetConfigDir method.
 		GetConfigDir []struct {
+		}
+		// GetCurrentUsername holds details about calls to the GetCurrentUsername method.
+		GetCurrentUsername []struct {
 		}
 		// GetFileOwner holds details about calls to the GetFileOwner method.
 		GetFileOwner []struct {
@@ -156,6 +188,11 @@ type MoqOsManager struct {
 			VersionExtractor VersionExtractor
 			// QueryArgs is the queryArgs argument value.
 			QueryArgs []string
+		}
+		// GetUserShell holds details about calls to the GetUserShell method.
+		GetUserShell []struct {
+			// Username is the username argument value.
+			Username string
 		}
 		// Getenv holds details about calls to the Getenv method.
 		Getenv []struct {
@@ -181,26 +218,37 @@ type MoqOsManager struct {
 			// Mode is the mode argument value.
 			Mode os.FileMode
 		}
+		// SetUserShell holds details about calls to the SetUserShell method.
+		SetUserShell []struct {
+			// Username is the username argument value.
+			Username string
+			// ShellPath is the shellPath argument value.
+			ShellPath string
+		}
 		// UserExists holds details about calls to the UserExists method.
 		UserExists []struct {
 			// Username is the username argument value.
 			Username string
 		}
 	}
-	lockAddSudoAccess        sync.RWMutex
-	lockAddUser              sync.RWMutex
-	lockAddUserToGroup       sync.RWMutex
-	lockGetChezmoiConfigHome sync.RWMutex
-	lockGetConfigDir         sync.RWMutex
-	lockGetFileOwner         sync.RWMutex
-	lockGetHomeDir           sync.RWMutex
-	lockGetProgramPath       sync.RWMutex
-	lockGetProgramVersion    sync.RWMutex
-	lockGetenv               sync.RWMutex
-	lockProgramExists        sync.RWMutex
-	lockSetOwnership         sync.RWMutex
-	lockSetPermissions       sync.RWMutex
-	lockUserExists           sync.RWMutex
+	lockAddSudoAccess          sync.RWMutex
+	lockAddUser                sync.RWMutex
+	lockAddUserToGroup         sync.RWMutex
+	lockEnsureShellInEtcShells sync.RWMutex
+	lockGetChezmoiConfigHome   sync.RWMutex
+	lockGetConfigDir           sync.RWMutex
+	lockGetCurrentUsername     sync.RWMutex
+	lockGetFileOwner           sync.RWMutex
+	lockGetHomeDir             sync.RWMutex
+	lockGetProgramPath         sync.RWMutex
+	lockGetProgramVersion      sync.RWMutex
+	lockGetUserShell           sync.RWMutex
+	lockGetenv                 sync.RWMutex
+	lockProgramExists          sync.RWMutex
+	lockSetOwnership           sync.RWMutex
+	lockSetPermissions         sync.RWMutex
+	lockSetUserShell           sync.RWMutex
+	lockUserExists             sync.RWMutex
 }
 
 // AddSudoAccess calls AddSudoAccessFunc.
@@ -303,6 +351,38 @@ func (mock *MoqOsManager) AddUserToGroupCalls() []struct {
 	return calls
 }
 
+// EnsureShellInEtcShells calls EnsureShellInEtcShellsFunc.
+func (mock *MoqOsManager) EnsureShellInEtcShells(shellPath string) error {
+	if mock.EnsureShellInEtcShellsFunc == nil {
+		panic("MoqOsManager.EnsureShellInEtcShellsFunc: method is nil but OsManager.EnsureShellInEtcShells was just called")
+	}
+	callInfo := struct {
+		ShellPath string
+	}{
+		ShellPath: shellPath,
+	}
+	mock.lockEnsureShellInEtcShells.Lock()
+	mock.calls.EnsureShellInEtcShells = append(mock.calls.EnsureShellInEtcShells, callInfo)
+	mock.lockEnsureShellInEtcShells.Unlock()
+	return mock.EnsureShellInEtcShellsFunc(shellPath)
+}
+
+// EnsureShellInEtcShellsCalls gets all the calls that were made to EnsureShellInEtcShells.
+// Check the length with:
+//
+//	len(mockedOsManager.EnsureShellInEtcShellsCalls())
+func (mock *MoqOsManager) EnsureShellInEtcShellsCalls() []struct {
+	ShellPath string
+} {
+	var calls []struct {
+		ShellPath string
+	}
+	mock.lockEnsureShellInEtcShells.RLock()
+	calls = mock.calls.EnsureShellInEtcShells
+	mock.lockEnsureShellInEtcShells.RUnlock()
+	return calls
+}
+
 // GetChezmoiConfigHome calls GetChezmoiConfigHomeFunc.
 func (mock *MoqOsManager) GetChezmoiConfigHome() (string, error) {
 	if mock.GetChezmoiConfigHomeFunc == nil {
@@ -354,6 +434,33 @@ func (mock *MoqOsManager) GetConfigDirCalls() []struct {
 	mock.lockGetConfigDir.RLock()
 	calls = mock.calls.GetConfigDir
 	mock.lockGetConfigDir.RUnlock()
+	return calls
+}
+
+// GetCurrentUsername calls GetCurrentUsernameFunc.
+func (mock *MoqOsManager) GetCurrentUsername() (string, error) {
+	if mock.GetCurrentUsernameFunc == nil {
+		panic("MoqOsManager.GetCurrentUsernameFunc: method is nil but OsManager.GetCurrentUsername was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetCurrentUsername.Lock()
+	mock.calls.GetCurrentUsername = append(mock.calls.GetCurrentUsername, callInfo)
+	mock.lockGetCurrentUsername.Unlock()
+	return mock.GetCurrentUsernameFunc()
+}
+
+// GetCurrentUsernameCalls gets all the calls that were made to GetCurrentUsername.
+// Check the length with:
+//
+//	len(mockedOsManager.GetCurrentUsernameCalls())
+func (mock *MoqOsManager) GetCurrentUsernameCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetCurrentUsername.RLock()
+	calls = mock.calls.GetCurrentUsername
+	mock.lockGetCurrentUsername.RUnlock()
 	return calls
 }
 
@@ -485,6 +592,38 @@ func (mock *MoqOsManager) GetProgramVersionCalls() []struct {
 	mock.lockGetProgramVersion.RLock()
 	calls = mock.calls.GetProgramVersion
 	mock.lockGetProgramVersion.RUnlock()
+	return calls
+}
+
+// GetUserShell calls GetUserShellFunc.
+func (mock *MoqOsManager) GetUserShell(username string) (string, error) {
+	if mock.GetUserShellFunc == nil {
+		panic("MoqOsManager.GetUserShellFunc: method is nil but OsManager.GetUserShell was just called")
+	}
+	callInfo := struct {
+		Username string
+	}{
+		Username: username,
+	}
+	mock.lockGetUserShell.Lock()
+	mock.calls.GetUserShell = append(mock.calls.GetUserShell, callInfo)
+	mock.lockGetUserShell.Unlock()
+	return mock.GetUserShellFunc(username)
+}
+
+// GetUserShellCalls gets all the calls that were made to GetUserShell.
+// Check the length with:
+//
+//	len(mockedOsManager.GetUserShellCalls())
+func (mock *MoqOsManager) GetUserShellCalls() []struct {
+	Username string
+} {
+	var calls []struct {
+		Username string
+	}
+	mock.lockGetUserShell.RLock()
+	calls = mock.calls.GetUserShell
+	mock.lockGetUserShell.RUnlock()
 	return calls
 }
 
@@ -621,6 +760,42 @@ func (mock *MoqOsManager) SetPermissionsCalls() []struct {
 	mock.lockSetPermissions.RLock()
 	calls = mock.calls.SetPermissions
 	mock.lockSetPermissions.RUnlock()
+	return calls
+}
+
+// SetUserShell calls SetUserShellFunc.
+func (mock *MoqOsManager) SetUserShell(username string, shellPath string) error {
+	if mock.SetUserShellFunc == nil {
+		panic("MoqOsManager.SetUserShellFunc: method is nil but OsManager.SetUserShell was just called")
+	}
+	callInfo := struct {
+		Username  string
+		ShellPath string
+	}{
+		Username:  username,
+		ShellPath: shellPath,
+	}
+	mock.lockSetUserShell.Lock()
+	mock.calls.SetUserShell = append(mock.calls.SetUserShell, callInfo)
+	mock.lockSetUserShell.Unlock()
+	return mock.SetUserShellFunc(username, shellPath)
+}
+
+// SetUserShellCalls gets all the calls that were made to SetUserShell.
+// Check the length with:
+//
+//	len(mockedOsManager.SetUserShellCalls())
+func (mock *MoqOsManager) SetUserShellCalls() []struct {
+	Username  string
+	ShellPath string
+} {
+	var calls []struct {
+		Username  string
+		ShellPath string
+	}
+	mock.lockSetUserShell.RLock()
+	calls = mock.calls.SetUserShell
+	mock.lockSetUserShell.RUnlock()
 	return calls
 }
 

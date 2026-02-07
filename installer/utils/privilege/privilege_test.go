@@ -6,14 +6,13 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
-	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_DefaultEscalator_ImplementsEscalatorInterface(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
-	mockProgramQuery := &osmanager.MoqProgramQuery{}
+	mockProgramQuery := &utils.MoqProgramQuery{}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -22,7 +21,7 @@ func Test_DefaultEscalator_ImplementsEscalatorInterface(t *testing.T) {
 
 func Test_NewDefaultEscalator_ReturnsValidInstance(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
-	mockProgramQuery := &osmanager.MoqProgramQuery{}
+	mockProgramQuery := &utils.MoqProgramQuery{}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -38,11 +37,9 @@ func Test_EscalateCommand_RunningAsRoot_ReturnsDirectCommand(t *testing.T) {
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -67,11 +64,9 @@ func Test_EscalateCommand_NonRootWithSudo_ReturnsSudoCommand(t *testing.T) {
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id" || program == "sudo", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id" || program == "sudo", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -99,14 +94,12 @@ func Test_EscalateCommand_NonRootWithDoas_ReturnsDoasCommand(t *testing.T) {
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			if program == "sudo" {
-				return false, nil
-			}
-			return program == "id" || program == "doas", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		if program == "sudo" {
+			return false, nil
+		}
+		return program == "id" || program == "doas", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -132,14 +125,12 @@ func Test_EscalateCommand_NonRootWithoutPrivilegeEscalation_ReturnsDirectCommand
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			if program == "sudo" || program == "doas" {
-				return false, nil
-			}
-			return program == "id", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		if program == "sudo" || program == "doas" {
+			return false, nil
+		}
+		return program == "id", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -154,7 +145,7 @@ func Test_EscalateCommand_NonRootWithoutPrivilegeEscalation_ReturnsDirectCommand
 
 func Test_EscalateCommand_EmptyCommand_ReturnsError(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
-	mockProgramQuery := &osmanager.MoqProgramQuery{}
+	mockProgramQuery := &utils.MoqProgramQuery{}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -174,11 +165,9 @@ func Test_IsRunningAsRoot_ReturnsTrue_WhenUidIsZero(t *testing.T) {
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -197,11 +186,9 @@ func Test_IsRunningAsRoot_ReturnsFalse_WhenUidIsNotZero(t *testing.T) {
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -213,11 +200,9 @@ func Test_IsRunningAsRoot_ReturnsFalse_WhenUidIsNotZero(t *testing.T) {
 
 func Test_IsRunningAsRoot_ReturnsError_WhenIdCommandNotAvailable(t *testing.T) {
 	mockCommander := &utils.MoqCommander{}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return false, nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return false, nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -237,11 +222,9 @@ func Test_IsRunningAsRoot_ReturnsError_WhenIdCommandFails(t *testing.T) {
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -261,11 +244,9 @@ func Test_GetAvailableEscalationMethods_AsRoot_ReturnsNoneOnly(t *testing.T) {
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -287,11 +268,9 @@ func Test_GetAvailableEscalationMethods_AsNonRootWithSudo_ReturnsSudoAndDirect(t
 			return &utils.Result{ExitCode: 1}, fmt.Errorf("command failed")
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id" || program == "sudo", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id" || program == "sudo", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -315,11 +294,9 @@ func Test_GetAvailableEscalationMethods_AsNonRootWithBothSudoAndDoas_ReturnsAll(
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id" || program == "sudo" || program == "doas", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id" || program == "sudo" || program == "doas", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -341,11 +318,9 @@ func Test_GetAvailableEscalationMethods_AsNonRootWithoutPrivilegeEscalation_Retu
 			return &utils.Result{ExitCode: 1}, fmt.Errorf("command failed")
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 
@@ -367,11 +342,9 @@ func Test_EscalateCommand_HandlesRootCheckFailure_GracefullyFallsBackToNonRoot(t
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{
-		ProgramExistsFunc: func(program string) (bool, error) {
-			return program == "id" || program == "sudo", nil
-		},
-	}
+	mockProgramQuery := &utils.MoqProgramQuery{ProgramExistsFunc: func(program string) (bool, error) {
+		return program == "id" || program == "sudo", nil
+	}}
 
 	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, mockCommander, mockProgramQuery)
 

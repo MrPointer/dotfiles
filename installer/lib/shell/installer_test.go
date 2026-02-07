@@ -23,8 +23,9 @@ func Test_ShellIsReportedAsAvailable_WhenShellProgramExists(t *testing.T) {
 	}
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+	shellChangerMock := &shell.MoqShellChanger{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, shellChangerMock, logger.DefaultLogger)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -47,8 +48,9 @@ func Test_ShellIsReportedAsUnavailable_WhenShellProgramDoesNotExist(t *testing.T
 	}
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+	shellChangerMock := &shell.MoqShellChanger{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, shellChangerMock, logger.DefaultLogger)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -71,8 +73,9 @@ func Test_ShellAvailabilityCheckFails_WhenProgramExistsFails(t *testing.T) {
 	}
 
 	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+	shellChangerMock := &shell.MoqShellChanger{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, shellChangerMock, logger.DefaultLogger)
 
 	// Act
 	available, err := installer.IsAvailable()
@@ -95,8 +98,9 @@ func Test_ShellInstallationSucceeds_WhenPackageManagerSucceeds(t *testing.T) {
 			return nil
 		},
 	}
+	shellChangerMock := &shell.MoqShellChanger{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, shellChangerMock, logger.DefaultLogger)
 
 	// Act
 	err := installer.Install(context.Background())
@@ -119,8 +123,9 @@ func Test_ShellInstallationFails_WhenPackageManagerFails(t *testing.T) {
 			return assert.AnError
 		},
 	}
+	shellChangerMock := &shell.MoqShellChanger{}
 
-	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, logger.DefaultLogger)
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, shellChangerMock, logger.DefaultLogger)
 
 	// Act
 	err := installer.Install(context.Background())
@@ -130,4 +135,48 @@ func Test_ShellInstallationFails_WhenPackageManagerFails(t *testing.T) {
 	assert.Len(t, pkgManagerMock.InstallPackageCalls(), 1)
 	assert.Equal(t, shellName, pkgManagerMock.InstallPackageCalls()[0].RequestedPackageInfo.Name)
 	assert.Nil(t, pkgManagerMock.InstallPackageCalls()[0].RequestedPackageInfo.VersionConstraints)
+}
+
+func Test_SetAsDefaultSucceeds_WhenShellChangerSucceeds(t *testing.T) {
+	// Arrange
+	shellName := "zsh"
+
+	programQueryMock := &osmanager.MoqProgramQuery{}
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+	shellChangerMock := &shell.MoqShellChanger{
+		SetAsDefaultFunc: func(ctx context.Context) error {
+			return nil
+		},
+	}
+
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, shellChangerMock, logger.DefaultLogger)
+
+	// Act
+	err := installer.SetAsDefault(context.Background())
+
+	// Assert
+	require.NoError(t, err)
+	assert.Len(t, shellChangerMock.SetAsDefaultCalls(), 1)
+}
+
+func Test_SetAsDefaultFails_WhenShellChangerFails(t *testing.T) {
+	// Arrange
+	shellName := "zsh"
+
+	programQueryMock := &osmanager.MoqProgramQuery{}
+	pkgManagerMock := &pkgmanager.MoqPackageManager{}
+	shellChangerMock := &shell.MoqShellChanger{
+		SetAsDefaultFunc: func(ctx context.Context) error {
+			return assert.AnError
+		},
+	}
+
+	installer := shell.NewDefaultShellInstaller(shellName, programQueryMock, pkgManagerMock, shellChangerMock, logger.DefaultLogger)
+
+	// Act
+	err := installer.SetAsDefault(context.Background())
+
+	// Assert
+	require.Error(t, err)
+	assert.Len(t, shellChangerMock.SetAsDefaultCalls(), 1)
 }

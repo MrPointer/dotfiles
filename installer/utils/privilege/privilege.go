@@ -6,7 +6,6 @@ import (
 
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
-	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
 )
 
 // EscalationMethod represents the type of privilege escalation being used.
@@ -52,13 +51,13 @@ type Escalator interface {
 type DefaultEscalator struct {
 	logger       logger.Logger
 	commander    utils.Commander
-	programQuery osmanager.ProgramQuery
+	programQuery utils.ProgramQuery
 }
 
 var _ Escalator = (*DefaultEscalator)(nil)
 
 // NewDefaultEscalator creates a new DefaultEscalator instance.
-func NewDefaultEscalator(logger logger.Logger, commander utils.Commander, programQuery osmanager.ProgramQuery) *DefaultEscalator {
+func NewDefaultEscalator(logger logger.Logger, commander utils.Commander, programQuery utils.ProgramQuery) *DefaultEscalator {
 	return &DefaultEscalator{
 		logger:       logger,
 		commander:    commander,

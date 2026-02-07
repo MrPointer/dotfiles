@@ -15,6 +15,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
+	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 )
 
 const (
@@ -314,13 +315,17 @@ type Options struct {
 
 // DefaultOptions returns the default options.
 func DefaultOptions() *Options {
+	commander := utils.NewDefaultCommander(logger.DefaultLogger)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, commander, utils.NewGoNativeProgramQuery())
+	fileSystem := utils.NewDefaultFileSystem()
+
 	return &Options{
 		Logger:           logger.DefaultLogger,
 		SystemInfo:       nil,
 		Commander:        utils.NewDefaultCommander(logger.DefaultLogger),
 		HTTPClient:       httpclient.NewDefaultHTTPClient(),
-		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, utils.NewDefaultCommander(logger.DefaultLogger), osmanager.IsRoot()),
-		Fs:               utils.NewDefaultFileSystem(),
+		OsManager:        osmanager.NewUnixOsManager(logger.DefaultLogger, commander, escalator, fileSystem),
+		Fs:               fileSystem,
 		BrewPathOverride: "",
 		DisplayMode:      utils.DisplayModeProgress,
 	}

@@ -42,6 +42,7 @@ var (
 // global variables for the command execution context.
 var (
 	globalPackageManager pkgmanager.PackageManager = nil // set later based on passed flags
+	globalBrewPath       string                          // path to brew binary, set if brew is installed/used
 )
 
 // output variables stored in global context
@@ -78,6 +79,7 @@ making it easier to get started with a new system.`,
 				installLogger.Error("Failed to install Homebrew: %v", err)
 				os.Exit(1)
 			}
+			globalBrewPath = brewPath
 			globalPackageManager = brew.NewBrewPackageManager(installLogger, globalCommander, globalOsManager, brewPath, GetDisplayMode())
 		}
 
@@ -106,6 +108,7 @@ making it easier to get started with a new system.`,
 				installLogger.Error("Failed to install Homebrew: %v", err)
 				os.Exit(1)
 			}
+			globalBrewPath = brewPath
 			globalPackageManager = brew.NewBrewPackageManager(installLogger, globalCommander, globalOsManager, brewPath, GetDisplayMode())
 		}
 
@@ -139,9 +142,9 @@ func createPackageManagerForSystem(sysInfo *compatibility.SystemInfo) pkgmanager
 	case "linux":
 		switch sysInfo.DistroName {
 		case "ubuntu", "debian":
-			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
+			return apt.NewAptPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalProgramQuery), GetDisplayMode())
 		case "fedora", "centos", "rhel":
-			return dnf.NewDnfPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalOsManager), GetDisplayMode())
+			return dnf.NewDnfPackageManager(cliLogger, globalCommander, globalOsManager, privilege.NewDefaultEscalator(cliLogger, globalCommander, globalProgramQuery), GetDisplayMode())
 		default:
 			cliLogger.Warning("Unsupported Linux distribution for automatic package installation: %s", sysInfo.DistroName)
 			return nil
@@ -347,7 +350,20 @@ func installHomebrew(sysInfo compatibility.SystemInfo, log logger.Logger) (strin
 func installShell(log logger.Logger) error {
 	log.StartProgress(fmt.Sprintf("Setting up %s shell", shellName))
 
-	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager, log)
+	// Create privilege escalator for shell operations
+	escalator := privilege.NewDefaultEscalator(log, globalCommander, globalProgramQuery)
+
+	// Create shell changer - pass brew path if shell was/will be installed via brew
+	shellChanger := shell.NewDefaultShellChanger(
+		shellName,
+		globalBrewPath, // empty if not using brew
+		log,
+		globalOsManager,
+		globalFilesystem,
+		escalator,
+	)
+
+	shellInstaller := shell.NewDefaultShellInstaller(shellName, globalOsManager, globalPackageManager, shellChanger, log)
 
 	log.StartProgress(fmt.Sprintf("Checking %s shell availability", shellName))
 	isAvailable, err := shellInstaller.IsAvailable()
@@ -356,19 +372,26 @@ func installShell(log logger.Logger) error {
 		return err
 	}
 
-	if isAvailable {
-		log.FinishProgress(fmt.Sprintf("%s shell is already available", shellName))
-		log.FinishProgress(fmt.Sprintf("%s shell is ready", shellName))
-		return nil
-	}
-	log.FinishProgress(fmt.Sprintf("%s shell not found", shellName))
+	if !isAvailable {
+		log.FinishProgress(fmt.Sprintf("%s shell not found", shellName))
 
-	log.StartProgress(fmt.Sprintf("Installing %s shell", shellName))
-	if err := shellInstaller.Install(context.TODO()); err != nil {
-		log.FailProgress(fmt.Sprintf("Failed to install %s shell", shellName), err)
+		log.StartProgress(fmt.Sprintf("Installing %s shell", shellName))
+		if err := shellInstaller.Install(context.TODO()); err != nil {
+			log.FailProgress(fmt.Sprintf("Failed to install %s shell", shellName), err)
+			return err
+		}
+		log.FinishProgress(fmt.Sprintf("%s shell installed successfully", shellName))
+	} else {
+		log.FinishProgress(fmt.Sprintf("%s shell is already available", shellName))
+	}
+
+	// Set shell as default (regardless of whether we just installed it or it was already available)
+	log.StartProgress(fmt.Sprintf("Setting %s as default shell", shellName))
+	if err := shellInstaller.SetAsDefault(context.TODO()); err != nil {
+		log.FailProgress(fmt.Sprintf("Failed to set %s as default shell", shellName), err)
 		return err
 	}
-	log.FinishProgress(fmt.Sprintf("%s shell installed successfully", shellName))
+	log.FinishProgress(fmt.Sprintf("%s set as default shell", shellName))
 
 	log.FinishProgress(fmt.Sprintf("%s shell setup completed", shellName))
 	return nil
