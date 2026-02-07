@@ -116,34 +116,9 @@ type UnixOsManager struct {
 
 var _ OsManager = (*UnixOsManager)(nil)
 
-// NewUnixOsManager creates a new UnixOsManager.
-func NewUnixOsManager(logger logger.Logger, commander utils.Commander, isRoot bool) *UnixOsManager {
-	_ = isRoot
-
-	u := &UnixOsManager{
-		logger:     logger,
-		fileSystem: utils.NewDefaultFileSystem(),
-		commander:  commander,
-	}
-	// UnixOsManager implements privilege.ProgramQuery via ProgramExists.
-	u.escalator = privilege.NewDefaultEscalator(logger, commander, u)
-	return u
-}
-
-// NewUnixOsManagerWithEscalator creates a new UnixOsManager with an injected Escalator.
+// NewUnixOsManager creates a new UnixOsManager with injected Escalator and FileSystem.
 // Intended for deterministic unit tests.
-func NewUnixOsManagerWithEscalator(logger logger.Logger, commander utils.Commander, escalator privilege.Escalator) *UnixOsManager {
-	return &UnixOsManager{
-		logger:     logger,
-		fileSystem: utils.NewDefaultFileSystem(),
-		commander:  commander,
-		escalator:  escalator,
-	}
-}
-
-// NewUnixOsManagerWithEscalatorAndFileSystem creates a new UnixOsManager with injected Escalator and FileSystem.
-// Intended for deterministic unit tests.
-func NewUnixOsManagerWithEscalatorAndFileSystem(
+func NewUnixOsManager(
 	logger logger.Logger,
 	commander utils.Commander,
 	escalator privilege.Escalator,

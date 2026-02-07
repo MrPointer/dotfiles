@@ -8,13 +8,6 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 )
 
-// ProgramQuery checks if commands exist on the system.
-//
-// This is intentionally minimal to avoid package import cycles (osmanager uses privilege).
-type ProgramQuery interface {
-	ProgramExists(program string) (bool, error)
-}
-
 // EscalationMethod represents the type of privilege escalation being used.
 type EscalationMethod string
 
@@ -58,13 +51,13 @@ type Escalator interface {
 type DefaultEscalator struct {
 	logger       logger.Logger
 	commander    utils.Commander
-	programQuery ProgramQuery
+	programQuery utils.ProgramQuery
 }
 
 var _ Escalator = (*DefaultEscalator)(nil)
 
 // NewDefaultEscalator creates a new DefaultEscalator instance.
-func NewDefaultEscalator(logger logger.Logger, commander utils.Commander, programQuery ProgramQuery) *DefaultEscalator {
+func NewDefaultEscalator(logger logger.Logger, commander utils.Commander, programQuery utils.ProgramQuery) *DefaultEscalator {
 	return &DefaultEscalator{
 		logger:       logger,
 		commander:    commander,

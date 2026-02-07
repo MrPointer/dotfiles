@@ -2,32 +2,32 @@
 // github.com/vektra/mockery
 // template: matryer
 
-package privilege
+package utils
 
 import (
 	"sync"
 )
 
-// Ensure that MoqProgramQuery does implement ProgramQuery.
+// Ensure that MoqProgramExistsQuery does implement ProgramExistsQuery.
 // If this is not the case, regenerate this file with mockery.
-var _ ProgramQuery = &MoqProgramQuery{}
+var _ ProgramExistsQuery = &MoqProgramExistsQuery{}
 
-// MoqProgramQuery is a mock implementation of ProgramQuery.
+// MoqProgramExistsQuery is a mock implementation of ProgramExistsQuery.
 //
-//	func TestSomethingThatUsesProgramQuery(t *testing.T) {
+//	func TestSomethingThatUsesProgramExistsQuery(t *testing.T) {
 //
-//		// make and configure a mocked ProgramQuery
-//		mockedProgramQuery := &MoqProgramQuery{
+//		// make and configure a mocked ProgramExistsQuery
+//		mockedProgramExistsQuery := &MoqProgramExistsQuery{
 //			ProgramExistsFunc: func(program string) (bool, error) {
 //				panic("mock out the ProgramExists method")
 //			},
 //		}
 //
-//		// use mockedProgramQuery in code that requires ProgramQuery
+//		// use mockedProgramExistsQuery in code that requires ProgramExistsQuery
 //		// and then make assertions.
 //
 //	}
-type MoqProgramQuery struct {
+type MoqProgramExistsQuery struct {
 	// ProgramExistsFunc mocks the ProgramExists method.
 	ProgramExistsFunc func(program string) (bool, error)
 
@@ -43,9 +43,9 @@ type MoqProgramQuery struct {
 }
 
 // ProgramExists calls ProgramExistsFunc.
-func (mock *MoqProgramQuery) ProgramExists(program string) (bool, error) {
+func (mock *MoqProgramExistsQuery) ProgramExists(program string) (bool, error) {
 	if mock.ProgramExistsFunc == nil {
-		panic("MoqProgramQuery.ProgramExistsFunc: method is nil but ProgramQuery.ProgramExists was just called")
+		panic("MoqProgramExistsQuery.ProgramExistsFunc: method is nil but ProgramExistsQuery.ProgramExists was just called")
 	}
 	callInfo := struct {
 		Program string
@@ -61,8 +61,8 @@ func (mock *MoqProgramQuery) ProgramExists(program string) (bool, error) {
 // ProgramExistsCalls gets all the calls that were made to ProgramExists.
 // Check the length with:
 //
-//	len(mockedProgramQuery.ProgramExistsCalls())
-func (mock *MoqProgramQuery) ProgramExistsCalls() []struct {
+//	len(mockedProgramExistsQuery.ProgramExistsCalls())
+func (mock *MoqProgramExistsQuery) ProgramExistsCalls() []struct {
 	Program string
 } {
 	var calls []struct {

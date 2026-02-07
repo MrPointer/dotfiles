@@ -42,7 +42,7 @@ func Test_UnixOsManager_SetUserShell_UsesEscalatorCommand(t *testing.T) {
 		},
 	}
 
-	m := osmanager.NewUnixOsManagerWithEscalatorAndFileSystem(
+	m := osmanager.NewUnixOsManager(
 		logger.DefaultLogger,
 		mockCommander,
 		mockEscalator,
@@ -73,7 +73,7 @@ func Test_UnixOsManager_AddSudoAccess_UsesEscalatorAndTeeWithInput(t *testing.T)
 		},
 	}
 
-	m := osmanager.NewUnixOsManagerWithEscalatorAndFileSystem(
+	m := osmanager.NewUnixOsManager(
 		logger.DefaultLogger,
 		mockCommander,
 		mockEscalator,
@@ -110,7 +110,7 @@ func Test_UnixOsManager_runPrivileged_ReturnsEscalatorError(t *testing.T) {
 		},
 	}
 
-	m := osmanager.NewUnixOsManagerWithEscalatorAndFileSystem(
+	m := osmanager.NewUnixOsManager(
 		logger.DefaultLogger,
 		mockCommander,
 		mockEscalator,
@@ -149,7 +149,7 @@ func Test_UnixOsManager_EnsureShellInEtcShells_ReadsViaFileSystemAndAppendsWhenM
 		},
 	}
 
-	m := osmanager.NewUnixOsManagerWithEscalatorAndFileSystem(logger.DefaultLogger, mockCommander, mockEscalator, mockFileSystem)
+	m := osmanager.NewUnixOsManager(logger.DefaultLogger, mockCommander, mockEscalator, mockFileSystem)
 	err := m.EnsureShellInEtcShells("/opt/homebrew/bin/zsh")
 	require.NoError(t, err)
 
@@ -194,7 +194,7 @@ func Test_UnixOsManager_EnsureShellInEtcShells_SkipsWhenAlreadyPresent(t *testin
 		},
 	}
 
-	m := osmanager.NewUnixOsManagerWithEscalatorAndFileSystem(logger.DefaultLogger, mockCommander, mockEscalator, mockFileSystem)
+	m := osmanager.NewUnixOsManager(logger.DefaultLogger, mockCommander, mockEscalator, mockFileSystem)
 	err := m.EnsureShellInEtcShells("/opt/homebrew/bin/zsh")
 	require.NoError(t, err)
 }
