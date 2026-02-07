@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/MrPointer/dotfiles/installer/utils"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
@@ -31,7 +30,6 @@ type DefaultShellChanger struct {
 	logger     logger.Logger
 	osManager  osmanager.OsManager
 	fileSystem utils.FileSystem
-	commander  utils.Commander
 	escalator  privilege.Escalator
 }
 
@@ -46,7 +44,6 @@ func NewDefaultShellChanger(
 	logger logger.Logger,
 	osManager osmanager.OsManager,
 	fileSystem utils.FileSystem,
-	commander utils.Commander,
 	escalator privilege.Escalator,
 ) *DefaultShellChanger {
 	return &DefaultShellChanger{
@@ -55,7 +52,6 @@ func NewDefaultShellChanger(
 		logger:     logger,
 		osManager:  osManager,
 		fileSystem: fileSystem,
-		commander:  commander,
 		escalator:  escalator,
 	}
 }
@@ -137,7 +133,7 @@ func (c *DefaultShellChanger) SetAsDefault(ctx context.Context) error {
 
 	// Ensure shell is in /etc/shells (only needed for Homebrew installations)
 	if c.brewPath != "" {
-		if err := c.ensureShellInEtcShells(shellPath); err != nil {
+		if err := c.osManager.EnsureShellInEtcShells(shellPath); err != nil {
 			return fmt.Errorf("failed to add shell to /etc/shells: %w", err)
 		}
 	}
@@ -173,47 +169,6 @@ func (c *DefaultShellChanger) validateShellPath(shellPath string) error {
 	}
 	if !executable {
 		return fmt.Errorf("shell binary at %s is not executable", shellPath)
-	}
-
-	return nil
-}
-
-// ensureShellInEtcShells adds the shell to /etc/shells if not already present.
-// This is required for Homebrew-installed shells before changing the default.
-func (c *DefaultShellChanger) ensureShellInEtcShells(shellPath string) error {
-	c.logger.Debug("Checking if %s is in /etc/shells", shellPath)
-
-	// Read current contents using FileSystem interface
-	content, err := c.fileSystem.ReadFileContents("/etc/shells")
-	if err != nil {
-		return fmt.Errorf("failed to read /etc/shells: %w", err)
-	}
-
-	// Check if already present
-	lines := strings.SplitSeq(string(content), "\n")
-	for line := range lines {
-		if strings.TrimSpace(line) == shellPath {
-			c.logger.Debug("Shell %s already in /etc/shells", shellPath)
-			return nil
-		}
-	}
-
-	c.logger.Info("Adding %s to /etc/shells", shellPath)
-
-	// Append using tee with privilege escalation
-	escalated, err := c.escalator.EscalateCommand("tee", []string{"-a", "/etc/shells"})
-	if err != nil {
-		return fmt.Errorf("failed to escalate command for /etc/shells modification: %w", err)
-	}
-
-	_, err = c.commander.RunCommand(
-		escalated.Command,
-		escalated.Args,
-		utils.WithCaptureOutput(),
-		utils.WithInputString(shellPath+"\n"),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to append shell to /etc/shells: %w", err)
 	}
 
 	return nil

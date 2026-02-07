@@ -360,7 +360,6 @@ func installShell(log logger.Logger) error {
 		log,
 		globalOsManager,
 		globalFilesystem,
-		globalCommander,
 		escalator,
 	)
 

@@ -37,7 +37,6 @@ func Test_GetShellPath_ReturnsPathFromOsManager_WhenShellExistsInPath(t *testing
 			return path == expectedPath, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	// Even with brew path set, should prefer PATH
@@ -47,7 +46,6 @@ func Test_GetShellPath_ReturnsPathFromOsManager_WhenShellExistsInPath(t *testing
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -87,7 +85,6 @@ func Test_GetShellPath_UsesOsManager_WhenNoBrewPath(t *testing.T) {
 			return path == expectedPath, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	changer := shell.NewDefaultShellChanger(
@@ -96,7 +93,6 @@ func Test_GetShellPath_UsesOsManager_WhenNoBrewPath(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -137,7 +133,6 @@ func Test_GetShellPath_ReturnsBrewPath_WhenShellNotInPathButExistsInBrewBin(t *t
 			return path == shellPath, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	changer := shell.NewDefaultShellChanger(
@@ -146,7 +141,6 @@ func Test_GetShellPath_ReturnsBrewPath_WhenShellNotInPathButExistsInBrewBin(t *t
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -187,7 +181,6 @@ func Test_GetShellPath_PrefersPathOverBrewBin_WhenBothExist(t *testing.T) {
 			return path == systemShellPath || path == brewShellPath, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	changer := shell.NewDefaultShellChanger(
@@ -196,7 +189,6 @@ func Test_GetShellPath_PrefersPathOverBrewBin_WhenBothExist(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -225,7 +217,6 @@ func Test_GetShellPath_ReturnsError_WhenShellNotFoundAnywhere(t *testing.T) {
 			return false, nil // Not in brew bin either
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	changer := shell.NewDefaultShellChanger(
@@ -234,7 +225,6 @@ func Test_GetShellPath_ReturnsError_WhenShellNotFoundAnywhere(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -257,7 +247,6 @@ func Test_GetShellPath_ReturnsError_WhenProgramNotFound(t *testing.T) {
 		},
 	}
 	fileSystemMock := &utils.MoqFileSystem{}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	changer := shell.NewDefaultShellChanger(
@@ -266,7 +255,6 @@ func Test_GetShellPath_ReturnsError_WhenProgramNotFound(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -304,7 +292,6 @@ func Test_IsCurrentDefault_ReturnsTrue_WhenShellMatches(t *testing.T) {
 			return true, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	changer := shell.NewDefaultShellChanger(
@@ -313,7 +300,6 @@ func Test_IsCurrentDefault_ReturnsTrue_WhenShellMatches(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -351,7 +337,6 @@ func Test_IsCurrentDefault_ReturnsFalse_WhenShellDiffers(t *testing.T) {
 			return true, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{}
 
 	changer := shell.NewDefaultShellChanger(
@@ -360,7 +345,6 @@ func Test_IsCurrentDefault_ReturnsFalse_WhenShellDiffers(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -401,7 +385,6 @@ func Test_SetAsDefault_SkipsChange_WhenAlreadyDefault(t *testing.T) {
 			return true, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{
 		IsRunningAsRootFunc: func() (bool, error) {
 			return false, nil
@@ -414,7 +397,6 @@ func Test_SetAsDefault_SkipsChange_WhenAlreadyDefault(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -455,7 +437,6 @@ func Test_SetAsDefault_SetsShell_WhenNotDefault(t *testing.T) {
 			return true, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{
 		IsRunningAsRootFunc: func() (bool, error) {
 			return false, nil
@@ -468,7 +449,6 @@ func Test_SetAsDefault_SetsShell_WhenNotDefault(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -492,8 +472,7 @@ func Test_SetAsDefault_AddsToEtcShells_WhenBrewInstalled(t *testing.T) {
 	currentShell := "/bin/bash"
 	username := "testuser"
 
-	// Simulate /etc/shells content without the brew shell
-	etcShellsContent := "/bin/sh\n/bin/bash\n/bin/zsh\n"
+	// We only assert delegation to OsManager now.
 
 	osManagerMock := &osmanager.MoqOsManager{
 		GetProgramPathFunc: func(program string) (string, error) {
@@ -509,6 +488,10 @@ func Test_SetAsDefault_AddsToEtcShells_WhenBrewInstalled(t *testing.T) {
 		SetUserShellFunc: func(user, shell string) error {
 			return nil
 		},
+		EnsureShellInEtcShellsFunc: func(p string) error {
+			require.Equal(t, shellPath, p)
+			return nil
+		},
 	}
 	fileSystemMock := &utils.MoqFileSystem{
 		PathExistsFunc: func(path string) (bool, error) {
@@ -517,35 +500,10 @@ func Test_SetAsDefault_AddsToEtcShells_WhenBrewInstalled(t *testing.T) {
 		IsExecutableFunc: func(path string) (bool, error) {
 			return path == shellPath, nil
 		},
-		ReadFileContentsFunc: func(path string) ([]byte, error) {
-			if path == "/etc/shells" {
-				return []byte(etcShellsContent), nil
-			}
-			return nil, assert.AnError
-		},
-	}
-
-	var teeCalled bool
-	commanderMock := &utils.MoqCommander{
-		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			// Capture tee call for /etc/shells
-			if name == "sudo" && len(args) > 0 && args[0] == "tee" {
-				teeCalled = true
-			}
-			return &utils.Result{ExitCode: 0}, nil
-		},
 	}
 	escalatorMock := &privilege.MoqEscalator{
 		IsRunningAsRootFunc: func() (bool, error) {
 			return false, nil
-		},
-		EscalateCommandFunc: func(baseCmd string, baseArgs []string) (privilege.EscalationResult, error) {
-			return privilege.EscalationResult{
-				Method:          privilege.EscalationSudo,
-				Command:         "sudo",
-				Args:            append([]string{baseCmd}, baseArgs...),
-				NeedsEscalation: true,
-			}, nil
 		},
 	}
 
@@ -555,7 +513,6 @@ func Test_SetAsDefault_AddsToEtcShells_WhenBrewInstalled(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -564,7 +521,7 @@ func Test_SetAsDefault_AddsToEtcShells_WhenBrewInstalled(t *testing.T) {
 
 	// Assert
 	require.NoError(t, err)
-	assert.True(t, teeCalled, "Should have called tee to add shell to /etc/shells")
+	require.Len(t, osManagerMock.EnsureShellInEtcShellsCalls(), 1, "Should have ensured shell in /etc/shells")
 }
 
 func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
@@ -577,8 +534,7 @@ func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
 	currentShell := "/bin/bash"
 	username := "testuser"
 
-	// Simulate /etc/shells content WITH the brew shell already present
-	etcShellsContent := "/bin/sh\n/bin/bash\n" + shellPath + "\n"
+	// We only assert delegation to OsManager now.
 
 	osManagerMock := &osmanager.MoqOsManager{
 		GetProgramPathFunc: func(program string) (string, error) {
@@ -594,6 +550,10 @@ func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
 		SetUserShellFunc: func(user, shell string) error {
 			return nil
 		},
+		EnsureShellInEtcShellsFunc: func(p string) error {
+			require.Equal(t, shellPath, p)
+			return nil
+		},
 	}
 	fileSystemMock := &utils.MoqFileSystem{
 		PathExistsFunc: func(path string) (bool, error) {
@@ -602,34 +562,10 @@ func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
 		IsExecutableFunc: func(path string) (bool, error) {
 			return path == shellPath, nil
 		},
-		ReadFileContentsFunc: func(path string) ([]byte, error) {
-			if path == "/etc/shells" {
-				return []byte(etcShellsContent), nil
-			}
-			return nil, assert.AnError
-		},
-	}
-
-	var teeCalled bool
-	commanderMock := &utils.MoqCommander{
-		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "sudo" && len(args) > 0 && args[0] == "tee" {
-				teeCalled = true
-			}
-			return &utils.Result{ExitCode: 0}, nil
-		},
 	}
 	escalatorMock := &privilege.MoqEscalator{
 		IsRunningAsRootFunc: func() (bool, error) {
 			return false, nil
-		},
-		EscalateCommandFunc: func(baseCmd string, baseArgs []string) (privilege.EscalationResult, error) {
-			return privilege.EscalationResult{
-				Method:          privilege.EscalationSudo,
-				Command:         "sudo",
-				Args:            append([]string{baseCmd}, baseArgs...),
-				NeedsEscalation: true,
-			}, nil
 		},
 	}
 
@@ -639,7 +575,6 @@ func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -648,7 +583,7 @@ func Test_SetAsDefault_SkipsEtcShells_WhenShellAlreadyPresent(t *testing.T) {
 
 	// Assert
 	require.NoError(t, err)
-	assert.False(t, teeCalled, "Should NOT have called tee - shell already in /etc/shells")
+	require.Len(t, osManagerMock.EnsureShellInEtcShellsCalls(), 1, "Should have ensured shell in /etc/shells")
 }
 
 func Test_SetAsDefault_SkipsEtcShells_WhenNotBrewInstalled(t *testing.T) {
@@ -679,12 +614,7 @@ func Test_SetAsDefault_SkipsEtcShells_WhenNotBrewInstalled(t *testing.T) {
 		IsExecutableFunc: func(path string) (bool, error) {
 			return true, nil
 		},
-		ReadFileContentsFunc: func(path string) ([]byte, error) {
-			t.Error("ReadFileContents should not be called for non-brew shells")
-			return nil, assert.AnError
-		},
 	}
-	commanderMock := &utils.MoqCommander{}
 	escalatorMock := &privilege.MoqEscalator{
 		IsRunningAsRootFunc: func() (bool, error) {
 			return false, nil
@@ -697,7 +627,6 @@ func Test_SetAsDefault_SkipsEtcShells_WhenNotBrewInstalled(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 
@@ -738,8 +667,6 @@ func Test_SetAsDefault_LogsWarning_WhenRunningAsRoot(t *testing.T) {
 			return true, nil
 		},
 	}
-	commanderMock := &utils.MoqCommander{}
-
 	var isRunningAsRootCalled bool
 	escalatorMock := &privilege.MoqEscalator{
 		IsRunningAsRootFunc: func() (bool, error) {
@@ -754,7 +681,6 @@ func Test_SetAsDefault_LogsWarning_WhenRunningAsRoot(t *testing.T) {
 		logger.DefaultLogger,
 		osManagerMock,
 		fileSystemMock,
-		commanderMock,
 		escalatorMock,
 	)
 

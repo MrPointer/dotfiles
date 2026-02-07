@@ -57,6 +57,12 @@ type SudoManager interface {
 	AddSudoAccess(username string) error
 }
 
+// EtcShellsManager defines operations for managing /etc/shells.
+type EtcShellsManager interface {
+	// EnsureShellInEtcShells adds the given shell path to /etc/shells if it is not already present.
+	EnsureShellInEtcShells(shellPath string) error
+}
+
 // FilePermissionManager defines operations for managing filesystem permissions.
 type FilePermissionManager interface {
 	// SetOwnership sets ownership of a directory to a user.
@@ -94,6 +100,7 @@ type EnvironmentManager interface {
 type OsManager interface {
 	UserManager
 	SudoManager
+	EtcShellsManager
 	FilePermissionManager
 	ProgramQuery
 	EnvironmentManager
@@ -101,9 +108,10 @@ type OsManager interface {
 
 // UnixOsManager implements OsManager for Unix-like systems.
 type UnixOsManager struct {
-	logger    logger.Logger
-	commander utils.Commander
-	escalator privilege.Escalator
+	logger     logger.Logger
+	fileSystem utils.FileSystem
+	commander  utils.Commander
+	escalator  privilege.Escalator
 }
 
 var _ OsManager = (*UnixOsManager)(nil)
@@ -113,8 +121,9 @@ func NewUnixOsManager(logger logger.Logger, commander utils.Commander, isRoot bo
 	_ = isRoot
 
 	u := &UnixOsManager{
-		logger:    logger,
-		commander: commander,
+		logger:     logger,
+		fileSystem: utils.NewDefaultFileSystem(),
+		commander:  commander,
 	}
 	// UnixOsManager implements privilege.ProgramQuery via ProgramExists.
 	u.escalator = privilege.NewDefaultEscalator(logger, commander, u)
@@ -125,9 +134,26 @@ func NewUnixOsManager(logger logger.Logger, commander utils.Commander, isRoot bo
 // Intended for deterministic unit tests.
 func NewUnixOsManagerWithEscalator(logger logger.Logger, commander utils.Commander, escalator privilege.Escalator) *UnixOsManager {
 	return &UnixOsManager{
-		logger:    logger,
-		commander: commander,
-		escalator: escalator,
+		logger:     logger,
+		fileSystem: utils.NewDefaultFileSystem(),
+		commander:  commander,
+		escalator:  escalator,
+	}
+}
+
+// NewUnixOsManagerWithEscalatorAndFileSystem creates a new UnixOsManager with injected Escalator and FileSystem.
+// Intended for deterministic unit tests.
+func NewUnixOsManagerWithEscalatorAndFileSystem(
+	logger logger.Logger,
+	commander utils.Commander,
+	escalator privilege.Escalator,
+	fileSystem utils.FileSystem,
+) *UnixOsManager {
+	return &UnixOsManager{
+		logger:     logger,
+		fileSystem: fileSystem,
+		commander:  commander,
+		escalator:  escalator,
 	}
 }
 
@@ -204,6 +230,39 @@ func (u *UnixOsManager) AddSudoAccess(username string) error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to add passwordless sudo for '%s': %w", username, err)
+	}
+
+	return nil
+}
+
+func (u *UnixOsManager) EnsureShellInEtcShells(shellPath string) error {
+	u.logger.Debug("Checking if %s is in /etc/shells", shellPath)
+
+	content, err := u.fileSystem.ReadFileContents("/etc/shells")
+	if err != nil {
+		return fmt.Errorf("failed to read /etc/shells: %w", err)
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(string(content)))
+	for scanner.Scan() {
+		if strings.TrimSpace(scanner.Text()) == shellPath {
+			u.logger.Debug("Shell %s already in /etc/shells", shellPath)
+			return nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to scan /etc/shells: %w", err)
+	}
+
+	u.logger.Info("Adding %s to /etc/shells", shellPath)
+	_, err = u.runPrivileged(
+		"tee",
+		[]string{"-a", "/etc/shells"},
+		utils.WithCaptureOutput(),
+		utils.WithInputString(shellPath+"\n"),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to append shell to /etc/shells: %w", err)
 	}
 
 	return nil

@@ -28,6 +28,9 @@ var _ OsManager = &MoqOsManager{}
 //			AddUserToGroupFunc: func(username string, group string) error {
 //				panic("mock out the AddUserToGroup method")
 //			},
+//			EnsureShellInEtcShellsFunc: func(shellPath string) error {
+//				panic("mock out the EnsureShellInEtcShells method")
+//			},
 //			GetChezmoiConfigHomeFunc: func() (string, error) {
 //				panic("mock out the GetChezmoiConfigHome method")
 //			},
@@ -85,6 +88,9 @@ type MoqOsManager struct {
 
 	// AddUserToGroupFunc mocks the AddUserToGroup method.
 	AddUserToGroupFunc func(username string, group string) error
+
+	// EnsureShellInEtcShellsFunc mocks the EnsureShellInEtcShells method.
+	EnsureShellInEtcShellsFunc func(shellPath string) error
 
 	// GetChezmoiConfigHomeFunc mocks the GetChezmoiConfigHome method.
 	GetChezmoiConfigHomeFunc func() (string, error)
@@ -146,6 +152,11 @@ type MoqOsManager struct {
 			Username string
 			// Group is the group argument value.
 			Group string
+		}
+		// EnsureShellInEtcShells holds details about calls to the EnsureShellInEtcShells method.
+		EnsureShellInEtcShells []struct {
+			// ShellPath is the shellPath argument value.
+			ShellPath string
 		}
 		// GetChezmoiConfigHome holds details about calls to the GetChezmoiConfigHome method.
 		GetChezmoiConfigHome []struct {
@@ -220,23 +231,24 @@ type MoqOsManager struct {
 			Username string
 		}
 	}
-	lockAddSudoAccess        sync.RWMutex
-	lockAddUser              sync.RWMutex
-	lockAddUserToGroup       sync.RWMutex
-	lockGetChezmoiConfigHome sync.RWMutex
-	lockGetConfigDir         sync.RWMutex
-	lockGetCurrentUsername   sync.RWMutex
-	lockGetFileOwner         sync.RWMutex
-	lockGetHomeDir           sync.RWMutex
-	lockGetProgramPath       sync.RWMutex
-	lockGetProgramVersion    sync.RWMutex
-	lockGetUserShell         sync.RWMutex
-	lockGetenv               sync.RWMutex
-	lockProgramExists        sync.RWMutex
-	lockSetOwnership         sync.RWMutex
-	lockSetPermissions       sync.RWMutex
-	lockSetUserShell         sync.RWMutex
-	lockUserExists           sync.RWMutex
+	lockAddSudoAccess          sync.RWMutex
+	lockAddUser                sync.RWMutex
+	lockAddUserToGroup         sync.RWMutex
+	lockEnsureShellInEtcShells sync.RWMutex
+	lockGetChezmoiConfigHome   sync.RWMutex
+	lockGetConfigDir           sync.RWMutex
+	lockGetCurrentUsername     sync.RWMutex
+	lockGetFileOwner           sync.RWMutex
+	lockGetHomeDir             sync.RWMutex
+	lockGetProgramPath         sync.RWMutex
+	lockGetProgramVersion      sync.RWMutex
+	lockGetUserShell           sync.RWMutex
+	lockGetenv                 sync.RWMutex
+	lockProgramExists          sync.RWMutex
+	lockSetOwnership           sync.RWMutex
+	lockSetPermissions         sync.RWMutex
+	lockSetUserShell           sync.RWMutex
+	lockUserExists             sync.RWMutex
 }
 
 // AddSudoAccess calls AddSudoAccessFunc.
@@ -336,6 +348,38 @@ func (mock *MoqOsManager) AddUserToGroupCalls() []struct {
 	mock.lockAddUserToGroup.RLock()
 	calls = mock.calls.AddUserToGroup
 	mock.lockAddUserToGroup.RUnlock()
+	return calls
+}
+
+// EnsureShellInEtcShells calls EnsureShellInEtcShellsFunc.
+func (mock *MoqOsManager) EnsureShellInEtcShells(shellPath string) error {
+	if mock.EnsureShellInEtcShellsFunc == nil {
+		panic("MoqOsManager.EnsureShellInEtcShellsFunc: method is nil but OsManager.EnsureShellInEtcShells was just called")
+	}
+	callInfo := struct {
+		ShellPath string
+	}{
+		ShellPath: shellPath,
+	}
+	mock.lockEnsureShellInEtcShells.Lock()
+	mock.calls.EnsureShellInEtcShells = append(mock.calls.EnsureShellInEtcShells, callInfo)
+	mock.lockEnsureShellInEtcShells.Unlock()
+	return mock.EnsureShellInEtcShellsFunc(shellPath)
+}
+
+// EnsureShellInEtcShellsCalls gets all the calls that were made to EnsureShellInEtcShells.
+// Check the length with:
+//
+//	len(mockedOsManager.EnsureShellInEtcShellsCalls())
+func (mock *MoqOsManager) EnsureShellInEtcShellsCalls() []struct {
+	ShellPath string
+} {
+	var calls []struct {
+		ShellPath string
+	}
+	mock.lockEnsureShellInEtcShells.RLock()
+	calls = mock.calls.EnsureShellInEtcShells
+	mock.lockEnsureShellInEtcShells.RUnlock()
 	return calls
 }
 
