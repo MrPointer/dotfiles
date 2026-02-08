@@ -64,13 +64,6 @@ func HandleCompatibilityError(err error, sysInfo compatibility.SystemInfo, log l
 var rootCmd = &cobra.Command{
 	Use:   "dotfiles-installer",
 	Short: "A tool to install (bootstrap) my dotfiles on any system",
-	Long: `dotfiles-installer is a command-line tool that helps installing
-my personal dotfiles on any system. It automates the process of setting up
-necessary configurations, mostly for chezmoi to work properly.
-It also installs essential packages and tools that I use on a daily basis.
-
-By default, the installer shows hierarchical progress indicators with spinners
-and timing information (similar to npm). Use --plain for simple text output.`,
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		// Ensure cleanup happens after all commands complete successfully
 		if cliLogger != nil {

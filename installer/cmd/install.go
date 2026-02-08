@@ -56,11 +56,6 @@ var (
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install dotfiles",
-	Long: `Install dotfiles on the current system.
-This command will set up the necessary configurations and
-install essential packages and tools that I use on a daily basis.
-It automates the process of setting up the dotfiles,
-making it easier to get started with a new system.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Use the global logger (already configured with proper progress/verbosity settings)
 		installLogger := cliLogger

@@ -14,11 +14,6 @@ import (
 var checkCompatibilityCmd = &cobra.Command{
 	Use:   "check-compatibility",
 	Short: "Check compatibility of your dotfiles with the current system",
-	Long: `Checks whether the current system is compatible with the dotfiles,
-as they have some distribution-specific configurations. This command will
-provide a report on the compatibility status.
-
-It's recommended to run this command before attempting to install the dotfiles.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get the globally loaded compatibility config.
 		config := GetCompatibilityConfig()
