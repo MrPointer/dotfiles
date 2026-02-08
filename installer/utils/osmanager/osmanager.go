@@ -229,7 +229,7 @@ func (u *UnixOsManager) EnsureShellInEtcShells(shellPath string) error {
 		return fmt.Errorf("failed to scan /etc/shells: %w", err)
 	}
 
-	u.logger.Info("Adding %s to /etc/shells", shellPath)
+	u.logger.Debug("Adding %s to /etc/shells", shellPath)
 	_, err = u.runPrivileged(
 		"tee",
 		[]string{"-a", "/etc/shells"},

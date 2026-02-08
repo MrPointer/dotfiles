@@ -442,7 +442,7 @@ func installShell(log logger.Logger) error {
 	// Resolve shell install strategy based on --shell-source flag
 	pkgMgr, resolver, err := resolveShellInstallStrategy()
 	if err != nil {
-		log.FailProgress(fmt.Sprintf("Failed to resolve shell install strategy"), err)
+		log.FailProgress("Failed to resolve shell install strategy", err)
 		return err
 	}
 
