@@ -6,11 +6,11 @@ get.sh
 installer/
 docs/
 dist/
-
 *.code-workspace
 .vscode/
 .zed/
 cspell.json
+Taskfile.yml
 
 {{- if not .personal.work_env }}
 .work/ # only manage work state on work machines
