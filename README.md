@@ -1,67 +1,123 @@
 # MrPointer's dotfiles
 
-## Motivation
+Personal dotfiles managed with [chezmoi], applied via a custom Go installer.
+Supports both personal and work environments on macOS and Linux.
 
-Like any other dotfiles project, I'm looking to create myself a templated solution that will help me
-apply it on new environments, mostly Unix ones.  
-I'm using a dotfiles manager alongside a custom installer binary to achieve this,
-managing both home and office/work environments.
+## Table of Contents
 
-## Installation
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Installation Options](#installation-options)
+- [Alternative Installation Methods](#alternative-installation-methods)
+- [Installation Process](#installation-process)
 
-The dotfiles are installed using a dedicated Go binary that handles system setup and configuration.
+## Overview
 
-### Quick Setup (Recommended)
+Like any other dotfiles project, this is a templated solution for applying a consistent
+environment across new Unix machines. A dotfiles manager ([chezmoi]) handles templating
+and per-machine differences, while a dedicated Go installer binary automates the full
+setup - from prerequisites to shell configuration.
 
-Use our get script to download the installer binary:
+## Quick Start
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash
-```
+Download and run the installer in one command:
 
-**One-command download and install dotfiles:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --run
 ```
 
-**Download and install dotfiles with custom options:**
+Or download first, then run manually:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --run -- --work-env --install-prerequisites
+curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash
+dotfiles-installer install
 ```
 
-**Download to custom directory:**
+## Installation Options
+
+### Install Command Options
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `--work-env` | Treat this installation as a work environment | `false` |
+| `--work-name` | Work environment name | `sedg` |
+| `--work-email` | Work email address | `timor.gruber@solaredge.com` |
+| `--shell` | Shell to install and set as default | `zsh` |
+| `--install-brew` | Install Homebrew if not present | `true` |
+| `--shell-source` | Where to find the shell: `auto`, `brew`, `system` | `auto` |
+| `--multi-user-system` | Configure for multi-user system | `false` |
+| `--git-clone-protocol` | Git protocol for operations | `https` |
+| `--install-prerequisites` | Automatically install missing prerequisites | `false` |
+
+### Global Options
+
+These work with any command:
+
+| Option | Description |
+| --- | --- |
+| `-v, --verbose` | Enable verbose output (use `-vv` for extra verbose) |
+| `--plain` | Show plain text instead of progress indicators |
+| `--non-interactive` | Disable interactive prompts |
+| `--extra-verbose` | Enable maximum verbosity |
+
+### Examples
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MrPointer/dotfiles/main/get.sh | bash -s -- --dir /usr/local/bin
+# Work environment
+dotfiles-installer install --work-env --work-email your.email@company.com
+
+# Non-interactive with prerequisites
+dotfiles-installer install --non-interactive --install-prerequisites
+
+# Check compatibility before installing
+dotfiles-installer check-compatibility
+dotfiles-installer install
 ```
 
-### Manual Download
+### Get Script Options
 
-Download pre-built binaries from [GitHub Releases](https://github.com/MrPointer/dotfiles/releases):
+The `get.sh` script itself accepts these flags:
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `-d, --dir` | Download directory | `$HOME/.local/bin` |
+| `-v, --version` | Specific version to download | latest |
+| `-r, --run` | Run the installer after download | `false` |
+
+Pass installer flags after `--`:
+
+```bash
+curl -fsSL .../get.sh | bash -s -- --run -- --work-env --install-prerequisites
+```
+
+## Alternative Installation Methods
+
+<details>
+<summary>Manual download from GitHub Releases</summary>
+
+Download pre-built binaries from [GitHub Releases](https://github.com/MrPointer/dotfiles/releases).
 
 **macOS (Apple Silicon):**
 ```bash
 curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/latest/download/dotfiles-installer-*-darwin-arm64.tar.gz
-tar -xzf dotfiles-installer.tar.gz
-chmod +x dotfiles-installer
+tar -xzf dotfiles-installer.tar.gz && chmod +x dotfiles-installer
 ```
 
 **Linux (x86_64):**
 ```bash
 curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/latest/download/dotfiles-installer-*-linux-x86_64.tar.gz
-tar -xzf dotfiles-installer.tar.gz
-chmod +x dotfiles-installer
+tar -xzf dotfiles-installer.tar.gz && chmod +x dotfiles-installer
 ```
 
 **Linux (ARM64):**
 ```bash
 curl -L -o dotfiles-installer.tar.gz https://github.com/MrPointer/dotfiles/releases/latest/download/dotfiles-installer-*-linux-arm64.tar.gz
-tar -xzf dotfiles-installer.tar.gz
-chmod +x dotfiles-installer
+tar -xzf dotfiles-installer.tar.gz && chmod +x dotfiles-installer
 ```
+</details>
 
-### Build from Source
-
-Clone the repository and build the installer:
+<details>
+<summary>Build from source</summary>
 
 ```bash
 git clone https://github.com/MrPointer/dotfiles.git
@@ -69,91 +125,20 @@ cd dotfiles/installer
 go build -o dotfiles-installer .
 ./dotfiles-installer install
 ```
+</details>
 
-### Using Go Install
-
-If you have Go installed:
+<details>
+<summary>Using go install</summary>
 
 ```bash
 go install github.com/MrPointer/dotfiles/installer@latest
 dotfiles-installer install
 ```
+</details>
 
-## Usage
+## Installation Process
 
-The installer provides several commands and options:
-
-### Basic Commands
-
-- `dotfiles-installer install` - Install dotfiles on the current system
-- `dotfiles-installer check-compatibility` - Check system compatibility
-- `dotfiles-installer --help` - Show all available commands and options
-
-### Installation Options
-
-The following options can be passed to the `install` command:
-
-| Option                      | Description                                   | Default                      |
-| --------------------------- | --------------------------------------------- | ---------------------------- |
-| `--work-env`                | Treat this installation as a work environment | `false`                      |
-| `--work-name`               | Work environment name                         | `sedg`                       |
-| `--work-email`              | Work email address                            | `timor.gruber@solaredge.com` |
-| `--shell`                   | Shell to install and set as default           | `zsh`                        |
-| `--install-brew`            | Install Homebrew if not present               | `true`                       |
-| `--shell-source`            | Where to find the shell: `auto`, `brew`, `system` | `auto`                  |
-| `--multi-user-system`       | Configure for multi-user system               | `false`                      |
-| `--git-clone-protocol`      | Git protocol for operations                   | `https`                      |
-| `--install-prerequisites`   | Automatically install missing prerequisites   | `false`                      |
-
-### Global Options
-
-These options work with any command:
-
-| Option              | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| `-v, --verbose`     | Enable verbose output (use `-vv` for extra verbose) |
-| `--plain`           | Show plain text instead of progress indicators      |
-| `--non-interactive` | Disable interactive prompts                         |
-| `--extra-verbose`   | Enable maximum verbosity                            |
-
-### Example Usage
-
-**Basic setup:**
-
-```bash
-./dotfiles-installer install
-```
-
-**Work environment installation:**
-
-```bash
-./dotfiles-installer install --work-env --work-email your.email@company.com
-```
-
-**Non-interactive dotfiles installation with prerequisites:**
-
-```bash
-./dotfiles-installer install --non-interactive --install-prerequisites --git-clone-protocol=https
-```
-
-**Check system compatibility first:**
-
-```bash
-./dotfiles-installer check-compatibility
-./dotfiles-installer install
-```
-
-## Overview
-
-### Dotfiles Manager
-
-I'm using [chezmoi] as the dotfiles manager, which provides templating abilities,
-per-machine differences, and much more. The installer sets up chezmoi and populates it with
-the necessary configuration.
-
-### Installation Process
-
-The Go installer handles the complete setup process:
+The installer walks through these steps:
 
 1. **System Compatibility Check** - Verifies the system can run the dotfiles
 2. **Prerequisites Installation** - Installs required tools and dependencies
@@ -163,6 +148,6 @@ The Go installer handles the complete setup process:
 6. **Dotfiles Manager Setup** - Installs and configures chezmoi
 7. **Template Application** - Applies the dotfiles with user-specific configuration
 
-The installer provides real-time progress indicators and detailed logging to track the installation process.
+Real-time progress indicators and detailed logging track each step.
 
 [chezmoi]: https://www.chezmoi.io/
