@@ -27,6 +27,10 @@ type FileSystem interface {
 	// This function does not distinguish between files and directories.
 	PathExists(path string) (bool, error)
 
+	// IsExecutable checks if the file at the specified path is executable.
+	// It returns true if the file exists and has any execute permission bit set.
+	IsExecutable(path string) (bool, error)
+
 	// CreateTemporaryFile creates a temporary file in the optional specified directory.
 	// dir is the directory where the temporary file will be created.
 	// If dir is nil, the system's default temporary directory will be used.
@@ -55,6 +59,10 @@ type FileSystem interface {
 	//
 	// It returns the number of bytes read and an error if the read operation fails.
 	ReadFile(path string, receiver io.Writer) (int64, error)
+
+	// ReadFileContents reads the entire contents of a file and returns it as a byte slice.
+	// This is a convenience method for small files where streaming is not needed.
+	ReadFileContents(path string) ([]byte, error)
 }
 
 // DefaultFileSystem is the default implementation of the FileSystem interface using os package.
@@ -160,4 +168,18 @@ func (fs *DefaultFileSystem) ReadFile(path string, receiver io.Writer) (int64, e
 	}
 
 	return bytesRead, nil
+}
+
+func (fs *DefaultFileSystem) IsExecutable(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if any execute bit is set
+	return info.Mode()&0111 != 0, nil
+}
+
+func (fs *DefaultFileSystem) ReadFileContents(path string) ([]byte, error) {
+	return os.ReadFile(path)
 }

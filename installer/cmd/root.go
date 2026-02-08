@@ -12,6 +12,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/httpclient"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/osmanager"
+	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,11 +27,12 @@ var (
 	plainFlag                 bool
 	nonInteractive            bool
 
-	cliLogger        logger.Logger       = nil // Will be initialized before any command is executed
-	globalCommander  utils.Commander     = nil // Will be initialized before any command is executed
-	globalHttpClient                     = httpclient.NewDefaultHTTPClient()
-	globalFilesystem                     = utils.NewDefaultFileSystem()
-	globalOsManager  osmanager.OsManager = nil // Will be initialized before any command is executed
+	cliLogger          logger.Logger       = nil // Will be initialized before any command is executed
+	globalCommander    utils.Commander     = nil // Will be initialized before any command is executed
+	globalProgramQuery utils.ProgramQuery  = utils.NewGoNativeProgramQuery()
+	globalHttpClient                       = httpclient.NewDefaultHTTPClient()
+	globalFilesystem                       = utils.NewDefaultFileSystem()
+	globalOsManager    osmanager.OsManager = nil // Will be initialized before any command is executed
 )
 
 // HandleCompatibilityError displays compatibility error with install hints and exits.
@@ -196,7 +198,10 @@ func GetCompatibilityConfig() *compatibility.CompatibilityConfig {
 
 func initOsManager() {
 	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
-		globalOsManager = osmanager.NewUnixOsManager(cliLogger, globalCommander, osmanager.IsRoot())
+		// Build the OS manager with DI-first dependencies.
+		// Privilege escalator needs a ProgramQuery implementation, but we avoid a cycle by using LookPath.
+		escalator := privilege.NewDefaultEscalator(cliLogger, globalCommander, globalProgramQuery)
+		globalOsManager = osmanager.NewUnixOsManager(cliLogger, globalCommander, escalator, globalFilesystem)
 	} else {
 		cliLogger.Error("The system may be compatible, but we haven't implemented an OS manager for it yet. Please open an issue on GitHub to request support for this OS.")
 		os.Exit(1)

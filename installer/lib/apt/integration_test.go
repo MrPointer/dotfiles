@@ -19,7 +19,12 @@ func Test_AptPackageManager_CanCheckIfPackageExists_Integration(t *testing.T) {
 
 	// This test only runs on systems where apt is available
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
 	// Check if apt is available on this system
 	aptExists, err := defaultOsManager.ProgramExists("apt")
@@ -27,7 +32,7 @@ func Test_AptPackageManager_CanCheckIfPackageExists_Integration(t *testing.T) {
 		t.Skip("apt not available on this system")
 	}
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	// Test with a commonly available package that should exist
@@ -46,7 +51,12 @@ func Test_AptPackageManager_CanListInstalledPackages_Integration(t *testing.T) {
 
 	// This test only runs on systems where apt is available
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
 	// Check if apt is available on this system
 	aptExists, err := defaultOsManager.ProgramExists("apt")
@@ -54,7 +64,7 @@ func Test_AptPackageManager_CanListInstalledPackages_Integration(t *testing.T) {
 		t.Skip("apt not available on this system")
 	}
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	packages, err := aptManager.ListInstalledPackages()
@@ -76,7 +86,12 @@ func Test_AptPackageManager_CanGetManagerInfo_Integration(t *testing.T) {
 
 	// This test only runs on systems where apt is available
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
 	// Check if apt is available on this system
 	aptExists, err := defaultOsManager.ProgramExists("apt")
@@ -84,7 +99,7 @@ func Test_AptPackageManager_CanGetManagerInfo_Integration(t *testing.T) {
 		t.Skip("apt not available on this system")
 	}
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	info, err := aptManager.GetInfo()
@@ -101,7 +116,12 @@ func Test_AptPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 
 	// This test only runs on systems where apt is available
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
 	// Check if apt is available on this system
 	aptExists, err := defaultOsManager.ProgramExists("apt")
@@ -115,7 +135,7 @@ func Test_AptPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 		t.Skip("sudo not available or requires password - skipping package installation test")
 	}
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	// Test with a lightweight package that's commonly available but might not be installed

@@ -100,7 +100,7 @@ The following options can be passed to the `install` command:
 | `--work-email`              | Work email address                            | `timor.gruber@solaredge.com` |
 | `--shell`                   | Shell to install and set as default           | `zsh`                        |
 | `--install-brew`            | Install Homebrew if not present               | `true`                       |
-| `--install-shell-with-brew` | Install shell using Homebrew                  | `true`                       |
+| `--shell-source`            | Where to find the shell: `auto`, `brew`, `system` | `auto`                  |
 | `--multi-user-system`       | Configure for multi-user system               | `false`                      |
 | `--git-clone-protocol`      | Git protocol for operations                   | `https`                      |
 | `--install-prerequisites`   | Automatically install missing prerequisites   | `false`                      |

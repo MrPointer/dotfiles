@@ -295,3 +295,62 @@ jobs:
           # Check if any dotfiles manager was initialized
           ls -la /tmp/test-home/.local/share/chezmoi/ 2>/dev/null || echo "No chezmoi directory found (expected in CI)"
           ls -la /tmp/test-interactive-home/.local/share/chezmoi/ 2>/dev/null || echo "No interactive chezmoi directory found (expected in CI)"
+
+      - name: Verify zsh is installed and set as default
+        run: |
+          # Get the shell that was set as default by the installer
+          if [ "${{ matrix.platform }}" = "macos" ]; then
+            CURRENT_SHELL=$(dscl . -read /Users/$(whoami) UserShell 2>/dev/null | awk '{print $2}' || echo "")
+          else
+            # Read /etc/passwd directly - more portable than getent in containers
+            CURRENT_SHELL=$(grep "^$(id -un):" /etc/passwd 2>/dev/null | cut -d: -f7 || echo "")
+          fi
+
+          if [ -z "$CURRENT_SHELL" ]; then
+            echo "WARNING: Could not verify default shell (may be expected in minimal containers)"
+            exit 0
+          fi
+
+          echo "Default shell set to: $CURRENT_SHELL"
+
+          # Verify it's zsh
+          if ! echo "$CURRENT_SHELL" | grep -q zsh; then
+            echo "ERROR: Default shell is $CURRENT_SHELL, expected zsh"
+            exit 1
+          fi
+
+          # Verify the shell exists and is executable
+          if [ ! -f "$CURRENT_SHELL" ]; then
+            echo "ERROR: Shell binary not found at $CURRENT_SHELL"
+            exit 1
+          fi
+
+          if [ ! -x "$CURRENT_SHELL" ]; then
+            echo "ERROR: Shell binary at $CURRENT_SHELL is not executable"
+            exit 1
+          fi
+
+          echo "SUCCESS: zsh is installed at $CURRENT_SHELL and set as default shell"
+          "$CURRENT_SHELL" --version
+
+      - name: Verify zsh works with dotfiles
+        run: |
+          # Use the test home directory
+          export HOME="/tmp/test-home"
+
+          # Add brew paths to PATH if they exist (needed for brew-installed zsh on Linux)
+          # In real usage, the user's shell RC files (managed by chezmoi) would do this
+          if [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
+            export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+          fi
+          if [ -d "/opt/homebrew/bin" ]; then
+            export PATH="/opt/homebrew/bin:$PATH"
+          fi
+
+          # Verify zsh can source the dotfiles (if they exist)
+          if [ -f "$HOME/.zshenv" ]; then
+            zsh -c 'source ~/.zshenv && echo "Dotfiles loaded successfully"'
+          else
+            echo "No .zshenv found (expected if chezmoi apply was skipped)"
+            zsh -c 'echo "zsh works correctly"'
+          fi

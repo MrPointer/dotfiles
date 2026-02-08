@@ -17,6 +17,10 @@ The installer of my dotfiles, used to bootstrap the system
 
 ## Features
 
+- **Shell Source Control**: Choose where your default shell comes from with `--shell-source`:
+  - `auto` (default) — use existing shell if available, otherwise try Homebrew then system package manager
+  - `brew` — force Homebrew's shell binary
+  - `system` — force the system package manager (apt/dnf)
 - **Hierarchical Progress Display**: Shows npm-style progress indicators with spinners and timing information
 - **Automatic Cursor Cleanup**: Ensures terminal cursor is always visible after program exit, even on interruption
 - **Signal Handling**: Gracefully handles Ctrl+C and other termination signals with proper cleanup

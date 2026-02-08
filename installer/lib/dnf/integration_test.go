@@ -20,9 +20,14 @@ func Test_DnfPackageManager_CanCheckIfPackageExists_Integration(t *testing.T) {
 	}
 
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	// Test with a commonly available package that should exist
@@ -41,9 +46,14 @@ func Test_DnfPackageManager_CanCheckIfGroupExists_Integration(t *testing.T) {
 	}
 
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	// Test with a commonly available group
@@ -61,9 +71,14 @@ func Test_DnfPackageManager_CanListInstalledPackages_Integration(t *testing.T) {
 	}
 
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	packages, err := dnfManager.ListInstalledPackages()
@@ -90,9 +105,14 @@ func Test_DnfPackageManager_CanGetManagerInfo_Integration(t *testing.T) {
 	}
 
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	info, err := dnfManager.GetInfo()
@@ -115,9 +135,14 @@ func Test_DnfPackageManager_PrerequisiteInstallationWorkflow_Integration(t *test
 	}
 
 	defaultCommander := utils.NewDefaultCommander(logger.DefaultLogger)
-	defaultOsManager := osmanager.NewUnixOsManager(logger.DefaultLogger, defaultCommander, false)
+	defaultOsManager := osmanager.NewUnixOsManager(
+		logger.DefaultLogger,
+		defaultCommander,
+		privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery()),
+		utils.NewDefaultFileSystem(),
+	)
 
-	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, defaultOsManager)
+	escalator := privilege.NewDefaultEscalator(logger.DefaultLogger, defaultCommander, utils.NewGoNativeProgramQuery())
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, defaultCommander, defaultOsManager, escalator, utils.DisplayModeProgress)
 
 	// Test with a lightweight package that's commonly available but might not be installed

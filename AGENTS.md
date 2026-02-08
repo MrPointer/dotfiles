@@ -10,6 +10,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 | `managing-chezmoi`           | Editing `dot_*`, `private_dot_*`, or `.tmpl` files; chezmoi commands        |
 | `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                                 |
 | `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                                     |
+| `testing-e2e-containers`     | E2E testing installer in Docker containers (Ubuntu, Debian, Fedora)         |
 
 ## Workflow
 

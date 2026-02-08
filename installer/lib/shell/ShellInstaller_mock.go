@@ -25,6 +25,9 @@ var _ ShellInstaller = &MoqShellInstaller{}
 //			IsAvailableFunc: func() (bool, error) {
 //				panic("mock out the IsAvailable method")
 //			},
+//			SetAsDefaultFunc: func(ctx context.Context) error {
+//				panic("mock out the SetAsDefault method")
+//			},
 //		}
 //
 //		// use mockedShellInstaller in code that requires ShellInstaller
@@ -38,6 +41,9 @@ type MoqShellInstaller struct {
 	// IsAvailableFunc mocks the IsAvailable method.
 	IsAvailableFunc func() (bool, error)
 
+	// SetAsDefaultFunc mocks the SetAsDefault method.
+	SetAsDefaultFunc func(ctx context.Context) error
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// Install holds details about calls to the Install method.
@@ -48,9 +54,15 @@ type MoqShellInstaller struct {
 		// IsAvailable holds details about calls to the IsAvailable method.
 		IsAvailable []struct {
 		}
+		// SetAsDefault holds details about calls to the SetAsDefault method.
+		SetAsDefault []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 	}
-	lockInstall     sync.RWMutex
-	lockIsAvailable sync.RWMutex
+	lockInstall      sync.RWMutex
+	lockIsAvailable  sync.RWMutex
+	lockSetAsDefault sync.RWMutex
 }
 
 // Install calls InstallFunc.
@@ -109,5 +121,37 @@ func (mock *MoqShellInstaller) IsAvailableCalls() []struct {
 	mock.lockIsAvailable.RLock()
 	calls = mock.calls.IsAvailable
 	mock.lockIsAvailable.RUnlock()
+	return calls
+}
+
+// SetAsDefault calls SetAsDefaultFunc.
+func (mock *MoqShellInstaller) SetAsDefault(ctx context.Context) error {
+	if mock.SetAsDefaultFunc == nil {
+		panic("MoqShellInstaller.SetAsDefaultFunc: method is nil but ShellInstaller.SetAsDefault was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockSetAsDefault.Lock()
+	mock.calls.SetAsDefault = append(mock.calls.SetAsDefault, callInfo)
+	mock.lockSetAsDefault.Unlock()
+	return mock.SetAsDefaultFunc(ctx)
+}
+
+// SetAsDefaultCalls gets all the calls that were made to SetAsDefault.
+// Check the length with:
+//
+//	len(mockedShellInstaller.SetAsDefaultCalls())
+func (mock *MoqShellInstaller) SetAsDefaultCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockSetAsDefault.RLock()
+	calls = mock.calls.SetAsDefault
+	mock.lockSetAsDefault.RUnlock()
 	return calls
 }
