@@ -42,6 +42,7 @@ assistant: "[How assistant should respond and use this agent]"
 model: inherit
 color: blue
 tools: ["Read", "Write", "Grep"]
+skills: ["skill-name"]
 ---
 
 You are [agent role description]...
@@ -158,6 +159,25 @@ tools: ["Read", "Write", "Grep", "Bash"]
 - Code generation: `["Read", "Write", "Grep"]`
 - Testing: `["Read", "Bash", "Grep"]`
 - Full access: Omit field or use `["*"]`
+
+### skills (optional)
+
+Preload skills into the agent's context at startup.
+
+**Format:** Array of skill names
+
+```yaml
+skills: ["writing-go-code", "applying-effective-go"]
+```
+
+**Behavior:**
+- The full content of each listed skill is injected into the agent's system context when it starts — not just made available for invocation
+- Skills are NOT inherited from the parent session — agents must list every skill they need explicitly
+- Skill names must match existing skill directory names (from `~/.claude/skills/` or `.claude/skills/`)
+
+**Use when:** An agent needs domain-specific knowledge to do its job correctly (e.g., a reviewer agent that needs to know project coding conventions).
+
+**Default:** If omitted, no skills are preloaded.
 
 ## System Prompt Design
 
@@ -355,6 +375,7 @@ Output: [What to provide]
 | model | Yes | inherit/sonnet/opus/haiku | inherit |
 | color | Yes | Color name | blue |
 | tools | No | Array of tool names | ["Read", "Grep"] |
+| skills | No | Array of skill names | ["writing-go-code"] |
 
 ### Best Practices
 
