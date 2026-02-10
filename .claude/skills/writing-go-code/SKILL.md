@@ -1,11 +1,15 @@
 ---
 name: writing-go-code
-description: Apply Go coding standards when writing, reviewing, or modifying Go code. Use when implementing functions, writing tests with testify, generating mocks with mockery, using dependency injection, handling errors idiomatically, or working with interfaces. Use this skill for any Go file editing task. For Go language conventions and idioms from official docs, see effective-go skill instead.
+description: Apply Go coding standards when writing, reviewing, or modifying Go code. Use when implementing functions, writing tests with testify, generating mocks with mockery, using dependency injection, handling errors idiomatically, or working with interfaces. Use this skill for any Go file editing task.
 ---
 
 # Go Development Standards
 
 Project-specific Go coding standards for this codebase.
+
+## Companion Skill
+
+This skill covers **project-specific** Go patterns (testing conventions, mock generation, dependency injection style). For **general Go idioms** from the official Effective Go documentation (naming, control flow, error handling philosophy, concurrency patterns), also load the `applying-effective-go` skill. Both skills are complementary — this one tells you how *this project* writes Go, the other tells you how *Go itself* should be written.
 
 ## Quick Reference
 
