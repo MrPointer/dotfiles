@@ -59,7 +59,7 @@ This is the most critical phase. Break the feature into sub-plans:
 
 Present the decomposition to the user for review before writing the actual plan files.
 
-### Phase 4: Plan Creation & Reviewer Assignment
+### Phase 4: Plan Creation, Reviewer Assignment & Model Selection
 
 Only after Phases 1-3 are complete:
 
@@ -79,6 +79,28 @@ Only after Phases 1-3 are complete:
 3. **Assign reviewers**: Write the chosen reviewer's name into each sub-plan's `## Reviewer` field.
 
 4. **Validate**: If no suitable local reviewer exists for a sub-plan's domain, **warn the user** with a specific recommendation (e.g., "sub-plan 03 covers database migrations but no reviewer with that expertise exists in `.claude/agents/`"). Ask how to proceed — do not skip the review silently.
+
+5. **Assign execution models**: For each sub-plan, assess complexity and recommend an execution model. This enables cost optimization by using cheaper models for straightforward work while reserving Opus for planning and review.
+
+**Model Selection Decision Tree**:
+
+| Use Haiku When | Use Sonnet When | Keep Opus For |
+|----------------|-----------------|---------------|
+| Following established patterns | Novel implementation approaches | Planning & decomposition |
+| CRUD operations | Complex business logic | Architecture review |
+| Straightforward integrations | Multiple edge cases to consider | Risk assessment |
+| Test writing for existing code | Integration of multiple systems | Synthesis & coordination |
+| Configuration changes | Performance-critical code | Multi-step reasoning |
+| Documentation updates | Security-sensitive operations | Ambiguous requirements |
+| File moves/renames | State machine implementations | |
+| Simple data transformations | Error handling with recovery logic | |
+
+**Assessment criteria**:
+- **Haiku-appropriate**: Task follows clear patterns, has well-defined inputs/outputs, requires minimal decision-making
+- **Sonnet-appropriate**: Task requires some architectural thinking, handles moderate complexity, balances multiple concerns
+- **Opus-appropriate**: Rare for execution; only when sub-plan has residual ambiguity or requires creative problem-solving
+
+Document the recommendation in each sub-plan's `## Execution Model` field with a brief rationale.
 
 ### Phase 5: Review Loop
 
@@ -154,17 +176,67 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 ## Sub-Plans
 
-| #  | Sub-Plan                | Depends On | Description                          |
-|----|-------------------------|------------|--------------------------------------|
-| 01 | `01-<name>.md`          | —          | <What this sub-plan accomplishes>    |
-| 02 | `02-<name>.md`          | 01         | <What this sub-plan accomplishes>    |
-| 03 | `03-<name>.md`          | —          | <What this sub-plan accomplishes>    |
+| #  | Sub-Plan                | Depends On | Model  | Description                          |
+|----|-------------------------|------------|--------|--------------------------------------|
+| 01 | `01-<name>.md`          | —          | Haiku  | <What this sub-plan accomplishes>    |
+| 02 | `02-<name>.md`          | 01         | Sonnet | <What this sub-plan accomplishes>    |
+| 03 | `03-<name>.md`          | —          | Haiku  | <What this sub-plan accomplishes>    |
 ...
 
 ## Execution Order
 <Describe which sub-plans can run in parallel and which must be sequential>
 - **Parallel group 1**: 01, 03 (no dependencies)
 - **Sequential**: 02 (after 01)
+...
+
+## Team Execution (Agent Teams)
+
+**Use Agent Teams when**:
+- ✅ Plan has 2+ sub-plans with meaningful scope
+- ✅ Sub-plans are self-contained (minimal cross-dependencies)
+- ✅ Sub-plans touch different files (avoid conflicts)
+- ✅ Parallelization offers significant time savings
+
+**Skip Agent Teams when**:
+- ❌ Single sub-plan (just execute directly)
+- ❌ Tiny sub-plans (overhead > benefit, e.g., "add one import")
+- ❌ Highly coupled sub-plans (too much coordination needed)
+
+**Setup**:
+1. Enable Agent Teams: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+2. Create the team:
+   ```
+   Create an agent team to execute .claude/plans/<feature-name>/00-master.md
+   ```
+
+**Team Lead Instructions**:
+- Use this master plan as the roadmap
+- Assign sub-plans to teammates based on the dependency graph
+- Each teammate should load the Required Skills listed in their assigned sub-plan before starting
+- Use the recommended models from the Sub-Plans table above
+- Coordinate handoffs when dependencies complete
+- Synthesize results when all sub-plans finish
+
+**Suggested Team Structure**:
+```
+Create a team with <N> teammates to execute .claude/plans/<feature-name>/00-master.md:
+- Teammate 1: Execute 01-<name>.md using Haiku (load skills: <skill-list>)
+- Teammate 2: Execute 02-<name>.md using Sonnet (load skills: <skill-list>, requires 01 complete)
+- Teammate 3: Execute 03-<name>.md using Haiku (load skills: <skill-list>, can start immediately)
+...
+```
+
+**File Ownership** (prevent conflicts):
+| Sub-Plan | Primary Files |
+|----------|---------------|
+| 01       | <files this sub-plan creates/modifies> |
+| 02       | <files this sub-plan creates/modifies> |
+...
+
+**Communication Points**:
+<When teammates might need to coordinate>
+- After 01 completes: Notify teammate 2 that dependencies are ready
+- If <event>: Broadcast to all teammates about <change>
 ...
 
 ## Risks & Mitigations
@@ -190,6 +262,15 @@ Each sub-plan is a **self-contained execution unit**. An agent should be able to
 ## Reviewer
 <Local reviewer agent assigned during Phase 4, or "None" if no suitable reviewer was found>
 
+## Execution Model
+**Recommended**: Haiku | Sonnet | Opus
+**Rationale**: <Why this model is appropriate for this sub-plan>
+
+Examples:
+- Haiku: "Standard CRUD implementation following existing patterns in the codebase"
+- Sonnet: "Complex business logic with multiple edge cases and error handling scenarios"
+- Opus: "Novel architectural approach requiring creative problem-solving" (rare)
+
 ## Prerequisites
 <What must exist before this sub-plan can be executed>
 - <Specific file, interface, or state expected from a prior sub-plan — include the actual signatures/shapes, not just references>
@@ -198,8 +279,10 @@ Each sub-plan is a **self-contained execution unit**. An agent should be able to
 ## Context
 <Essential context embedded directly — relevant interfaces, data shapes, conventions, architectural decisions the agent needs to know>
 
-## Files Affected
-<List of files to modify/create with brief description of changes>
+## Primary Files
+<Files this sub-plan primarily creates or modifies — helps prevent conflicts in parallel execution>
+- `path/to/file.ext` (create | modify)
+- `path/to/other.ext` (modify)
 
 ## Implementation Steps
 1. <Step with clear deliverable>
