@@ -1,9 +1,9 @@
 ---
-name: project-feature-planning
+name: planning-project-features
 description: Create implementation plans for features within a single project. Decomposes work into self-contained sub-plans with iterative multi-agent review. Use when planning new features, refactoring efforts, or any multi-step implementation. Never assumes or fills in gaps - always asks for clarification until requirements are complete.
 ---
 
-# Project Feature Planning
+# Planning Project Features
 
 Create thorough, actionable implementation plans for features within a single project. **Never assume or guess** — ask until every gap is filled.
 
@@ -39,11 +39,19 @@ If the user says "just figure it out" or "use your judgment":
 
 Once requirements are clear:
 
-1. Search for relevant existing code, patterns, and conventions
-2. Identify files that will need modification
-3. Note any architectural constraints or patterns to follow
-4. Flag potential conflicts or risks
-5. **Identify required skills**: Determine which skills (both global from `~/.claude/skills/` and local from `.claude/skills/`) an executing agent will need to follow project conventions correctly (e.g., `writing-go-code` for Go changes, `managing-chezmoi` for dotfile edits). Check the project's `CLAUDE.md` for documented skill mappings.
+1. **Read existing documentation first**: Check AGENTS.md for documentation pointers, then read relevant docs (domain, architecture, business processes, components). Existing documentation is dramatically cheaper than re-exploring code from scratch.
+2. **Explore code only for gaps**: Search for relevant code, patterns, and conventions that documentation doesn't cover.
+3. Identify files that will need modification
+4. Note any architectural constraints or patterns to follow
+5. Flag potential conflicts or risks
+6. **Identify required skills**: Determine which skills (both global from `~/.claude/skills/` and local from `.claude/skills/`) an executing agent will need to follow project conventions correctly (e.g., `writing-go-code` for Go changes, `managing-chezmoi` for dotfile edits). Check the project's `AGENTS.md` for documented skill mappings.
+7. **Flag documentation gaps**: If critical areas needed for the plan are undocumented, note them. Recommend the appropriate documenting skill:
+   - Missing domain knowledge → `documenting-domain`
+   - Missing architecture overview → `documenting-architecture`
+   - Missing business workflow docs → `documenting-business-processes`
+   - Missing component docs → `documenting-components`
+
+   Present gaps to the user — they may want to create docs before planning continues, or accept the gap and proceed.
 
 Share findings with the user and confirm understanding before proceeding.
 
@@ -157,6 +165,17 @@ The user may also request additional specialized reviewers (e.g., security, perf
 
 Present the fully reviewed plan (master + sub-plans) along with a summary of review findings and how they were addressed. Only mark as ready when the user explicitly approves.
 
+### Post-Execution: Documentation Updates
+
+After sub-plans have been executed, the `updating-documentation` skill should be run to keep project documentation in sync with the changes. This is not part of the planning workflow itself, but should be noted in the master plan as a final step:
+
+```markdown
+## Post-Execution
+After all sub-plans are complete, run the `updating-documentation` skill to update affected docs.
+```
+
+This ensures that the documentation investment compounds — each feature execution improves docs for the next planning session.
+
 ## Master Plan Structure
 
 The master plan is the orchestration document. It does NOT contain implementation details — those live in sub-plans.
@@ -243,6 +262,9 @@ Create a team with <N> teammates to execute .claude/plans/<feature-name>/00-mast
 | Risk | Mitigation |
 |------|------------|
 | ...  | ...        |
+
+## Post-Execution
+After all sub-plans are complete, run the `updating-documentation` skill to update affected project documentation.
 ```
 
 ## Sub-Plan Structure
