@@ -7,6 +7,10 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 | Skill                        | Use When                                                                    |
 | ---------------------------- | --------------------------------------------------------------------------- |
 | `writing-go-code`            | Writing/editing Go code, tests, mocks, interfaces                           |
+| `developing-cli-apps`        | CLI commands, flags, Cobra patterns, Huh interactive UI, signal handling     |
+| `building-go-binaries`       | Compiling the project, troubleshooting build failures                        |
+| `linting-go-code`            | Running linters, fixing lint errors, formatting code                         |
+| `testing-go-code`            | Running unit tests, coverage, benchmarks, regenerating mocks                 |
 | `managing-chezmoi`           | Editing `dot_*`, `private_dot_*`, or `.tmpl` files; chezmoi commands        |
 | `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                                 |
 | `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                                     |
