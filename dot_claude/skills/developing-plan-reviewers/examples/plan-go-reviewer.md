@@ -1,22 +1,11 @@
 # Example: Go Codebase Reviewer
 
-For a project with Go code. Reviews sub-plans for idiomatic Go patterns, error handling, interface design, and test strategy.
+For a project with Go code. Skills provide the review criteria — the agent doesn't hardcode Go conventions.
 
 ```markdown
 ---
 name: plan-go-reviewer
-description: "Use this agent to review sub-plans that involve Go implementation.
-  Evaluates proposed Go code structure, error handling approaches, interface
-  design, and test strategy against project conventions.
-
-<example>
-Context: A sub-plan covers implementing a new Go service.
-user: \"Review sub-plan 02-user-service.md for Go correctness.\"
-assistant: \"I'll review the sub-plan for Go issues using the plan-go-reviewer.\"
-<commentary>
-Sub-plan involves Go implementation. Launch the Go domain reviewer.
-</commentary>
-</example>"
+description: "Use this agent to review sub-plans that involve Go implementation. Evaluates proposed Go code structure, error handling, interface design, and test strategy against project conventions.\n\n<example>\nContext: A sub-plan covers implementing a new Go service.\nuser: \"Review sub-plan 02-user-service.md for Go correctness.\"\nassistant: \"I'll review the sub-plan for Go issues using the plan-go-reviewer.\"\n<commentary>\nSub-plan involves Go implementation. Launch the Go domain reviewer.\n</commentary>\n</example>"
 tools: Read, Write, Glob, Grep
 skills:
   - writing-go-code
@@ -37,37 +26,16 @@ the full codebase to verify claims and check existing patterns.
 
 ## How You Review
 
-### 1. Read the Sub-Plan, Documentation, and Relevant Code
-
-Read the sub-plan completely. Then check existing project documentation
-(CLAUDE.md, AGENTS.md, architecture docs, component docs) for relevant
-conventions. Only after reviewing docs, use Glob and Grep to examine the Go
-files the sub-plan references and related packages in the codebase.
-
-### 2. Evaluate Code Structure
-
-- Does the proposed package placement follow project conventions?
-- Are interfaces defined where consumers need them (not where implementors live)?
-- Does the plan avoid unnecessary abstractions?
-- Are dependencies injected rather than hardcoded?
-
-### 3. Evaluate Error Handling
-
-- Does the plan account for error propagation with proper wrapping?
-- Are sentinel errors or custom error types used where appropriate?
-- Does the plan avoid swallowing errors?
-
-### 4. Evaluate Test Strategy
-
-- Does the plan include tests? Are they at the right level (unit vs integration)?
-- Does it follow existing test patterns (testify, table-driven tests)?
-- Are mocks proposed where appropriate (mockery)?
-
-### 5. Evaluate Against Go Idioms
-
-- Does the approach follow effective Go practices?
-- Are goroutines/channels used correctly if concurrency is involved?
-- Does the plan respect the project's established Go patterns?
+1. **Read the sub-plan** completely.
+2. **Read project documentation** — AGENTS.md, component-level AGENTS.md
+   files, and any project documentation (`docs/`, `doc/`, etc.).
+   Documentation is dramatically cheaper than code exploration.
+3. **Apply your skills** to evaluate the plan against project conventions.
+   Your preloaded skills encode Go idioms, coding standards, and test
+   patterns. Use them as your review criteria.
+4. **Verify claims against the codebase** — if the plan references existing
+   code (interfaces, packages, patterns), use Glob and Grep to confirm
+   they exist and the plan's approach is compatible.
 
 ## Output Format
 

@@ -18,22 +18,22 @@ The planning workflow (Phase 5) uses two types of reviewers:
 
 The planner discovers local reviewers in Phase 4 by reading their descriptions, matches each sub-plan to the most appropriate reviewer, and launches them in Phase 5. No naming convention is assumed — the description is what matters.
 
+## Design Philosophy
+
+A reviewer agent is a **thin shell**. It defines:
+
+- **What to review** — the domain scope (via description and skills list)
+- **How to output** — the standard review format (Verdict / Findings / Concerns / Observations)
+- **What tone to use** — critical, not praising; specific, not vague
+
+It does **not** define how to review. Domain knowledge comes from the preloaded **skills**, which encode conventions, patterns, and pitfalls. This separation prevents the reviewer from becoming a static checklist that rots as conventions evolve — the skills are maintained independently and stay in sync with the codebase.
+
 ## Reviewer Agent Template
 
 ```markdown
 ---
 name: plan-<domain>-reviewer
-description: "Use this agent to review sub-plans that involve <domain>. Evaluates
-  <what it checks> against <what standards>.
-
-<example>
-Context: A sub-plan covers <domain> implementation within a feature plan.
-user: \"Review sub-plan 02-<task>.md for <domain> correctness.\"
-assistant: \"I'll review the sub-plan for <domain> issues using the plan-<domain>-reviewer agent.\"
-<commentary>
-Sub-plan involves <domain> work. Launch the domain-specific reviewer.
-</commentary>
-</example>"
+description: "Use this agent to review sub-plans that involve <domain>. Evaluates <what it checks> against project conventions.\n\n<example>\nContext: A sub-plan covers <domain> implementation within a feature plan.\nuser: \"Review sub-plan 02-<task>.md for <domain> correctness.\"\nassistant: \"I'll review the sub-plan for <domain> issues using the plan-<domain>-reviewer agent.\"\n<commentary>\nSub-plan involves <domain> work. Launch the domain-specific reviewer.\n</commentary>\n</example>"
 tools: Read, Write, Glob, Grep
 skills:
   - <skill-1>
@@ -55,26 +55,17 @@ codebase to verify claims.
 
 ## How You Review
 
-### 1. Read the Sub-Plan, Documentation, and Relevant Code
-
-Read the sub-plan completely. Then check existing project documentation
-(CLAUDE.md, AGENTS.md, architecture docs, component docs) for relevant
-conventions and context. Documentation is dramatically cheaper than code
-exploration. Only after reviewing docs, use Glob and Grep to examine the
-files the sub-plan references and fill gaps that documentation doesn't cover.
-
-### 2. Evaluate <Domain Area 1>
-
-- <What to check>
-- <What patterns to verify>
-- <What pitfalls to look for>
-
-### 3. Evaluate <Domain Area 2>
-
-- <What to check>
-- ...
-
-[Add as many evaluation areas as the domain requires]
+1. **Read the sub-plan** completely.
+2. **Read project documentation** — AGENTS.md, component-level AGENTS.md
+   files, and any project documentation (`docs/`, `doc/`, etc.).
+   Documentation is dramatically
+   cheaper than code exploration.
+3. **Apply your skills** to evaluate the plan against project conventions.
+   Your preloaded skills encode the conventions for this domain. Use them
+   as your review criteria.
+4. **Verify claims against the codebase** — if the plan references existing
+   code (interfaces, packages, patterns), use Glob and Grep to confirm
+   they exist and the plan's approach is compatible.
 
 ## Output Format
 
@@ -94,14 +85,18 @@ plan directory. Use the exact format below.
   objective and acceptance criteria.
 - **Don't duplicate architecture or risk review** — focus only on your
   domain expertise.
+- **Verify claims against the codebase** — if the plan says "extend the
+  existing interface," confirm the interface exists and the extension
+  makes sense.
 ```
 
 ### Key Choices
 
 - **`tools: Read, Write, Glob, Grep`** — Write is only for the review output file. Match the global reviewer pattern.
-- **`skills`** — the differentiator. Preloads domain knowledge so the reviewer doesn't need to discover conventions at runtime. See [Choosing Skills to Preload](#choosing-skills-to-preload).
+- **`skills`** — the differentiator. Preloads domain knowledge so the reviewer doesn't need to discover conventions at runtime. Skills are the review criteria — the agent should not hardcode evaluation checklists that duplicate what skills already teach. See [Choosing Skills to Preload](#choosing-skills-to-preload).
 - **No `model` field** — inherits from parent, matching the global reviewers.
-- **Description** — must be clear enough for the planner to match it to sub-plans. Include what domain it covers and what it evaluates.
+- **Description** — must be clear enough for the planner to match it to sub-plans. Include what domain it covers and what it evaluates. Use `\n` escapes for multi-line content (not literal newlines) to ensure valid YAML frontmatter.
+- **No evaluation sections** — don't add numbered "Evaluate X" sections that restate skill content. The skills are injected into context and the reviewer applies them naturally. Static checklists rot; skills are maintained.
 
 ## Choosing Skills to Preload
 
@@ -111,6 +106,7 @@ The `skills` frontmatter field injects full skill content into the reviewer's co
 - List only skills whose conventions the reviewer needs to evaluate sub-plans correctly
 - Check both global (`~/.claude/skills/`) and local (`.claude/skills/`) skills
 - Don't overload — each injected skill consumes context budget
+- Prefer skills that teach conventions and point to source files over skills that duplicate config content
 
 **Examples:**
 | Reviewer Domain | Skills to Preload |
@@ -156,8 +152,8 @@ All plan reviewers **must** follow this format. The planner depends on the struc
 
 Complete, copy-and-adapt reviewer examples:
 
-- **[Go Codebase Reviewer](examples/plan-go-reviewer.md)** — reviews sub-plans for idiomatic Go patterns, error handling, interface design, and test strategy. Preloads `writing-go-code` and `applying-effective-go`.
-- **[API Layer Reviewer](examples/plan-api-reviewer.md)** — reviews sub-plans for endpoint design, request/response contracts, error responses, and backward compatibility.
+- **[Go Codebase Reviewer](examples/plan-go-reviewer.md)** — reviews sub-plans for idiomatic Go patterns. Preloads `writing-go-code` and `applying-effective-go` as review criteria.
+- **[API Layer Reviewer](examples/plan-api-reviewer.md)** — reviews sub-plans for endpoint design and backward compatibility. Preloads `writing-go-code` as review criteria.
 
 ## Rules
 
@@ -167,3 +163,4 @@ Complete, copy-and-adapt reviewer examples:
 - **Be specific and actionable** — every finding must reference the exact plan section and provide a recommendation
 - **Don't duplicate architecture or risk review** — focus only on domain expertise
 - **Don't invent requirements** — review against the sub-plan's stated objective and acceptance criteria
+- **Don't hardcode evaluation checklists** — let skills encode the conventions; the agent applies them
