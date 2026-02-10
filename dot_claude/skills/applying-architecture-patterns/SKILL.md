@@ -1,9 +1,9 @@
 ---
-name: architecture-patterns
+name: applying-architecture-patterns
 description: Implement proven backend architecture patterns including Clean Architecture, Hexagonal Architecture, and Domain-Driven Design. Use when (1) designing new backend systems from scratch, (2) refactoring monolithic applications for better maintainability, (3) establishing architecture standards for a team, (4) migrating from tightly coupled to loosely coupled architectures, (5) implementing domain-driven design principles, (6) creating testable and mockable codebases, or (7) planning microservices decomposition.
 ---
 
-# Architecture Patterns
+# Applying Architecture Patterns
 
 Apply Clean Architecture, Hexagonal Architecture, and Domain-Driven Design to build maintainable, testable, and scalable backend systems.
 
