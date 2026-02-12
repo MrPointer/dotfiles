@@ -111,4 +111,5 @@ After documentation is created, future planning sessions and executing agents be
 - **Match existing doc style** — don't introduce a new format if docs already exist
 - **Propose, don't force** — if unsure about structure, location, or scope, ask the user
 - **Keep it maintainable** — shorter accurate docs beat comprehensive stale docs
+- **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **No meta-commentary** — don't add "this doc was auto-generated" or session timestamps

@@ -91,6 +91,21 @@ Follow the project's existing doc style. If none exists, use this structure:
 <Technical constraints, platform limitations, or organizational factors that shaped the architecture>
 ```
 
+#### Mermaid Diagrams
+
+Architecture docs should include a mermaid diagram showing how the major parts relate. Place it in or after the Structure section to give humans an instant visual overview.
+
+Choose the diagram type based on what you're showing:
+
+- **Flowchart** (`flowchart TD/LR`): Best for showing layers, dependency direction, and data flow between components.
+- **Sequence diagram** (`sequenceDiagram`): Best when showing how components interact over time (e.g., request lifecycle).
+
+Guidelines:
+- Show structure and relationships, not process steps — those belong in process docs
+- Use subgraphs to group layers or modules
+- Label edges with what flows between components (data, calls, events)
+- Keep it high-level — detailed internal flows belong in process or component docs
+
 ### Step 4: Update AGENTS.md Pointers
 
 If new documentation files were created, propose adding a pointer in AGENTS.md:
@@ -116,4 +131,5 @@ See `docs/architecture/<area>.md` for <brief description>.
 - **Never describe component internals** — that belongs in component docs; architecture describes how components relate
 - **Document reality, not aspirations** — if the code doesn't match the intended architecture, document what exists and note the drift
 - **Rationale is mandatory** — every design decision must include "why", not just "what"
+- **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **Propose structure first** — if no architecture docs exist yet, propose a directory structure and format before creating files

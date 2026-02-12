@@ -10,7 +10,7 @@ Document the business domain of a project: its terminology, entities, relationsh
 ## Core Principles
 
 1. **Ubiquitous Language**: Define terms precisely. Every entity, state, and concept should have one clear definition that the entire team (and every agent) uses consistently.
-2. **Business-First**: Write from the business perspective, not the implementation perspective. "A workspace contains projects" is domain; "the workspaces table has a foreign key to projects" is implementation.
+2. **Business-First (What and Why, Not How)**: Write from the business perspective, not the implementation perspective. Define what concepts ARE and why they exist — never describe step-by-step flows or how things happen at runtime. "A workspace contains projects" is domain; "the workspaces table has a foreign key to projects" is implementation; "when a user creates a workspace, the system first validates..." is a process. If you find yourself writing sequential steps, that content belongs in a process doc.
 3. **Accurate Over Comprehensive**: Only document domain concepts that actually exist in the codebase. Don't invent domain models the project doesn't implement.
 4. **Non-Technical Where Possible**: Domain docs should be readable by non-technical stakeholders. Minimize code references — save those for component docs.
 5. **No Duplication Across Levels**: Domain docs are the canonical source for business concepts. Architecture, process, and component docs **reference** domain docs — they never redefine domain terms. If you find a concept documented elsewhere, consolidate it here and replace the duplicate with a reference.
@@ -109,4 +109,6 @@ See `docs/domain/<area>.md` for <brief description>.
 - **Never define concepts from an implementation perspective** — describe what they ARE, not how they're stored
 - **No code snippets** — domain docs describe the business model; component docs show the implementation
 - **One definition per concept** — if a term is already defined in domain docs, other layers must reference it, not redefine it
+- **Defer process details to process docs** — if a concept involves a multi-step flow (loading chain, resolution sequence, initialization steps), define the concept here and link to the process doc for the "how"
+- **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **Propose structure first** — if no domain docs exist yet, propose a directory structure and format to the user before creating files

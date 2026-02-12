@@ -68,6 +68,9 @@ Follow the project's existing doc style. If none exists, use this structure:
 <Who or what is involved — users, services, external systems>
 - <Actor>: <role in this process>
 
+## Diagram
+<Mermaid diagram visualizing the process flow — see diagram guidance below>
+
 ## Flow
 
 ### Happy Path
@@ -95,6 +98,21 @@ Follow the project's existing doc style. If none exists, use this structure:
 <External systems, services, or conditions this process relies on>
 ```
 
+#### Mermaid Diagrams
+
+Every process doc should include a mermaid diagram placed **before** the textual flow description. The diagram gives humans an instant visual overview; the text provides the detail.
+
+Choose the diagram type based on the process shape:
+
+- **Flowchart** (`flowchart TD`): Best for most processes — decision branches, parallel paths, error terminals. Use subgraphs to group related phases.
+- **Sequence diagram** (`sequenceDiagram`): Best when the process is a back-and-forth between distinct actors or systems (e.g., sourcing chain, API handshakes).
+
+Guidelines:
+- Keep diagrams focused — show the main flow and key decision points, not every edge case
+- Use descriptive node labels in business language, not function names
+- Mark error terminals distinctly (e.g., red styling or stop symbols)
+- Use subgraphs to separate phases when a process has distinct stages
+
 ### Step 4: Update AGENTS.md Pointers
 
 If new documentation files were created, propose adding a pointer in AGENTS.md:
@@ -120,4 +138,5 @@ See `docs/processes/<process>.md` for <brief description>.
 - **Never redefine domain concepts or architectural patterns** — reference the appropriate docs
 - **Always include failure paths** — happy-path-only docs are incomplete and misleading
 - **Business language first** — describe what happens from the business perspective, then note which components are involved
+- **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **Propose structure first** — if no process docs exist yet, propose a directory structure and format before creating files

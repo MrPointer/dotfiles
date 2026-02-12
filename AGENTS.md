@@ -49,6 +49,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 2. **Sheldon for plugin management** - Not oh-my-zsh at runtime (used only for vendored snippets)
 3. **Templates for conditional config** - `{{ .chezmoi.os }}` for OS-specific logic
 4. **Separate work/personal dotfiles** - Work configs loaded conditionally in work environments
+5. **Global skills and agents live in `dot_claude/`** - Edit `dot_claude/skills/` and `dot_claude/agents/` here, never under `~/.claude/` directly
 
 ## Project Motivation
 
