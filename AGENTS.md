@@ -39,7 +39,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 ## Documentation
 
 - `docs/domain.md` — Project-specific terminology, the work environment model, chezmoi data schema, package resolution system, and other domain concepts
-- `docs/processes/` — End-to-end flows: installation, package resolution, shell startup, work environment loading
+- `docs/processes/` — End-to-end flows: installation (with sub-processes for compatibility checking, prerequisite installation, shell setup, GPG setup, dotfiles setup), package resolution, shell startup, work environment loading
 
 ## Key Conventions
 

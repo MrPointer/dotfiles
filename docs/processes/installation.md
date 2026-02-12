@@ -53,68 +53,45 @@ flowchart TD
 
 1. **Detect basic system info** — OS name, architecture, distro (via OS detector)
 2. **Install Homebrew early on macOS** — If `--install-brew` is set and the OS is macOS, install Homebrew *before* prerequisite checks. This solves the chicken-and-egg problem: Homebrew provides tools needed for prerequisite checks on macOS.
-3. **Check system compatibility** — Verify the system meets minimum requirements and identify missing prerequisites against [`compatibility.yaml`][compatibility-yaml]
-4. **Install missing prerequisites** — Resolve abstract package keys to concrete names (see [package resolution][pkg-resolution]), then install via the active package manager. In interactive mode, the user selects which prerequisites to install; in non-interactive mode, all are installed automatically.
+3. **[Check system compatibility][compat-check]** — Verify the system meets minimum requirements and identify missing prerequisites against [`compatibility.yaml`][compatibility-yaml]
+4. **[Install missing prerequisites][prereq-install]** — Resolve [abstract package keys][domain-pkg-resolution] to concrete names, then install via the active package manager. In interactive mode, the user selects which prerequisites to install; in non-interactive mode, all are installed automatically.
 5. **Re-check compatibility** — After installing prerequisites, verify the system passes all checks
 6. **Install Homebrew on non-macOS** — If `--install-brew` is set and Homebrew wasn't installed in step 2
-7. **Install and configure shell** — Install the target shell (default: zsh) using the [shell source strategy][domain-shell-source], then set it as the user's default shell
-8. **Set up GPG keys** — Check for existing GPG keys. If none exist, create a new key pair interactively. If keys exist, let the user select one. Skipped in non-interactive mode.
-9. **Set up dotfiles manager** — Install chezmoi if needed, initialize [chezmoi data][domain-data-schema] from collected input, then apply dotfiles
+7. **[Install and configure shell][shell-setup]** — Install the target shell (default: zsh) using the [shell source strategy][domain-shell-source], then set it as the user's default shell
+8. **[Set up GPG keys][gpg-setup]** — Check for existing GPG keys. If none exist, create a new key pair interactively. If keys exist, let the user select one. Skipped in non-interactive mode.
+9. **[Set up dotfiles manager][dotfiles-setup]** — Install chezmoi if needed, initialize [chezmoi data][domain-data-schema] from collected input, then apply dotfiles
 
 Result: Machine is fully configured with the user's dotfiles, shell, and GPG setup.
 
 ### Failure Scenarios
 
-#### Compatibility check fails after prerequisite installation
+Each sub-process has its own detailed failure scenarios. At the orchestration level:
 
-- **Trigger**: A prerequisite could not be installed, or the system has a fundamental incompatibility
-- **At step**: 5 (re-check compatibility)
-- **Handling**: The installer logs a detailed error explaining what's still missing and exits non-zero
-- **User impact**: Must resolve the remaining issues manually
+- Any step failure causes the installer to exit non-zero — there is no rollback mechanism
+- On macOS, Homebrew failure at step 2 blocks the entire flow (prerequisites depend on it)
+- Steps are sequential: each depends on state set by previous steps (e.g., `selectedGpgKey` from step 8 feeds into step 9)
 
-#### Homebrew installation fails
-
-- **Trigger**: Network issues, unsupported architecture, or permissions problem
-- **At step**: 2 or 6
-- **Handling**: Installer logs the error and exits. On macOS (step 2), this blocks the entire flow since brew is needed for prerequisites.
-- **User impact**: Must install Homebrew manually or fix the underlying issue
-
-#### Package resolution fails
-
-- **Trigger**: A prerequisite's abstract key has no mapping for the active package manager or distro
-- **At step**: 4
-- **Handling**: Installer logs which package could not be resolved and exits
-- **User impact**: Must install the package manually or add a mapping to [`packagemap.yaml`][packagemap-yaml]
-
-#### Shell installation or default-setting fails
-
-- **Trigger**: Package manager error, or insufficient privileges to modify `/etc/shells` and `chsh`
-- **At step**: 7
-- **Handling**: Installer uses privilege escalation (sudo) for shell registration. If that fails, logs the error and exits.
-- **User impact**: Must set the default shell manually
-
-#### GPG key creation fails (interactive)
-
-- **Trigger**: GPG client not available, or key generation error
-- **At step**: 8
-- **Handling**: Installer attempts to install the GPG client first. If key creation still fails, logs the error and exits.
-- **User impact**: Must create GPG keys manually; dotfiles will be applied without a signing key
-
-#### Chezmoi apply fails
-
-- **Trigger**: Template error, missing chezmoi data key, or file permission issue
-- **At step**: 9
-- **Handling**: Installer logs the chezmoi error output and exits
-- **User impact**: Must fix the template or data issue and re-run
+See the individual process docs for detailed failure scenarios and handling.
 
 ## State Changes
 
-- **System packages**: Missing prerequisites installed
+- **System packages**: Missing prerequisites installed (see [prerequisite installation][prereq-install])
 - **Homebrew**: Installed and on PATH (if opted in)
-- **Default shell**: Changed to the target shell
-- **GPG keyring**: New key pair created or existing key selected
-- **Chezmoi config**: `~/.config/chezmoi/chezmoi.yaml` written with all data namespaces
+- **Default shell**: Changed to the target shell (see [shell setup][shell-setup])
+- **GPG keyring**: New key pair created or existing key selected (see [GPG setup][gpg-setup])
+- **Chezmoi config**: `~/.config/chezmoi/chezmoi.toml` written with all data namespaces (see [dotfiles setup][dotfiles-setup])
 - **Home directory**: Dotfiles applied — shell configs, git config, work profiles, etc.
+
+## Sub-Processes
+
+| Process | Description |
+|---------|-------------|
+| [Compatibility Checking][compat-check] | Detect OS/distro, verify prerequisites, validate platform support |
+| [Prerequisite Installation][prereq-install] | Resolve and install missing prerequisites |
+| [Package Resolution][pkg-resolution] | Translate abstract package keys to platform-specific names |
+| [Shell Setup][shell-setup] | Install shell and set as default |
+| [GPG Setup][gpg-setup] | Install GPG client, create or select signing key |
+| [Dotfiles Setup][dotfiles-setup] | Install chezmoi, write config, clone repo, apply dotfiles |
 
 ## Dependencies
 
@@ -124,6 +101,12 @@ Result: Machine is fully configured with the user's dotfiles, shell, and GPG set
 
 [compatibility-yaml]: ../../installer/internal/config/compatibility.yaml
 [packagemap-yaml]: ../../installer/internal/config/packagemap.yaml
+[compat-check]: compatibility-checking.md
+[prereq-install]: prerequisite-installation.md
 [pkg-resolution]: package-resolution.md
+[shell-setup]: shell-setup.md
+[gpg-setup]: gpg-setup.md
+[dotfiles-setup]: dotfiles-setup.md
 [domain-shell-source]: ../domain.md#shell-source-strategy
 [domain-data-schema]: ../domain.md#chezmoi-data-schema
+[domain-pkg-resolution]: ../domain.md#package-resolution
