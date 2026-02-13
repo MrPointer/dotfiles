@@ -7,6 +7,10 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 | Skill                        | Use When                                                                    |
 | ---------------------------- | --------------------------------------------------------------------------- |
 | `writing-go-code`            | Writing/editing Go code, tests, mocks, interfaces                           |
+| `developing-cli-apps`        | CLI commands, flags, Cobra patterns, Huh interactive UI, signal handling     |
+| `building-go-binaries`       | Compiling the project, troubleshooting build failures                        |
+| `linting-go-code`            | Running linters, fixing lint errors, formatting code                         |
+| `testing-go-code`            | Running unit tests, coverage, benchmarks, regenerating mocks                 |
 | `managing-chezmoi`           | Editing `dot_*`, `private_dot_*`, or `.tmpl` files; chezmoi commands        |
 | `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                                 |
 | `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                                     |
@@ -25,12 +29,19 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 .
 ├── dot_claude/                 # ~/.claude (Claude global config)
 ├── .github/workflows/          # CI/CD pipelines
-├── installer/                  # Go installer/bootstrapper (has own CLAUDE.md)
+├── installer/                  # Go installer/bootstrapper (has own AGENTS.md)
 ├── dot_config/                 # ~/.config/* files (sheldon, etc.)
 ├── dot_zshrc, dot_zshenv, ...  # Shell config files
 ├── private_dot_ssh/            # ~/.ssh (private files)
 └── .chezmoiignore              # Files to ignore during apply
 ```
+
+## Documentation
+
+- `docs/domain.md` — Project-specific terminology, the work environment model, chezmoi data schema, package resolution system, and other domain concepts
+- `docs/architecture.md` — Top-level project structure: installer, chezmoi templates, shell runtime, and how they connect through the data contract
+- `docs/architecture-installer.md` — Installer's internal layered architecture: cmd, lib, cli, utils, dependency injection, key design decisions
+- `docs/processes/` — End-to-end flows: installation (with sub-processes for compatibility checking, prerequisite installation, shell setup, GPG setup, dotfiles setup), package resolution, shell startup, work environment loading
 
 ## Key Conventions
 
@@ -38,6 +49,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 2. **Sheldon for plugin management** - Not oh-my-zsh at runtime (used only for vendored snippets)
 3. **Templates for conditional config** - `{{ .chezmoi.os }}` for OS-specific logic
 4. **Separate work/personal dotfiles** - Work configs loaded conditionally in work environments
+5. **Global skills and agents live in `dot_claude/`** - Edit `dot_claude/skills/` and `dot_claude/agents/` here, never under `~/.claude/` directly
 
 ## Project Motivation
 
@@ -51,7 +63,7 @@ The installer is a Go CLI application in the `installer/` directory. It was rewr
 
 **Tech stack**: [cobra] (CLI), [huh] (interactive UI), [goreleaser] (releases)
 
-**For development details**, see `installer/CLAUDE.md`.
+**For development details**, see `installer/AGENTS.md`.
 
 [chezmoi]: https://www.chezmoi.io/
 [homebrew]: https://docs.brew.sh/

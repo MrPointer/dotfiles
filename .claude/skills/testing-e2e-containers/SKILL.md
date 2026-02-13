@@ -18,21 +18,29 @@ Test the installer binary inside Docker containers running the supported Linux d
 
 ## Step 1: Build the Binary
 
-Use goreleaser to build a snapshot binary. The docker-compose volumes mount `installer/` into containers at `/workspace/installer`, so the binary at `installer/bin/dotfiles-installer` becomes `/workspace/installer/bin/dotfiles-installer`.
-
-Build for the host platform (when host matches container arch):
+Use goreleaser to build snapshot binaries for all platforms defined in `.goreleaser.yaml`. Run from the `installer/` directory:
 
 ```bash
-cd installer && task build
+cd installer && goreleaser build --skip before --snapshot --clean
 ```
 
-Cross-compile for Linux when running on macOS:
+This produces binaries under `installer/dist/`, one per OS-arch combo. The docker-compose volumes mount `installer/` into containers at `/workspace/installer`, so the binary path inside the container follows this pattern:
 
-```bash
-cd installer && GOOS=linux GOARCH=arm64 goreleaser build --single-target --skip before --snapshot --clean --output ./bin/dotfiles-installer-linux-arm64
+```
+/workspace/installer/dist/dotfiles_installer_<os>_<arch>/dotfiles-installer
 ```
 
-Adjust `GOARCH` to match the container platform (`arm64` for Apple Silicon, `amd64` for Intel).
+For example, on a macOS ARM host (Apple Silicon) running Linux ARM64 containers:
+
+```
+/workspace/installer/dist/dotfiles_installer_linux_arm64_v8.0/dotfiles-installer
+```
+
+For Linux AMD64 containers:
+
+```
+/workspace/installer/dist/dotfiles_installer_linux_amd64_v1/dotfiles-installer
+```
 
 ## Step 2: Run Tests in Containers
 
@@ -44,27 +52,26 @@ cd installer/docker
 # Start container
 task ubuntu:start
 
-# Run the installer
+# Run the installer (adjust flags for the scenario being tested)
 docker-compose -f ubuntu/docker-compose.yml exec --user testuser installer-test-ubuntu \
-  sudo /workspace/installer/bin/dotfiles-installer install \
+  sudo /workspace/installer/dist/dotfiles_installer_linux_arm64_v8.0/dotfiles-installer install \
     --shell zsh --shell-source auto --non-interactive --install-prerequisites
 
-# Verify results
-docker-compose -f ubuntu/docker-compose.yml exec --user testuser installer-test-ubuntu \
-  command -v zsh
+# Verify results (scenario-dependent)
+# ...
 
 # Tear down before next test
 task ubuntu:stop
 ```
 
-For standalone containers (without docker-compose), bind-mount the binary explicitly:
+For standalone containers (without docker-compose), bind-mount the dist directory explicitly:
 
 ```bash
 docker run -d --name test-ubuntu --platform linux/arm64 \
-  -v "$(pwd)/../bin:/workspace/bin:ro" \
+  -v "$(pwd)/../dist:/workspace/installer/dist:ro" \
   ubuntu-installer-test-ubuntu:latest tail -f /dev/null
 
-docker exec test-ubuntu /workspace/bin/dotfiles-installer-linux-arm64 install \
+docker exec test-ubuntu /workspace/installer/dist/dotfiles_installer_linux_arm64_v8.0/dotfiles-installer install \
   --shell zsh --shell-source system --non-interactive
 
 docker stop test-ubuntu && docker rm test-ubuntu
@@ -72,20 +79,7 @@ docker stop test-ubuntu && docker rm test-ubuntu
 
 ## Step 3: Verify Results
 
-After running the installer, verify inside the container:
-
-```bash
-# Check PATH-visible binary
-docker exec <container> command -v zsh
-
-# Check specific paths (brew is NOT in PATH by default)
-docker exec <container> ls -la /home/linuxbrew/.linuxbrew/bin/zsh  # brew
-docker exec <container> ls -la /usr/bin/zsh                         # system (ubuntu/debian)
-docker exec <container> ls -la /usr/sbin/zsh                        # system (fedora)
-
-# Verify version
-docker exec <container> zsh --version
-```
+Verification depends on what the test scenario is exercising. After running the installer, determine appropriate checks based on the flags and features being tested, then run them inside the container using `docker-compose exec` or `docker exec`.
 
 ## Testing All Distros
 
@@ -100,6 +94,12 @@ for distro in ubuntu debian fedora; do
   task ${distro}:stop
 done
 ```
+
+## Interactive GPG Testing
+
+For testing the GPG key setup flow interactively (which requires automating GPG's prompts), see the [testing-interactive-gpg skill][gpg-skill].
+
+[gpg-skill]: /Users/timorgruber/.local/share/chezmoi/.claude/skills/testing-interactive-gpg/SKILL.md
 
 ## Gotchas
 
