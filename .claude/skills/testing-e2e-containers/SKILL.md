@@ -95,6 +95,12 @@ for distro in ubuntu debian fedora; do
 done
 ```
 
+## Interactive GPG Testing
+
+For testing the GPG key setup flow interactively (which requires automating GPG's prompts), see the [testing-interactive-gpg skill][gpg-skill].
+
+[gpg-skill]: /Users/timorgruber/.local/share/chezmoi/.claude/skills/testing-interactive-gpg/SKILL.md
+
 ## Gotchas
 
 - See [distro-specific notes](references/distro-notes.md) for platform quirks (zsh paths, brew behavior, package manager differences)
