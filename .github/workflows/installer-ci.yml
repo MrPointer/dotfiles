@@ -354,3 +354,28 @@ jobs:
             echo "No .zshenv found (expected if chezmoi apply was skipped)"
             zsh -c 'echo "zsh works correctly"'
           fi
+
+  # Gate job for auto-merge: always runs, reports the aggregate result of all CI jobs.
+  # When the workflow is skipped entirely (no installer/** changes), GitHub treats the
+  # check as "pending" which won't block merging in rulesets. When it does run, it
+  # accurately reflects whether build/test/e2e passed.
+  ci-status:
+    name: Installer CI Status
+    if: always()
+    needs: [build, test, e2e-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        run: |
+          echo "build: ${{ needs.build.result }}"
+          echo "test: ${{ needs.test.result }}"
+          echo "e2e-test: ${{ needs.e2e-test.result }}"
+
+          if [[ "${{ needs.build.result }}" == "failure" || \
+                "${{ needs.test.result }}" == "failure" || \
+                "${{ needs.e2e-test.result }}" == "failure" ]]; then
+            echo "One or more jobs failed"
+            exit 1
+          fi
+
+          echo "All jobs passed (or were skipped/cancelled)"
