@@ -29,7 +29,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 .
 ├── dot_claude/                 # ~/.claude (Claude global config)
 ├── .github/workflows/          # CI/CD pipelines
-├── installer/                  # Go installer/bootstrapper (has own CLAUDE.md)
+├── installer/                  # Go installer/bootstrapper (has own AGENTS.md)
 ├── dot_config/                 # ~/.config/* files (sheldon, etc.)
 ├── dot_zshrc, dot_zshenv, ...  # Shell config files
 ├── private_dot_ssh/            # ~/.ssh (private files)
@@ -63,7 +63,7 @@ The installer is a Go CLI application in the `installer/` directory. It was rewr
 
 **Tech stack**: [cobra] (CLI), [huh] (interactive UI), [goreleaser] (releases)
 
-**For development details**, see `installer/CLAUDE.md`.
+**For development details**, see `installer/AGENTS.md`.
 
 [chezmoi]: https://www.chezmoi.io/
 [homebrew]: https://docs.brew.sh/
