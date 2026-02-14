@@ -319,6 +319,8 @@ Examples:
 
 ## Rules (Non-Negotiable)
 
+- **Always respect model assignments during execution** — Sub-plan model assignments (Haiku, Sonnet, Opus) are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
+- **Use Agent Teams for plan execution, not Task sub-agents** — When a plan qualifies for Agent Teams (per the criteria in Phase 4), always use TeamCreate to spawn teammates. Agent Team teammates have their own independent context windows (preserving the lead's context budget) and have full tool access including file writes. Task sub-agents (spawned via the Task tool) cannot write files regardless of permission mode and consume the main context window. Never use Task sub-agents as a substitute for Agent Teams when executing plans.
 - **Never write a plan based on incomplete information**
 - **Never invent requirements the user didn't specify**
 - **Always decompose into sub-plans** — a single monolithic plan is a failure mode
