@@ -64,6 +64,7 @@ This is the most critical phase. Break the feature into sub-plans:
 3. **Embed all necessary context**: Each sub-plan must include the interfaces, data shapes, conventions, and file contents an executing agent needs. Don't assume the agent has read the master plan or any other sub-plan.
 4. **Define clear inputs and outputs**: If sub-plan B depends on sub-plan A, sub-plan B must specify exactly what it expects to exist (e.g., "a `UserService` interface in `internal/service/user.go` with methods `Create(ctx, user) error` and `GetByID(ctx, id) (User, error)`").
 5. **Keep sub-plans small**: A good sub-plan should be completable in a single focused session. If it feels too big, split it further.
+6. **Plan documentation updates as a sub-plan**: If the feature affects documented domain concepts, architecture, or business processes, add a final sub-plan that updates those docs. This sub-plan is planned upfront — the planner already knows what's changing and can specify exactly which docs to update, which new docs to create, and which existing docs to use as structural patterns. This makes documentation updates human-reviewable alongside the rest of the plan. See [Documentation Sub-Plan](#documentation-sub-plan) for guidance on what belongs here vs. post-execution review.
 
 Present the decomposition to the user for review before writing the actual plan files.
 
@@ -167,16 +168,17 @@ The user may also request additional specialized reviewers (e.g., security, perf
 
 Present the fully reviewed plan (master + sub-plans) along with a summary of review findings and how they were addressed. Only mark as ready when the user explicitly approves.
 
-### Post-Execution: Documentation Updates
+### Post-Execution: Component Documentation Review
 
-After sub-plans have been executed, the `updating-documentation` skill should be run to keep project documentation in sync with the changes. This is not part of the planning workflow itself, but should be noted in the master plan as a final step:
+Domain, architecture, and process documentation updates are handled by the documentation sub-plan (Phase 3, step 6) — planned upfront and human-reviewed.
+
+**Component docs** are the exception: they describe implementation details (interfaces, internal behavior, code patterns) that may deviate from the plan during execution. For projects that have component documentation, run the `component-docs-reviewer` agent after all sub-plans complete to catch implementation-vs-plan drift in component docs.
 
 ```markdown
 ## Post-Execution
-After all sub-plans are complete, run the `updating-documentation` skill to update affected docs.
+If this project has component-level documentation, run the `component-docs-reviewer` agent to verify
+component docs still match the actual implementation.
 ```
-
-This ensures that the documentation investment compounds — each feature execution improves docs for the next planning session.
 
 ## Master Plan Structure
 
@@ -261,7 +263,8 @@ Create a team with <N> teammates to execute .claude/plans/<feature-name>/00-mast
 | ...  | ...        |
 
 ## Post-Execution
-After all sub-plans are complete, run the `updating-documentation` skill to update affected project documentation.
+If this project has component-level documentation, run the `component-docs-reviewer` agent to verify
+component docs still match the actual implementation.
 ```
 
 ## Sub-Plan Structure
@@ -313,6 +316,35 @@ Examples:
 - [ ] <Criterion 2>
 ...
 ```
+
+## Documentation Sub-Plan
+
+When a feature affects documented domain concepts, architecture, or business processes, the planner adds a **documentation sub-plan** as the final sub-plan in the execution order. This makes doc updates part of the plan — visible, reviewable, and deliberate.
+
+### What Goes in the Documentation Sub-Plan
+
+| Doc Level | Planned Upfront? | Rationale |
+|---|---|---|
+| Domain docs | Yes | The planner knows what domain concepts are changing |
+| Architecture docs | Yes | The planner knows what structural changes are happening |
+| Process docs | Yes | The planner knows what flows are being added/modified |
+| Component docs | **No** — post-execution | Component docs describe implementation details that may drift from the plan |
+
+### How to Write It
+
+The documentation sub-plan follows the standard sub-plan template but its implementation steps are doc edits, not code changes. Be specific:
+
+- **Which existing docs to update** — file paths, which sections, what to change
+- **Which new docs to create** — file paths, which existing doc to use as a structural pattern, what the new doc should cover
+- **Structural pattern matching** — if existing docs follow a pattern (e.g., process steps link to sub-process docs), new additions must follow it. Specify the pattern explicitly.
+- **Required skills**: List the documenting skills the executing agent needs (e.g., `documenting-business-processes` for new process docs, `documenting-domain` for new domain entries)
+
+### When to Skip It
+
+Skip the documentation sub-plan when:
+- The feature doesn't affect any documented concepts, flows, or architecture
+- The only doc impact is component-level (handled by `component-docs-reviewer` post-execution)
+- No project documentation exists yet (recommend creating initial docs as a separate effort)
 
 ## Rules (Non-Negotiable)
 
