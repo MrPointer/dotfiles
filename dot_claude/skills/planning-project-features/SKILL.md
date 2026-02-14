@@ -128,28 +128,30 @@ The review loop uses two types of reviewer agents:
 
 #### Review Output Location
 
-All review output is written to `reviews/` within the plan directory, named `<plan-file>.<reviewer-type>.md`:
+Review output is saved to `reviews/` within the plan directory, named `<plan-file>.<reviewer-type>.md`:
 
 ```
 .claude/plans/<feature-name>/reviews/
 ├── 00-master.architect.md      # Architecture review of master plan
 ├── 00-master.risk.md           # Risk review of master plan
-├── 01-data-model.codebase.md   # Codebase review of sub-plan 01
-├── 02-api-layer.codebase.md    # Codebase review of sub-plan 02
+├── 01-data-model.installer.md  # Installer review of sub-plan 01
+├── 02-api-layer.ci.md          # CI review of sub-plan 02
 └── ...
 ```
+
+**Important**: Reviewer agents return their findings as their Task response — they do not write files. The planner is responsible for writing each reviewer's output to the appropriate `reviews/` file.
 
 This directory is ephemeral — already covered by the `.claude/plans/` ignore rule — but persists locally across sessions for reference.
 
 #### Step 1: Master Plan Review
 
-Launch `plan-architect-reviewer` and `plan-risk-reviewer` against the master plan (in parallel — they are independent). Pass the plan directory path so they can read all plan files and cross-reference against the codebase. Instruct each reviewer to write its output to `reviews/00-master.<reviewer-type>.md`.
+Launch `plan-architect-reviewer` and `plan-risk-reviewer` against the master plan (in parallel — they are independent). Pass the plan directory path so they can read all plan files and cross-reference against the codebase. Each reviewer returns its findings as a response — write them to `reviews/00-master.architect.md` and `reviews/00-master.risk.md` respectively.
 
 Incorporate findings into both the master plan and affected sub-plans.
 
 #### Step 2: Sub-Plan Review
 
-After the master plan review is resolved, launch each sub-plan's assigned reviewer (from the `## Reviewer` field) against it. Sub-plan reviews can run in parallel — even when different sub-plans use different reviewers. Each reviewer writes its output to `reviews/<plan-file>.<reviewer-type>.md`.
+After the master plan review is resolved, launch each sub-plan's assigned reviewer (from the `## Reviewer` field) against it. Sub-plan reviews can run in parallel — even when different sub-plans use different reviewers. Each reviewer returns its findings as a response — write them to `reviews/<plan-file>.<reviewer-type>.md`.
 
 **Output normalization**: If a local reviewer's output doesn't follow the standard format (Verdict, Critical Findings, Concerns, Observations), normalize it before incorporating. The planner interprets the reviewer's findings and translates them into actionable changes to the plan.
 
@@ -210,16 +212,11 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 ## Team Execution (Agent Teams)
 
-**Use Agent Teams when**:
-- ✅ Plan has 2+ sub-plans with meaningful scope
-- ✅ Sub-plans are self-contained (minimal cross-dependencies)
-- ✅ Sub-plans touch different files (avoid conflicts)
-- ✅ Parallelization offers significant time savings
+**Agent Teams are REQUIRED for plans with 2+ sub-plans.** Do not use Task sub-agents — they cannot write files and consume the main context window.
 
-**Skip Agent Teams when**:
+**The only exception** — skip Agent Teams when:
 - ❌ Single sub-plan (just execute directly)
-- ❌ Tiny sub-plans (overhead > benefit, e.g., "add one import")
-- ❌ Highly coupled sub-plans (too much coordination needed)
+- ❌ All sub-plans are trivially small (e.g., "add one import")
 
 **Setup**:
 1. Enable Agent Teams: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
@@ -320,7 +317,8 @@ Examples:
 ## Rules (Non-Negotiable)
 
 - **Always respect model assignments during execution** — Sub-plan model assignments (Haiku, Sonnet, Opus) are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
-- **Use Agent Teams for plan execution, not Task sub-agents** — When a plan qualifies for Agent Teams (per the criteria in Phase 4), always use TeamCreate to spawn teammates. Agent Team teammates have their own independent context windows (preserving the lead's context budget) and have full tool access including file writes. Task sub-agents (spawned via the Task tool) cannot write files regardless of permission mode and consume the main context window. Never use Task sub-agents as a substitute for Agent Teams when executing plans.
+- **Use Agent Teams for multi-plan execution — ALWAYS** — When a plan has 2+ sub-plans, ALWAYS use Agent Teams (TeamCreate) to spawn teammates for execution. This is not optional. Agent Team teammates have their own independent context windows (preserving the lead's context budget) and have full tool access including file writes. Task sub-agents (spawned via the Task tool) cannot write files regardless of permission mode and consume the main context window. Never use Task sub-agents for plan execution. If Agent Teams are unavailable or fail, STOP and ask the user — do not silently execute sub-plans on the main agent.
+- **Reviewers return findings, planner writes files** — Reviewer agents (both global and local) return their findings as their Task response. They do not write files. The planner is responsible for writing review output to `reviews/<plan-file>.<reviewer-type>.md`.
 - **Never write a plan based on incomplete information**
 - **Never invent requirements the user didn't specify**
 - **Always decompose into sub-plans** — a single monolithic plan is a failure mode
