@@ -86,6 +86,17 @@ build-essential:
 
 See the [package resolution process][pkg-resolution] for the resolution flow from abstract key to installable package.
 
+### Optional Tools
+
+Daily-use CLI tools (fzf, bat, eza, ripgrep, fd, difftastic, sheldon) that the installer can install at the user's request. Defined in [`tools.yaml`][tools-yaml], separate from prerequisites.
+
+- **Tool definition**: An entry in `tools.yaml` with a `name` ([abstract package key](#package-resolution)) and a human-readable `description`.
+- **Not required**: Unlike prerequisites, optional tools are not needed for correct dotfiles setup. They enhance the shell experience but the system works without them.
+- **Not persisted**: Tool selections are not saved to chezmoi data — tools are not part of the data contract.
+- **Platform-dependent availability**: Not all tools have package mappings for every manager. Some (e.g., `sheldon`, `eza`, `difftastic`) are brew-only.
+
+See the [optional tools installation process][tools-install] for selection, filtering, and installation details.
+
 ### Shell Source Strategy
 
 When installing the user's shell, the installer supports three strategies for locating and installing it:
@@ -148,10 +159,14 @@ See the [shell startup process][shell-startup] for the full shell startup flow i
 | Package type | Classification of a package: regular (default), group (DNF group install), or pattern |
 | Shell source strategy | How the installer finds/installs the shell: auto, brew, or system |
 | Specific work profile | Employer-specific configuration at `~/.work/{work_name}/profile` |
+| Optional tool | A daily-use CLI tool (e.g., fzf, bat) defined in `tools.yaml`, installable after dotfiles setup via the installer's optional tools step |
+| Tool definition | An entry in `tools.yaml` with a name (abstract package key) and description |
 | Work name | Short employer identifier (e.g., `sedg`) used in paths and environment variable prefixes |
 
 [installation]: processes/installation.md
+[tools-install]: processes/tools-installation.md
 [pkg-resolution]: processes/package-resolution.md
 [shell-startup]: processes/shell-startup.md
 [work-env-loading]: processes/work-environment-loading.md
 [packagemap-yaml]: ../installer/internal/config/packagemap.yaml
+[tools-yaml]: ../installer/internal/config/tools.yaml
