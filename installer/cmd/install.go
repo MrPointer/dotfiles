@@ -18,6 +18,7 @@ import (
 	"github.com/MrPointer/dotfiles/installer/lib/packageresolver"
 	"github.com/MrPointer/dotfiles/installer/lib/pkgmanager"
 	"github.com/MrPointer/dotfiles/installer/lib/shell"
+	"github.com/MrPointer/dotfiles/installer/lib/toolsinstaller"
 	"github.com/MrPointer/dotfiles/installer/utils/logger"
 	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 	"github.com/samber/mo"
@@ -38,6 +39,7 @@ var (
 	gitBranch            string
 	verbose              bool
 	installPrerequisites bool
+	installTools         bool
 )
 
 // global variables for the command execution context.
@@ -123,6 +125,10 @@ var installCmd = &cobra.Command{
 		if err := setupDotfilesManager(installLogger); err != nil {
 			installLogger.Error("Failed to setup dotfiles manager: %v", err)
 			os.Exit(1)
+		}
+
+		if err := installOptionalTools(installLogger); err != nil {
+			installLogger.Warning("Failed to install optional tools: %v", err)
 		}
 
 		installLogger.Success("Installation completed successfully")
@@ -649,6 +655,125 @@ func initDotfilesManagerData(dm dotfilesmanager.DotfilesManager) error {
 	return dm.Initialize(dotfiles_data)
 }
 
+// installOptionalTools installs optional CLI tools after dotfiles setup completes.
+// This function is non-fatal - it logs warnings for failures but never aborts the overall install.
+func installOptionalTools(log logger.Logger) error {
+	log.StartProgress("Setting up optional tools")
+
+	// Load tools configuration with a fresh viper instance
+	toolsCfg, err := toolsinstaller.LoadToolsConfig(viper.New(), toolsConfigFile)
+	if err != nil {
+		log.FailProgress("Failed to load tools configuration", err)
+		log.Warning("Skipping optional tools installation due to config load failure")
+		return nil
+	}
+
+	if len(toolsCfg.Tools) == 0 {
+		log.FinishProgress("No optional tools available")
+		return nil
+	}
+
+	// Create package manager and resolver
+	pm := createPackageManagerForSystem(&globalSysInfo)
+	if pm == nil {
+		log.Warning("No package manager available for optional tools installation")
+		log.FinishProgress("Skipping optional tools installation")
+		return nil
+	}
+
+	resolver := createPackageResolverForSystem(pm, &globalSysInfo)
+	if resolver == nil {
+		log.Warning("Cannot resolve package information for optional tools")
+		log.FinishProgress("Skipping optional tools installation")
+		return nil
+	}
+
+	// Pre-filter tools: only keep tools that can be resolved
+	var availableTools []string
+	toolDetails := make(map[string]cli.ToolDetail)
+
+	log.StartProgress("Checking available optional tools")
+	for _, tool := range toolsCfg.Tools {
+		_, err := resolver.Resolve(tool.Name, "")
+		if err == nil {
+			availableTools = append(availableTools, tool.Name)
+			toolDetails[tool.Name] = cli.ToolDetail{
+				Name:        tool.Name,
+				Description: tool.Description,
+			}
+		} else {
+			log.Debug("Tool %s not available: %v", tool.Name, err)
+		}
+	}
+	log.FinishProgress(fmt.Sprintf("Found %d available optional tools", len(availableTools)))
+
+	if len(availableTools) == 0 {
+		log.FinishProgress("No optional tools available for this system")
+		return nil
+	}
+
+	var toolsToInstall []string
+
+	// Determine which tools to install based on mode
+	if installTools {
+		// Auto-install all available tools
+		toolsToInstall = availableTools
+		log.Info("Auto-installing all %d available optional tools", len(availableTools))
+	} else if !IsNonInteractive() {
+		// Interactive mode: show selector
+		log.StartInteractiveProgress("Selecting optional tools to install")
+
+		selector := cli.NewDefaultToolSelector()
+		selected, err := selector.SelectTools(availableTools, toolDetails)
+		if err != nil {
+			log.FailInteractiveProgress("Failed to select tools", err)
+			log.Warning("Skipping optional tools installation")
+			return nil
+		}
+
+		log.FinishInteractiveProgress("Tool selection completed")
+
+		if len(selected) == 0 {
+			log.Info("No tools selected for installation")
+			log.FinishProgress("Optional tools setup completed")
+			return nil
+		}
+
+		toolsToInstall = selected
+	} else {
+		// Non-interactive without --install-tools flag: skip entirely
+		log.Info("Skipping optional tools in non-interactive mode (use --install-tools to enable)")
+		log.FinishProgress("Optional tools setup skipped")
+		return nil
+	}
+
+	// Install selected tools
+	log.StartProgress(fmt.Sprintf("Installing %d optional tools", len(toolsToInstall)))
+
+	installer := toolsinstaller.NewToolsInstaller(resolver, pm, log)
+	results := installer.InstallTools(toolsToInstall)
+
+	// Report results
+	successCount := 0
+	failureCount := 0
+	for _, result := range results {
+		if result.Success {
+			successCount++
+		} else {
+			failureCount++
+		}
+	}
+
+	if failureCount > 0 {
+		log.Warning("Some optional tools failed to install: %d succeeded, %d failed", successCount, failureCount)
+	} else {
+		log.Success("All %d optional tools installed successfully", successCount)
+	}
+
+	log.FinishProgress("Optional tools setup completed")
+	return nil
+}
+
 //nolint:gochecknoinits // Cobra requires an init function to set up the command structure.
 func init() {
 	rootCmd.AddCommand(installCmd)
@@ -672,6 +797,8 @@ func init() {
 			"Useful for testing changes in feature branches or when running in CI/CD pipelines.")
 	installCmd.Flags().BoolVar(&installPrerequisites, "install-prerequisites", false,
 		"Automatically install missing prerequisites")
+	installCmd.Flags().BoolVar(&installTools, "install-tools", false,
+		"Automatically install all optional tools")
 
 	viper.BindPFlag("work-env", installCmd.Flags().Lookup("work-env"))
 	viper.BindPFlag("work-name", installCmd.Flags().Lookup("work-name"))
@@ -683,4 +810,5 @@ func init() {
 	viper.BindPFlag("git-branch", installCmd.Flags().Lookup("git-branch"))
 
 	viper.BindPFlag("install-prerequisites", installCmd.Flags().Lookup("install-prerequisites"))
+	viper.BindPFlag("install-tools", installCmd.Flags().Lookup("install-tools"))
 }
