@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-//go:embed compatibility.yaml packagemap.yaml
+//go:embed compatibility.yaml packagemap.yaml tools.yaml
 var configFS embed.FS
 
 // GetRawEmbeddedCompatibilityConfig returns the raw content of the embedded compatibility configuration file.
@@ -24,6 +24,15 @@ func GetRawEmbeddedPackageMapConfig() ([]byte, error) {
 	data, err := configFS.ReadFile("packagemap.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read embedded package map config: %w", err)
+	}
+	return data, nil
+}
+
+// GetRawEmbeddedToolsConfig returns the raw content of the embedded tools configuration file.
+func GetRawEmbeddedToolsConfig() ([]byte, error) {
+	data, err := configFS.ReadFile("tools.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read embedded tools config: %w", err)
 	}
 	return data, nil
 }

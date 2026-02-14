@@ -37,6 +37,7 @@ Each package under `lib/` owns one domain area:
 | [`shell`][shell] | Shell installation and default-setting | `ShellInstaller`, `ShellResolver`, `ShellChanger` |
 | [`gpg`][gpg] | GPG client installation and key management | `GpgInstaller`, `GpgClient` |
 | [`dotfilesmanager`][dotfilesmanager] | Chezmoi integration | `DotfilesManager` (composed of `DotfilesInstaller`, `DotfilesDataInitializer`, `DotfilesApplier`) |
+| [`toolsinstaller`][toolsinstaller] | Optional tool installation | `ToolsInstaller` — resolve and install user-selected CLI tools |
 
 **Dependency direction within lib**: Packages depend on `pkgmanager` (the interface), never on each other's concrete implementations. For example, `shell` accepts a `PackageManager` — it doesn't know whether it's brew or apt.
 
@@ -48,6 +49,7 @@ Each package under `lib/` owns one domain area:
   - `selector.go` — Generic single-select wrapper around Huh
   - `multiselect_selector.go` — Generic multi-select wrapper
   - `prerequisite_selector.go` — Prerequisite selection form
+  - `tool_selector.go` — Optional tool selection form
   - `gpg_selector.go` — GPG key selection form
 
 ### utils — Infrastructure Layer
@@ -69,8 +71,8 @@ Shared utilities that all other layers depend on:
 
 ### internal/config — Embedded Configuration
 
-- **Responsibility**: Store static YAML config files ([`compatibility.yaml`][compatibility-yaml], [`packagemap.yaml`][packagemap-yaml]) embedded into the binary via `go:embed`
-- **Boundaries**: Read-only. Loaded by `lib/compatibility` and `lib/packageresolver` through viper.
+- **Responsibility**: Store static YAML config files ([`compatibility.yaml`][compatibility-yaml], [`packagemap.yaml`][packagemap-yaml], [`tools.yaml`][tools-yaml]) embedded into the binary via `go:embed`
+- **Boundaries**: Read-only. Loaded by `lib/compatibility`, `lib/packageresolver`, and `lib/toolsinstaller` through viper.
 
 ## Communication Patterns
 
@@ -134,6 +136,7 @@ flowchart TD
         shell_pkg["shell"]
         gpg_pkg["gpg"]
         dotfiles["dotfilesmanager\n+ chezmoi impl"]
+        toolsinst["toolsinstaller"]
 
         brew -.->|implements| pkgmgr
         apt_pkg -.->|implements| pkgmgr
@@ -152,6 +155,7 @@ flowchart TD
     subgraph internal ["internal/config"]
         compat_yaml["compatibility.yaml"]
         pkgmap_yaml["packagemap.yaml"]
+        tools_yaml["tools.yaml"]
     end
 
     cmd --> cli
@@ -188,3 +192,5 @@ flowchart TD
 [shell]: ../installer/lib/shell
 [gpg]: ../installer/lib/gpg
 [dotfilesmanager]: ../installer/lib/dotfilesmanager
+[toolsinstaller]: ../installer/lib/toolsinstaller
+[tools-yaml]: ../installer/internal/config/tools.yaml

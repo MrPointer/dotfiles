@@ -1,0 +1,15 @@
+tools:
+  - name: fzf
+    description: "Fuzzy finder for the command line"
+  - name: bat
+    description: "Cat clone with syntax highlighting"
+  - name: sheldon
+    description: "Shell plugin manager"
+  - name: eza
+    description: "Modern replacement for ls"
+  - name: ripgrep
+    description: "Fast recursive search tool"
+  - name: fd
+    description: "Fast alternative to find"
+  - name: difftastic
+    description: "Structural diff tool"

@@ -20,6 +20,7 @@ import (
 var (
 	cfgFile                   string
 	compatibilityConfigFile   string
+	toolsConfigFile           string
 	globalCompatibilityConfig *compatibility.CompatibilityConfig
 	globalVerbosity           logger.VerbosityLevel
 	verboseCount              int
@@ -119,6 +120,9 @@ func init() {
 	// Add compatibility config flag to root command so it's available globally.
 	rootCmd.PersistentFlags().StringVar(&compatibilityConfigFile, "compat-config", "",
 		"compatibility configuration file (uses embedded config by default)")
+
+	rootCmd.PersistentFlags().StringVar(&toolsConfigFile, "tools-config", "",
+		"tools configuration file (uses embedded config by default)")
 
 	// Verbosity flags: supports multiple levels
 	// - No flags: Normal verbosity with progress indicators (default)
