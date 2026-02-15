@@ -29,3 +29,15 @@ func TestEmbeddedPackageMapConfigCanBeLoaded(t *testing.T) {
 		t.Fatal("Expected package map config to be non-nil, got nil")
 	}
 }
+
+func TestEmbeddedToolsConfigCanBeLoaded(t *testing.T) {
+	// Test basic loading functionality
+	config, err := config.GetRawEmbeddedToolsConfig()
+	if err != nil {
+		t.Fatalf("Expected no error when loading embedded tools config, got: %v", err)
+	}
+
+	if config == nil {
+		t.Fatal("Expected tools config to be non-nil, got nil")
+	}
+}

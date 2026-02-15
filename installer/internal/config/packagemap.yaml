@@ -57,3 +57,40 @@ packages:
       name: procps
     dnf:
       name: procps-ng
+  fzf:
+    apt:
+      name: fzf
+    brew:
+      name: fzf
+    dnf:
+      name: fzf
+  bat:
+    apt:
+      name: bat
+    brew:
+      name: bat
+    dnf:
+      name: bat
+  ripgrep:
+    apt:
+      name: ripgrep
+    brew:
+      name: ripgrep
+    dnf:
+      name: ripgrep
+  fd:
+    apt:
+      name: fd-find
+    brew:
+      name: fd
+    dnf:
+      name: fd-find
+  sheldon:
+    brew:
+      name: sheldon
+  eza:
+    brew:
+      name: eza
+  difftastic:
+    brew:
+      name: difftastic

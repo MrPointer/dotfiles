@@ -6,7 +6,8 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 
 | Skill                        | Use When                                                                    |
 | ---------------------------- | --------------------------------------------------------------------------- |
-| `writing-go-code`            | Writing/editing Go code, tests, mocks, interfaces                           |
+| `writing-go-code`            | Writing/editing Go code, interfaces, dependency injection                    |
+| `writing-go-tests`           | Writing test files, assertions, mock selection, test naming                  |
 | `developing-cli-apps`        | CLI commands, flags, Cobra patterns, Huh interactive UI, signal handling     |
 | `building-go-binaries`       | Compiling the project, troubleshooting build failures                        |
 | `linting-go-code`            | Running linters, fixing lint errors, formatting code                         |

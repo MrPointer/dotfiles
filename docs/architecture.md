@@ -33,7 +33,7 @@ The project has three major parts that interact through a clear data contract: a
 
 ### Embedded Configuration (`installer/internal/config/`)
 
-- **Responsibility**: Store static configuration that the installer needs — supported platforms ([`compatibility.yaml`][compatibility-yaml]) and package name mappings ([`packagemap.yaml`][packagemap-yaml])
+- **Responsibility**: Store static configuration that the installer needs — supported platforms ([`compatibility.yaml`][compatibility-yaml]), package name mappings ([`packagemap.yaml`][packagemap-yaml]), and optional tool definitions ([`tools.yaml`][tools-yaml])
 - **Boundaries**: Embedded into the Go binary at compile time via `go:embed`. Read-only at runtime. Overridable via CLI flags for testing.
 - **Dependencies**: None — these are self-contained data files
 
@@ -74,6 +74,7 @@ flowchart LR
         I1[Collect user input]
         I2[Install prerequisites]
         I3[Write chezmoi.toml]
+        I4[Install optional tools]
     end
 
     subgraph chezmoi ["Chezmoi"]
@@ -94,6 +95,7 @@ flowchart LR
     I3 -- "chezmoi.toml\n(data contract)" --> C1
     C1 --> C2 --> C3
     C3 -- "generated files" --> R1
+    C3 --> I4
     R1 --> R2
     R2 --> R3
 ```
@@ -104,4 +106,5 @@ flowchart LR
 [arch-installer]: architecture-installer.md
 [compatibility-yaml]: ../installer/internal/config/compatibility.yaml
 [packagemap-yaml]: ../installer/internal/config/packagemap.yaml
+[tools-yaml]: ../installer/internal/config/tools.yaml
 [shell-startup]: processes/shell-startup.md

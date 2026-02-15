@@ -23,8 +23,9 @@ installer/
 │   ├── gpg/                 # GPG key management
 │   ├── shell/               # Shell installation
 │   ├── dotfilesmanager/     # Chezmoi integration
-│   └── packageresolver/     # Package name resolution
-├── utils/                     # Shared utilities
+│   ├── packageresolver/     # Package name resolution
+│   └── toolsinstaller/      # Optional tools installation
+├── utils/                   # Shared utilities
 │   ├── logger/              # Logging with progress display
 │   ├── osmanager/           # OS operations interface
 │   ├── privilege/           # Sudo/doas escalation
@@ -142,6 +143,18 @@ supported_os:
       - name: macOS
         architectures: [amd64, arm64]
         prerequisites: [git, curl]
+```
+
+### tools.yaml (internal/config/)
+
+Defines optional CLI tools available for installation after dotfiles setup:
+
+```yaml
+tools:
+  - name: fzf
+    description: "Fuzzy finder for the command line"
+  - name: bat
+    description: "Cat clone with syntax highlighting"
 ```
 
 ### packagemap.yaml (internal/config/)

@@ -12,6 +12,13 @@
 - Always assume the current file state is correct - never revert based on cached/stale versions.
 - Clean up any temporary files, scripts, or helpers created during the task.
 
+## Plan Execution
+
+- When a plan specifies model assignments for sub-plans, respect them exactly.
+- When a plan qualifies for Agent Teams (per the planning skill criteria), use Agent Teams (TeamCreate) — never ad-hoc Task sub-agents. Agent Team teammates have their own context windows and can write files; Task sub-agents cannot write files regardless of permission mode and consume the main context window.
+- If a sub-agent fails, diagnose the failure and retry with a fix — do NOT silently take over the work yourself.
+- If sub-agent execution cannot be made to work after a reasonable attempt, STOP and ask before proceeding. Never fall back to a more expensive model without explicit approval.
+
 ## Session Summaries
 
 - Summarize work at the end of edit sessions.

@@ -254,7 +254,7 @@ jobs:
             fi
           fi
 
-      - name: Test Interactive GPG Installation
+      - name: Test Interactive Installer
         run: |
           echo "Testing installer in interactive mode with expect automation..."
 

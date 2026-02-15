@@ -42,7 +42,10 @@ flowchart TD
     M --> N[Install chezmoi]
     N --> O[Initialize chezmoi data]
     O --> P[Apply dotfiles]
-    P --> Q([Installation complete])
+    P --> R{Tools available &<br>selected/auto?}
+    R -- Yes --> S[Install optional tools]
+    R -- No --> Q
+    S --> Q([Installation complete])
 
     style Q fill:#2d6,stroke:#183,color:#fff
 ```
@@ -60,14 +63,16 @@ flowchart TD
 7. **[Install and configure shell][shell-setup]** — Install the target shell (default: zsh) using the [shell source strategy][domain-shell-source], then set it as the user's default shell
 8. **[Set up GPG keys][gpg-setup]** — Check for existing GPG keys. If none exist, create a new key pair interactively. If keys exist, let the user select one. Skipped in non-interactive mode.
 9. **[Set up dotfiles manager][dotfiles-setup]** — Install chezmoi if needed, initialize [chezmoi data][domain-data-schema] from collected input, then apply dotfiles
+10. **[Install optional tools][tools-install]** — Load [tool definitions][domain-optional-tools] from `tools.yaml`, pre-filter against the active package manager, then either auto-install all (if `--install-tools`) or present an interactive multi-select. Individual failures are logged but never abort the install.
 
-Result: Machine is fully configured with the user's dotfiles, shell, and GPG setup.
+Result: Machine is fully configured with the user's dotfiles, shell, GPG setup, and selected optional tools.
 
 ### Failure Scenarios
 
 Each sub-process has its own detailed failure scenarios. At the orchestration level:
 
-- Any step failure causes the installer to exit non-zero — there is no rollback mechanism
+- Any step failure in steps 1–9 causes the installer to exit non-zero — there is no rollback mechanism
+- Step 10 (optional tools) is non-fatal: individual tool failures are logged but do not affect the exit code
 - On macOS, Homebrew failure at step 2 blocks the entire flow (prerequisites depend on it)
 - Steps are sequential: each depends on state set by previous steps (e.g., `selectedGpgKey` from step 8 feeds into step 9)
 
@@ -81,6 +86,7 @@ See the individual process docs for detailed failure scenarios and handling.
 - **GPG keyring**: New key pair created or existing key selected (see [GPG setup][gpg-setup])
 - **Chezmoi config**: `~/.config/chezmoi/chezmoi.toml` written with all data namespaces (see [dotfiles setup][dotfiles-setup])
 - **Home directory**: Dotfiles applied — shell configs, git config, work profiles, etc.
+- **Optional tools**: Selected CLI tools installed via the active package manager (if any were chosen)
 
 ## Sub-Processes
 
@@ -92,6 +98,7 @@ See the individual process docs for detailed failure scenarios and handling.
 | [Shell Setup][shell-setup] | Install shell and set as default |
 | [GPG Setup][gpg-setup] | Install GPG client, create or select signing key |
 | [Dotfiles Setup][dotfiles-setup] | Install chezmoi, write config, clone repo, apply dotfiles |
+| [Optional Tools Installation][tools-install] | Load tool definitions, pre-filter by platform, select and install optional CLI tools |
 
 ## Dependencies
 
@@ -107,6 +114,8 @@ See the individual process docs for detailed failure scenarios and handling.
 [shell-setup]: shell-setup.md
 [gpg-setup]: gpg-setup.md
 [dotfiles-setup]: dotfiles-setup.md
+[tools-install]: tools-installation.md
 [domain-shell-source]: ../domain.md#shell-source-strategy
 [domain-data-schema]: ../domain.md#chezmoi-data-schema
+[domain-optional-tools]: ../domain.md#optional-tools
 [domain-pkg-resolution]: ../domain.md#package-resolution

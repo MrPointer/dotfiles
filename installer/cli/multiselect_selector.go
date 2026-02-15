@@ -22,11 +22,13 @@ type MultiSelectSelector[T comparable] interface {
 var _ MultiSelectSelector[string] = (*HuhMultiSelectSelector[string])(nil)
 
 // HuhMultiSelectSelector implements MultiSelectSelector using the huh library.
-type HuhMultiSelectSelector[T comparable] struct{}
+type HuhMultiSelectSelector[T comparable] struct {
+	accessible bool
+}
 
 // NewHuhMultiSelectSelector constructs a HuhMultiSelectSelector.
-func NewHuhMultiSelectSelector[T comparable]() *HuhMultiSelectSelector[T] {
-	return &HuhMultiSelectSelector[T]{}
+func NewHuhMultiSelectSelector[T comparable](accessible bool) *HuhMultiSelectSelector[T] {
+	return &HuhMultiSelectSelector[T]{accessible: accessible}
 }
 
 // SelectMultiple implements MultiSelectSelector.
@@ -55,7 +57,7 @@ func (s *HuhMultiSelectSelector[T]) SelectMultiple(title string, items []MultiSe
 				Options(options...).
 				Value(&selectedItems),
 		),
-	)
+	).WithAccessible(s.accessible)
 
 	err := form.Run()
 	if err != nil {
