@@ -136,6 +136,22 @@ expect {
         exp_continue
     }
 
+    # Optional tools multi-select prompt
+    # On apt/dnf systems the pre-filtered list is: fzf, bat, ripgrep, fd
+    # (sheldon, eza, difftastic are brew-only and get filtered out)
+    -re "Select optional tools to install" {
+        puts "🔧 Tool selection prompt detected, selecting fzf, bat, ripgrep..."
+        # Cursor starts on fzf (item 1) — select it
+        send " "
+        # Move to bat (item 2) — select it
+        send "\x1b\[B "
+        # Move to ripgrep (item 3) — select it
+        send "\x1b\[B "
+        # Confirm selection
+        send "\r"
+        exp_continue
+    }
+
     # Error patterns
     -re "(?i).*(error|fail|abort)" {
         puts "❌ Error detected in output"
