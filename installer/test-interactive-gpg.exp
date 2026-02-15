@@ -64,7 +64,10 @@ if {$verbosity ne ""} {
 
 spawn $installer_path {*}$cmd_args
 
-# Main interaction loop - Only handle GPG-specific prompts
+# State counter for tool multi-select (each prompt gets the next action)
+set tool_select_step 0
+
+# Main interaction loop
 expect {
     # GPG email prompts (various possible formats)
     -re "(?i).*(email|e-?mail address)" {
@@ -137,17 +140,28 @@ expect {
     }
 
     # Optional tools multi-select (accessible mode: number-based prompts)
-    # On apt/dnf systems the available tools are: 1=fzf, 2=bat, 3=ripgrep, 4=fd
-    # Select fzf, bat, ripgrep then confirm with 0
+    # Each "Input a number" prompt is handled one at a time via the main loop.
+    # Select items 1, 2, 3 then confirm with 0.
     -re "Input a number between 0 and" {
-        puts "🔧 Tool selection prompt detected, selecting fzf, bat, ripgrep..."
-        send "1\r"
-        expect -re "Input a number between"
-        send "2\r"
-        expect -re "Input a number between"
-        send "3\r"
-        expect -re "Input a number between"
-        send "0\r"
+        incr tool_select_step
+        switch $tool_select_step {
+            1 {
+                puts "🔧 Tool selection: selecting item 1..."
+                send "1\r"
+            }
+            2 {
+                puts "🔧 Tool selection: selecting item 2..."
+                send "2\r"
+            }
+            3 {
+                puts "🔧 Tool selection: selecting item 3..."
+                send "3\r"
+            }
+            4 {
+                puts "🔧 Tool selection: confirming with 0..."
+                send "0\r"
+            }
+        }
         exp_continue
     }
 
