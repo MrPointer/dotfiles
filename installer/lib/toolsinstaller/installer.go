@@ -46,14 +46,13 @@ func (ti *ToolsInstaller) InstallTools(tools []string) []InstallResult {
 	for i, tool := range tools {
 		result := InstallResult{Name: tool}
 
-		ti.logger.Info("Installing tool: %s", tool)
+		ti.logger.UpdateProgress(fmt.Sprintf("Installing %s (%d/%d)", tool, i+1, len(tools)))
 
 		// Resolve the tool name using the resolver
 		resolvedInfo, err := ti.resolver.Resolve(tool, "")
 		if err != nil {
 			result.Success = false
 			result.Error = fmt.Errorf("failed to resolve tool '%s': %w", tool, err)
-			ti.logger.Warning("Failed to resolve tool %s: %v", tool, err)
 			results[i] = result
 			continue
 		}
@@ -63,11 +62,11 @@ func (ti *ToolsInstaller) InstallTools(tools []string) []InstallResult {
 		if err != nil {
 			result.Success = false
 			result.Error = fmt.Errorf("failed to install tool '%s': %w", tool, err)
-			ti.logger.Warning("Failed to install tool %s: %v", tool, err)
 			results[i] = result
 			continue
 		}
 
+		ti.logger.LogAccomplishment(fmt.Sprintf("Installed %s", tool))
 		result.Success = true
 		results[i] = result
 	}

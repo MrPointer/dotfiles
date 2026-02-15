@@ -658,41 +658,36 @@ func initDotfilesManagerData(dm dotfilesmanager.DotfilesManager) error {
 // installOptionalTools installs optional CLI tools after dotfiles setup completes.
 // This function is non-fatal - it logs warnings for failures but never aborts the overall install.
 func installOptionalTools(log logger.Logger) error {
-	log.StartProgress("Setting up optional tools")
-
 	// Load tools configuration with a fresh viper instance
+	log.StartProgress("Loading optional tools configuration")
 	toolsCfg, err := toolsinstaller.LoadToolsConfig(viper.New(), toolsConfigFile)
 	if err != nil {
 		log.FailProgress("Failed to load tools configuration", err)
-		log.Warning("Skipping optional tools installation due to config load failure")
-		return nil
+		return err
 	}
 
 	if len(toolsCfg.Tools) == 0 {
-		log.FinishProgress("No optional tools available")
+		log.FinishProgress("No optional tools configured")
 		return nil
 	}
 
 	// Create package manager and resolver
 	pm := createPackageManagerForSystem(&globalSysInfo)
 	if pm == nil {
-		log.Warning("No package manager available for optional tools installation")
-		log.FinishProgress("Skipping optional tools installation")
-		return nil
+		log.FailProgress("No package manager available for optional tools", nil)
+		return fmt.Errorf("no package manager available")
 	}
 
 	resolver := createPackageResolverForSystem(pm, &globalSysInfo)
 	if resolver == nil {
-		log.Warning("Cannot resolve package information for optional tools")
-		log.FinishProgress("Skipping optional tools installation")
-		return nil
+		log.FailProgress("Cannot resolve package information for optional tools", nil)
+		return fmt.Errorf("cannot resolve package information")
 	}
 
 	// Pre-filter tools: only keep tools that can be resolved
 	var availableTools []string
 	toolDetails := make(map[string]cli.ToolDetail)
 
-	log.StartProgress("Checking available optional tools")
 	for _, tool := range toolsCfg.Tools {
 		_, err := resolver.Resolve(tool.Name, "")
 		if err == nil {
@@ -708,7 +703,6 @@ func installOptionalTools(log logger.Logger) error {
 	log.FinishProgress(fmt.Sprintf("Found %d available optional tools", len(availableTools)))
 
 	if len(availableTools) == 0 {
-		log.FinishProgress("No optional tools available for this system")
 		return nil
 	}
 
@@ -718,7 +712,6 @@ func installOptionalTools(log logger.Logger) error {
 	if installTools {
 		// Auto-install all available tools
 		toolsToInstall = availableTools
-		log.Info("Auto-installing all %d available optional tools", len(availableTools))
 	} else if !IsNonInteractive() {
 		// Interactive mode: show selector
 		log.StartInteractiveProgress("Selecting optional tools to install")
@@ -726,16 +719,13 @@ func installOptionalTools(log logger.Logger) error {
 		selector := cli.NewDefaultToolSelector()
 		selected, err := selector.SelectTools(availableTools, toolDetails)
 		if err != nil {
-			log.FailInteractiveProgress("Failed to select tools", err)
-			log.Warning("Skipping optional tools installation")
+			log.FinishInteractiveProgress("Tool selection cancelled or failed")
 			return nil
 		}
 
 		log.FinishInteractiveProgress("Tool selection completed")
 
 		if len(selected) == 0 {
-			log.Info("No tools selected for installation")
-			log.FinishProgress("Optional tools setup completed")
 			return nil
 		}
 
@@ -743,12 +733,11 @@ func installOptionalTools(log logger.Logger) error {
 	} else {
 		// Non-interactive without --install-tools flag: skip entirely
 		log.Info("Skipping optional tools in non-interactive mode (use --install-tools to enable)")
-		log.FinishProgress("Optional tools setup skipped")
 		return nil
 	}
 
 	// Install selected tools
-	log.StartProgress(fmt.Sprintf("Installing %d optional tools", len(toolsToInstall)))
+	log.StartPersistentProgress(fmt.Sprintf("Installing %d optional tools", len(toolsToInstall)))
 
 	installer := toolsinstaller.NewToolsInstaller(resolver, pm, log)
 	results := installer.InstallTools(toolsToInstall)
@@ -765,12 +754,11 @@ func installOptionalTools(log logger.Logger) error {
 	}
 
 	if failureCount > 0 {
-		log.Warning("Some optional tools failed to install: %d succeeded, %d failed", successCount, failureCount)
+		log.FinishPersistentProgress(fmt.Sprintf("Optional tools installed (%d succeeded, %d failed)", successCount, failureCount))
 	} else {
-		log.Success("All %d optional tools installed successfully", successCount)
+		log.FinishPersistentProgress(fmt.Sprintf("All %d optional tools installed successfully", successCount))
 	}
 
-	log.FinishProgress("Optional tools setup completed")
 	return nil
 }
 
