@@ -17,11 +17,13 @@ type Selector[T comparable] interface {
 var _ Selector[string] = (*HuhSelector[string])(nil)
 
 // HuhSelector implements Selector using the huh library.
-type HuhSelector[T comparable] struct{}
+type HuhSelector[T comparable] struct {
+	accessible bool
+}
 
 // NewHuhSelector constructs a HuhSelector.
-func NewHuhSelector[T comparable]() *HuhSelector[T] {
-	return &HuhSelector[T]{}
+func NewHuhSelector[T comparable](accessible bool) *HuhSelector[T] {
+	return &HuhSelector[T]{accessible: accessible}
 }
 
 // Select implements Selector.
@@ -43,7 +45,7 @@ func (s *HuhSelector[T]) Select(title string, items []T) (T, error) {
 				Options(huh.NewOptions(items...)...).
 				Value(&selectedItem),
 		),
-	)
+	).WithAccessible(s.accessible)
 
 	err := form.Run()
 	if err != nil {
@@ -81,7 +83,7 @@ func (s *HuhSelector[T]) SelectWithLabels(title string, items []T, labels []stri
 				Options(options...).
 				Value(&selectedItem),
 		),
-	)
+	).WithAccessible(s.accessible)
 
 	err := form.Run()
 	if err != nil {

@@ -54,7 +54,7 @@ puts "  Verbosity: $verbosity"
 puts ""
 
 # Build command with optional branch parameter
-set cmd_args [list "install" "--plain" "--install-prerequisites=true" "--git-clone-protocol=https"]
+set cmd_args [list "install" "--plain" "--install-prerequisites=true" "--install-tools" "--git-clone-protocol=https"]
 if {$branch ne ""} {
     lappend cmd_args "--git-branch=$branch"
 }
@@ -136,19 +136,18 @@ expect {
         exp_continue
     }
 
-    # Optional tools multi-select prompt
-    # On apt/dnf systems the pre-filtered list is: fzf, bat, ripgrep, fd
-    # (sheldon, eza, difftastic are brew-only and get filtered out)
-    -re "Select optional tools to install" {
+    # Optional tools multi-select (accessible mode: number-based prompts)
+    # On apt/dnf systems the available tools are: 1=fzf, 2=bat, 3=ripgrep, 4=fd
+    # Select fzf, bat, ripgrep then confirm with 0
+    -re "Input a number between 0 and" {
         puts "🔧 Tool selection prompt detected, selecting fzf, bat, ripgrep..."
-        # Cursor starts on fzf (item 1) — select it
-        send " "
-        # Move to bat (item 2) — select it
-        send "\x1b\[B "
-        # Move to ripgrep (item 3) — select it
-        send "\x1b\[B "
-        # Confirm selection
-        send "\r"
+        send "1\r"
+        expect -re "Input a number between"
+        send "2\r"
+        expect -re "Input a number between"
+        send "3\r"
+        expect -re "Input a number between"
+        send "0\r"
         exp_continue
     }
 

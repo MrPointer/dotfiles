@@ -17,9 +17,9 @@ func NewGpgKeySelector(selector Selector[string]) *GpgKeySelector {
 }
 
 // NewDefaultGpgKeySelector constructs a GpgKeySelector with the default HuhSelector.
-func NewDefaultGpgKeySelector() *GpgKeySelector {
+func NewDefaultGpgKeySelector(accessible bool) *GpgKeySelector {
 	return &GpgKeySelector{
-		selector: NewHuhSelector[string](),
+		selector: NewHuhSelector[string](accessible),
 	}
 }
 

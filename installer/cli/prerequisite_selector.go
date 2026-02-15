@@ -17,9 +17,9 @@ func NewPrerequisiteSelector(selector MultiSelectSelector[string]) *Prerequisite
 }
 
 // NewDefaultPrerequisiteSelector constructs a PrerequisiteSelector with the default HuhMultiSelectSelector.
-func NewDefaultPrerequisiteSelector() *PrerequisiteSelector {
+func NewDefaultPrerequisiteSelector(accessible bool) *PrerequisiteSelector {
 	return &PrerequisiteSelector{
-		selector: NewHuhMultiSelectSelector[string](),
+		selector: NewHuhMultiSelectSelector[string](accessible),
 	}
 }
 

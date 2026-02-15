@@ -17,9 +17,9 @@ func NewToolSelector(selector MultiSelectSelector[string]) *ToolSelector {
 }
 
 // NewDefaultToolSelector constructs a ToolSelector with the default HuhMultiSelectSelector.
-func NewDefaultToolSelector() *ToolSelector {
+func NewDefaultToolSelector(accessible bool) *ToolSelector {
 	return &ToolSelector{
-		selector: NewHuhMultiSelectSelector[string](),
+		selector: NewHuhMultiSelectSelector[string](accessible),
 	}
 }
 

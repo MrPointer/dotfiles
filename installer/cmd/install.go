@@ -228,7 +228,7 @@ func handlePrerequisiteInstallation(sysInfo compatibility.SystemInfo, log logger
 		log.StartProgress("Installing missing prerequisites automatically")
 	} else {
 		// In interactive mode, let user select which prerequisites to install
-		prerequisiteSelector := cli.NewDefaultPrerequisiteSelector()
+		prerequisiteSelector := cli.NewDefaultPrerequisiteSelector(plainFlag)
 
 		// Convert compatibility.PrerequisiteDetail to cli.PrerequisiteDetail
 		cliDetails := make(map[string]cli.PrerequisiteDetail)
@@ -532,7 +532,7 @@ func setupGpgKeys(log logger.Logger) error {
 		log.FinishInteractiveProgress("GPG key pair created successfully")
 	} else {
 		log.StartInteractiveProgress("Selecting GPG key from existing keys")
-		gpgSelector := cli.NewDefaultGpgKeySelector()
+		gpgSelector := cli.NewDefaultGpgKeySelector(plainFlag)
 		selectedKey, err := gpgSelector.SelectKey(existingKeys)
 		if err != nil {
 			log.FailInteractiveProgress("Failed to select GPG key", err)
@@ -716,7 +716,7 @@ func installOptionalTools(log logger.Logger) error {
 		// Interactive mode: show selector
 		log.StartInteractiveProgress("Selecting optional tools to install")
 
-		selector := cli.NewDefaultToolSelector()
+		selector := cli.NewDefaultToolSelector(plainFlag)
 		selected, err := selector.SelectTools(availableTools, toolDetails)
 		if err != nil {
 			log.FinishInteractiveProgress("Tool selection cancelled or failed")
