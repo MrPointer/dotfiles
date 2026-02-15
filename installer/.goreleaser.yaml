@@ -6,6 +6,7 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
+    - cp ../README.md README.md
 
 builds:
   - id: dotfiles_installer
@@ -48,7 +49,7 @@ archives:
         formats:
           - zip
     files:
-      - src: ../README.md
+      - README.md
       - LICENSE
 
 release:
