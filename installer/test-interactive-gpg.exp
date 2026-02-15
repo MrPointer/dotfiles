@@ -54,7 +54,7 @@ puts "  Verbosity: $verbosity"
 puts ""
 
 # Build command with optional branch parameter
-set cmd_args [list "install" "--plain" "--install-prerequisites=true" "--install-tools" "--git-clone-protocol=https"]
+set cmd_args [list "install" "--plain" "--install-prerequisites=true" "--git-clone-protocol=https"]
 if {$branch ne ""} {
     lappend cmd_args "--git-branch=$branch"
 }
