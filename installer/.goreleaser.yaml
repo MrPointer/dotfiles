@@ -48,7 +48,7 @@ archives:
         formats:
           - zip
     files:
-      - README.md
+      - src: ../README.md
       - LICENSE
 
 release:
