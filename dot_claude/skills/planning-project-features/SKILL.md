@@ -191,148 +191,12 @@ Domain, architecture, and process documentation updates are handled by the docum
 
 **Component docs** are the exception: they describe implementation details (interfaces, internal behavior, code patterns) that may deviate from the plan during execution. For projects that have component documentation, run the `component-docs-reviewer` agent after all sub-plans complete to catch implementation-vs-plan drift in component docs.
 
-```markdown
-## Post-Execution
-If this project has component-level documentation, run the `component-docs-reviewer` agent to verify
-component docs still match the actual implementation.
-```
+## Plan Structures
 
-## Master Plan Structure
+Templates for plan files are in this skill's `references/` directory. Read them when creating plans:
 
-The master plan is the orchestration document. It does NOT contain implementation details — those live in sub-plans.
-
-```markdown
-# Master Plan: <Feature Name>
-
-## Summary
-<Brief description of what this feature accomplishes>
-
-## Requirements
-<Bullet list of confirmed requirements from Phase 1>
-
-## Scope
-- **In scope**: ...
-- **Out of scope**: ...
-
-## Sub-Plans
-
-| #  | Sub-Plan                | Depends On | Model  | Description                          |
-|----|-------------------------|------------|--------|--------------------------------------|
-| 01 | `01-<name>.md`          | —          | Haiku  | <What this sub-plan accomplishes>    |
-| 02 | `02-<name>.md`          | 01         | Sonnet | <What this sub-plan accomplishes>    |
-| 03 | `03-<name>.md`          | —          | Haiku  | <What this sub-plan accomplishes>    |
-...
-
-## Execution Order
-<Describe which sub-plans can run in parallel and which must be sequential>
-- **Parallel group 1**: 01, 03 (no dependencies)
-- **Sequential**: 02 (after 01)
-...
-
-## Team Execution (Agent Teams)
-
-**Agent Teams are REQUIRED for plans with 2+ sub-plans.** Do not use Task sub-agents — they cannot write files and consume the main context window.
-
-**The only exception** — skip Agent Teams when:
-- ❌ Single sub-plan (just execute directly)
-- ❌ All sub-plans are trivially small (e.g., "add one import")
-
-**Setup**:
-1. Enable Agent Teams: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
-2. Create the team:
-   ```
-   Create an agent team to execute .claude/plans/<feature-name>/00-master.md
-   ```
-
-**Team Lead Instructions**:
-- Use this master plan as the roadmap
-- Assign sub-plans to teammates based on the dependency graph
-- Each teammate should load the Required Skills listed in their assigned sub-plan before starting
-- Use the recommended models from the Sub-Plans table above
-- Coordinate handoffs when dependencies complete
-- Synthesize results when all sub-plans finish
-
-**Suggested Team Structure**:
-```
-Create a team with <N> teammates to execute .claude/plans/<feature-name>/00-master.md:
-- Teammate 1: Execute 01-<name>.md using Haiku (load skills: <skill-list>)
-- Teammate 2: Execute 02-<name>.md using Sonnet (load skills: <skill-list>, requires 01 complete)
-- Teammate 3: Execute 03-<name>.md using Haiku (load skills: <skill-list>, can start immediately)
-...
-```
-
-**File Ownership** (prevent conflicts):
-| Sub-Plan | Primary Files |
-|----------|---------------|
-| 01       | <files this sub-plan creates/modifies> |
-| 02       | <files this sub-plan creates/modifies> |
-...
-
-**Communication Points**:
-<When teammates might need to coordinate>
-- After 01 completes: Notify teammate 2 that dependencies are ready
-- If <event>: Broadcast to all teammates about <change>
-...
-
-## Risks & Mitigations
-| Risk | Mitigation |
-|------|------------|
-| ...  | ...        |
-
-## Post-Execution
-If this project has component-level documentation, run the `component-docs-reviewer` agent to verify
-component docs still match the actual implementation.
-```
-
-## Sub-Plan Structure
-
-Each sub-plan is a **self-contained execution unit**. An agent should be able to pick up a sub-plan and execute it without reading anything else.
-
-```markdown
-# Sub-Plan: <Task Name>
-
-## Objective
-<What this sub-plan accomplishes and why>
-
-## Required Skills
-<Skills the executing agent MUST load before starting>
-- `skill-name` — reason it's needed
-
-## Reviewer
-<Local reviewer agent assigned during Phase 4, or "None" if no suitable reviewer was found>
-
-## Execution Model
-**Recommended**: Haiku | Sonnet | Opus
-**Rationale**: <Why this model is appropriate for this sub-plan>
-
-Examples:
-- Haiku: "Standard CRUD implementation following existing patterns in the codebase"
-- Sonnet: "Complex business logic with multiple edge cases and error handling scenarios"
-- Opus: "Novel architectural approach requiring creative problem-solving" (rare)
-
-## Prerequisites
-<What must exist before this sub-plan can be executed>
-- <Specific file, interface, or state expected from a prior sub-plan — include the actual signatures/shapes, not just references>
-- Or: "None — this sub-plan has no dependencies"
-
-## Context
-<Essential context embedded directly — relevant interfaces, data shapes, conventions, architectural decisions the agent needs to know>
-
-## Primary Files
-<Files this sub-plan primarily creates or modifies — helps prevent conflicts in parallel execution>
-- `path/to/file.ext` (create | modify)
-- `path/to/other.ext` (modify)
-
-## Implementation Steps
-1. <Step with clear deliverable>
-2. <Step with clear deliverable>
-...
-
-## Acceptance Criteria
-- [ ] <Criterion 1>
-- [ ] <Criterion 2>
-...
-```
+- **[Master plan template][master-plan-template]** — Orchestration document structure (no implementation details)
+- **[Sub-plan template][sub-plan-template]** — Self-contained execution unit structure
 
 ## Documentation Sub-Plan
 
@@ -376,3 +240,6 @@ Skip the documentation sub-plan when:
 - **Always run the review loop before presenting to the user** — unreviewed plans are draft plans, not finished plans
 - **Save plans to `.claude/plans/<feature-name>/`** in the local repository — not to `~/.claude/`, and never with random/generated filenames
 - **Ask for clarification even if it feels repetitive** — it's better than introducing garbage
+
+[master-plan-template]: references/master-plan-template.md
+[sub-plan-template]: references/sub-plan-template.md
