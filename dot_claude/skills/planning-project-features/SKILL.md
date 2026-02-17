@@ -111,9 +111,9 @@ Only after Phases 1-3 are complete:
 
 Document the recommendation in each sub-plan's `## Execution Model` field with a brief rationale.
 
-### Phase 5: Review Loop
+### Phase 5: Initial Review Loop
 
-After plan creation and reviewer assignment, run an iterative review process. The loop continues until all reviewers report no new findings.
+After plan creation and reviewer assignment, run an iterative review process **once, before the user sees the plan**. The loop continues until all reviewers report no new findings. This is the only automatic, full-scope review — post-feedback revisions follow a lighter process (see Phase 6).
 
 #### Reviewer Agents
 
@@ -160,13 +160,30 @@ Incorporate findings into the sub-plans. If a sub-plan review surfaces an issue 
 
 #### Step 3: Convergence
 
-Repeat Steps 1-2 only for affected parts until no reviewer produces new findings. Do NOT restart the entire review — only re-review plans that changed.
+Repeat Steps 1-2 only for affected parts until no reviewer produces new findings. Do NOT restart the entire review — only re-review plans that changed. This convergence loop applies **only within the initial review** — it does not re-trigger after user feedback in Phase 6.
 
 The user may also request additional specialized reviewers (e.g., security, performance) for specific sub-plans. Add these on request, but they are not part of the default flow.
 
-### Phase 6: User Approval
+### Phase 6: User Approval & Feedback
 
 Present the fully reviewed plan (master + sub-plans) along with a summary of review findings and how they were addressed. Only mark as ready when the user explicitly approves.
+
+#### Handling User Feedback
+
+When the user requests changes, incorporate them and then **classify each change** to determine whether re-review is needed:
+
+| Change Type | Examples | Re-review Action |
+|---|---|---|
+| Cosmetic / wording | Clarify a step description, rename a sub-plan, fix typos | **None** |
+| Scoped implementation detail | Add an edge case to one sub-plan, change a file path, adjust a step | **None** — planner judgment is sufficient |
+| Scope adjustment within a sub-plan | Add/remove acceptance criteria, change approach for one sub-plan | Re-review **only that sub-plan** with its assigned reviewer |
+| Structural change | New sub-plan added, dependency graph changed, boundaries shifted, sub-plans merged/split | Re-review affected sub-plans + `plan-architect-reviewer` on master plan |
+
+**Default behavior**: After incorporating feedback, state what changed and recommend whether re-review is warranted. **Do not automatically re-run reviewers.** Let the user decide whether to spend the tokens. Example:
+
+> "I've updated sub-plans 02 and 03 based on your feedback. The changes are scoped to implementation details — I don't think a re-review is needed, but I can run one if you'd like."
+
+The user can always explicitly request a re-review regardless of change classification.
 
 ### Post-Execution: Component Documentation Review
 
