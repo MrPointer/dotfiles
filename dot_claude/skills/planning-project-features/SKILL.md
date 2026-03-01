@@ -12,7 +12,7 @@ Plans are decomposed into a **master plan** (high-level orchestration) and **sub
 ## Core Principles
 
 1. **No Assumptions**: If something is unclear, ambiguous, or missing — ask. Do not fill in gaps with reasonable defaults or best guesses.
-2. **Relentless Clarification**: Ask as many questions as needed. A plan built on assumptions is worse than no plan.
+2. **Relentless Clarification**: Ask as many questions as needed. A plan built on assumptions is worse than no plan. Requirement gathering doesn't end at Phase 1 — when later phases surface new ambiguities or decision points not resolved earlier, **STOP and present them to the user**. Do not make autonomous architectural decisions.
 3. **Atomic Decomposition**: Break work into the smallest self-contained sub-plans possible. Each sub-plan should be executable in isolation.
 4. **Embedded Context**: Each sub-plan includes everything an executing agent needs — no reliance on reading other sub-plans or external documents.
 5. **Convergent Review**: Plans are reviewed iteratively by specialized sub-agents until no new issues are found.
@@ -52,6 +52,7 @@ Once requirements are clear:
    - Missing component docs → `documenting-components`
 
    Present gaps to the user — they may want to create docs before planning continues, or accept the gap and proceed.
+8. **Flag specification gaps**: When the plan depends on a specification or requirements document that doesn't cover a case the implementation needs, treat it as a **blocking gap** — not a documentation gap. Present the gap and options to the user before proceeding. Examples: an API spec that doesn't define error responses, a data model that doesn't cover edge-case states, a workflow description that omits failure paths.
 
 Share findings with the user and confirm understanding before proceeding.
 
@@ -64,7 +65,8 @@ This is the most critical phase. Break the feature into sub-plans:
 3. **Embed all necessary context**: Each sub-plan must include the interfaces, data shapes, conventions, and file contents an executing agent needs. Don't assume the agent has read the master plan or any other sub-plan.
 4. **Define clear inputs and outputs**: If sub-plan B depends on sub-plan A, sub-plan B must specify exactly what it expects to exist (e.g., "a `UserService` interface in `internal/service/user.go` with methods `Create(ctx, user) error` and `GetByID(ctx, id) (User, error)`").
 5. **Keep sub-plans small**: A good sub-plan should be completable in a single focused session. If it feels too big, split it further.
-6. **Plan documentation updates as a sub-plan**: If the feature affects documented domain concepts, architecture, or business processes, add a final sub-plan that updates those docs. This sub-plan is planned upfront — the planner already knows what's changing and can specify exactly which docs to update, which new docs to create, and which existing docs to use as structural patterns. This makes documentation updates human-reviewable alongside the rest of the plan. See [Documentation Sub-Plan](#documentation-sub-plan) for guidance on what belongs here vs. post-execution review.
+6. **Apply skills as design constraints**: When designing each sub-plan's approach, load and apply the sub-plan's required skills as design constraints — not just annotations. If a skill mandates interface-based DI, the plan must use that pattern. If a skill requires table-driven tests, the plan must specify them. Don't just list skills; use them to validate your design decisions.
+7. **Plan documentation updates as a sub-plan**: If the feature affects documented domain concepts, architecture, or business processes, add a final sub-plan that updates those docs. This sub-plan is planned upfront — the planner already knows what's changing and can specify exactly which docs to update, which new docs to create, and which existing docs to use as structural patterns. This makes documentation updates human-reviewable alongside the rest of the plan. See [Documentation Sub-Plan](#documentation-sub-plan) for guidance on what belongs here vs. post-execution review.
 
 Present the decomposition to the user for review before writing the actual plan files.
 
@@ -100,9 +102,9 @@ Only after Phases 1-3 are complete:
 | Straightforward integrations | Multiple edge cases to consider | Risk assessment |
 | Test writing for existing code | Integration of multiple systems | Synthesis & coordination |
 | Configuration changes | Performance-critical code | Multi-step reasoning |
-| Documentation updates | Security-sensitive operations | Ambiguous requirements |
-| File moves/renames | State machine implementations | |
-| Simple data transformations | Error handling with recovery logic | |
+| File moves/renames | Security-sensitive operations | Ambiguous requirements |
+| Simple data transformations | State machine implementations | Documentation updates |
+| | Error handling with recovery logic | |
 
 **Assessment criteria**:
 - **Haiku-appropriate**: Task follows clear patterns, has well-defined inputs/outputs, requires minimal decision-making
@@ -219,6 +221,7 @@ The documentation sub-plan follows the standard sub-plan template but its implem
 - **Which new docs to create** — file paths, which existing doc to use as a structural pattern, what the new doc should cover
 - **Structural pattern matching** — if existing docs follow a pattern (e.g., process steps link to sub-process docs), new additions must follow it. Specify the pattern explicitly.
 - **Required skills**: List the documenting skills the executing agent needs (e.g., `documenting-business-processes` for new process docs, `documenting-domain` for new domain entries)
+- **Execution model**: Always assign the most capable available model. Documentation requires understanding the full feature context, making judgments about what to include, and producing clear prose — this is not rote work.
 
 ### When to Skip It
 
