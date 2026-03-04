@@ -9,7 +9,7 @@ Each sub-plan is a **self-contained execution unit**. An agent should be able to
 <What this sub-plan accomplishes and why>
 
 ## Required Skills
-<Skills the executing agent MUST load before starting>
+<Skills the executing agent MUST load before starting — both design skills (coding conventions, patterns) and operational skills (testing, linting, building)>
 - `skill-name` — reason it's needed
 
 ## Reviewer
@@ -37,10 +37,13 @@ Examples:
 - `path/to/file.ext` (create | modify)
 - `path/to/other.ext` (modify)
 
-## Implementation Steps
-1. <Step with clear deliverable>
-2. <Step with clear deliverable>
+## Design Decisions
+<Decisions the executing agent must follow — things it wouldn't arrive at independently from skills + codebase alone. Focus on the "what" and "why," not the "how.">
+
+1. **<Decision name>**: <What to do and why — architectural choices, library selections, behavioral requirements, constraints not covered by skills>
 ...
+
+Do NOT include: method body implementations, exact code patterns, step-by-step coding instructions, specific commands for testing/linting/building (skills handle these). If the agent can derive it from the loaded skills + codebase + acceptance criteria, it doesn't belong here.
 
 ## Acceptance Criteria
 - [ ] <Criterion 1>
