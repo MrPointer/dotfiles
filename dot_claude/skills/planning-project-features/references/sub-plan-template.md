@@ -16,13 +16,13 @@ Each sub-plan is a **self-contained execution unit**. An agent should be able to
 <Local reviewer agent assigned during Phase 4, or "None" if no suitable reviewer was found>
 
 ## Execution Model
-**Recommended**: Haiku | Sonnet | Opus
-**Rationale**: <Why this model is appropriate for this sub-plan>
+**Recommended**: Cheapest | Mid-tier | Most capable
+**Rationale**: <Why this model tier is appropriate for this sub-plan>
 
 Examples:
-- Haiku: "Standard CRUD implementation following existing patterns in the codebase"
-- Sonnet: "Complex business logic with multiple edge cases and error handling scenarios"
-- Opus: "Novel architectural approach requiring creative problem-solving" (rare)
+- Cheapest: "Standard CRUD implementation following established patterns in the codebase"
+- Mid-tier: "Complex business logic with multiple edge cases and error handling scenarios"
+- Most capable: "Novel architectural approach requiring creative problem-solving" (rare)
 
 ## Prerequisites
 <What must exist before this sub-plan can be executed>

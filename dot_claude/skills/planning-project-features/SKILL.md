@@ -90,13 +90,13 @@ Only after Phases 1-3 are complete:
 └── ...
 ```
 
-2. **Discover available local reviewers**: Read the project's `.claude/agents/` directory to find reviewer agents. Match each sub-plan to the most appropriate available reviewer based on the agent's description and the sub-plan's domain.
+2. **Discover available local reviewers**: Read the project's local agents directory to find reviewer agents. Match each sub-plan to the most appropriate available reviewer based on the agent's description and the sub-plan's domain.
 
 3. **Assign reviewers**: Write the chosen reviewer's name into each sub-plan's `## Reviewer` field.
 
-4. **Validate**: If no suitable local reviewer exists for a sub-plan's domain, **warn the user** with a specific recommendation (e.g., "sub-plan 03 covers database migrations but no reviewer with that expertise exists in `.claude/agents/`"). Ask how to proceed — do not skip the review silently.
+4. **Validate**: If no suitable local reviewer exists for a sub-plan's domain, **warn the user** with a specific recommendation (e.g., "sub-plan 03 covers database migrations but no reviewer with that expertise exists locally"). Ask how to proceed — do not skip the review silently.
 
-5. **Assign execution models**: For each sub-plan, assess complexity and recommend an execution model. This enables cost optimization by using cheaper models for straightforward work while reserving Opus for planning and review.
+5. **Assign execution models**: For each sub-plan, assess complexity and recommend an execution model. This enables cost optimization by using cheaper models for straightforward work while reserving the most capable model for planning and review.
 
 **Model Selection Decision Tree** — evaluate top-down, use the first tier that fits:
 
@@ -123,6 +123,23 @@ When in doubt, prefer one tier up — the cost of a wrong model choice is rework
 
 Document the recommendation in each sub-plan's `## Execution Model` field with a brief rationale.
 
+6. **Ensure worker agents exist for execution**: Each sub-plan's model + skills combination needs a matching worker agent definition. Worker agents are the **only reliable mechanism** for controlling which model a sub-agent runs on — model selection via natural language prompts or team configuration is unreliable.
+
+   **Search for existing workers**: Check both local and global agent directories. An agent is a match if its `model` field and `skills` list cover the sub-plan's requirements. A partial match (correct model but incomplete skills, or correct skills but different model) can serve as a basis for a new worker — clone and adapt rather than starting from scratch.
+
+   **Create missing workers**: If no matching worker exists, create one following this format:
+
+   - **Naming convention**: `{model-tier}-{domain}-worker.md` (e.g., `mid-go-worker.md`, `cheap-docs-worker.md`). Domain should reflect the skills baked in; model tier should match the decision tree terminology.
+   - **Placement**: Always local (project-level agents directory), since skills are typically project-local.
+   - **Frontmatter rules**:
+     - `description` MUST be a quoted single-line YAML string with `\n` escapes. Multiline descriptions break frontmatter parsing and the agent won't be discovered.
+     - `model`: set to the target model identifier — this is what actually controls the execution model.
+     - `skills`: list of skill names to preload into the agent's context at startup. The agent does not need to load skills manually.
+     - Do NOT set `tools` unless you need to restrict access — omit for full tool access.
+   - **System prompt**: Brief role description. The sub-plan provides all task context; the agent definition provides model, skills, and identity.
+
+   **Warn the user**: Newly created worker agents may require a session restart to be discovered. Note this when presenting the plan.
+
 ### Phase 5: Initial Review Loop
 
 After plan creation and reviewer assignment, run an iterative review process **once, before the user sees the plan**. The loop continues until all reviewers report no new findings. This is the only automatic, full-scope review — post-feedback revisions follow a lighter process (see Phase 6).
@@ -131,11 +148,11 @@ After plan creation and reviewer assignment, run an iterative review process **o
 
 The review loop uses two types of reviewer agents:
 
-**Global reviewers** (from `~/.claude/agents/`) — generic, project-agnostic:
+**Global reviewers** (from the global agents directory) — generic, project-agnostic:
 - **`plan-architect-reviewer`** — Evaluates the decomposition, boundaries between sub-plans, dependency graph, and whether the pieces will fit together when assembled.
 - **`plan-risk-reviewer`** — Identifies technical risks the planner missed: migration pitfalls, backward-compatibility landmines, missing rollback strategies, and sub-plans that may be harder or more complex than they appear.
 
-**Local reviewers** (from `.claude/agents/`) — project-specific, domain-specialized:
+**Local reviewers** (from the local agents directory) — project-specific, domain-specialized:
 - Each project defines its own reviewer agents tailored to the domains it works with (e.g., API, UI, database, infrastructure). These reviewers can preload project-specific skills via the `skills` frontmatter field for deep domain knowledge.
 - The planner does not assume naming conventions — it discovers available agents and matches them to sub-plans by reading their descriptions.
 
@@ -255,7 +272,7 @@ Skip the documentation sub-plan when:
 ## Rules (Non-Negotiable)
 
 - **Always respect model assignments during execution** — Sub-plan model assignments are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
-- **Use Agent Teams for multi-plan execution — ALWAYS** — When a plan has 2+ sub-plans, ALWAYS use Agent Teams (TeamCreate) to spawn teammates for execution. This is not optional. Agent Team teammates have their own independent context windows (preserving the lead's context budget) and have full tool access including file writes. Task sub-agents (spawned via the Task tool) cannot write files regardless of permission mode and consume the main context window. Never use Task sub-agents for plan execution. If Agent Teams are unavailable or fail, STOP and ask the user — do not silently execute sub-plans on the main agent.
+- **Use worker agents for multi-plan execution** — When a plan has 2+ sub-plans, spawn each sub-plan's assigned worker agent (created in Phase 4 step 6). Worker agents are the **only reliable mechanism** for controlling sub-agent model selection — model requests via natural language prompts or team configuration are unreliable. Run independent sub-plans in parallel where the agent framework supports it. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a worker agent fails, diagnose and retry — do not silently execute on the main agent or fall back to a more expensive model. If the issue cannot be resolved, STOP and ask the user.
 - **Reviewers return findings, planner writes files** — Reviewer agents (both global and local) return their findings as their Task response. They do not write files. The planner is responsible for writing review output to `reviews/<plan-file>.<reviewer-type>.md`.
 - **Never write a plan based on incomplete information**
 - **Never invent requirements the user didn't specify**

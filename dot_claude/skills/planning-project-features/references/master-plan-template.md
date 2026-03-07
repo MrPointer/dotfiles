@@ -19,9 +19,9 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 | #  | Sub-Plan                | Depends On | Model  | Description                          |
 |----|-------------------------|------------|--------|--------------------------------------|
-| 01 | `01-<name>.md`          | —          | Haiku  | <What this sub-plan accomplishes>    |
-| 02 | `02-<name>.md`          | 01         | Sonnet | <What this sub-plan accomplishes>    |
-| 03 | `03-<name>.md`          | —          | Haiku  | <What this sub-plan accomplishes>    |
+| 01 | `01-<name>.md`          | —          | Cheapest      | <What this sub-plan accomplishes>    |
+| 02 | `02-<name>.md`          | 01         | Mid-tier      | <What this sub-plan accomplishes>    |
+| 03 | `03-<name>.md`          | —          | Cheapest      | <What this sub-plan accomplishes>    |
 ...
 
 ## Execution Order
@@ -30,49 +30,41 @@ The master plan is the orchestration document. It does NOT contain implementatio
 - **Sequential**: 02 (after 01)
 ...
 
-## Team Execution (Agent Teams)
+## Execution via Worker Agents
 
-**Agent Teams are REQUIRED for plans with 2+ sub-plans.** Do not use Task sub-agents — they cannot write files and consume the main context window.
+**Worker agents are REQUIRED for plans with 2+ sub-plans.** Each sub-plan's model + skills combination maps to a worker agent definition (created during Phase 4). Worker agents are the only reliable mechanism for controlling sub-agent model selection — model requests via natural language prompts or team configuration are unreliable.
 
-**The only exception** — skip Agent Teams when:
-- ❌ Single sub-plan (just execute directly)
-- ❌ All sub-plans are trivially small (e.g., "add one import")
+**The only exception** — skip worker agents when:
+- Single sub-plan (just execute directly)
+- All sub-plans are trivially small (e.g., "add one import")
 
-**Setup**:
-1. Enable Agent Teams: `export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
-2. Create the team:
-   ```
-   Create an agent team to execute .claude/plans/<feature-name>/00-master.md
-   ```
-
-**Team Lead Instructions**:
-- Use this master plan as the roadmap
-- Assign sub-plans to teammates based on the dependency graph
-- Each teammate should load the Required Skills listed in their assigned sub-plan before starting
-- Use the recommended models from the Sub-Plans table above
-- Coordinate handoffs when dependencies complete
-- Synthesize results when all sub-plans finish
-
-**Suggested Team Structure**:
-```
-Create a team with <N> teammates to execute .claude/plans/<feature-name>/00-master.md:
-- Teammate 1: Execute 01-<name>.md using Haiku (load skills: <skill-list>)
-- Teammate 2: Execute 02-<name>.md using Sonnet (load skills: <skill-list>, requires 01 complete)
-- Teammate 3: Execute 03-<name>.md using Haiku (load skills: <skill-list>, can start immediately)
+**Worker Agents** (created during planning):
+| Sub-Plan | Worker Agent | Model Tier | Skills |
+|----------|-------------|------------|--------|
+| 01       | `<tier>-<domain>-worker` | <tier> | <skills> |
+| 02       | `<tier>-<domain>-worker` | <tier> | <skills> |
 ...
-```
 
-**File Ownership** (prevent conflicts):
+**File Ownership** (prevent conflicts during parallel execution):
 | Sub-Plan | Primary Files |
 |----------|---------------|
 | 01       | <files this sub-plan creates/modifies> |
 | 02       | <files this sub-plan creates/modifies> |
 ...
 
-**Communication Points**:
-<When teammates might need to coordinate>
-- After 01 completes: Notify teammate 2 that dependencies are ready
-- If <event>: Broadcast to all teammates about <change>
+**Lead Agent Instructions**:
+- Use this master plan as the roadmap
+- Spawn each sub-plan's assigned worker agent from the table above
+- Run sub-plans in the same parallel group concurrently where the framework supports it
+- For sequential dependencies, wait for the prior worker to complete before spawning the next
+- The lead relays information between workers when needed (workers cannot communicate directly)
+- Pass the sub-plan file path and any prerequisite context when spawning
+- Synthesize results when all sub-plans finish
+
+**Coordination Points**:
+<When the lead needs to relay information between sequential workers>
+- After 01 completes: Pass results to worker executing 02
+- If <event>: Relay to affected workers
 ...
 
 ## Risks & Mitigations
