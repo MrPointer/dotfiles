@@ -94,3 +94,10 @@ packages:
   difftastic:
     brew:
       name: difftastic
+  jq:
+    apt:
+      name: jq
+    brew:
+      name: jq
+    dnf:
+      name: jq

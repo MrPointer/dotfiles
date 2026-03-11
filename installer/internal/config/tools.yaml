@@ -13,3 +13,5 @@ tools:
     description: "Fast alternative to find"
   - name: difftastic
     description: "Structural diff tool"
+  - name: jq
+    description: "Lightweight command-line JSON processor"
