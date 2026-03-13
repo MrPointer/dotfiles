@@ -81,8 +81,14 @@ Only after Phases 1-3 are complete:
 
 1. **Create the plan directory and files**:
 
+   **Plan location depends on context:**
+   - Standalone feature: `.claude/plans/features/<feature-name>/`
+   - Feature belonging to an epic: `.claude/plans/epics/<epic-name>/<feature-name>/`
+
+   If the user references an epic plan or provides an epic context, use the epic path. Otherwise, default to standalone.
+
 ```
-.claude/plans/<feature-name>/
+<plan-directory>/
 ├── 00-master.md          # Master plan: overview, ordering, dependencies
 ├── 01-<first-task>.md    # Sub-plan 1
 ├── 02-<second-task>.md   # Sub-plan 2
@@ -161,7 +167,7 @@ The review loop uses two types of reviewer agents:
 Review output is saved to `reviews/` within the plan directory, named `<plan-file>.<reviewer-type>.md`:
 
 ```
-.claude/plans/<feature-name>/reviews/
+<plan-directory>/reviews/
 ├── 00-master.architect.md      # Architecture review of master plan
 ├── 00-master.risk.md           # Risk review of master plan
 ├── 01-data-model.installer.md  # Installer review of sub-plan 01
@@ -280,7 +286,7 @@ Skip the documentation sub-plan when:
 - **Each sub-plan must be self-contained** — embed context, don't reference other sub-plans
 - **Always list required skills in every sub-plan** — an executing agent without the right skills will produce subpar results or get stuck
 - **Always run the review loop before presenting to the user** — unreviewed plans are draft plans, not finished plans
-- **Save plans to `.claude/plans/<feature-name>/`** in the local repository — not to `~/.claude/`, and never with random/generated filenames
+- **Save plans to the correct location** — standalone features go to `.claude/plans/features/<feature-name>/`, epic features go to `.claude/plans/epics/<epic-name>/<feature-name>/`. Never save to `~/.claude/`, and never use random/generated filenames
 - **Ask for clarification even if it feels repetitive** — it's better than introducing garbage
 
 [master-plan-template]: references/master-plan-template.md
