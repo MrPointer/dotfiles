@@ -17,6 +17,11 @@
 - If a sub-agent fails, diagnose the failure and retry with a fix — do NOT silently take over the work yourself.
 - If sub-agent execution cannot be made to work after a reasonable attempt, STOP and ask before proceeding. Never fall back to a more expensive model without explicit approval.
 
+## GitLab Access
+
+- NEVER fetch directly from `gitlab.solaredge.com` — always use the `glab` CLI instead.
+- If a `glab` command fails, diagnose and fix the failure or alert the user. Do not fall back to direct fetching.
+
 ## Session Summaries
 
 - Summarize work at the end of edit sessions.
