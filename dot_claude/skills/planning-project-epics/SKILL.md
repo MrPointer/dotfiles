@@ -89,7 +89,7 @@ Present the decomposition to the user for review before writing the epic plan.
 
 Only after Phases 1-5 are complete:
 
-1. **Create the epic plan file**: Save to `.claude/plans/epics/<epic-name>.md` using the [epic plan template][epic-plan-template].
+1. **Create the epic plan file**: Save to `plans/epics/<epic-name>.md` using the [epic plan template][epic-plan-template].
 
 2. **Write rich feature descriptions**: Each feature section must contain enough context for a feature planner starting cold:
    - What the feature accomplishes and why it's a distinct unit
@@ -110,7 +110,7 @@ After plan creation, run a review using the global reviewers before presenting t
 
 Pass the epic plan file path so reviewers can read it and cross-reference against the codebase.
 
-**Important**: Reviewer agents return their findings as their Task response — they do not write files. The epic planner writes review output to `.claude/plans/epics/reviews/<epic-name>.<reviewer-type>.md`.
+**Important**: Reviewer agents return their findings as their Task response — they do not write files. The epic planner writes review output to `plans/epics/reviews/<epic-name>.<reviewer-type>.md`.
 
 Incorporate findings into the epic plan. If changes are significant enough to alter feature boundaries or dependencies, re-run only the affected reviewer(s). Do not restart the full review for minor adjustments.
 
@@ -150,7 +150,7 @@ The user is the workflow engine — the epic plan is their coordination artifact
 - **Never invent requirements the user didn't specify**
 - **Every feature must pass the feature-worthiness test** — if it doesn't have design decisions worth discussing, it's not a feature
 - **Always run the review loop before presenting to the user** — unreviewed epic plans are drafts
-- **Save epic plans to `.claude/plans/epics/`** in the local repository — not to `~/.claude/`
+- **Save epic plans to `plans/epics/`** in the local repository — not to `~/.claude/` or `.claude/`
 - **Ask for clarification even if it feels repetitive** — it's better than a decomposition built on assumptions
 - **Rich feature descriptions are mandatory** — a feature planner starting cold must be able to understand what to plan without reading the whole epic or other features
 

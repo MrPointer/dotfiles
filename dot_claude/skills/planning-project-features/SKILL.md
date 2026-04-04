@@ -82,8 +82,8 @@ Only after Phases 1-3 are complete:
 1. **Create the plan directory and files**:
 
    **Plan location depends on context:**
-   - Standalone feature: `.claude/plans/features/<feature-name>/`
-   - Feature belonging to an epic: `.claude/plans/epics/<epic-name>/<feature-name>/`
+   - Standalone feature: `plans/features/<feature-name>/`
+   - Feature belonging to an epic: `plans/epics/<epic-name>/<feature-name>/`
 
    If the user references an epic plan or provides an epic context, use the epic path. Otherwise, default to standalone.
 
@@ -177,7 +177,7 @@ Review output is saved to `reviews/` within the plan directory, named `<plan-fil
 
 **Important**: Reviewer agents return their findings as their Task response — they do not write files. The planner is responsible for writing each reviewer's output to the appropriate `reviews/` file.
 
-This directory is ephemeral — already covered by the `.claude/plans/` ignore rule — but persists locally across sessions for reference.
+This directory is ephemeral — already covered by the `plans/` ignore rule — but persists locally across sessions for reference.
 
 #### Step 1: Master Plan Review
 
@@ -286,7 +286,7 @@ Skip the documentation sub-plan when:
 - **Each sub-plan must be self-contained** — embed context, don't reference other sub-plans
 - **Always list required skills in every sub-plan** — an executing agent without the right skills will produce subpar results or get stuck
 - **Always run the review loop before presenting to the user** — unreviewed plans are draft plans, not finished plans
-- **Save plans to the correct location** — standalone features go to `.claude/plans/features/<feature-name>/`, epic features go to `.claude/plans/epics/<epic-name>/<feature-name>/`. Never save to `~/.claude/`, and never use random/generated filenames
+- **Save plans to the correct location** — standalone features go to `plans/features/<feature-name>/`, epic features go to `plans/epics/<epic-name>/<feature-name>/`. Never save to `~/.claude/` or `.claude/`, and never use random/generated filenames
 - **Ask for clarification even if it feels repetitive** — it's better than introducing garbage
 
 [master-plan-template]: references/master-plan-template.md

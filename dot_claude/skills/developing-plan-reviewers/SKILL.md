@@ -62,7 +62,7 @@ reviews start faster.
 ## What You Review
 
 You will be given a path to a specific sub-plan file (e.g.,
-`.claude/plans/<feature>/02-<task>.md`). You also have access to the full
+`plans/<feature>/02-<task>.md`). You also have access to the full
 codebase to verify claims.
 
 ## How You Review
