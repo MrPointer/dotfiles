@@ -34,7 +34,7 @@ It does **not** define how to review. Domain knowledge comes from the preloaded 
 ---
 name: plan-<domain>-reviewer
 description: "Use this agent to review sub-plans that involve <domain>. Evaluates <what it checks> against project conventions.\n\n<example>\nContext: A sub-plan covers <domain> implementation within a feature plan.\nuser: \"Review sub-plan 02-<task>.md for <domain> correctness.\"\nassistant: \"I'll review the sub-plan for <domain> issues using the plan-<domain>-reviewer agent.\"\n<commentary>\nSub-plan involves <domain> work. Launch the domain-specific reviewer.\n</commentary>\n</example>"
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, Write, Edit
 memory: project
 skills:
   - <skill-1>
@@ -80,11 +80,11 @@ codebase to verify claims.
    specific claims the plan makes (e.g., an interface exists, a file path
    is correct). Do not broadly explore the codebase.
 
-## Output Format
+## Output
 
-Return your findings as your response using the format below. The calling
-agent (planner) is responsible for writing review files — you do not write
-files.
+The calling agent provides a review output file path. Write your findings
+to that file using the format below. If no output path is provided, return
+your findings as your response instead.
 
 [Insert the standard output format template from this skill]
 
@@ -106,8 +106,8 @@ files.
 
 ### Key Choices
 
-- **`tools: Read, Glob, Grep`** — No Write. Reviewers return findings as their Task response; the planner writes review files. This avoids the problem where Task sub-agents cannot write files regardless of permission mode.
-- **`memory: project`** — Persistent memory scoped to the project. Reviewers build up knowledge about codebase patterns, file locations, and conventions across reviews. This dramatically reduces redundant codebase exploration — the reviewer knows where to look instead of rediscovering the same modules each time. Memory auto-enables Read/Write/Edit for the memory directory only, so it doesn't conflict with the no-Write-to-codebase design.
+- **`tools: Read, Glob, Grep, Write, Edit`** — Write-capable so reviewers can write their own review output files directly, saving tokens and avoiding truncation of large findings. The reviewer only writes to the review output path provided by the planner — it does not modify plan files or codebase files.
+- **`memory: project`** — Persistent memory scoped to the project. Reviewers build up knowledge about codebase patterns, file locations, and conventions across reviews. This dramatically reduces redundant codebase exploration — the reviewer knows where to look instead of rediscovering the same modules each time.
 - **`skills`** — the differentiator. Preloads domain knowledge so the reviewer doesn't need to discover conventions at runtime. Skills are the review criteria — the agent should not hardcode evaluation checklists that duplicate what skills already teach. See [Choosing Skills to Preload](#choosing-skills-to-preload).
 - **No `model` field** — inherits from parent, matching the global reviewers.
 - **Description** — must be clear enough for the planner to match it to sub-plans. Include what domain it covers and what it evaluates. Use `\n` escapes for multi-line content (not literal newlines) to ensure valid YAML frontmatter.
@@ -173,7 +173,7 @@ Complete, copy-and-adapt reviewer examples:
 ## Rules
 
 - **Always follow the standard output format** — the planner depends on the Verdict/Critical Findings/Concerns/Observations structure
-- **Return findings as response, never write files** — the planner writes review output to `reviews/<plan-file>.<reviewer-type>.md`
+- **Write review output to the provided path** — the planner passes the output file path; write findings there directly. If no path is provided, return findings as your response
 - **Review the plan, not the code** — evaluate whether the plan's strategy is sound for the domain; code-level review happens during execution
 - **Be specific and actionable** — every finding must reference the exact plan section and provide a recommendation
 - **Don't duplicate architecture or risk review** — focus only on domain expertise

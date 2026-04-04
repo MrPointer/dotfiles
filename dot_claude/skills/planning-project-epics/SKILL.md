@@ -108,9 +108,9 @@ After plan creation, run a review using the global reviewers before presenting t
 - **`plan-architect-reviewer`** — Evaluates feature boundaries, dependency graph, whether the decomposition will hold together when features are planned and built separately.
 - **`plan-risk-reviewer`** — Identifies risks: features that may be harder than they appear, dependency chains that could cause rework, missing considerations.
 
-Pass the epic plan file path so reviewers can read it and cross-reference against the codebase.
+Pass the epic plan file path so reviewers can read it and cross-reference against the codebase. Launch reviewers with `subagent_type: "general-purpose"` so they inherit Write/Edit tools and can write review output directly.
 
-**Important**: Reviewer agents return their findings as their Task response — they do not write files. The epic planner writes review output to `plans/epics/reviews/<epic-name>.<reviewer-type>.md`.
+Pass the review output file path (e.g., `plans/epics/reviews/<epic-name>.<reviewer-type>.md`) to each reviewer. Write-capable reviewers write the file directly; read-only reviewers return findings as their response, and the planner writes the file on their behalf. Check whether the file exists after the reviewer finishes.
 
 Incorporate findings into the epic plan. If changes are significant enough to alter feature boundaries or dependencies, re-run only the affected reviewer(s). Do not restart the full review for minor adjustments.
 

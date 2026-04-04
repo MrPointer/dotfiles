@@ -162,6 +162,8 @@ The review loop uses two types of reviewer agents:
 - Each project defines its own reviewer agents tailored to the domains it works with (e.g., API, UI, database, infrastructure). These reviewers can preload project-specific skills via the `skills` frontmatter field for deep domain knowledge.
 - The planner does not assume naming conventions — it discovers available agents and matches them to sub-plans by reading their descriptions.
 
+**Launching reviewers**: Always launch reviewer agents with `subagent_type: "general-purpose"` so they inherit the full tool set declared in their agent definition (including Write/Edit for writing review output). Using a read-only subagent type (e.g., Explore) would silently strip write tools, forcing the planner to relay output manually.
+
 #### Review Output Location
 
 Review output is saved to `reviews/` within the plan directory, named `<plan-file>.<reviewer-type>.md`:
@@ -175,13 +177,13 @@ Review output is saved to `reviews/` within the plan directory, named `<plan-fil
 └── ...
 ```
 
-**Important**: Reviewer agents return their findings as their Task response — they do not write files. The planner is responsible for writing each reviewer's output to the appropriate `reviews/` file.
+**Who writes review files** depends on the reviewer agent's capabilities. When launching a reviewer, pass the output file path (e.g., `reviews/00-master.architect.md`). Write-capable reviewers (those with Write/Edit tools) write the file themselves. Read-only reviewers return findings as their response, and the planner writes the file on their behalf. The planner should check whether the output file was created after the reviewer finishes to determine which path was taken.
 
 This directory is ephemeral — already covered by the `plans/` ignore rule — but persists locally across sessions for reference.
 
 #### Step 1: Master Plan Review
 
-Launch `plan-architect-reviewer` and `plan-risk-reviewer` against the master plan (in parallel — they are independent). Pass the plan directory path so they can read all plan files and cross-reference against the codebase. Each reviewer returns its findings as a response — write them to `reviews/00-master.architect.md` and `reviews/00-master.risk.md` respectively.
+Launch `plan-architect-reviewer` and `plan-risk-reviewer` against the master plan (in parallel — they are independent). Pass the plan directory path and the review output file path (e.g., `reviews/00-master.architect.md`) so they can read all plan files and write their findings directly. If a reviewer didn't write its output file (read-only agent), write the reviewer's response to the file.
 
 Reviewers evaluate architecture, contracts, constraints, and acceptance criteria — not implementation details (which are no longer in the plan). If a reviewer suggests adding implementation specifics ("specify which encoder method to use"), reject the suggestion — that's the executing agent's domain.
 
@@ -189,7 +191,7 @@ Incorporate findings into both the master plan and affected sub-plans.
 
 #### Step 2: Sub-Plan Review
 
-After the master plan review is resolved, launch each sub-plan's assigned reviewer (from the `## Reviewer` field) against it. Sub-plan reviews can run in parallel — even when different sub-plans use different reviewers. Each reviewer returns its findings as a response — write them to `reviews/<plan-file>.<reviewer-type>.md`.
+After the master plan review is resolved, launch each sub-plan's assigned reviewer (from the `## Reviewer` field) against it. Sub-plan reviews can run in parallel — even when different sub-plans use different reviewers. Pass the review output file path (e.g., `reviews/<plan-file>.<reviewer-type>.md`) to each reviewer. If a reviewer didn't write its output file, write the reviewer's response to the file.
 
 **Output normalization**: If a local reviewer's output doesn't follow the standard format (Verdict, Critical Findings, Concerns, Observations), normalize it before incorporating. The planner interprets the reviewer's findings and translates them into actionable changes to the plan.
 
@@ -279,7 +281,7 @@ Skip the documentation sub-plan when:
 
 - **Always respect model assignments during execution** — Sub-plan model assignments are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
 - **Use worker agents for multi-plan execution** — When a plan has 2+ sub-plans, spawn each sub-plan's assigned worker agent (created in Phase 4 step 6). Worker agents are the **only reliable mechanism** for controlling sub-agent model selection — model requests via natural language prompts or team configuration are unreliable. Run independent sub-plans in parallel where the agent framework supports it. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a worker agent fails, diagnose and retry — do not silently execute on the main agent or fall back to a more expensive model. If the issue cannot be resolved, STOP and ask the user.
-- **Reviewers return findings, planner writes files** — Reviewer agents (both global and local) return their findings as their Task response. They do not write files. The planner is responsible for writing review output to `reviews/<plan-file>.<reviewer-type>.md`.
+- **Planner owns review output** — The planner passes the review output file path to each reviewer. Write-capable reviewers write the file directly; read-only reviewers return findings as their response, and the planner writes the file on their behalf. The planner checks whether the file exists after the reviewer finishes.
 - **Never write a plan based on incomplete information**
 - **Never invent requirements the user didn't specify**
 - **Always decompose into sub-plans** — a single monolithic plan is a failure mode
