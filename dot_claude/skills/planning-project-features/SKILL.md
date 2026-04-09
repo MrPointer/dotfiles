@@ -61,10 +61,16 @@ Share findings with the user and confirm understanding before proceeding.
 This is the most critical phase. Break the feature into sub-plans:
 
 1. **Identify natural boundaries**: Look for seams in the work — different layers (data model, API, UI), different domains, or different files/modules.
-2. **Minimize dependencies**: Each sub-plan should depend on as few other sub-plans as possible. Where dependencies exist, make them explicit and one-directional.
+2. **Minimize dependencies and enforce DAG ordering**: Each sub-plan should depend on as few other sub-plans as possible. Where dependencies exist, make them explicit and one-directional. The dependency graph must form a valid DAG — no cycles, and no sub-plan may depend on information produced by a sub-plan that runs after it or in the same parallel group. Sub-plans cannot communicate with each other at runtime; the lead agent relays results strictly along dependency edges. If a proposed decomposition requires bidirectional information flow between two sub-plans, merge them or restructure the boundaries until the dependency is one-directional.
 3. **Embed domain knowledge and cross-boundary contracts**: Each sub-plan must be self-contained — don't assume the agent has read the master plan or other sub-plans. What belongs in a sub-plan:
    - **Domain knowledge** the agent can't derive from code: spec requirements, business rules, config formats, protocol details.
    - **Cross-boundary contracts** — exact interface/type signatures that other sub-plans depend on. When sub-plans run in parallel, the consuming agent can't discover these at execution time, so the plan must specify them. For sequential dependencies, the later agent can read the earlier sub-plan's actual output — no pre-specified contract needed.
+
+   Cross-boundary contracts must satisfy three additional integrity rules:
+
+   - **Caller annotations**: Every new public method/function introduced by a sub-plan must specify its production caller. If the caller lives in a different sub-plan, both sides must reference the contract: the producer documents "called by: sub-plan N, in `Location`", the consumer documents "calls: `Method` from sub-plan M". No orphan methods — if no caller is identified, the method is dead code.
+   - **Connected data flow**: When data must flow between components owned by different sub-plans, the master plan must trace the full path: source → transport mechanism → destination, with sub-plan ownership at each hop. Prose descriptions like "X stores the value on config" are insufficient when the consumer needs it delivered through a channel that no sub-plan was told to wire.
+   - **Interface boundary checks**: If a sub-plan adds a method to a concrete type, but consumers access that type through an interface, the plan must either add the method to the interface or explicitly assign the concrete-type wiring (type assertion, constructor injection, etc.) to a specific sub-plan. Otherwise the method is unreachable from the integration layer.
 
    What does NOT belong: internal API design, function signatures within a package, private helpers, method bodies, step-by-step coding instructions, specific commands for testing/linting/building. These are the executing agent's decisions, guided by loaded skills and acceptance criteria.
 
@@ -212,6 +218,8 @@ Before presenting, run a final consistency check:
 1. **Model assignments** — verify each sub-plan's execution model matches the decision tree and any explicit rules
 2. **Skill conformance** — verify that reviewer-driven changes haven't introduced patterns that contradict required skills listed in each sub-plan
 3. **Cross-sub-plan prerequisites** — verify that every interface, type, or file referenced in a sub-plan's Prerequisites section is created by an earlier sub-plan in the dependency graph
+4. **Integration contract integrity** — verify that every "Produces" entry in one sub-plan has a matching "Consumes" entry in another (and vice versa), that the master plan's data flow table covers all cross-boundary data paths, and that interface wiring is assigned to a specific sub-plan when methods are accessed through interfaces
+5. **DAG validity** — verify the execution order forms a valid DAG: no cycles, no sub-plan depends on output from a later or same-group sub-plan, and every "Consumes" reference points to a sub-plan that completes before the consumer starts
 
 Fix any inconsistencies before proceeding.
 

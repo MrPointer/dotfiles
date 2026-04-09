@@ -37,6 +37,19 @@ Examples:
 - `path/to/file.ext` (create | modify)
 - `path/to/other.ext` (modify)
 
+## Integration Contracts
+<Cross-sub-plan wiring this sub-plan participates in. Every new public method must have a production caller; every consumed method must be referenced.>
+
+**Produces** (new methods/types other sub-plans consume):
+- `Type.Method()` — called by: sub-plan NN, in `consumer/location.go`
+
+**Consumes** (methods/types from other sub-plans this sub-plan calls):
+- calls: `Type.Method()` from sub-plan NN
+
+**Interface wiring**: <If a produced method must be added to an interface for consumers to reach it, state which interface and who owns the change. If consumers use the concrete type directly, state that explicitly.>
+
+<Omit this section entirely if this sub-plan has no cross-boundary contracts.>
+
 ## Design Decisions
 <Decisions the executing agent must follow — things it wouldn't arrive at independently from skills + codebase alone. Focus on the "what" and "why," not the "how.">
 

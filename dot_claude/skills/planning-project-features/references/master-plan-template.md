@@ -25,7 +25,7 @@ The master plan is the orchestration document. It does NOT contain implementatio
 ...
 
 ## Execution Order
-<Describe which sub-plans can run in parallel and which must be sequential>
+<The execution order must form a valid DAG. Sub-plans in the same parallel group cannot depend on each other. Every dependency edge points from an earlier group to a later one. Sub-plans cannot communicate at runtime — the lead relays results strictly along dependency edges.>
 - **Parallel group 1**: 01, 03 (no dependencies)
 - **Sequential**: 02 (after 01)
 ...
@@ -51,6 +51,16 @@ The master plan is the orchestration document. It does NOT contain implementatio
 | 01       | <files this sub-plan creates/modifies> |
 | 02       | <files this sub-plan creates/modifies> |
 ...
+
+## Cross-Sub-Plan Data Flow
+<Trace every data path that crosses sub-plan boundaries. Each row is one piece of data that is produced in one sub-plan and consumed in another.>
+
+| Data | Source (Sub-Plan) | Transport | Destination (Sub-Plan) |
+|------|-------------------|-----------|------------------------|
+| <what> | 01 — `producer.Method()` | <how it travels: config field, return value, file, event, etc.> | 02 — `consumer.Method()` |
+...
+
+<If a hop has no sub-plan owner, it's a gap — assign it or flag it.>
 
 **Lead Agent Instructions**:
 - Use this master plan as the roadmap
