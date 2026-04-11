@@ -63,7 +63,7 @@ Do NOT include: method body implementations, exact code patterns, step-by-step c
 - [ ] <Criterion 2>
 ...
 
-## Post-Execution
-If this project has component-level documentation, run the `component-docs-reviewer` agent to verify
-component docs still match the actual implementation.
+<!-- Include a ## Post-Execution section only if this sub-plan modifies interfaces or behavior
+     covered by component-level documentation. When included, instruct the executing agent to run
+     the `component-docs-reviewer` agent to verify component docs still match the implementation. -->
 ```

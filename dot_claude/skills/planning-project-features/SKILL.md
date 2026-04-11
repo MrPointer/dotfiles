@@ -77,7 +77,8 @@ This is the most critical phase. Break the feature into sub-plans:
    **The test**: if changing something would break a *different* sub-plan's code, it's a contract and belongs in the plan. If it only affects code within this sub-plan, it's an internal the agent owns.
 4. **Keep sub-plans small**: A good sub-plan should be completable in a single focused session. If it feels too big, split it further.
 5. **Skills are the agent's authority, not the plan's**: List the skills each sub-plan requires, but do NOT replicate skill content into the plan. Skills define how to write code, how to test, how to lint, how to build — the executing agent loads them and follows them. The plan defines *what* to build and *why*; skills define *how*. If a skill says "use `task test`," the plan should not say "run `go test ./...`." If a skill mandates table-driven tests, the plan should not specify test structure — the agent will follow the skill. The plan's job is to provide architectural decisions, domain knowledge, and constraints that skills don't cover. This applies to both design skills (coding conventions, test patterns) and operational skills (running tests, linting, building). If the project has skills for testing, linting, or building, list them in the sub-plan's Required Skills. The sub-plan's verification/acceptance criteria should say "all tests pass, code builds, lints clean" — not specify raw commands. The executing agent uses the loaded operational skills to determine the correct commands.
-6. **Plan documentation updates as a sub-plan**: If the feature affects documented domain concepts, architecture, or business processes, add a final sub-plan that updates those docs. The planner knows which concepts, boundaries, and flows are changing — enough to specify which docs to update, which new docs to create, and which existing docs to use as structural patterns. Implementation details that affect docs will be resolved by the executing agent at documentation time. This makes documentation updates human-reviewable alongside the rest of the plan. See [Documentation Sub-Plan](#documentation-sub-plan) for guidance on what belongs here vs. post-execution review.
+6. **Sub-plans must be decisive**: Before writing a design decision, verify it against the codebase. If a decision references an interface, method, or file, confirm it exists and state its exact shape. Do not write "if X exists" or "either A or B" — pick one approach and commit to it. Unresolved decisions are caught by the `plan-clarity-reviewer` and will require revision. This is especially critical for sub-plans assigned to cheap models, which cannot resolve ambiguity on their own.
+7. **Plan documentation updates as a sub-plan**: If the feature affects documented domain concepts, architecture, or business processes, add a final sub-plan that updates those docs. The planner knows which concepts, boundaries, and flows are changing — enough to specify which docs to update, which new docs to create, and which existing docs to use as structural patterns. Implementation details that affect docs will be resolved by the executing agent at documentation time. This makes documentation updates human-reviewable alongside the rest of the plan. See [Documentation Sub-Plan](#documentation-sub-plan) for guidance on what belongs here vs. post-execution review.
 
 Present the decomposition to the user for review before writing the actual plan files.
 
@@ -163,6 +164,7 @@ The review loop uses two types of reviewer agents:
 **Global reviewers** (from the global agents directory) — generic, project-agnostic:
 - **`plan-architect-reviewer`** — Evaluates the decomposition, boundaries between sub-plans, dependency graph, and whether the pieces will fit together when assembled.
 - **`plan-risk-reviewer`** — Identifies technical risks the planner missed: migration pitfalls, backward-compatibility landmines, missing rollback strategies, and sub-plans that may be harder or more complex than they appear.
+- **`plan-clarity-reviewer`** — Catches vague, ambiguous, or speculative language in sub-plans that would force executing agents to make design decisions the planner should have resolved.
 
 **Local reviewers** (from the local agents directory) — project-specific, domain-specialized:
 - Each project defines its own reviewer agents tailored to the domains it works with (e.g., API, UI, database, infrastructure). These reviewers can preload project-specific skills via the `skills` frontmatter field for deep domain knowledge.
@@ -178,6 +180,7 @@ Review output is saved to `reviews/` within the plan directory, named `<plan-fil
 <plan-directory>/reviews/
 ├── 00-master.architect.md      # Architecture review of master plan
 ├── 00-master.risk.md           # Risk review of master plan
+├── 00-master.clarity.md        # Clarity review of master plan
 ├── 01-data-model.installer.md  # Installer review of sub-plan 01
 ├── 02-api-layer.ci.md          # CI review of sub-plan 02
 └── ...
@@ -189,7 +192,7 @@ This directory is ephemeral — already covered by the `plans/` ignore rule — 
 
 #### Step 1: Master Plan Review
 
-Launch `plan-architect-reviewer` and `plan-risk-reviewer` against the master plan (in parallel — they are independent). Pass the plan directory path and the review output file path (e.g., `reviews/00-master.architect.md`) so they can read all plan files and write their findings directly. If a reviewer didn't write its output file (read-only agent), write the reviewer's response to the file.
+Launch `plan-architect-reviewer`, `plan-risk-reviewer`, and `plan-clarity-reviewer` against the master plan (in parallel — they are independent). Pass the plan directory path and the review output file path (e.g., `reviews/00-master.architect.md`) so they can read all plan files and write their findings directly. If a reviewer didn't write its output file (read-only agent), write the reviewer's response to the file.
 
 Reviewers evaluate architecture, contracts, constraints, and acceptance criteria — not implementation details (which are no longer in the plan). If a reviewer suggests adding implementation specifics ("specify which encoder method to use"), reject the suggestion — that's the executing agent's domain.
 
