@@ -21,7 +21,9 @@ Plans are decomposed into a **master plan** (high-level orchestration) and **sub
 
 ### Phase 1: Requirement Gathering
 
-Before writing any plan, gather complete information:
+**Check for an existing design spec first.** If the user provides or references a design spec (e.g., from the `brainstorming` skill or any other source), read and validate it — then skip the requirement gathering below and proceed to Phase 2 with the spec as your requirements baseline. Validate that the spec covers: problem statement, scope, constraints, chosen approach, and success criteria. If the spec has gaps, ask about those specific gaps rather than re-gathering everything.
+
+**If no design spec exists**, suggest that the user run the `brainstorming` skill first to produce one — the resulting spec will give the plan a stronger foundation. However, this is a recommendation, not a gate. If the user wants to proceed without a spec, continue with requirement gathering as normal:
 
 1. **Understand the goal**: What problem does this solve? What does success look like?
 2. **Identify scope**: What's in scope? What's explicitly out of scope?
