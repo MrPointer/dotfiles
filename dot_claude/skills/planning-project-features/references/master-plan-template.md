@@ -39,10 +39,11 @@ The master plan is the orchestration document. It does NOT contain implementatio
 - All sub-plans are trivially small (e.g., "add one import")
 
 **Worker Agents** (created during planning):
-| Sub-Plan | Worker Agent | Model Tier | Skills |
-|----------|-------------|------------|--------|
-| 01       | `<tier>-<domain>-worker` | <tier> | <skills> |
-| 02       | `<tier>-<domain>-worker` | <tier> | <skills> |
+| Sub-Plan | Implementer Worker | Test Author Worker | Model Tier |
+|----------|-------------------|-------------------|------------|
+| 01       | `<tier>-<domain>-worker` | `<tier>-test-author-worker` | <tier> |
+| 02       | `<tier>-<domain>-worker` | `<tier>-test-author-worker` | <tier> |
+| 03       | `<tier>-<domain>-worker` | — (no testable AC) | <tier> |
 ...
 
 **File Ownership** (prevent conflicts during parallel execution):

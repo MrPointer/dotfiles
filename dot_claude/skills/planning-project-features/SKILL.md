@@ -153,6 +153,8 @@ Document the recommendation in each sub-plan's `## Execution Model` field with a
      - Do NOT set `tools` unless you need to restrict access — omit for full tool access.
    - **System prompt**: Brief role description. The sub-plan provides all task context; the agent definition provides model, skills, and identity.
 
+   **Create a test author worker**: If any sub-plan has testable acceptance criteria, create a single test author worker for the project. It always uses the **most capable model** — the task is finite (write tests from acceptance criteria, confirm they fail) and critical enough to justify the investment. Preload the project's testing and code-writing skills, plus `test-driven-development` if it's available. Use the naming convention `{model-tier}-test-author-worker.md`, where the model tier reflects the most capable model available in the current environment. All sub-plans with testable AC share this single worker.
+
    **Warn the user**: Newly created worker agents may require a session restart to be discovered. Note this when presenting the plan.
 
 ### Phase 5: Initial Review Loop
