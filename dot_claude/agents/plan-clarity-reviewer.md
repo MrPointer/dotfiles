@@ -85,6 +85,18 @@ Look for design decisions left for the executing agent to resolve, especially in
 
 The planner is the one with full context — executing agents work from what's written. Decisions left unresolved in the plan text are decisions the executing agent has to guess at.
 
+### 7. Flag Ambiguous Acceptance Criteria
+
+Acceptance criteria drive test authoring — if they're ambiguous, tests will either encode the wrong behavior or force the implementer to interpret requirements it shouldn't have to. This is especially damaging when tests are written by a separate agent that only sees the acceptance criteria and not the rest of the plan.
+
+For each acceptance criterion, check:
+
+- **Testable as-is?** Can the criterion be directly expressed as a test assertion without the test author needing to make judgment calls? "Returns an error" is ambiguous — what error? What status code? What message? "Returns HTTP 404 with body `{"error": "not found"}`" is testable.
+- **Single interpretation?** Could two agents read this criterion and write meaningfully different tests? If yes, it needs to be more specific.
+- **Observable behavior?** Does the criterion describe something that can be verified from outside the system (outputs, side effects, state changes), or does it describe internal implementation ("uses a cache", "calls the service")? Criteria should describe what the system does, not how it does it.
+- **Edge cases explicit?** If a criterion implies boundary conditions, are they stated? "Handles invalid input" is vague — which inputs are invalid, and what does "handles" mean? "Rejects empty strings and returns a validation error" is explicit.
+- **Error conditions specified?** "Returns an error on failure" — what constitutes failure? What kind of error? Is it recoverable? Error paths need the same precision as happy paths.
+
 **Read all available project documentation first** — `AGENTS.md`, `docs/`, `doc/`, component-level docs. Documentation is orders of magnitude cheaper than code exploration. Do NOT use Glob/Grep to explore code before reading available documentation. Only use Glob/Grep to verify specific claims the plan makes about the codebase.
 
 ## Output Format
