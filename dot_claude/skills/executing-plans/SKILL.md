@@ -1,17 +1,17 @@
 ---
 name: executing-plans
-description: Use when executing implementation plans. Orchestrates task execution with structural test-implementation separation, progress checkpointing, and dispute batching. Works with any plan structure that has identifiable tasks and acceptance criteria. Handles resumption after interruptions.
+description: Use when executing implementation plans. Orchestrates task execution with testability-gated TDD, progress checkpointing, and dispute batching. Works with any plan structure that has identifiable tasks and acceptance criteria. Handles resumption after interruptions.
 ---
 
 # Executing Plans
 
 Orchestrate the execution of implementation plans. Read the plan, identify tasks and their ordering, maintain progress checkpoints, and handle interruptions gracefully.
 
-This skill structurally separates test authoring from implementation — a separate agent writes tests from acceptance criteria alone, without seeing design decisions. The implementer then receives the full task plus the tests. This prevents the common failure mode where agents write tests that rationalize their implementation rather than verify requirements.
+When the code surface supports it, this skill structurally separates test authoring from implementation — a separate agent writes tests from acceptance criteria alone, without seeing design decisions. The implementer then receives the full task plus the tests. This prevents the common failure mode where agents write tests that rationalize their implementation rather than verify requirements. When the code isn't ready for TDD (missing test infrastructure, no testable seams, tight coupling), the executor skips structural separation rather than fighting the codebase.
 
 ## Core Principles
 
-1. **Tests and Implementation Are Structurally Separated**: The test author sees only acceptance criteria. The implementer sees the full task context plus the tests. Neither can influence the other's context.
+1. **Tests and Implementation Are Structurally Separated — When Feasible**: The test author sees only acceptance criteria. The implementer sees the full task context plus the tests. Neither can influence the other's context. However, this separation requires a testable code surface. When the target code lacks the infrastructure or seams to support isolated testing, the executor skips structural TDD rather than producing tests that fight the codebase.
 2. **Progress Is Always Persisted**: After every meaningful step, update the progress file. If the session drops, the executor resumes from the last checkpoint — not from scratch.
 3. **Tests Are Immutable to the Implementer**: The implementer cannot modify tests. If it believes a test is wrong, it reports this and moves on. Disputes are batched for human resolution.
 4. **Independent Work Continues**: When a task is blocked (test dispute, failure), the executor continues with independent tasks.
@@ -47,7 +47,20 @@ For each task in execution order (respecting dependencies):
 
 #### 3a. Test Authoring
 
-**When to skip**: Some tasks don't have testable work — documentation updates, file moves, configuration changes, or tasks with no acceptance criteria. Skip test authoring for these and proceed directly to implementation.
+**When to skip (no testable work)**: Some tasks don't have testable work — documentation updates, file moves, configuration changes, or tasks with no acceptance criteria. Skip test authoring for these and proceed directly to implementation.
+
+**When to skip (code surface not testable)**: For tasks that have testable acceptance criteria, check whether the code surface supports TDD before spawning the test author. This is a gate, not an analysis — the goal is a binary decision, not a report on what needs fixing.
+
+1. **Check project docs first**: Look for explicit testability statements in `AGENTS.md`, project documentation, or task-level notes. If the project or area is declared untestable, skip immediately — no exploration needed.
+
+2. **Lightweight code surface check**: If docs don't cover it, spawn an exploration agent at the cheapest available model tier to answer one question: can the components this task touches be tested in isolation? The agent looks for:
+   - Interfaces or injectable dependencies (substitution points for test doubles)
+   - An existing test framework and test patterns in the area
+   - Whether tests could target the code without restructuring it first
+
+   The agent returns a yes/no — not an analysis of what's wrong or recommendations for making it testable.
+
+If the code surface isn't ready for TDD, skip test authoring and proceed directly to implementation without structural separation. Record the decision briefly in the progress file (Tests column: `skipped`, Notes: e.g., "declared untestable in AGENTS.md" or "no testable seams"). The implementer still receives the full task with acceptance criteria — it just doesn't receive pre-written tests and isn't bound by the test immutability constraint.
 
 **Isolation via worktree**: The test author must NOT have access to plan files. Since plans live outside the tracked codebase (under `plans/`, typically gitignored), spawning the test author in a worktree achieves physical isolation — the worktree contains the source code but not the plan directory.
 
@@ -83,7 +96,9 @@ The test author writes tests grounded in the acceptance criteria and confirms th
 
 #### 3b. Implementation
 
-Spawn an **implementer** sub-agent with full context:
+**Without structural TDD** (test authoring was skipped due to testability): Spawn an implementer sub-agent with the complete task. No pre-written tests exist, so the immutability constraint doesn't apply. The implementer implements against the acceptance criteria directly. It returns implementation status and files created/modified. Existing tests must still pass — regressions are still caught in step 3c.
+
+**With structural TDD** (tests were written in 3a): Spawn an **implementer** sub-agent with full context:
 
 **What the implementer receives:**
 - The complete task (all sections — design decisions, context, contracts, acceptance criteria)
@@ -107,10 +122,17 @@ The implementer implements the task and runs tests. It returns:
 
 #### 3c. Handle Results
 
+**With structural TDD:**
+
 - **All tests pass**: Mark task as `done`. Proceed to the next task.
 - **Tests fail, no disputes**: The implementer couldn't make tests pass but doesn't claim they're wrong. Mark as `blocked: implementation failure`. Continue with independent tasks.
 - **Disputes reported**: Record each dispute in the progress file with the implementer's explanation. Mark the task as `blocked: test dispute`. Continue with independent tasks.
 - **Existing tests regress**: Mark as `blocked: regression`. This takes priority — it means the implementation broke something outside its scope. Continue with independent tasks.
+
+**Without structural TDD:**
+
+- **Implementation complete, no regressions**: Mark task as `done`. Proceed to the next task.
+- **Existing tests regress**: Mark as `blocked: regression`. Same treatment as above — the implementation broke something outside its scope.
 
 ### Step 4: Resolve Blocks
 
@@ -164,5 +186,6 @@ If no worker agents are specified, the executor spawns sub-agents with the proje
 - **Continue independent work when blocked** — don't stop the entire execution because one task has a dispute. If the plan specifies dependencies, use them to determine what can proceed. If no dependencies are specified, treat remaining tasks as sequential and pause at the blocked one.
 - **Relay prerequisite outputs between dependent tasks** — sub-agents cannot communicate with each other. The executor passes results between tasks when needed.
 - **Respect model assignments** — if the plan specifies a model tier for a task, use it. Don't silently upgrade or downgrade.
+- **Record testability gate decisions but don't analyze** — when TDD is skipped, note the reason briefly in progress (e.g., "declared untestable in AGENTS.md", "no testable seams"). Don't spend tokens analyzing what would need to change — that's a separate effort if the user chooses to pursue it.
 
 [progress-template]: references/progress-template.md

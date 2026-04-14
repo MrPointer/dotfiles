@@ -18,7 +18,8 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 | 01 | <task name or file> | done | done | done | |
 | 02 | <task name or file> | done | blocked | blocked: test dispute | See disputes below |
 | 03 | <task name or file> | skipped | done | done | No testable AC |
-| 04 | <task name or file> | — | — | pending | Depends on 02 |
+| 04 | <task name or file> | skipped | done | done | TDD skipped: no interfaces, tightly coupled to DB |
+| 05 | <task name or file> | — | — | pending | Depends on 02 |
 
 ## Current State
 <What the executor is currently doing or waiting on>
