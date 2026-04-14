@@ -7,8 +7,6 @@ description: Create project-specific plan reviewer agents that integrate with th
 
 Create project-specific reviewer agents for the `planning-project-features` workflow. These agents review individual sub-plans for domain-specific correctness — catching issues that the generic global reviewers (architecture, risk) cannot.
 
-For general agent development guidance (frontmatter fields, description examples, system prompt design), see the `developing-agents` skill.
-
 ## How Plan Reviewers Fit In
 
 The planning workflow (Phase 5) uses two types of reviewers:
