@@ -9,6 +9,21 @@ Orchestrate the execution of implementation plans. Read the plan, identify tasks
 
 When the code surface supports it, this skill structurally separates test authoring from implementation — a separate agent writes tests from acceptance criteria alone, without seeing design decisions. The implementer then receives the full task plus the tests. This prevents the common failure mode where agents write tests that rationalize their implementation rather than verify requirements. When the code isn't ready for TDD (missing test infrastructure, no testable seams, tight coupling), the executor skips structural separation rather than fighting the codebase.
 
+## Runtime Binding
+
+This skill has one canonical workflow. Runtime files only map that workflow to the active agent runtime's mechanics.
+
+Before doing any work, determine the active runtime and read exactly one adapter:
+
+- **Codex runtime** → [references/runtime-codex.md](references/runtime-codex.md)
+- **Claude runtime** → [references/runtime-claude.md](references/runtime-claude.md)
+
+**Determining the active runtime**: Check the system prompt and environment banner for identifying markers (e.g., "Claude Code", "Codex CLI"). If the signal is ambiguous, ask the user rather than guessing — reading the wrong adapter silently breaks assumptions downstream.
+
+Do not load or mix instructions from the other runtime adapter in the same turn. If a runtime adapter conflicts with this file, this file is authoritative.
+
+**Terminology bridge**: This skill uses runtime-neutral terms. Claude's runtime calls execution bindings "worker agent definitions"; Codex's runtime calls them "dispatch recipes". Use whichever term is native to the active runtime when writing or reading concrete artifacts; the canonical workflow terms are used only in this file.
+
 ## Core Principles
 
 1. **Tests and Implementation Are Structurally Separated — When Feasible**: The test author sees only acceptance criteria. The implementer sees the full task context plus the tests. Neither can influence the other's context. However, this separation requires a testable code surface. When the target code lacks the infrastructure or seams to support isolated testing, the executor skips structural TDD rather than producing tests that fight the codebase.
@@ -30,7 +45,7 @@ Extract what's available:
 - Task list and execution order
 - Dependencies between tasks (if specified — otherwise assume sequential)
 - Which tasks can run independently / in parallel (if specified)
-- Worker agent assignments (if specified)
+- Execution binding assignments (if specified)
 - File ownership per task (if specified — helps prevent conflicts during parallel execution)
 
 ### Step 2: Initialize or Resume Progress
@@ -53,7 +68,7 @@ For each task in execution order (respecting dependencies):
 
 1. **Check project docs first**: Look for explicit testability statements in `AGENTS.md`, project documentation, or task-level notes. If the project or area is declared untestable, skip immediately — no exploration needed.
 
-2. **Lightweight code surface check**: If docs don't cover it, spawn an exploration agent at the cheapest available model tier to answer one question: can the components this task touches be tested in isolation? The agent looks for:
+2. **Lightweight code surface check**: If docs don't cover it, use the active runtime adapter's cheapest suitable exploration mechanism to answer one question: can the components this task touches be tested in isolation? The agent looks for:
    - Interfaces or injectable dependencies (substitution points for test doubles)
    - An existing test framework and test patterns in the area
    - Whether tests could target the code without restructuring it first
@@ -62,22 +77,19 @@ For each task in execution order (respecting dependencies):
 
 If the code surface isn't ready for TDD, skip test authoring and proceed directly to implementation without structural separation. Record the decision briefly in the progress file (Tests column: `skipped`, Notes: e.g., "declared untestable in AGENTS.md" or "no testable seams"). The implementer still receives the full task with acceptance criteria — it just doesn't receive pre-written tests and isn't bound by the test immutability constraint.
 
-**Isolation via worktree**: The test author must NOT have access to plan files. Since plans live outside the tracked codebase (under `plans/`, typically gitignored), spawning the test author in a worktree achieves physical isolation — the worktree contains the source code but not the plan directory.
+**Isolation capability gate**: Before structural TDD, use the active runtime adapter to verify that the runtime can place the test author in an isolated workspace that does not contain the planning artifacts. If the runtime cannot enforce that isolation, skip structural TDD and proceed directly to implementation. Record the decision briefly in the progress file (Tests column: `skipped`, Notes: e.g., "runtime cannot provide isolated test-author workspace").
 
-Create the worktree using whichever mechanism is available, in priority order:
-1. **Worktrunk** (`wt switch <branch-name>`) — if the `worktrunk` skill or `wt` CLI is available. Preferred because it handles setup hooks and cleanup.
-2. **Agent-native worktrees** (`EnterWorktree`) — if the agent framework provides worktree tooling.
-3. **Git CLI** (`git worktree add`) — always available as a fallback.
+**Isolation via isolated workspace**: The test author must NOT have access to plan files. Use the active runtime adapter's isolation mechanism to create a temporary isolated workspace containing the relevant code surface but not the planning artifacts.
 
-The worktree is temporary — remove it after the test author finishes. The test files it writes exist on a branch that gets merged or cherry-picked back.
+The isolated workspace is temporary — remove it after the test author finishes. The test files it writes must be brought back to the main execution workspace using the active runtime adapter's mechanism.
 
-**Spawn a test author sub-agent inside the worktree** with a deliberately limited context:
+**Spawn a test author sub-agent inside the isolated workspace** with a deliberately limited context:
 
 **What the test author receives:**
 - The acceptance criteria from the task (extracted and relayed as inline text by the executor — NOT as a file path)
-- The relevant code surface (existing files, interfaces, types the tests will interact with — these are in the worktree)
+- The relevant code surface (existing files, interfaces, types the tests will interact with — these are in the isolated workspace)
 
-The test author's skills (`test-driven-development` + project-specific testing skills) must be preloaded via a worker agent definition — they cannot be passed dynamically at spawn time. If the plan specifies a test author worker agent, use it. If not, the test author runs without preloaded skills and relies on whatever the default agent has access to.
+The test author's skills (`test-driven-development` + project-specific testing skills) must be loaded using the active runtime adapter's execution-binding mechanism. If the plan specifies a test author binding, use it. If not, the test author runs with the runtime's default sub-agent setup and the executor compensates by providing the minimum required task-local context.
 
 **What the test author does NOT receive:**
 - Design decisions, implementation context, integration contracts, or any other section of the task
@@ -85,12 +97,12 @@ The test author's skills (`test-driven-development` + project-specific testing s
 - The task file itself
 
 **Two layers of isolation protect this separation:**
-1. **Physical**: The worktree contains only tracked source code. If plans are gitignored (the default), they don't exist in the worktree.
-2. **Contextual**: Even if plans are tracked and present in the worktree, the test author's prompt contains no plan paths, directory names, or breadcrumbs that would lead it to look for them. An agent won't search for files it doesn't know exist.
+1. **Physical**: The isolated workspace contains only the code surface the test author needs, not the planning artifacts.
+2. **Contextual**: The test author's prompt contains no plan paths, directory names, feature names, or breadcrumbs that would lead it to look for the planning artifacts.
 
 The test author writes tests grounded in the acceptance criteria and confirms they fail (RED). It returns the test file paths and a summary of what each test verifies.
 
-**After the test author finishes**: Bring the test files back to the main working tree (merge the worktree branch or cherry-pick the commit), then remove the worktree.
+**After the test author finishes**: Bring the test files back to the main execution workspace using the active runtime adapter's mechanism, then remove the isolated workspace.
 
 **Update progress**: Record test authoring as complete, note test file paths.
 
@@ -103,7 +115,7 @@ The test author writes tests grounded in the acceptance criteria and confirms th
 **What the implementer receives:**
 - The complete task (all sections — design decisions, context, contracts, acceptance criteria)
 - The tests written in step 3a (file paths)
-- The project's required skills (if the plan specifies them for this task, or via the implementer's worker agent definition)
+- The project's required skills (if the plan specifies them for this task, or via the implementer's execution binding)
 - Any outputs from prerequisite tasks (relayed by the executor)
 
 **What the implementer is told:**
@@ -167,20 +179,21 @@ A reference template is in this skill's `references/` directory:
 
 The executor updates this file after every meaningful step. It must be readable enough that a human (or a resumed executor) can understand exactly where execution stands.
 
-## Integration with Worker Agents
+## Integration with Execution Bindings
 
-If the plan specifies worker agents, the executor uses them:
+If the plan specifies runtime-specific execution bindings, the executor uses them:
 
-- **Test author worker**: Should preload testing and code-writing skills. The executor spawns this agent in a worktree and passes only acceptance criteria as inline text.
-- **Implementer worker**: Should preload the task's required skills (coding conventions, operational skills). The executor spawns this agent with the full task and test file paths.
+- **Test author binding**: Should preload testing and code-writing skills. The executor dispatches this agent in an isolated workspace and passes only acceptance criteria as inline text.
+- **Implementer binding**: Should preload the task's required skills (coding conventions, operational skills). The executor dispatches this agent with the full task and test file paths.
 
-For tasks without testable AC (docs, config, file moves), only the implementer worker is needed.
+For tasks without testable AC (docs, config, file moves), only the implementer binding is needed.
 
-If no worker agents are specified, the executor spawns sub-agents with the project's default model. The structural isolation (worktree + prompt hygiene) still applies regardless, but agents won't have skills preloaded.
+If no execution bindings are specified, the executor spawns sub-agents with the runtime's default model and tool configuration. The structural isolation requirements and prompt-hygiene rules still apply regardless, but agents may not have skills preloaded.
 
 ## Rules
 
 - **Never let the test author see design decisions** — the structural separation is the entire point. If the test author's prompt accidentally includes plan context, the separation is broken.
+- **Never claim structural TDD without enforced isolation** — if the active runtime cannot place the test author in the required isolated workspace, skip structural TDD and record the reason. Prompt hygiene alone does not satisfy the physical isolation requirement.
 - **Never let the implementer modify tests** — disputes are recorded and batched, not resolved by the implementer.
 - **Always update progress after each step** — this is the checkpoint mechanism. If you skip an update and the session drops, work is lost.
 - **Continue independent work when blocked** — don't stop the entire execution because one task has a dispute. If the plan specifies dependencies, use them to determine what can proceed. If no dependencies are specified, treat remaining tasks as sequential and pause at the blocked one.

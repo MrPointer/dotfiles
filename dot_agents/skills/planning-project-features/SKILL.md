@@ -9,6 +9,21 @@ Create thorough, actionable implementation plans for features within a single pr
 
 Plans are decomposed into a **master plan** (high-level orchestration) and **sub-plans** (self-contained, independently executable units). Before finalization, plans go through an **iterative multi-agent review loop** that surfaces architectural issues, risks, and implementation problems. This structure ensures that even the least capable executing agent can pick up a sub-plan and succeed without additional context.
 
+## Runtime Binding
+
+This skill has one canonical workflow. Runtime files only map that workflow to the active agent runtime's mechanics.
+
+Before doing any work, determine the active runtime and read exactly one adapter:
+
+- **Codex runtime** → [references/runtime-codex.md](references/runtime-codex.md)
+- **Claude runtime** → [references/runtime-claude.md](references/runtime-claude.md)
+
+**Determining the active runtime**: Check the system prompt and environment banner for identifying markers (e.g., "Claude Code", "Codex CLI"). If the signal is ambiguous, ask the user rather than guessing — reading the wrong adapter silently breaks assumptions downstream.
+
+Do not load or mix instructions from the other runtime adapter in the same turn. If a runtime adapter conflicts with this file, this file is authoritative.
+
+**Terminology bridge**: This skill uses runtime-neutral terms. Claude's runtime calls execution bindings "worker agent definitions"; Codex's runtime calls them "dispatch recipes". Reviewer bindings follow the same pattern. Use whichever term is native to the active runtime when writing or reading concrete artifacts; the canonical workflow terms are used only in this file.
+
 ## Core Principles
 
 1. **No Assumptions**: If something is unclear, ambiguous, or missing — ask. Do not fill in gaps with reasonable defaults or best guesses.
@@ -46,7 +61,7 @@ Once requirements are clear:
 3. Identify files that will need modification
 4. Note any architectural constraints or patterns to follow
 5. Flag potential conflicts or risks
-6. **Identify required skills**: Determine which skills (both global from `~/.claude/skills/` and local from `.claude/skills/`) an executing agent will need to follow project conventions correctly (e.g., `writing-go-code` for Go changes, `managing-chezmoi` for dotfile edits). Check the project's `AGENTS.md` for documented skill mappings.
+6. **Identify required skills**: Determine which skills available in the active runtime the executing agent will need to follow project conventions correctly (e.g., `writing-go-code` for Go changes, `managing-chezmoi` for dotfile edits). Check the project's `AGENTS.md` for documented skill mappings, then use the active runtime adapter for the exact discovery/loading mechanism.
 7. **Flag documentation gaps**: If critical areas needed for the plan are undocumented, note them. Recommend the appropriate documenting skill:
    - Missing domain knowledge → `documenting-domain`
    - Missing architecture overview → `documenting-architecture`
@@ -105,11 +120,11 @@ Only after Phases 1-3 are complete:
 └── ...
 ```
 
-2. **Discover available local reviewers**: Read the project's local agents directory to find reviewer agents. Match each sub-plan to the most appropriate available reviewer based on the agent's description and the sub-plan's domain.
+2. **Discover available local reviewers**: Use the active runtime adapter to discover the project's local reviewer bindings. Every supported runtime must provide a way to represent and invoke project-local reviewer sub-agents, even if the storage format or dispatch mechanism differs between runtimes. Match each sub-plan to the most appropriate local reviewer based on the reviewer's description and the sub-plan's domain.
 
 3. **Assign reviewers**: Write the chosen reviewer's name into each sub-plan's `## Reviewer` field.
 
-4. **Validate**: If no suitable local reviewer exists for a sub-plan's domain, **warn the user** with a specific recommendation (e.g., "sub-plan 03 covers database migrations but no reviewer with that expertise exists locally"). Ask how to proceed — do not skip the review silently.
+4. **Validate**: If no suitable local reviewer exists for a sub-plan's domain, **warn the user** with a specific recommendation (e.g., "sub-plan 03 covers database migrations but no reviewer with that expertise exists locally"). Ask how to proceed — do not silently substitute a generic global reviewer for project-specific review coverage.
 
 5. **Assign execution models**: For each sub-plan, assess complexity and recommend an execution model. This enables cost optimization by using cheaper models for straightforward work while reserving the most capable model for planning and review.
 
@@ -138,24 +153,20 @@ When in doubt, prefer one tier up — the cost of a wrong model choice is rework
 
 Document the recommendation in each sub-plan's `## Execution Model` field with a brief rationale.
 
-6. **Ensure worker agents exist for execution**: Each sub-plan's model + skills combination needs a matching worker agent definition. Worker agents are the **only reliable mechanism** for controlling which model a sub-agent runs on — model selection via natural language prompts or team configuration is unreliable.
+6. **Establish execution bindings for execution**: Each sub-plan's model + skills combination needs a matching runtime-specific execution binding. The active runtime adapter defines what that binding looks like — for example, a persistent worker definition, a reusable dispatch recipe, or another runtime-native mechanism. Natural language alone is not a reliable way to control model selection or preload the right skills.
 
-   **Search for existing workers**: Check both local and global agent directories. An agent is a match if its `model` field and `skills` list cover the sub-plan's requirements. A partial match (correct model but incomplete skills, or correct skills but different model) can serve as a basis for a new worker — clone and adapt rather than starting from scratch.
+   **Search for existing execution bindings**: Check the locations and mechanisms defined by the active runtime adapter. A binding is a match if it covers the sub-plan's required model tier and skill set. A partial match (correct model but incomplete skills, or correct skills but different model) can serve as a basis for an updated binding — adapt rather than starting from scratch.
 
-   **Create missing workers**: If no matching worker exists, create one following this format:
+   **Establish missing execution bindings**: If no matching binding exists, establish one using the mechanism defined by the active runtime adapter. If the runtime uses persistent bindings, create the required artifact. If the runtime uses ephemeral bindings, record the binding parameters in the runtime-specific way so retries and resumed execution use the same model and skills. The binding must make the sub-plan's model choice and required skills explicit enough that execution does not depend on prompt inference.
 
-   - **Naming convention**: `{model-tier}-{domain}-worker.md` (e.g., `mid-go-worker.md`, `cheap-docs-worker.md`). Domain should reflect the skills baked in; model tier should match the decision tree terminology.
-   - **Placement**: Always local (project-level agents directory), since skills are typically project-local.
-   - **Frontmatter rules**:
-     - `description` MUST be a quoted single-line YAML string with `\n` escapes. Multiline descriptions break frontmatter parsing and the agent won't be discovered.
-     - `model`: set to the target model identifier — this is what actually controls the execution model.
-     - `skills`: list of skill names to preload into the agent's context at startup. The agent does not need to load skills manually.
-     - Do NOT set `tools` unless you need to restrict access — omit for full tool access.
-   - **System prompt**: Brief role description. The sub-plan provides all task context; the agent definition provides model, skills, and identity.
+   - **Naming and placement**: Follow the active runtime adapter's conventions so the binding is discoverable by that runtime.
+   - **Model control**: Set the target model using the runtime's actual model-selection mechanism.
+   - **Skill preload**: Make the required skills explicit using the runtime's actual skill-loading mechanism.
+   - **Identity/prompt**: Keep the binding itself minimal. The sub-plan provides the task context; the binding provides model, skills, and runtime-native agent identity.
 
-   **Create a test author worker**: If any sub-plan has testable acceptance criteria, create a single test author worker for the project. It always uses the **most capable model** — the task is finite (write tests from acceptance criteria, confirm they fail) and critical enough to justify the investment. Preload the project's testing and code-writing skills, plus `test-driven-development` if it's available. Use the naming convention `{model-tier}-test-author-worker.md`, where the model tier reflects the most capable model available in the current environment. All sub-plans with testable AC share this single worker.
+   **Create a test author binding**: If any sub-plan has testable acceptance criteria, create a single test author binding for the project. It always uses the **most capable model** — the task is finite (write tests from acceptance criteria, confirm they fail) and critical enough to justify the investment. Preload the project's testing and code-writing skills, plus `test-driven-development` if it's available. All sub-plans with testable AC share this single binding.
 
-   **Warn the user**: Newly created worker agents may require a session restart to be discovered. Note this when presenting the plan.
+   **Warn the user**: If the runtime adapter says newly established persistent bindings require discovery, reload, or session restart before they become available, note that when presenting the plan.
 
 ### Phase 5: Initial Review Loop
 
@@ -165,16 +176,16 @@ After plan creation and reviewer assignment, run an iterative review process **o
 
 The review loop uses two types of reviewer agents:
 
-**Global reviewers** (from the global agents directory) — generic, project-agnostic:
+**Global reviewers** — generic, project-agnostic reviewer roles provided outside the current project:
 - **`plan-architect-reviewer`** — Evaluates the decomposition, boundaries between sub-plans, dependency graph, and whether the pieces will fit together when assembled.
 - **`plan-risk-reviewer`** — Identifies technical risks the planner missed: migration pitfalls, backward-compatibility landmines, missing rollback strategies, and sub-plans that may be harder or more complex than they appear.
 - **`plan-clarity-reviewer`** — Catches vague, ambiguous, or speculative language in sub-plans that would force executing agents to make design decisions the planner should have resolved.
 
-**Local reviewers** (from the local agents directory) — project-specific, domain-specialized:
-- Each project defines its own reviewer agents tailored to the domains it works with (e.g., API, UI, database, infrastructure). These reviewers can preload project-specific skills via the `skills` frontmatter field for deep domain knowledge.
-- The planner does not assume naming conventions — it discovers available agents and matches them to sub-plans by reading their descriptions.
+**Project-local reviewers** — project-specific, domain-specialized reviewer roles:
+- Each project defines its own reviewer bindings tailored to the domains it works with (e.g., API, UI, database, infrastructure). The active runtime adapter defines how those bindings are represented and invoked, but not whether they exist conceptually — local reviewer coverage is a planning requirement.
+- The planner does not assume naming conventions — it discovers available local reviewer bindings and matches them to sub-plans by reading their descriptions.
 
-**Launching reviewers**: Always launch reviewer agents with `subagent_type: "general-purpose"` so they inherit the full tool set declared in their agent definition (including Write/Edit for writing review output). Using a read-only subagent type (e.g., Explore) would silently strip write tools, forcing the planner to relay output manually.
+**Launching reviewers**: Use the active runtime adapter's reviewer-launch mechanism so reviewers receive the intended tools, context, and model assignment. If a required reviewer binding is not available in the active runtime, report the gap and stop rather than recreating the reviewer ad hoc.
 
 #### Review Output Location
 
@@ -190,7 +201,7 @@ Review output is saved to `reviews/` within the plan directory, named `<plan-fil
 └── ...
 ```
 
-**Who writes review files** depends on the reviewer agent's capabilities. When launching a reviewer, pass the output file path (e.g., `reviews/00-master.architect.md`). Write-capable reviewers (those with Write/Edit tools) write the file themselves. Read-only reviewers return findings as their response, and the planner writes the file on their behalf. The planner should check whether the output file was created after the reviewer finishes to determine which path was taken.
+**Who writes review files** depends on the runtime and the reviewer binding's capabilities. When launching a reviewer, pass the output file path (e.g., `reviews/00-master.architect.md`) when the runtime supports that pattern. If the reviewer cannot write files directly, it returns findings in its response and the planner writes the file on its behalf. The planner should check whether the output file was created after the reviewer finishes to determine which path was taken.
 
 This directory is ephemeral — already covered by the `plans/` ignore rule — but persists locally across sessions for reference.
 
@@ -294,8 +305,8 @@ Skip the documentation sub-plan when:
 
 ## Rules (Non-Negotiable)
 
-- **Always respect model assignments during execution** — Sub-plan model assignments are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
-- **Use worker agents for multi-plan execution** — When a plan has 2+ sub-plans, spawn each sub-plan's assigned worker agent (created in Phase 4 step 6). Worker agents are the **only reliable mechanism** for controlling sub-agent model selection — model requests via natural language prompts or team configuration are unreliable. Run independent sub-plans in parallel where the agent framework supports it. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a worker agent fails, diagnose and retry — do not silently execute on the main agent or fall back to a more expensive model. If the issue cannot be resolved, STOP and ask the user.
+- **Always respect model assignments during execution** — Sub-plan model assignments are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used via the active runtime's actual model-selection mechanism. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
+- **Use runtime-specific execution bindings for multi-plan execution** — When a plan has 2+ sub-plans, dispatch each sub-plan through its assigned execution binding from Phase 4 step 6. That binding is the reliable mechanism for controlling model selection and skill preload; prompt wording alone is not. Run independent sub-plans in parallel where the runtime supports it. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a binding fails, diagnose and retry — do not silently execute on the main agent or fall back to a more expensive model. If the issue cannot be resolved, STOP and ask the user.
 - **Planner owns review output** — The planner passes the review output file path to each reviewer. Write-capable reviewers write the file directly; read-only reviewers return findings as their response, and the planner writes the file on their behalf. The planner checks whether the file exists after the reviewer finishes.
 - **Never write a plan based on incomplete information**
 - **Never invent requirements the user didn't specify**
@@ -303,7 +314,7 @@ Skip the documentation sub-plan when:
 - **Each sub-plan must be self-contained** — embed context, don't reference other sub-plans
 - **Always list required skills in every sub-plan** — an executing agent without the right skills will produce subpar results or get stuck
 - **Always run the review loop before presenting to the user** — unreviewed plans are draft plans, not finished plans
-- **Save plans to the correct location** — standalone features go to `plans/features/<feature-name>/`, epic features go to `plans/epics/<epic-name>/<feature-name>/`. Never save to `~/.claude/` or `.claude/`, and never use random/generated filenames
+- **Save plans to the correct location** — standalone features go to `plans/features/<feature-name>/`, epic features go to `plans/epics/<epic-name>/<feature-name>/`. Never save to runtime metadata directories, and never use random/generated filenames
 - **Ask for clarification even if it feels repetitive** — it's better than introducing garbage
 
 [master-plan-template]: references/master-plan-template.md
