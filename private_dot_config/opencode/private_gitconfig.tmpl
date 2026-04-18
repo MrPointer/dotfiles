@@ -1,0 +1,40 @@
+[user]
+   name = {{ .personal.full_name }}
+   email = {{ .personal.email }}
+   signingkey = {{ .chezmoi.homeDir }}/.ssh/id_ed25519.pub
+[branch]
+   sort = committerdate
+[pull]
+   rebase = true
+[rebase]
+   autosquash = true
+   autostash = true
+[merge]
+   conflictstyle = zdiff3
+[submodule]
+   recurse = true
+[core]
+   autocrlf = input
+   editor = nvim
+   pager = diff-so-fancy | less --tabs=4 -RFX
+[diff]
+   algorithm = histogram
+   external = difft
+[grep]
+   patternType = perl
+[alias]
+   exe = update-index --chmod=+x
+   root = rev-parse --show-toplevel
+
+   # `git log` with patches shown with difftastic.
+   dl = -c diff.external=difft log -p --ext-diff
+
+   # Show the most recent commit with difftastic.
+   ds = -c diff.external=difft show --ext-diff
+
+   # `git diff` with difftastic.
+   dft = -c diff.external=difft diff
+[commit]
+   gpgSign = true
+[gpg]
+   format = ssh
