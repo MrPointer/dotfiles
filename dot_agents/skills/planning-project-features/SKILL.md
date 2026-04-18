@@ -15,14 +15,15 @@ This skill has one canonical workflow. Runtime files only map that workflow to t
 
 Before doing any work, determine the active runtime and read exactly one adapter:
 
+- **OpenCode runtime** → [references/runtime-opencode.md](references/runtime-opencode.md)
 - **Codex runtime** → [references/runtime-codex.md](references/runtime-codex.md)
 - **Claude runtime** → [references/runtime-claude.md](references/runtime-claude.md)
 
-**Determining the active runtime**: Check the system prompt and environment banner for identifying markers (e.g., "Claude Code", "Codex CLI"). If the signal is ambiguous, ask the user rather than guessing — reading the wrong adapter silently breaks assumptions downstream.
+**Determining the active runtime**: Check the system prompt and environment banner for identifying markers (e.g., "OpenCode", "Claude Code", "Codex CLI"). If the signal is ambiguous, ask the user rather than guessing — reading the wrong adapter silently breaks assumptions downstream.
 
 Do not load or mix instructions from the other runtime adapter in the same turn. If a runtime adapter conflicts with this file, this file is authoritative.
 
-**Terminology bridge**: This skill uses runtime-neutral terms. Claude's runtime calls execution bindings "worker agent definitions"; Codex's runtime calls them "dispatch recipes". Reviewer bindings follow the same pattern. Use whichever term is native to the active runtime when writing or reading concrete artifacts; the canonical workflow terms are used only in this file.
+**Terminology bridge**: This skill uses runtime-neutral terms. Claude's runtime calls execution bindings "worker agent definitions"; Codex's runtime calls them "dispatch recipes"; OpenCode's runtime uses custom subagent definitions. Reviewer bindings follow the same pattern. Use whichever term is native to the active runtime when writing or reading concrete artifacts; the canonical workflow terms are used only in this file.
 
 ## Core Principles
 
