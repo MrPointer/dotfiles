@@ -103,7 +103,7 @@ Present the completed spec with a brief summary:
 
 ## Spec Document Structure
 
-A reference template is in this skill's `references/` directory. Read it when creating specs:
+A reference template is in this skill's `assets/` directory. Read it when creating specs:
 
 - **[Design spec template][spec-template]**
 
@@ -118,4 +118,4 @@ The template is a starting point — adapt sections to fit the design's complexi
 - **Respect the user's domain knowledge** — they may know things you can't derive from the codebase. When they state something confidently, don't second-guess it with "are you sure?"
 - **If scope is too large, decompose first** — help the user break the problem into independent pieces before brainstorming any single piece in depth
 
-[spec-template]: references/spec-template.md
+[spec-template]: assets/spec-template.md

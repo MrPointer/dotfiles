@@ -268,7 +268,7 @@ If this project has component documentation, run the `component-docs-reviewer` a
 
 ## Plan Structures
 
-Templates for plan files are in this skill's `references/` directory. Read them when creating plans:
+Templates for plan files are in this skill's `assets/` directory. Read them when creating plans:
 
 - **[Master plan template][master-plan-template]** — Orchestration document structure (no implementation details)
 - **[Sub-plan template][sub-plan-template]** — Self-contained execution unit structure
@@ -317,5 +317,5 @@ Skip the documentation sub-plan when:
 - **Save plans to the correct location** — standalone features go to `plans/features/<feature-name>/`, epic features go to `plans/epics/<epic-name>/<feature-name>/`. Never save to runtime metadata directories, and never use random/generated filenames
 - **Ask for clarification even if it feels repetitive** — it's better than introducing garbage
 
-[master-plan-template]: references/master-plan-template.md
-[sub-plan-template]: references/sub-plan-template.md
+[master-plan-template]: assets/master-plan-template.md
+[sub-plan-template]: assets/sub-plan-template.md

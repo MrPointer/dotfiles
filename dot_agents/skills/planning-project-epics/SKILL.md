@@ -154,4 +154,4 @@ The user is the workflow engine — the epic plan is their coordination artifact
 - **Ask for clarification even if it feels repetitive** — it's better than a decomposition built on assumptions
 - **Rich feature descriptions are mandatory** — a feature planner starting cold must be able to understand what to plan without reading the whole epic or other features
 
-[epic-plan-template]: references/epic-plan-template.md
+[epic-plan-template]: assets/epic-plan-template.md

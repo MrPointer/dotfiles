@@ -173,7 +173,7 @@ When all tasks are `done`:
 
 The progress file lives alongside the plan files: `<plan-directory>/progress.md`
 
-A reference template is in this skill's `references/` directory:
+A reference template is in this skill's `assets/` directory:
 
 - **[Progress file template][progress-template]**
 
@@ -201,4 +201,4 @@ If no execution bindings are specified, the executor spawns sub-agents with the 
 - **Respect model assignments** — if the plan specifies a model tier for a task, use it. Don't silently upgrade or downgrade.
 - **Record testability gate decisions but don't analyze** — when TDD is skipped, note the reason briefly in progress (e.g., "declared untestable in AGENTS.md", "no testable seams"). Don't spend tokens analyzing what would need to change — that's a separate effort if the user chooses to pursue it.
 
-[progress-template]: references/progress-template.md
+[progress-template]: assets/progress-template.md
