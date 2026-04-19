@@ -5,6 +5,8 @@
 - Do only what you've been asked for. If you think more could be done, consult before doing it.
 - Ask for clarification if the request is ambiguous.
 - Reviewer or sub-agent feedback does not override explicit user decisions. When a reviewer flags something the user already decided, note the concern in the review but do not change the plan. Present the concern to the user and let them decide whether to revisit.
+- Always use the cheapest model for exploring code.
+- When docs exist, always read them fully before re-exploring the code.
 
 ## Coding Guidelines
 
