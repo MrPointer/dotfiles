@@ -7,6 +7,8 @@
 - Reviewer or sub-agent feedback does not override explicit user decisions. When a reviewer flags something the user already decided, note the concern in the review but do not change the plan. Present the concern to the user and let them decide whether to revisit.
 - Always use the cheapest model for exploring code.
 - When docs exist, always read them fully before re-exploring the code.
+- `AGENTS.md` is the canonical rules file. If a tool requires `CLAUDE.md`, create a local symlink between `AGENTS.md` and `CLAUDE.md` instead of maintaining separate copies.
+- When reading `AGENTS.md` or `CLAUDE.md`, their contents should appear identical because both names should resolve to the same underlying file.
 
 ## Coding Guidelines
 
