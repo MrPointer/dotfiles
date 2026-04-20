@@ -32,6 +32,11 @@
 - NEVER fetch directly from GitLab instances — always use the `glab` CLI instead.
 - If a `glab` command fails, diagnose and fix the failure or alert the user. Do not fall back to direct fetching.
 
+## Azure Devops Access
+
+- NEVER fetch directly from Azure DevOps instances — always use the `az` CLI instead.
+- If an `az` command fails, diagnose and fix the failure or alert the user. Do not fall back to direct fetching.
+
 ## Session Summaries
 
 - Summarize work at the end of edit sessions.
