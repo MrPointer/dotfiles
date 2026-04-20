@@ -17,6 +17,14 @@
 - Always assume the current file state is correct - never revert based on cached/stale versions.
 - Clean up any temporary files, scripts, or helpers created during the task.
 
+## Commit Messages
+
+- Keep the subject to 72 characters or fewer.
+- Leave exactly one blank line between the subject and body.
+- Wrap body lines at 72 characters or fewer.
+- Write the subject as a present-simple verb phrase so it reads naturally after: "If I were to apply this commit, it would <subject>".
+- Use the body to explain the motivation for the change and, when helpful, a high-level summary of what changed. Avoid low-level implementation detail.
+
 ## Plan Execution
 
 - If a sub-agent fails, diagnose the failure and retry with a fix — do NOT silently take over the work yourself.
