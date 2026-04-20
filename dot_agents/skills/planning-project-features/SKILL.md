@@ -7,7 +7,7 @@ description: Create implementation plans for features within a single project. D
 
 Create thorough, actionable implementation plans for features within a single project. **Never assume or guess** — ask until every gap is filled.
 
-Plans are decomposed into a **master plan** (high-level orchestration) and **sub-plans** (self-contained, independently executable units). Before finalization, plans go through an **iterative multi-agent review loop** that surfaces architectural issues, risks, and implementation problems. This structure ensures that even the least capable executing agent can pick up a sub-plan and succeed without additional context.
+Plans are decomposed into a **master plan** (high-level orchestration) and **sub-plans** (self-contained, independently executable units). Before finalization, plans go through an **iterative multi-agent review loop** that surfaces architectural issues, risks, clarity problems, and execution-consistency contradictions. This structure ensures that even the least capable executing agent can pick up a sub-plan and succeed without additional context.
 
 ## Runtime Binding
 
@@ -177,10 +177,11 @@ After plan creation and reviewer assignment, run an iterative review process **o
 
 The review loop uses two types of reviewer agents:
 
-**Global reviewers** — generic, project-agnostic reviewer roles provided outside the current project:
-- **`plan-architect-reviewer`** — Evaluates the decomposition, boundaries between sub-plans, dependency graph, and whether the pieces will fit together when assembled.
-- **`plan-risk-reviewer`** — Identifies technical risks the planner missed: migration pitfalls, backward-compatibility landmines, missing rollback strategies, and sub-plans that may be harder or more complex than they appear.
-- **`plan-clarity-reviewer`** — Catches vague, ambiguous, or speculative language in sub-plans that would force executing agents to make design decisions the planner should have resolved.
+**Global reviewers** - generic, project-agnostic reviewer roles provided outside the current project:
+- **`plan-architect-reviewer`** - Evaluates the decomposition, boundaries between sub-plans, dependency graph, and whether the pieces will fit together when assembled.
+- **`plan-risk-reviewer`** - Identifies technical risks the planner missed: migration pitfalls, backward-compatibility landmines, missing rollback strategies, and sub-plans that may be harder or more complex than they appear.
+- **`plan-clarity-reviewer`** - Catches vague, ambiguous, or speculative language in sub-plans that would force executing agents to make design decisions the planner should have resolved.
+- **`plan-executability-reviewer`** - Checks whether each sub-plan can actually be executed in isolation within its owned files and stated acceptance criteria, without forcing the agent to overreach or make unauthorized decisions about other sub-plans' code.
 
 **Project-local reviewers** — project-specific, domain-specialized reviewer roles:
 - Each project defines its own reviewer bindings tailored to the domains it works with (e.g., API, UI, database, infrastructure). The active runtime adapter defines how those bindings are represented and invoked, but not whether they exist conceptually — local reviewer coverage is a planning requirement.
@@ -197,6 +198,7 @@ Review output is saved to `reviews/` within the plan directory, named `<plan-fil
 ├── 00-master.architect.md      # Architecture review of master plan
 ├── 00-master.risk.md           # Risk review of master plan
 ├── 00-master.clarity.md        # Clarity review of master plan
+├── 00-master.executability.md  # Executability review of master plan
 ├── 01-data-model.installer.md  # Installer review of sub-plan 01
 ├── 02-api-layer.ci.md          # CI review of sub-plan 02
 └── ...
@@ -208,7 +210,7 @@ This directory is ephemeral — already covered by the `plans/` ignore rule — 
 
 #### Step 1: Master Plan Review
 
-Launch `plan-architect-reviewer`, `plan-risk-reviewer`, and `plan-clarity-reviewer` against the master plan (in parallel — they are independent). Pass the plan directory path and the review output file path (e.g., `reviews/00-master.architect.md`) so they can read all plan files and write their findings directly. If a reviewer didn't write its output file (read-only agent), write the reviewer's response to the file.
+Launch `plan-architect-reviewer`, `plan-risk-reviewer`, `plan-clarity-reviewer`, and `plan-executability-reviewer` against the master plan (in parallel - they are independent). Pass the plan directory path and the review output file path (for example, `reviews/00-master.architect.md` or `reviews/00-master.executability.md`) so they can read all plan files and write their findings directly. If a reviewer didn't write its output file (read-only agent), write the reviewer's response to the file.
 
 Reviewers evaluate architecture, contracts, constraints, and acceptance criteria — not implementation details (which are no longer in the plan). If a reviewer suggests adding implementation specifics ("specify which encoder method to use"), reject the suggestion — that's the executing agent's domain.
 
@@ -255,7 +257,7 @@ When the user requests changes, incorporate them and then **classify each change
 | Cosmetic / wording | Clarify a step description, rename a sub-plan, fix typos | **None** |
 | Scoped implementation detail | Add an edge case to one sub-plan, change a file path, adjust a step | **None** — planner judgment is sufficient |
 | Scope adjustment within a sub-plan | Add/remove acceptance criteria, change approach for one sub-plan | Re-review **only that sub-plan** with its assigned reviewer |
-| Structural change | New sub-plan added, dependency graph changed, boundaries shifted, sub-plans merged/split | Re-review affected sub-plans + `plan-architect-reviewer` on master plan |
+| Structural change | New sub-plan added, dependency graph changed, boundaries shifted, sub-plans merged/split, ownership or verification scope changed across sub-plans | Re-review affected sub-plans + `plan-architect-reviewer` and `plan-executability-reviewer` on master plan |
 
 **Default behavior**: After incorporating feedback, state what changed and recommend whether re-review is warranted. **Do not automatically re-run reviewers.** Let the user decide whether to spend the tokens. Example:
 
