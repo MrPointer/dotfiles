@@ -84,6 +84,17 @@ Evaluate the states between sequential and parallel sub-plans:
 
 Missing acknowledgment is usually a concern. A direct contradiction that makes a sub-plan's stated acceptance criteria unattainable is a critical finding.
 
+### 8. Check TDD Workflow Feasibility
+
+For each sub-plan that uses a test-author-first workflow, or for which the master plan assigns a test author binding, evaluate the execution state at the point where the test author would run:
+
+- Does the target package compile at that point in the sequence?
+- Do earlier sub-plans change interfaces, remove exports, or add abstract methods that the package under test has not satisfied yet?
+- Do the required mocks, fixtures, helpers, or other test doubles already exist at that point?
+- If mocks are generated, does the plan ensure they can be generated before the test author runs, or does it create a circular dependency where mock generation needs a compiling package that has not been repaired yet?
+
+If either compilation readiness or test infrastructure availability fails, flag it as a concern, or as a critical finding when it blocks multiple sub-plans or makes the stated execution order impossible. Recommend a concrete repair: add temporary stubs to restore compilation before test authoring, move mock generator configuration and regeneration into an earlier sub-plan, or adjust execution order so the test infrastructure exists before the test author is dispatched.
+
 ## Output Format
 
 Write your findings to the review output file path provided by the calling agent. If no output path is provided, return your findings as your response instead.

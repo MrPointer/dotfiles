@@ -80,6 +80,10 @@ If the code surface isn't ready for TDD, skip test authoring and proceed directl
 
 **Isolation capability gate**: Before structural TDD, use the active runtime adapter to verify that the runtime can place the test author in an isolated workspace that does not contain the planning artifacts. If the runtime cannot enforce that isolation, skip structural TDD and proceed directly to implementation. Record the decision briefly in the progress file (Tests column: `skipped`, Notes: e.g., "runtime cannot provide isolated test-author workspace").
 
+**Compilation readiness gate**: Before spawning the test author, verify that the target package compiles at the current execution state and that the required test infrastructure already exists. Earlier sub-plans may have changed interfaces or compile-time assertions in ways that leave the package temporarily uncompilable even though the task is still meant to follow structural TDD. Check for missing or stale mocks, fixtures, and test helpers as well. If the project uses generated mocks, confirm that the mock for the dependency under test exists and is up to date.
+
+If either check fails, resolve the blocker within the TDD framework instead of skipping TDD or inverting the order. Acceptable scaffolding includes adding method stubs that panic or return zero values to satisfy interface assertions, adding the package to the mock generator configuration and regenerating mocks, or creating missing test helpers. These are temporary unblockers for the test author, not the task implementation itself. Record every scaffold created in the progress file so the implementer knows what must be replaced in step 3b.
+
 **Isolation via isolated workspace**: The test author must NOT have access to plan files. Use the active runtime adapter's isolation mechanism to create a temporary isolated workspace containing the relevant code surface but not the planning artifacts.
 
 The isolated workspace is temporary — remove it after the test author finishes. The test files it writes must be brought back to the main execution workspace using the active runtime adapter's mechanism.
