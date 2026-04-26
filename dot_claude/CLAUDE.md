@@ -22,7 +22,7 @@
 - Keep the subject to 72 characters or fewer.
 - Leave exactly one blank line between the subject and body.
 - Wrap body lines at 72 characters or fewer.
-- Write the subject as a present-simple verb phrase so it reads naturally after: "If I were to apply this commit, it would <subject>".
+- Write the subject as a present-simple verb phrase so it reads naturally after: "If I were to apply this commit, it would <subject>". Always start with a lowercase verb.
 - Use the body to explain the motivation for the change and, when helpful, a high-level summary of what changed. Avoid low-level implementation detail.
 
 ## Plan Execution
