@@ -18,6 +18,8 @@ Before writing anything, collect the raw material:
 
 Do not rely solely on commit messages — they often lack the bigger picture. Read the actual changes.
 
+All PR content must describe the net change from the base branch to `HEAD`. Do not describe intermediate implementation steps, temporary refactors made during the session, or changes elsewhere in the worktree that are not part of the branch diff.
+
 ## Title
 
 Format: `<type>: <short description>`
@@ -42,11 +44,15 @@ In the **generated PR description**, prefix each section heading with a matching
 
 Write for a reviewer who has not seen the ticket. State the problem or goal, then the approach taken. Do not list files or repeat commit messages.
 
+Describe only the final reviewer-visible outcome relative to the base branch.
+
 ### Key Decisions (required)
 
 Each significant component or area that was added, changed, or removed gets its own `###` sub-heading under this section. A short paragraph describes what changed and, when the rationale is not obvious from the ticket alone, why.
 
 If a change isn't worth more than a single bullet point, it's not worth calling out here — the diff speaks for itself.
+
+Do not explain the order you made changes during the session unless that order is visible in the final branch state and matters to the reviewer.
 
 Include rationale when:
 - The PR makes internal refactors or restructuring choices that are self-contained (not driven by the ticket)
@@ -69,6 +75,8 @@ Introduced an idempotency key on webhook delivery to prevent duplicates on retry
 A table comparing the previous state to the new state. This helps reviewers understand the net effect without reading every line of the diff.
 
 Each row covers one meaningful area of change. Keep cells concise — short phrases, not sentences.
+
+Every row must compare the base branch state to the final branch state. Never use intermediate states from the implementation process as the `Before` or `After` values.
 
 ```
 ## Before & After
@@ -106,6 +114,7 @@ EOF
 ## Anti-Patterns
 
 - **Restating commits** — the commit log is one click away; the description should add context the commits lack.
+- **Describing session history instead of branch diff** — PR text must reflect `base...HEAD`, not the sequence of edits made while implementing the change.
 - **Listing every file changed** — the diff view exists for this; focus on *what* and *why*, not *where*.
 - **Vague summaries** — "various improvements" or "refactor code" tells the reviewer nothing.
 - **Over-long descriptions** — if the summary exceeds 5 lines, it is doing too much. Push detail into Key Decisions or Before & After.
