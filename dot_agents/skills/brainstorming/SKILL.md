@@ -9,13 +9,15 @@ Explore a problem space collaboratively. Turn rough ideas into validated design 
 
 The output is a **design spec document**: a committed artifact that captures the problem understanding, chosen approach, and key decisions. It stands on its own — useful whether the next step is formal planning, direct implementation, or team review.
 
+For brainstorming that spans sessions or substantial decision context, pair this skill with `anchoring-context`. Brainstorming drives exploration and convergence; the anchor preserves concise working memory until the final spec is produced.
+
 ## Core Principles
 
 1. **Diverge Before Converging**: Explore the problem space before narrowing to a solution. Challenge the framing, not just the details.
 2. **One Thread at a Time**: Ask one question per message. Give each answer room to reshape your understanding before moving on.
 3. **Genuine Alternatives**: When proposing approaches, each option must be a real contender with real tradeoffs — not strawmen set up to make one option look obvious.
 4. **The User Decides**: Present options with your recommendation and reasoning. Never silently pick an approach.
-5. **No Implementation**: This skill produces a design spec. It does not write code, create plans, or invoke other skills.
+5. **No Implementation**: This skill produces a design spec. It does not write code or create plans. It may pair with `anchoring-context` for long-running working memory, but does not chain into implementation or planning skills.
 
 ## Workflow
 
@@ -24,8 +26,9 @@ The output is a **design spec document**: a committed artifact that captures the
 Before asking anything, understand where you are:
 
 1. **Read project context**: Check the project's documentation pointers (AGENTS.md, CLAUDE.md, etc.) and read relevant docs (domain, architecture, business processes). Skim recent commits if the request relates to ongoing work.
-2. **Assess scope**: If the request describes multiple independent subsystems, flag this immediately. Don't spend questions refining details of something that needs decomposition first.
-3. **Identify what you already know vs. what you need to learn**: Don't ask questions the codebase already answers.
+2. **Read active anchors**: If the request resumes or continues existing work, look for a feature anchor using project conventions, then `docs/context/<topic>-anchor.md`. Read it before asking the user to restate context. If the brainstorming is likely to span sessions and no anchor exists, create one with `anchoring-context` before context accumulates only in chat.
+3. **Assess scope**: If the request describes multiple independent subsystems, flag this immediately. Don't spend questions refining details of something that needs decomposition first.
+4. **Identify what you already know vs. what you need to learn**: Don't ask questions the codebase already answers.
 
 ### Phase 2: Divergent Exploration
 
@@ -80,13 +83,14 @@ Present each section and confirm before moving on. A section that's straightforw
 Write the validated design to a spec document:
 
 1. **Save the spec**: `docs/specs/<topic>-design.md` (or follow project conventions if they exist for spec/design documents).
-2. **Self-review** before presenting:
+2. **Reconcile any anchor**: If an anchor was used, ensure the spec reflects the settled decisions and that the anchor keeps only active open questions, handoff state, or implementation-continuity context.
+3. **Self-review** before presenting:
    - **Placeholder scan**: Any "TBD", "TODO", incomplete sections?
    - **Internal consistency**: Do sections contradict each other?
    - **Scope check**: Is this focused enough, or does it need decomposition?
    - **Ambiguity check**: Could any decision be interpreted two ways? If so, pick one and make it explicit.
    - Fix issues inline — don't flag them, just fix them.
-3. **Present the spec path** and ask the user to review. Wait for approval.
+4. **Present the spec path** and ask the user to review. Wait for approval.
 
 If the user requests changes, make them and re-run the self-review. Only finalize once the user approves.
 
@@ -113,7 +117,7 @@ The template is a starting point — adapt sections to fit the design's complexi
 
 - **One question at a time** — don't overwhelm with lists of questions
 - **Never skip Phase 2** — even if the request seems clear, explore before converging
-- **Never chain to other skills** — this skill terminates with a spec artifact, nothing more
+- **Never chain to implementation or planning skills** — this skill terminates with a spec artifact. `anchoring-context` is allowed only as a companion memory protocol for long-running brainstorming.
 - **Never write code** — not even pseudo-code. Describe behavior and architecture, not implementation.
 - **Respect the user's domain knowledge** — they may know things you can't derive from the codebase. When they state something confidently, don't second-guess it with "are you sure?"
 - **If scope is too large, decompose first** — help the user break the problem into independent pieces before brainstorming any single piece in depth

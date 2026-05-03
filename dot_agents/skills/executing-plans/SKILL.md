@@ -49,6 +49,8 @@ Extract what's available:
 - Execution binding assignments (if specified)
 - File ownership per task (if specified — helps prevent conflicts during parallel execution)
 
+If the plan or user references an active feature anchor, read it for feature-level context before executing. If the plan names a feature but not an anchor path, look for one using project conventions, then `docs/context/<topic>-anchor.md`. The anchor explains intent, constraints, rationale, rejected alternatives, and handoff context; it is not the execution checkpoint. Do not infer an anchor from unrelated old feature docs.
+
 ### Step 2: Initialize or Resume Progress
 
 Check for an existing progress file alongside the plan (`progress.md` in the plan directory, or next to a single-file plan).
@@ -56,6 +58,8 @@ Check for an existing progress file alongside the plan (`progress.md` in the pla
 **If progress exists**: Read it, determine current state, and resume from the last checkpoint. Verify that completed tasks' artifacts still exist (files, tests). If something is missing, mark that task for re-execution.
 
 **If no progress exists**: Create the initial progress file from the plan. See [Progress File Format](#progress-file-format).
+
+The progress file is the source of truth for task-by-task execution status, tests, blockers, disputes, and completion. If an anchor is active, update it only for feature-level context: new durable decisions, changed constraints, spec/plan deviations, unresolved questions, or handoff state. Do not duplicate progress tables or per-task status in the anchor.
 
 ### Step 3: Execute Tasks
 
@@ -172,7 +176,8 @@ When all tasks are `done`:
 
 1. Run the full test suite to catch cross-task regressions
 2. Update progress file to reflect completion
-3. Report summary to the user: what was built, any issues encountered, final test results
+3. If an anchor is active, update its final active-work state without duplicating progress details, and note any durable decisions that should graduate to ADRs or permanent docs
+4. Report summary to the user: what was built, any issues encountered, final test results, and whether any ADR/doc follow-up was identified
 
 ## Progress File Format
 
@@ -201,6 +206,7 @@ If no execution bindings are specified, the executor spawns sub-agents with the 
 - **Never claim structural TDD without enforced isolation** — if the active runtime cannot place the test author in the required isolated workspace, skip structural TDD and record the reason. Prompt hygiene alone does not satisfy the physical isolation requirement.
 - **Never let the implementer modify tests** — disputes are recorded and batched, not resolved by the implementer.
 - **Always update progress after each step** — this is the checkpoint mechanism. If you skip an update and the session drops, work is lost.
+- **Do not use anchors as progress files** — anchors preserve feature-level rationale and handoff context. Progress files preserve mechanical execution state.
 - **Continue independent work when blocked** — don't stop the entire execution because one task has a dispute. If the plan specifies dependencies, use them to determine what can proceed. If no dependencies are specified, treat remaining tasks as sequential and pause at the blocked one.
 - **Relay prerequisite outputs between dependent tasks** — sub-agents cannot communicate with each other. The executor passes results between tasks when needed.
 - **Respect model assignments** — if the plan specifies a model tier for a task, use it. Don't silently upgrade or downgrade.

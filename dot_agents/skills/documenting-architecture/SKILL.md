@@ -36,7 +36,8 @@ Before writing anything:
 1. Check for existing architecture docs, ADRs (Architecture Decision Records), or design docs
 2. Read AGENTS.md for pointers to existing documentation
 3. Check for diagrams, READMEs in key directories, or informal architecture notes
-4. **If architecture docs already exist**: Understand their structure and extend them
+4. If invoked after feature work, read any referenced spec or active feature anchor for the feature's intent, decision rationale, rejected alternatives, and ADR candidates. If the feature is named but no anchor path is provided, look for one using project conventions, then `docs/context/<topic>-anchor.md`. Verify against the current code before documenting — anchors explain design context, but architecture docs document durable reality.
+5. **If architecture docs already exist**: Understand their structure and extend them
 
 ### Step 2: Analyze System Structure
 
@@ -123,6 +124,7 @@ See `docs/architecture/<area>.md` for <brief description>.
 - **documenting-business-processes**: Process docs explain how business workflows traverse the architecture
 - **documenting-components**: Component docs explain internals; architecture docs explain how components relate to each other
 - **project-feature-planning**: The planning skill's Phase 2 benefits enormously from architecture docs — agents understand system structure without reverse-engineering it from code
+- **anchoring-context**: Feature anchors can identify candidate decisions and motivation, but only durable architecture decisions verified against the completed implementation belong here
 
 ## Rules
 
