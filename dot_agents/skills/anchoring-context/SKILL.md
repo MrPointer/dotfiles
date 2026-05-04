@@ -50,6 +50,8 @@ Use a short, stable topic name. Prefer one anchor per coherent feature or invest
 
 Use [anchor-template.md](assets/anchor-template.md) as the starting point when creating a new anchor. Adapt sections to the work, but keep the document concise.
 
+For long-running anchors, include a **Quick Summary** near the top. The quick summary must be a self-contained design snapshot, not a set of category labels. Prefer a table with `Settled Direction` and `What It Means` columns. Each row should make sense without rereading the full decision log. Avoid vague areas like `Plugins`, `Scope`, or `Authoring` unless the row itself states the decision.
+
 ## Writing Rules
 
 - Be concise. Preserve durable context, not conversation history.
@@ -63,6 +65,9 @@ Use [anchor-template.md](assets/anchor-template.md) as the starting point when c
 - Update the anchor when reality changes. Do not preserve stale decisions as if they still apply.
 - Do not update inactive feature anchors just because later unrelated work changes code that the feature once touched. Anchors are for active work continuity, not historical maintenance.
 - Prefer ADRs or permanent documentation for durable architectural decisions that must remain true after the feature is complete.
+- Use markdown checkboxes in **Current State**: `[x]` for settled or completed context, and `[ ]` for active resumption items.
+- Store decisions by theme, not one entry per conversational turn.
+- Compact overlapping decisions while preserving the **Decision**, **Reason**, **Rejected**, **Reason rejected**, and **Reconsider if** details.
 
 ## Workflow
 
@@ -88,6 +93,13 @@ Capture outcomes and rationale. Do not copy hidden interactions, transcripts, or
 
 If an execution progress file exists, keep mechanical status there. The anchor may link to it, but should only summarize execution state when that summary affects cross-session understanding.
 
+Compact the anchor when:
+
+- The anchor exceeds roughly 200-300 lines.
+- Several related decisions accumulate in one session.
+- The quick summary no longer lets a new session resume quickly.
+- The user says the anchor is hard to scan.
+
 ### End Of Session Or Handoff
 
 Before stopping long-running work, update:
@@ -98,6 +110,15 @@ Before stopping long-running work, update:
 - Decisions made since the last anchor update.
 - Deviations from any spec or plan.
 - The next recommended step.
+
+Run an anchor hygiene pass during handoff:
+
+- Refresh the Quick Summary.
+- Update checkbox status.
+- Merge overlapping decisions.
+- Move resolved open questions into Decisions.
+- Remove stale "in progress" wording.
+- Keep only genuinely unresolved Open Questions.
 
 The handoff test is: a new session should be able to read the anchor and continue without anxiety or lengthy reconstruction.
 
@@ -116,6 +137,7 @@ Before presenting or relying on an anchor, verify:
 - It explains why key decisions were made.
 - It distinguishes settled decisions from open questions.
 - It names rejected alternatives that future sessions might otherwise re-propose.
+- Its Quick Summary is self-contained when present.
 - It has a clear next step when work is active.
 - It is concise enough to load quickly in a future session.
 - It does not contradict referenced specs, plans, ADRs, or current implementation state.

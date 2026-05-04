@@ -4,11 +4,16 @@
 
 Short statement of the problem, outcome, and motivation.
 
+## Quick Summary
+
+| Settled Direction | What It Means |
+|-------------------|---------------|
+| Concrete design direction and reason. | Practical effect future sessions should preserve. |
+
 ## Current State
 
-- Done:
-- In progress:
-- Next step:
+- [x] Settled or completed context.
+- [ ] Active resumption item or next step.
 
 ## Constraints
 
@@ -16,15 +21,17 @@ Short statement of the problem, outcome, and motivation.
 
 ## Decisions
 
-### <Date or Session Marker>: <Decision>
+### <Theme>
 
-Reason: Short motivation and intent behind the decision.
+**Decision:** Concrete choice that should guide future work.
 
-Rejected: Alternative that was considered.
+**Reason:** Short motivation and intent behind the decision.
 
-Reason rejected: Why it does not fit this work.
+**Rejected:** Alternative that was considered or might be re-proposed.
 
-Reconsider if: Condition that would make the decision worth revisiting.
+**Reason rejected:** Why it does not fit this work.
+
+**Reconsider if:** Condition that would make the decision worth revisiting.
 
 ## Open Questions
 

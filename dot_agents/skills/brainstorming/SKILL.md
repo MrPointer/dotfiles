@@ -83,7 +83,7 @@ Present each section and confirm before moving on. A section that's straightforw
 Write the validated design to a spec document:
 
 1. **Save the spec**: `docs/specs/<topic>-design.md` (or follow project conventions if they exist for spec/design documents).
-2. **Reconcile any anchor**: If an anchor was used, ensure the spec reflects the settled decisions and that the anchor keeps only active open questions, handoff state, or implementation-continuity context.
+2. **Reconcile any anchor**: If an anchor was used, ensure the spec reflects the settled decisions and that the anchor keeps only active open questions, handoff state, or implementation-continuity context. For long design sessions, reconcile the anchor into a self-contained design snapshot: checkbox current state, thematic decisions, active open questions only, and a quick summary that can be understood without reading the full decision log.
 3. **Self-review** before presenting:
    - **Placeholder scan**: Any "TBD", "TODO", incomplete sections?
    - **Internal consistency**: Do sections contradict each other?
