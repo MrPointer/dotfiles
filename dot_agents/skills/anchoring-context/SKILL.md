@@ -27,7 +27,8 @@ Context anchoring is a support protocol, not a replacement for task-specific ski
 
 | Skill | Owns | Anchor Role |
 |-------|------|-------------|
-| `brainstorming` | Exploration, framing, alternatives, convergence, final design spec | Read and update the anchor as persistent working memory during long-running design conversations |
+| `brainstorming` | Exploration, framing, alternatives, convergence | Read and update the anchor as persistent working memory during long-running design conversations |
+| `authoring-rfcs` | Final design RFC | Use the anchor as input, then let the RFC become the settled design artifact |
 | `planning-project-features` | Breaking an approved design into executable plans | Preserve decisions, unresolved questions, and handoff context that plans should respect |
 | `executing-plans` | Task execution, acceptance criteria, test status, blockers, and mechanical progress checkpoints | Track only feature-level context that future sessions need: intent, decision rationale, constraints, deviations from the design, and handoff context |
 | Documentation or ADR skills | Permanent project knowledge | Graduate stable decisions after the work settles |
@@ -122,11 +123,11 @@ Run an anchor hygiene pass during handoff:
 
 The handoff test is: a new session should be able to read the anchor and continue without anxiety or lengthy reconstruction.
 
-### Spec And ADR Flow
+### RFC And ADR Flow
 
-During long brainstorming, the anchor is the read/write working memory. The final design spec is the polished, committed design derived from the matured anchor.
+During long brainstorming, the anchor is the read/write working memory. The final RFC is the polished, committed design derived from the matured anchor and authored through `authoring-rfcs`.
 
-After a spec exists, keep the anchor only for active-work continuity: implementation state, deviations, new constraints, and new decisions. When the work settles, graduate durable architectural or domain decisions into ADRs or permanent documentation, then archive or stop updating the anchor unless the feature becomes active again.
+After an RFC exists, keep the anchor only for active-work continuity: implementation state, deviations, new constraints, and new decisions. When the work settles, graduate durable architectural or domain decisions into ADRs or permanent documentation, then archive or stop updating the anchor unless the feature becomes active again.
 
 Once an anchor is inactive, do not chase later code changes back into it. If later work invalidates a durable architectural decision, update the ADR or permanent documentation that owns that decision. Only reopen the feature anchor when the feature itself becomes active again.
 
@@ -140,4 +141,4 @@ Before presenting or relying on an anchor, verify:
 - Its Quick Summary is self-contained when present.
 - It has a clear next step when work is active.
 - It is concise enough to load quickly in a future session.
-- It does not contradict referenced specs, plans, ADRs, or current implementation state.
+- It does not contradict referenced RFCs, plans, ADRs, or current implementation state.
