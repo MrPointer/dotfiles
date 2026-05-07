@@ -9,13 +9,15 @@ Create implementation plans from a reviewed RFC. The RFC owns the design; this s
 
 ## Runtime Binding
 
-Use the runtime adapters from `planning-project-features-direct/references/`. They define runtime mechanics for reviewer dispatch, execution bindings, and artifact ownership. They do not change this workflow's routing or review policy.
+This skill has one canonical workflow. Runtime files only map that workflow to the active agent runtime's mechanics.
 
 Before doing any work, determine the active runtime and read exactly one adapter:
 
-- **OpenCode runtime** -> `../planning-project-features-direct/references/runtime-opencode.md`
-- **Codex runtime** -> `../planning-project-features-direct/references/runtime-codex.md`
-- **Claude runtime** -> `../planning-project-features-direct/references/runtime-claude.md`
+- **OpenCode runtime** -> [references/runtime-opencode.md](references/runtime-opencode.md)
+- **Codex runtime** -> [references/runtime-codex.md](references/runtime-codex.md)
+- **Claude runtime** -> [references/runtime-claude.md](references/runtime-claude.md)
+
+Do not load or mix instructions from another runtime adapter in the same turn. If a runtime adapter conflicts with this file, this file is authoritative.
 
 ## Core Principles
 
