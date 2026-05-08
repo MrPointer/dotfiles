@@ -1,8 +1,10 @@
 # RFC Template
 
-Use this template for RFCs that need to be precise enough for engineering review and later planning. Adapt section names to project conventions, but preserve the distinction between verified current state, proposed design, tradeoffs, and planning handoff context.
+Use this template for RFCs that need to be precise enough for human engineering review and later planning. Adapt section names to project conventions, but preserve the distinction between verified current state, proposed design, tradeoffs, and planning handoff context.
 
 Remove sections that truly do not apply. Do not leave placeholders in the final document.
+
+Write the RFC as a normal engineering design document. Do not refer to "the user," "the agent," "the model," or the prompting/review workflow in body prose. Recast conversation-derived input as requirements, constraints, decisions, assumptions, or source references.
 
 ```markdown
 # RFC-0000: <Title>
@@ -47,7 +49,7 @@ Valid review statuses: `Pending`, `Passed`, `Passed with concerns`, `Blocking`, 
 ## Decision Summary
 | Decision | Rationale | Consequence |
 |----------|-----------|-------------|
-| <Settled architectural decision> | <Why this decision was made> | <What this means for the design or future plan> |
+| <Settled architectural decision> | <Why this decision is appropriate for the project> | <What this means for the design or future plan> |
 
 ## Proposed Architecture
 <How the system will be structured after this design. Describe boundaries, ownership, responsibilities, and how the changed pieces fit with the existing architecture.>
@@ -69,7 +71,7 @@ Valid review statuses: `Pending`, `Passed`, `Passed with concerns`, `Blocking`, 
 ## Failure Modes And Recovery
 | Failure Mode | Expected Behavior | Recovery / User Impact |
 |--------------|-------------------|------------------------|
-| <What can go wrong> | <How the system responds> | <How the system recovers or what the user sees> |
+| <What can go wrong> | <How the system responds> | <How the system recovers or what affected actors see> |
 
 ## Security, Privacy, And Permissions
 <Authentication, authorization, secret handling, data exposure, local permissions, or privacy implications. Omit if not relevant.>
@@ -104,5 +106,5 @@ Valid review statuses: `Pending`, `Passed`, `Passed with concerns`, `Blocking`, 
 | Source | What It Confirms |
 |--------|------------------|
 | `<path-or-doc>` | <Current architecture, contract, constraint, or behavior verified from this source> |
-| User input | <User-stated constraint or decision that cannot be derived from code> |
+| Requirement or decision input | <Constraint, decision, or assumption that cannot be derived from code> |
 ```

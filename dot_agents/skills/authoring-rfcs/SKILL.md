@@ -7,7 +7,7 @@ description: Use when turning a settled design direction, brainstorming outcome,
 
 Turn a validated direction into an engineering RFC that can survive review and feed planning without re-litigating the architecture.
 
-The output is an RFC document: self-contained, precise, grounded in the current codebase or explicitly stated assumptions, and clear about the chosen design. It is not an anchor, implementation plan, ADR, transcript, or collection of well-arranged thoughts.
+The output is an RFC document for human engineering review: self-contained, precise, grounded in the current codebase or explicitly stated assumptions, and clear about the chosen design. It is not an anchor, implementation plan, ADR, transcript, agent handoff, or collection of well-arranged thoughts.
 
 ## Relationship To Other Skills
 
@@ -30,6 +30,7 @@ If used after `brainstorming`, do not reopen the conversation unless reviewer re
 6. **No Fabrication**: If a claim is not verified and not a user-stated requirement, mark it as an assumption or open question. Do not invent architecture to make the document feel complete.
 7. **Reviewer-Owned Quality**: Architecture, risk, and clarity review belong to reviewer subagents. The RFC author drafts and revises; reviewers validate.
 8. **Pattern-Aware, Not Pattern-Driven**: Use established architecture patterns when they fit the problem and existing system. Do not force Clean Architecture, Hexagonal Architecture, or DDD onto simple CRUD or codebases that do not need that structure.
+9. **Human RFC Voice**: Write the RFC as a normal engineering document by and for people. Do not expose the prompting process, agent workflow, reviewer mechanics, or phrases like "the user decided" in design prose.
 
 ## Workflow
 
@@ -80,6 +81,16 @@ If an unresolved question changes the architecture, stop and ask the user one qu
 ### Phase 4: Write The RFC
 
 Use the [RFC template][rfc-template] unless the project has a stronger convention.
+
+Write in a direct human engineering voice:
+
+- Convert conversation facts into project facts, constraints, or decisions. For example, write "Homebrew-only `uv` availability is acceptable for the MVP because target setups primarily use Homebrew," not "The user accepted Homebrew-only `uv` availability."
+- Use "we" only when it describes the project/team's chosen direction or operational responsibility. Avoid referring to "the user," "the agent," "the model," "the assistant," "the reviewer," or "the conversation" in the RFC body.
+- Put conversation-derived information in neutral terms such as "Requirement," "Constraint," "Decision," or "Assumption." Reserve a neutral source label such as "Requirement or decision input" for the **Source References** table when a fact cannot be derived from code or docs.
+- Do not write transcript-style rationale. The RFC should explain why the design is right, not who said what during discovery.
+- Do not optimize the language for downstream agents. Planning agents should benefit from the same clear human-readable design record that engineers use.
+
+Before review, scan the RFC body and rewrite any agent-centric or transcript-like phrasing, including "the user," "the assistant," "the agent," "the conversation," "explicitly accepted," "asked for," or "decided during brainstorming."
 
 Save the draft RFC using the project's convention. If none exists, use this ID and path convention:
 
@@ -142,6 +153,8 @@ If an anchor was used, update or reconcile it so settled design context points t
 - Never hide uncertainty in vague language. Ask about blocking uncertainty or record non-blocking uncertainty as an open question.
 - Never claim an existing component, interface, storage format, or runtime behavior exists without verifying it.
 - Prefer specific file paths and document references over broad statements like "the existing architecture".
-- Preserve user decisions. If a verified reality conflicts with a user decision, present the conflict and ask before changing the design.
+- Preserve approved decisions. If a verified reality conflicts with an approved decision, present the conflict and ask before changing the design.
+- Never refer to the human requestor as "the user" in RFC prose. Recast their input as requirements, constraints, decisions, assumptions, or source references.
+- Never mention agents, models, prompts, subagents, reviewer mechanics, or the authoring workflow in the RFC body except for the required **Review Record** metadata.
 
 [rfc-template]: assets/rfc-template.md
