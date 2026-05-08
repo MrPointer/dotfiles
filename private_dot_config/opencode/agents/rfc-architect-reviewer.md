@@ -34,8 +34,12 @@ The RFC is not a plan. Do not ask for sub-plan sequencing, task breakdowns, mode
 
 Write findings to the provided review output path. If no output path is provided, return findings as your response.
 
+Review output files are cumulative. For a new output file, write `## Review Round 1` before the verdict. If the output path already exists, read it first and append a new review round instead of replacing the file. Preserve all earlier review rounds exactly as historical context. Use an append/edit operation, or include the existing content unchanged before the new round if a whole-file write is unavoidable. Use the next sequential heading, for example `## Review Round 2`, and put the verdict, critical findings, concerns, and observations for the new review under that heading. If the existing file has the older single-review format, preserve it and append the new round after it.
+
 ```markdown
 # RFC Architecture Review: <RFC ID and Title>
+
+## Review Round 1
 
 ## Verdict
 

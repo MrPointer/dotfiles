@@ -114,7 +114,7 @@ Do not leave placeholders. Remove irrelevant optional sections rather than keepi
 
 ### Phase 5: Reviewer Review
 
-Before presenting the RFC, run reviewer subagents. Do not self-approve the RFC's architecture, risk profile, or clarity.
+Before presenting the first complete RFC draft, run reviewer subagents once. Do not self-approve the RFC's architecture, risk profile, or clarity.
 
 Required reviewers:
 
@@ -127,15 +127,33 @@ Optional reviewer:
 
 When launching reviewers, pass the RFC path, active anchor path if any, relevant source references, and the intended review output path. Ask reviewers to review the RFC as a design artifact, not as an implementation plan. They should not request task sequencing, code-level implementation instructions, or plan decomposition details.
 
+Review output files are cumulative artifacts. When re-running a reviewer, reuse the same review output path and instruct the reviewer to preserve existing content by appending a new review round to the file. Do not let a later review overwrite earlier findings. If a reviewer returns findings instead of writing the file, append those findings to the existing review file yourself without replacing prior rounds.
+
 Use this default review output location unless the project has a stronger convention:
 
 ```text
 docs/rfcs/reviews/RFC-0001.<reviewer>.md
 ```
 
-Incorporate reviewer findings into the RFC before presenting it. Preserve explicit user decisions: if reviewer feedback conflicts with a user decision or verified codebase reality, record the concern and ask the user before changing the design. Re-run only reviewers whose scope changed until required reviewers, and any optional reviewer that ran, report no blocking findings. Non-blocking concerns may remain in **Risks And Tradeoffs** or **Open Questions** with rationale.
+Incorporate reviewer findings into the RFC before presenting it. Preserve explicit user decisions: if reviewer feedback conflicts with a user decision or verified codebase reality, record the concern and ask the user before changing the design. Non-blocking concerns may remain in **Risks And Tradeoffs** or **Open Questions** with rationale.
 
-Update the RFC's **Review Record** before presenting it so planning can see which reviews ran, what remains open, and whether architecture and risk review passed. Use statuses like `Passed`, `Passed with concerns`, `Blocking`, or `Not requested`.
+#### Review Change Classification
+
+After incorporating initial reviewer findings, classify the resulting RFC changes before deciding whether to run or recommend re-review. Do not restart the full review by default.
+
+| Change Type | Examples | Re-review Action |
+|---|---|---|
+| Editorial / wording | Improve phrasing, remove transcript-like language, fix typos, reorganize prose without changing meaning | **None** |
+| Evidence / citation repair | Add source references, quote verified current-state details, clarify where a constraint came from | **None** unless the added evidence contradicts the reviewed design |
+| Finding-specific repair | Address one reviewer's finding without changing the chosen design, boundaries, contracts, data flow, compatibility strategy, or risk posture | **None by default**; recommend targeted re-review only if confirmation is genuinely needed |
+| Cross-scope design change | Change chosen approach, component boundaries, public contracts, data/control flow, state ownership, compatibility or migration strategy, failure behavior, or major risk mitigation | Run targeted re-review of the affected scopes, commonly `rfc-architect-reviewer` and/or `rfc-risk-reviewer` |
+| Large accumulated revision | Many smaller edits together make the reviewed artifact materially different, even if each edit looked local | **Ask the user** whether to spend tokens on targeted re-review; do not decide silently |
+
+Required reviewers do not need to re-approve every minor edit. There is no automatic convergence loop after the initial review. Automatically re-run reviewers only for clear cross-scope design changes, and only for affected scopes. If it is ambiguous whether a change is cross-scope, state the ambiguity and ask the user before launching any reviewer. Large accumulated revisions always require asking before re-review.
+
+Update the RFC's **Review Record** before presenting it so planning can see which reviews ran, what remains open, and whether architecture and risk review passed. Use statuses like `Passed`, `Passed with concerns`, `Blocking`, or `Not requested`. In the notes, record whether a verdict came from the original review, a targeted re-review, or author classification that no re-review was needed after a limited edit.
+
+If the user requests changes after the reviewed RFC is presented, incorporate them and classify the change using the same table. Default to stating what changed and recommending whether re-review is warranted; automatically spend reviewer tokens only for clear cross-scope design changes or when the user explicitly asks for re-review. The user can always request re-review regardless of classification.
 
 ### Phase 6: Present And Stop
 
