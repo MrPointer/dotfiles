@@ -1,6 +1,6 @@
 ---
 name: authoring-rfcs
-description: Use when turning a settled design direction, brainstorming outcome, context anchor, or architecture discussion into a codebase-grounded RFC. Produces self-contained RFC documents with verified current architecture, chosen design, tradeoffs, risks, stable IDs, and planning handoff context without creating implementation plans.
+description: Use when turning a settled design direction, brainstorming outcome, context anchor, or architecture discussion into a codebase-grounded RFC. Produces self-contained RFC documents with verified current architecture, chosen design, tradeoffs, risks, stable references, and planning handoff context without creating implementation plans.
 ---
 
 # RFC Authoring
@@ -92,13 +92,13 @@ Write in a direct human engineering voice:
 
 Before review, scan the RFC body and rewrite any agent-centric or transcript-like phrasing, including "the user," "the assistant," "the agent," "the conversation," "explicitly accepted," "asked for," or "decided during brainstorming."
 
-Save the draft RFC using the project's convention. If none exists, use this ID and path convention:
+Save the draft RFC using the project's convention. If none exists, use a descriptive filename:
 
 ```text
-docs/rfcs/RFC-0001-<topic>.md
+docs/rfcs/<topic>.md
 ```
 
-Assign the next sequential four-digit ID by inspecting existing RFCs in `docs/rfcs/`. The first RFC is `RFC-0001`. Use a stable, kebab-case topic slug after the ID, and title the document `# RFC-0001: <Title>`. Preserve the ID across revisions; update status and `Revision: R1` metadata instead of renumbering the RFC.
+Use a stable, kebab-case topic slug and title the document `# RFC: <Title>` unless the project uses a different heading style. Numbered RFC IDs are optional, not the default. Use IDs only when the project already has an `RFC-0001`-style convention, the user explicitly requests numbered RFCs, or the repository needs stable numbered cross-references across many RFCs. When IDs are appropriate, assign the next sequential ID by inspecting existing RFCs in `docs/rfcs/`, then preserve that ID across revisions.
 
 Scale detail to the design's complexity, but keep these sections conceptually present:
 
@@ -132,7 +132,7 @@ Review output files are cumulative artifacts. When re-running a reviewer, reuse 
 Use this default review output location unless the project has a stronger convention:
 
 ```text
-docs/rfcs/reviews/RFC-0001.<reviewer>.md
+docs/rfcs/reviews/<rfc-file-stem>.<reviewer>.md
 ```
 
 Incorporate reviewer findings into the RFC before presenting it. Preserve explicit user decisions: if reviewer feedback conflicts with a user decision or verified codebase reality, record the concern and ask the user before changing the design. Non-blocking concerns may remain in **Risks And Tradeoffs** or **Open Questions** with rationale.

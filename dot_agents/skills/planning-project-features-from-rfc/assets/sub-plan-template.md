@@ -9,7 +9,7 @@ Each sub-plan is a self-contained execution unit derived from the RFC. An agent 
 <What this sub-plan accomplishes and which RFC outcome it supports>
 
 ## RFC Context
-- **RFC**: `<docs/rfcs/RFC-0001-topic.md>`
+- **RFC**: `<docs/rfcs/topic.md>`
 - **Relevant RFC decisions**: <decisions this sub-plan must preserve>
 - **Relevant constraints / non-goals**: <constraints and exclusions this sub-plan must respect>
 

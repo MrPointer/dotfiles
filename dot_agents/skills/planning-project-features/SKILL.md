@@ -42,7 +42,7 @@ If no RFC exists, recommend creating one before planning. Explain the concrete b
 - It gives architecture and risk reviewers the right artifact to review.
 - It gives planning a stable, reviewed baseline instead of forcing it to rediscover the design.
 - It reduces token waste in planning by narrowing plan review to fidelity and executability.
-- It creates a stable `RFC-0001`-style reference for future plans, implementation sessions, and follow-up discussion.
+- It creates a stable RFC document reference for future plans, implementation sessions, and follow-up discussion.
 - It preserves user-approved decisions so the planner does not reopen them accidentally.
 
 Then ask the user to choose exactly one path:

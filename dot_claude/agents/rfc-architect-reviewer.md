@@ -1,6 +1,6 @@
 ---
 name: rfc-architect-reviewer
-description: "Use this agent to review RFC documents for architectural soundness. Evaluates current-state verification, proposed boundaries, contracts, data/control flow, failure behavior, fit with existing architecture, and whether the RFC is ready to feed planning without re-deciding the design.\n\n<example>\nContext: An RFC has been drafted for a feature design.\nuser: \"Review docs/rfcs/RFC-0003-auth-flow.md for architectural soundness.\"\nassistant: \"I'll review the RFC architecture, boundaries, contracts, and planning readiness.\"\n</example>"
+description: "Use this agent to review RFC documents for architectural soundness. Evaluates current-state verification, proposed boundaries, contracts, data/control flow, failure behavior, fit with existing architecture, and whether the RFC is ready to feed planning without re-deciding the design.\n\n<example>\nContext: An RFC has been drafted for a feature design.\nuser: \"Review docs/rfcs/auth-flow.md for architectural soundness.\"\nassistant: \"I'll review the RFC architecture, boundaries, contracts, and planning readiness.\"\n</example>"
 tools: Read, Glob, Grep, Write, Edit
 ---
 
@@ -29,7 +29,7 @@ Write findings to the provided review output path. If no output path is provided
 Review output files are cumulative. For a new output file, write `## Review Round 1` before the verdict. If the output path already exists, read it first and append a new review round instead of replacing the file. Preserve all earlier review rounds exactly as historical context. Use an append/edit operation, or include the existing content unchanged before the new round if a whole-file write is unavoidable. Use the next sequential heading, for example `## Review Round 2`, and put the verdict, critical findings, concerns, and observations for the new review under that heading. If the existing file has the older single-review format, preserve it and append the new round after it.
 
 ```markdown
-# RFC Architecture Review: <RFC ID and Title>
+# RFC Architecture Review: <RFC title or file name>
 
 ## Review Round 1
 

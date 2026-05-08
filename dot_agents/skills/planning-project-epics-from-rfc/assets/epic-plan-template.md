@@ -6,7 +6,7 @@ The epic plan is a coordination document that decomposes a reviewed RFC into seq
 # Epic: <Name>
 
 ## RFC Baseline
-- **RFC**: `<docs/rfcs/RFC-0001-topic.md>`
+- **RFC**: `<docs/rfcs/topic.md>`
 - **RFC Status**: <Accepted | Draft approved for planning | other project status>
 - **RFC Reviews**: `rfc-architect-reviewer` <status>, `rfc-risk-reviewer` <status>, `rfc-clarity-reviewer` <status or not requested>
 

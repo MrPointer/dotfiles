@@ -7,7 +7,7 @@ Remove sections that truly do not apply. Do not leave placeholders in the final 
 Write the RFC as a normal engineering design document. Do not refer to "the user," "the agent," "the model," or the prompting/review workflow in body prose. Recast conversation-derived input as requirements, constraints, decisions, assumptions, or source references.
 
 ```markdown
-# RFC-0000: <Title>
+# RFC: <Title>
 
 Status: Draft
 Revision: R0

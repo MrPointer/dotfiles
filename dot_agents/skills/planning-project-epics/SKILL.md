@@ -42,7 +42,7 @@ If no RFC exists, recommend creating one before epic planning. Explain the concr
 - It gives architecture and risk reviewers the right artifact to review.
 - It gives epic planning a stable, reviewed baseline for feature boundaries and sequencing.
 - It reduces token waste by narrowing epic review to RFC fidelity and feature-decomposition quality.
-- It creates a stable `RFC-0001`-style reference for the epic plan and future feature plans.
+- It creates a stable RFC document reference for the epic plan and future feature plans.
 - It preserves user-approved decisions so the epic planner does not reopen them accidentally.
 
 Then ask the user to choose exactly one path:

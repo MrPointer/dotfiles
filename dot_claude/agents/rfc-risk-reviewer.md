@@ -1,6 +1,6 @@
 ---
 name: rfc-risk-reviewer
-description: "Use this agent to review RFC documents for technical risks and feasibility issues. Evaluates migration and compatibility risks, rollback gaps, operational hazards, hidden complexity, irreversible decisions, and whether the RFC's mitigations are concrete enough before planning starts.\n\n<example>\nContext: An RFC proposes a storage format migration.\nuser: \"Review docs/rfcs/RFC-0004-storage-format.md for risks and feasibility.\"\nassistant: \"I'll review the RFC for migration, compatibility, rollback, and hidden-complexity risks.\"\n</example>"
+description: "Use this agent to review RFC documents for technical risks and feasibility issues. Evaluates migration and compatibility risks, rollback gaps, operational hazards, hidden complexity, irreversible decisions, and whether the RFC's mitigations are concrete enough before planning starts.\n\n<example>\nContext: An RFC proposes a storage format migration.\nuser: \"Review docs/rfcs/storage-format.md for risks and feasibility.\"\nassistant: \"I'll review the RFC for migration, compatibility, rollback, and hidden-complexity risks.\"\n</example>"
 tools: Read, Glob, Grep, Write, Edit
 ---
 
@@ -29,7 +29,7 @@ Write findings to the provided review output path. If no output path is provided
 Review output files are cumulative. For a new output file, write `## Review Round 1` before the verdict. If the output path already exists, read it first and append a new review round instead of replacing the file. Preserve all earlier review rounds exactly as historical context. Use an append/edit operation, or include the existing content unchanged before the new round if a whole-file write is unavoidable. Use the next sequential heading, for example `## Review Round 2`, and put the verdict, critical findings, concerns, and observations for the new review under that heading. If the existing file has the older single-review format, preserve it and append the new round after it.
 
 ```markdown
-# RFC Risk Review: <RFC ID and Title>
+# RFC Risk Review: <RFC title or file name>
 
 ## Review Round 1
 

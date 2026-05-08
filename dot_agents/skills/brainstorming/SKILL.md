@@ -87,7 +87,7 @@ Write the validated design to an RFC document with `authoring-rfcs`:
 1. **Load the RFC authoring skill**: Use `authoring-rfcs` for the final RFC document structure and reviewer workflow.
 2. **Pass the settled design inputs**: Include the agreed approach, constraints, rejected alternatives, unresolved non-blocking questions, and any anchor context.
 3. **Verify codebase reality**: Before writing the RFC, read the relevant docs and source files needed to describe the current architecture accurately. Do not let the anchor substitute for current-state verification.
-4. **Save the RFC**: `docs/rfcs/RFC-0001-<topic>.md` (or follow project conventions if they exist for RFC documents).
+4. **Save the RFC**: follow project conventions, or use `docs/rfcs/<topic>.md` when no convention exists. Use numbered RFC IDs only when the project already uses them or the user explicitly requests them.
 5. **Reconcile any anchor**: If an anchor was used, ensure the RFC reflects the settled decisions and that the anchor keeps only active open questions, handoff state, or implementation-continuity context. For long design sessions, reconcile the anchor into a self-contained design snapshot: checkbox current state, thematic decisions, active open questions only, and a quick summary that can be understood without reading the full decision log.
 6. **Run RFC reviewer review**: Use the reviewer workflow defined by `authoring-rfcs`. Incorporate reviewer findings before presenting.
 7. **Present the RFC path** and ask the user to review. Wait for approval.
