@@ -6,10 +6,18 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to OpenCode-
 
 ## Exploration and Dispatch
 
-- Use OpenCode subagents for exploration, test authoring, and implementation work when subagents materially help.
+- Use OpenCode subagents for exploration, test authoring, and implementation work when subagents materially help. OpenCode subagents can be invoked through native subagent dispatch, including `@<subagent-name>` mentions in an interactive session, and by primary agents through the Task tool when permitted.
 - Prefer the built-in `explore` subagent for cheap, read-only codebase exploration such as the testability gate.
 - Prefer a custom implementer or test-author subagent when the plan assigns a specific model tier or required skills; the built-in `general` subagent is acceptable only when no explicit binding is required.
 - Keep prompts narrow for test authors and complete for implementers, matching the canonical workflow.
+
+For same-workspace assigned workers, prefer native OpenCode subagent dispatch when it can invoke the named custom subagent and preserve the assigned model/permissions. In interactive sessions, mentioning `@<worker-name>` is a valid native invocation path. If the current runtime surface cannot invoke project-local custom subagents directly, or when explicit workspace routing is required, the CLI dispatch path is an acceptable fallback:
+
+```bash
+opencode run --agent <worker-name> --dir <workspace-path> "<task prompt>"
+```
+
+Before executing a multi-sub-plan plan, verify that every assigned worker name appears in `opencode agent list` or the runtime's native subagent picker. If native dispatch of an assigned worker fails, diagnose and retry once. If native dispatch is unavailable in the current surface, use `opencode run --agent ...` as a fallback. If no dispatch path works, stop and ask the user; do not perform the assigned implementation in the coordinator context.
 
 ## Execution Bindings
 
@@ -32,11 +40,18 @@ OpenCode execution bindings should be **markdown-defined custom subagents** unde
 
 When `wt` is used, create or enter the isolated workspace with `wt switch`. Per Worktrunk's documented behavior, `wt switch` is the command that switches to a worktree and creates one if needed; use `wt switch --create <branch>` when the isolation branch does not exist yet. Its `--execute` mode can also be useful when you need to launch the agent directly inside the isolated worktree.
 
+For OpenCode structural TDD, the required verification is that the test-author process actually runs in the isolated workspace. Same-workspace `@<subagent-name>` invocation is not sufficient for this gate unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable isolation-routing mechanisms include:
+
+- `wt switch --create <isolation-branch> --execute 'opencode run --agent <test-author-worker> --dir "$PWD" "<AC-only prompt>"'`
+- Creating the isolated worktree with `wt`, determining its path, then running `opencode run --agent <test-author-worker> --dir <isolated-worktree-path> "<AC-only prompt>"`
+- Any native OpenCode subagent dispatch mechanism that explicitly targets the isolated worktree and can be verified before the test author sees context.
+
 OpenCode's public docs describe subagents, custom agent files, and permissions, but they do not currently document a first-class mechanism for dispatching a subagent into an arbitrary alternate workspace. Therefore:
 
 - Do not assume structural TDD is possible just because subagents exist.
 - Structural TDD is allowed only when you can verify that the test-author subagent will actually run against the isolated worktree rather than the main workspace.
-- If you cannot verify that workspace routing, skip structural TDD and record `runtime cannot provide isolated test-author workspace` in progress.
+- If `wt` and either native isolated-workspace subagent routing or `opencode run --agent --dir` are available, do not skip structural TDD without first attempting or otherwise concretely verifying one of those routing paths.
+- If routing cannot be verified after an attempted dispatch, record the exact attempted mechanism and failure in progress, then stop and ask whether to fix isolation or explicitly skip structural TDD.
 
 **Physical isolation**: The isolated worktree must contain only the tracked code surface the test author needs. Do not copy plan files into it.
 
@@ -52,6 +67,7 @@ In both cases, verify that the test files now exist in the main execution worksp
 ## Implementer Dispatch
 
 - Dispatch a separate implementer subagent with the full task, test file paths, prerequisite outputs, and required skills.
+- Use native OpenCode subagent dispatch for assigned implementer workers when available. Use `opencode run --agent <implementer-worker> --dir <main-workspace> "<full task prompt>"` when the current runtime surface cannot invoke the custom worker directly or when explicit workspace routing is needed.
 - Tell the implementer explicitly that tests are immutable.
 - If the implementer reports a dispute, record it in progress and continue with independent tasks per the canonical workflow.
 
@@ -59,6 +75,7 @@ In both cases, verify that the test files now exist in the main execution worksp
 
 - The parent executor owns `progress.md` and updates it after each meaningful step.
 - Even if a subagent writes files directly, the parent remains responsible for checkpointing and verifying that expected artifacts exist.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort from the worker binding, command or runtime mechanism used, workspace path, and TDD isolation outcome.
 
 ## Model Assignment
 

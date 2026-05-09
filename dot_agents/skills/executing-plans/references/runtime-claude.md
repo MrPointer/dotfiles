@@ -10,6 +10,7 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to Claude-na
 - Respect the model tier assigned by the plan — use the worker agent's `model` field, not prompt wording, to control model selection.
 - For testability gate exploration, prefer `subagent_type: "Explore"` at a cheap model tier.
 - Keep prompts narrow for test authors and complete for implementers, matching the canonical workflow.
+- Before executing a multi-sub-plan plan, verify every assigned worker agent is discoverable to the current session. If a worker is missing or cannot be launched, diagnose and retry once when the cause is mechanical. If it still fails, stop and ask the user; do not perform assigned implementation in the coordinator context.
 
 ## Execution Bindings
 
@@ -31,7 +32,7 @@ Claude execution bindings are **file-defined worker agents** under `.claude/agen
 
 **Contextual isolation**: Even with physical isolation, the test author's prompt must not reveal the plan path, task file path, feature name, or design rationale. Pass only acceptance criteria (inline as text, not as a file path) and the code surface the tests interact with.
 
-**Structural TDD gate**: If Claude cannot create the isolated worktree (e.g., the repository has uncommitted changes that block worktree creation and the user declines to resolve them), skip structural TDD and record the reason in progress.
+**Structural TDD gate**: If Claude cannot create the isolated worktree (e.g., the repository has uncommitted changes that block worktree creation and the user declines to resolve them), skip structural TDD only after recording the attempted mechanism and failure. If an isolation mechanism exists but dispatch into it fails, stop and ask whether to fix isolation or explicitly skip structural TDD.
 
 **Bringing test files back**: After the test author finishes, return the test files to the main execution workspace:
 
@@ -49,6 +50,7 @@ Claude execution bindings are **file-defined worker agents** under `.claude/agen
 
 - The parent executor owns `progress.md` and updates it after each meaningful step.
 - Even if a worker writes files directly, the parent remains responsible for checkpointing and verifying that expected artifacts exist.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, workspace path, and TDD isolation outcome.
 
 ## Model Assignment
 
