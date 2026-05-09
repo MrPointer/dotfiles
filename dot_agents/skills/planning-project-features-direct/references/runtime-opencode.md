@@ -17,7 +17,7 @@ This adapter maps the canonical planning workflow in `../SKILL.md` to OpenCode-n
 - Project-local OpenCode agents: `.opencode/agents/` within the repository
 - Global OpenCode agents: `~/.config/opencode/agents/`
 
-**Dotfile-source note**: If the project itself is a chezmoi source directory or another dotfile source repo, use the source-path equivalents when creating global artifacts (for example `dot_config/opencode/agents/` rather than editing `~/.config/opencode/agents/` directly).
+**Dotfile-source note**: If the project itself is a chezmoi source directory or another dotfile source repo, use the source-path equivalents when creating global artifacts (for example `private_dot_config/opencode/agents/` rather than editing `~/.config/opencode/agents/` directly).
 
 **Precedence**: When the same agent name exists in both places, project-local wins. When searching for reusable reviewer or execution bindings, check project-local first, then global.
 
@@ -75,6 +75,22 @@ Do not rely on prompt text alone to pick the right model, and do not rely on the
 - Run independent reviewers in parallel using separate OpenCode subagent dispatches when practical.
 - Re-run only affected reviewers during convergence; do not restart the full review.
 - The planner remains responsible for checking that each expected review artifact was actually created.
+
+## Execution Dispatch
+
+Direct feature plans with two or more sub-plans must include concrete lead-agent instructions and worker tables in the master plan. During execution, OpenCode workers are invoked through the runtime's native subagent mechanism. In interactive sessions, `@<worker-name>` mention is a valid native invocation path when it can invoke the named worker and preserve the worker's configured model and permissions.
+
+The CLI is an acceptable fallback when the current runtime surface cannot invoke project-local custom subagents directly, or when explicit workspace routing is required:
+
+```bash
+opencode run --agent <worker-name> --dir <workspace-path> "<task prompt>"
+```
+
+Do not rely on prompt text alone to pick the right model, and do not let the coordinator execute a sub-plan directly when the plan assigned a worker or model tier.
+
+## TDD Isolation Mechanics
+
+If any sub-plan has testable acceptance criteria, the test-author binding must be paired with an isolation mechanism. Prefer `wt` when available in the project workflow, then dispatch the test author into the isolated workspace. Same-workspace `@<test-author-worker>` invocation is not sufficient for structural TDD unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable routing includes a verified native isolated-workspace dispatch mechanism or `opencode run --agent <test-author-worker> --dir <isolated-workspace>`. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when `wt` plus either native isolated-workspace dispatch or `opencode run --dir` is available.
 
 ## Model Assignment
 

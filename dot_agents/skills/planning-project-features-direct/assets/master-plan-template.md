@@ -32,13 +32,13 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 ## Execution via Worker Agents
 
-**Worker agents are REQUIRED for plans with 2+ sub-plans.** Each sub-plan's model + skills combination maps to a worker agent definition (created during Phase 4). Worker agents are the only reliable mechanism for controlling sub-agent model selection — model requests via natural language prompts or team configuration are unreliable.
+**Worker agents are REQUIRED for plans with 2+ sub-plans.** Each sub-plan's model + skills combination maps to a worker agent definition or dispatch recipe created during planning. Worker agents are the only reliable mechanism for controlling sub-agent model selection; model requests via natural language prompts or team configuration are unreliable.
 
 **The only exception** — skip worker agents when:
 - Single sub-plan (just execute directly)
 - All sub-plans are trivially small (e.g., "add one import")
 
-**Worker Agents** (created during planning):
+**Worker Agents**:
 | Sub-Plan | Implementer Worker | Test Author Worker | Model Tier |
 |----------|-------------------|-------------------|------------|
 | 01       | `<tier>-<domain>-worker` | `<tier>-test-author-worker` | <tier> |
@@ -65,11 +65,14 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 **Lead Agent Instructions**:
 - Use this master plan as the roadmap
-- Spawn each sub-plan's assigned worker agent from the table above
-- Run sub-plans in the same parallel group concurrently where the framework supports it
+- Before editing implementation files, initialize or resume `progress.md` and fill the execution audit with planned workers, model tiers, dispatch mechanisms, and TDD gate status
+- Spawn each sub-plan's assigned worker agent from the table above using the active runtime adapter's dispatch mechanism. Do not self-execute assigned worker tasks in the coordinator context
+- Run sub-plans in the same parallel group concurrently where the runtime supports it and file ownership does not conflict
 - For sequential dependencies, wait for the prior worker to complete before spawning the next
 - The lead relays information between workers when needed (workers cannot communicate directly)
-- Pass the sub-plan file path and any prerequisite context when spawning
+- Pass the sub-plan file path and any prerequisite context when spawning implementer workers
+- For test-author workers, pass only acceptance criteria and code-surface context through an isolated workspace; do not pass plan paths, feature names, or design rationale. Same-workspace subagent invocation is not enough for structural TDD unless the runtime can prove it routes the worker into the isolated workspace.
+- If a worker binding, model assignment, or TDD isolation mechanism cannot be used, diagnose and retry once. If it still cannot be used, stop and ask the user rather than falling back to coordinator execution or a different model tier
 - Synthesize results when all sub-plans finish
 
 **Coordination Points**:

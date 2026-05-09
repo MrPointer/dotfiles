@@ -55,6 +55,14 @@ Claude execution bindings are **file-defined worker agents** under the agent dir
 - Re-run only affected reviewers during convergence; do not restart the full review.
 - The planner is responsible for checking that each expected review artifact was actually created, regardless of whether the reviewer wrote it directly or returned findings.
 
+## Execution Dispatch
+
+Direct feature plans with two or more sub-plans must include concrete lead-agent instructions and worker tables in the master plan. During execution, launch the assigned Claude worker agents rather than recreating their persona in prompt text. Do not rely on prompt wording to pick the right model, and do not let the coordinator execute a sub-plan directly when the plan assigned a worker or model tier.
+
+## TDD Isolation Mechanics
+
+If any sub-plan has testable acceptance criteria, the shared test-author worker must be paired with an isolation mechanism. Prefer Worktrunk when available, then Claude's native worktree mechanism, then `git worktree`. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a worktree plus worker dispatch path is available.
+
 ## Model Assignment
 
 - Use the worker or reviewer definition's explicit `model` field as the source of truth.
