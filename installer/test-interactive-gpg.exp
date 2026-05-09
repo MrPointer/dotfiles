@@ -44,7 +44,7 @@ exp_internal 0
 log_user 1
 
 # Start the installer
-puts "🔑 Starting interactive GPG test with:"
+puts "Starting interactive GPG test with:"
 puts "  Installer: $installer_path"
 puts "  Email: $email"
 puts "  Name: $name"
@@ -71,70 +71,70 @@ set tool_select_step 0
 expect {
     # GPG email prompts (various possible formats)
     -re "(?i).*(email|e-?mail address)" {
-        puts "📧 Entering email address..."
+        puts "Entering email address..."
         send "$email\r"
         exp_continue
     }
 
     # GPG name/full name prompts
     -re "(?i).*(full name|name|real name)" {
-        puts "👤 Entering full name..."
+        puts "Entering full name..."
         send "$name\r"
         exp_continue
     }
 
     # GPG passphrase prompts
     -re "(?i).*(passphrase|password)" {
-        puts "🔐 Entering passphrase..."
+        puts "Entering passphrase..."
         send "$passphrase\r"
         exp_continue
     }
 
     # GPG "okay" confirmation - exact match for the problematic prompt
     -re "Change.*Name.*Email.*kay.*uit" {
-        puts "✅ GPG change/okay prompt (sending O)..."
+        puts "GPG change/okay prompt (sending O)..."
         send "O\r"
         exp_continue
     }
 
     # GPG "okay" confirmation - matches "(O)kay" pattern
     -re "\\(O\\)kay" {
-        puts "✅ GPG okay confirmation (sending O)..."
+        puts "GPG okay confirmation (sending O)..."
         send "O\r"
         exp_continue
     }
 
     # Fallback: any prompt containing "(O)" - likely GPG menu
     -re "\\(O\\)" {
-        puts "✅ GPG menu with O option (sending O)..."
+        puts "GPG menu with O option (sending O)..."
         send "O\r"
         exp_continue
     }
 
     # GPG key generation prompts
     -re "(?i).*(key.*size|rsa.*bits)" {
-        puts "🔧 Using default key size..."
+        puts "Using default key size..."
         send "\r"
         exp_continue
     }
 
     # Key expiration prompts
     -re "(?i).*(key.*expir|expir.*date)" {
-        puts "⏰ Setting key expiration..."
+        puts "Setting key expiration..."
         send "0\r"
         exp_continue
     }
 
     # GPG key type selection (default to RSA)
     -re "(?i).*(kind of key|key.*type)" {
-        puts "🔑 Selecting default key type..."
+        puts "Selecting default key type..."
         send "\r"
         exp_continue
     }
 
     # GPG comment field (usually optional)
     -re "(?i).*comment" {
-        puts "💬 Skipping comment field..."
+        puts "Skipping comment field..."
         send "\r"
         exp_continue
     }
@@ -146,19 +146,19 @@ expect {
         incr tool_select_step
         switch $tool_select_step {
             1 {
-                puts "🔧 Tool selection: selecting item 1..."
+                puts "Tool selection: selecting item 1..."
                 send "1\r"
             }
             2 {
-                puts "🔧 Tool selection: selecting item 2..."
+                puts "Tool selection: selecting item 2..."
                 send "2\r"
             }
             3 {
-                puts "🔧 Tool selection: selecting item 3..."
+                puts "Tool selection: selecting item 3..."
                 send "3\r"
             }
             4 {
-                puts "🔧 Tool selection: confirming with 0..."
+                puts "Tool selection: confirming with 0..."
                 send "0\r"
             }
         }
@@ -167,7 +167,7 @@ expect {
 
     # Error patterns
     -re "(?i).*(error|fail|abort)" {
-        puts "❌ Error detected in output"
+        puts "Error detected in output"
         set error_output $expect_out(buffer)
         puts "Error details: $error_output"
         # Don't exit immediately - some errors might be expected in CI
@@ -176,34 +176,34 @@ expect {
 
     # Success patterns
     -re "(?i).*(success|complete|finished|done)" {
-        puts "✅ Installation appears to have completed successfully"
+        puts "Installation appears to have completed successfully"
         exp_continue
     }
 
     # Timeout handling
     timeout {
-        puts "⏰ Timeout reached after 300 seconds"
+        puts "Timeout reached after 300 seconds"
         exit 1
     }
 
     # End of output
     eof {
-        puts "📋 Process completed"
+        puts "Process completed"
         # Get exit status
         catch wait result
         set exit_code [lindex $result 3]
         puts "Exit code: $exit_code"
 
         if {$exit_code == 0} {
-            puts "✅ Installation completed successfully!"
+            puts "Installation completed successfully!"
             exit 0
         } else {
-            puts "❌ Installation failed with exit code: $exit_code"
+            puts "Installation failed with exit code: $exit_code"
             exit $exit_code
         }
     }
 }
 
 # This should never be reached, but just in case
-puts "🤔 Unexpected end of script"
+puts "Unexpected end of script"
 exit 0
