@@ -14,6 +14,7 @@ Create user-facing documentation for libraries — the docs users actually read.
 3. **Connected to the Code**: Every example must come from the actual codebase — real types, real method signatures, real return values. Never write pseudocode or hypothetical examples. If the API changes, the docs should feel immediately stale so they get updated.
 4. **Site-Ready Structure**: Organize docs as if they'll be served by a static site generator (Starlight, MkDocs, Docusaurus). Each page stands alone but fits a reading order. Sidebar-friendly hierarchy, clear page boundaries, cross-page linking.
 5. **Adjacent, Not Redundant**: These docs complement inline code documentation — they don't replace it. Inline docs describe the API surface; library guides describe how to *use* it to get things done. Never duplicate what a godoc/rustdoc/typedoc already provides.
+6. **Proportionality To Reader Journey**: A new feature can update guide examples without becoming the whole guide. Preserve each page's original reader goal and level of detail unless the feature changes that goal.
 
 ## Documentation Structure
 
@@ -104,3 +105,4 @@ After writing:
 - **Keep getting-started ruthlessly short** — the reader's patience is at its lowest here; get them to "it works" fast
 - **Use reference-style links** — when linking between pages or to source files, use reference links for readability and maintainability
 - **Match the library's terminology** — use the same names the API uses, don't invent synonyms
+- **Preserve proportional emphasis** — update feature-relevant examples and explanations without turning broad guides into release notes or single-feature walkthroughs.

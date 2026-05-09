@@ -14,6 +14,7 @@ Document the business domain of a project: its terminology, entities, relationsh
 3. **Accurate Over Comprehensive**: Only document domain concepts that actually exist in the codebase. Don't invent domain models the project doesn't implement.
 4. **Non-Technical Where Possible**: Domain docs should be readable by non-technical stakeholders. Minimize code references — save those for component docs.
 5. **No Duplication Across Levels**: Domain docs are the canonical source for business concepts. Architecture, process, and component docs **reference** domain docs — they never redefine domain terms. If you find a concept documented elsewhere, consolidate it here and replace the duplicate with a reference.
+6. **Proportionality To Document Purpose**: A feature can motivate a doc update without becoming the doc's center of gravity. Preserve the document's existing purpose, audience, abstraction level, and relative emphasis. Mention feature-specific tools or mechanisms only as much as the domain concept requires.
 
 ## Documentation Hierarchy
 
@@ -111,5 +112,6 @@ See `docs/domain/<area>.md` for <brief description>.
 - **One definition per concept** — if a term is already defined in domain docs, other layers must reference it, not redefine it
 - **Defer process details to process docs** — if a concept involves a multi-step flow (loading chain, resolution sequence, initialization steps), define the concept here and link to the process doc for the "how"
 - **No behavioral conditionals** — if you're writing "when X happens", "in Y mode", or "if Z flag is set", that's a process description. Domain docs define static properties of concepts (what they are, what they contain, how they relate). Conditional behavior, modes, flags, and runtime decisions belong in process docs.
+- **Preserve proportional emphasis** — if updating an existing broad domain doc for a narrow feature, make the smallest accurate change. Do not let the feature's terminology dominate the domain doc unless the feature actually changes the domain's primary language.
 - **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **Propose structure first** — if no domain docs exist yet, propose a directory structure and format to the user before creating files

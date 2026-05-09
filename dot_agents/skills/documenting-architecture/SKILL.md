@@ -14,6 +14,7 @@ Document how a system is designed: its layers, boundaries, communication pattern
 3. **Accurate to the Code**: Document the architecture as it IS, not as it was designed to be. If the code has drifted from the original vision, document reality.
 4. **No Duplication Across Levels**: Architecture docs reference domain concepts — they never redefine business terms. If you need to mention a domain entity, link to the domain docs. Similarly, don't describe individual component internals — that belongs in component docs.
 5. **Discover, Don't Assume**: Read the code to understand the actual architecture. Don't project patterns onto it based on naming alone.
+6. **Proportionality To Document Purpose**: A feature can require architecture doc updates without becoming the architecture's center of gravity. Preserve the target doc's existing abstraction level and emphasis. Mention feature-specific tools, libraries, or commands only where they change durable boundaries, dependencies, or decisions.
 
 ## Documentation Hierarchy
 
@@ -133,5 +134,6 @@ See `docs/architecture/<area>.md` for <brief description>.
 - **Never describe component internals** — that belongs in component docs; architecture describes how components relate
 - **Document reality, not aspirations** — if the code doesn't match the intended architecture, document what exists and note the drift
 - **Rationale is mandatory** — every design decision must include "why", not just "what"
+- **Preserve proportional emphasis** — broad architecture docs should stay broad. If a feature only changes one dependency, guard, or integration point, update that specific claim instead of re-centering the document around the feature.
 - **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **Propose structure first** — if no architecture docs exist yet, propose a directory structure and format before creating files
