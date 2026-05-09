@@ -22,7 +22,7 @@ Also consult `AGENTS.md` (or `CLAUDE.md`) for documented skill mappings and doma
 
 ## Reviewer Bindings
 
-**Launch mechanism**: Always launch reviewer agents with `subagent_type: "general-purpose"` so they inherit the full tool set declared in their agent definition — including `Write`/`Edit` for writing review output directly. Using a narrower or read-only `subagent_type` (e.g., `Explore`) silently strips write tools, which forces the planner to relay review output manually and defeats write-capable reviewer definitions.
+**Launch mechanism**: Launch each reviewer agent through its own `subagent_type` (for example, `subagent_type: "plan-rfc-fidelity-reviewer"`). The named agent's frontmatter declares both its persona and its `tools` list — including `Write`/`Edit` for write-capable reviewers — so direct dispatch loads both the right system prompt and the right tools. Do not launch reviewers as `general-purpose`: that bypasses the reviewer's specialized system prompt and replaces its declared tool list with general-purpose's broader set, defeating the reviewer definition. Read-only agent types like `Explore` are not a substitute either; pick the actual reviewer's `subagent_type`.
 
 **Dispatch parameters**: Pass the plan directory path and the requested review output path (e.g., `reviews/00-master.architect.md`).
 
