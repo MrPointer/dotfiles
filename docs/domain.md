@@ -88,12 +88,14 @@ See the [package resolution process][pkg-resolution] for the resolution flow fro
 
 ### Optional Tools
 
-Daily-use CLI tools (fzf, bat, eza, ripgrep, fd, difftastic, sheldon) that the installer can install at the user's request. Defined in [`tools.yaml`][tools-yaml], separate from prerequisites.
+Daily-use CLI tools (fzf, bat, eza, ripgrep, fd, difftastic, sheldon, uv) that the installer can install at the user's request. Defined in [`tools.yaml`][tools-yaml], separate from prerequisites.
 
 - **Tool definition**: An entry in `tools.yaml` with a `name` ([abstract package key](#package-resolution)) and a human-readable `description`.
 - **Not required**: Unlike prerequisites, optional tools are not needed for correct dotfiles setup. They enhance the shell experience but the system works without them.
 - **Not persisted**: Tool selections are not saved to chezmoi data — tools are not part of the data contract.
-- **Platform-dependent availability**: Not all tools have package mappings for every manager. Some (e.g., `sheldon`, `eza`, `difftastic`) are brew-only.
+- **Platform-dependent availability**: Not all tools have package mappings for every manager. Some (e.g., `sheldon`, `eza`, `difftastic`, `uv`) are brew-only.
+
+`uv` is an optional Python tooling entrypoint in this model. It is available through the optional-tools flow only where package resolution supports it; it is not required for dotfiles setup, is not written to chezmoi data, and does not imply installer-managed Python versions or migration of existing Python tool state.
 
 See the [optional tools installation process][tools-install] for selection, filtering, and installation details.
 

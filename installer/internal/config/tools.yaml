@@ -15,3 +15,5 @@ tools:
     description: "Structural diff tool"
   - name: jq
     description: "Lightweight command-line JSON processor"
+  - name: uv
+    description: "Fast Python package and project manager"

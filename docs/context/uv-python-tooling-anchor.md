@@ -10,8 +10,8 @@ reducing shell complexity while preserving portable machine setup behavior.
 
 | Settled Direction | What It Means |
 |-------------------|---------------|
-| RFC accepted. | `docs/rfcs/RFC-0001-switch-to-uv-python-tooling.md` R4 is the accepted design baseline. |
-| Current repo treats Python mostly as shell runtime state. | Existing integration is in `dot_zshenv.tmpl`, `dot_zshrc.tmpl`, and `docs/processes/shell-startup.md`; the installer does not currently install Python tooling. |
+| RFC accepted. | `docs/rfcs/RFC-switch-to-uv-python-tooling.md` R4 is the accepted design baseline. |
+| Implementation complete. | `uv` is configured as a brew-only optional tool, pyenv shell runtime behavior has been removed from the dotfiles source, and docs describe the uv-compatible optional Python tooling model. |
 | Directory-sensitive bare `python` selection is not required. | This removes the strongest reason to keep pyenv shims and shell integration. |
 | `uv` should be a normal optional installer tool. | The installer should offer `uv`, but not preselect or special-case it; adding recommendation tiers is not worth the complexity. |
 | Current repo has no Python project payload. | Searches found no `pyproject.toml`, `requirements*.txt`, `poetry.lock`, or `uv.lock`; Python references are shell integration, docs/examples, and packageresolver test fixtures. |
@@ -40,11 +40,12 @@ reducing shell complexity while preserving portable machine setup behavior.
 - [x] R3 review found completion-cache ambiguity; R4 clarifies stale zcompdump behavior and requires a safer pipx argcomplete guard.
 - [x] RFC R4 passed architecture, risk, and clarity review with no concerns.
 - [x] User accepted RFC R4.
+- [x] Implementation plan `plans/features/switch-to-uv-python-tooling/` executed completely; final installer verification passed with `rtk go test ./...` from `installer/`.
 
 ## Constraints
 
 - The repository is a chezmoi source directory; shell behavior changes should be made in source templates, not generated files.
-- Shell startup performance matters; current pyenv integration is lazy because eager `pyenv init` was too costly or intrusive.
+- Shell startup performance matters; avoid reintroducing eager Python tool initialization or mandatory uv startup work.
 - The installer is the only writer of chezmoi data, but Python tooling is currently not part of the installer data contract.
 - Existing design favors progressive enhancement: missing tools should not break shell startup.
 
@@ -176,10 +177,8 @@ No active open questions for the accepted RFC.
 - `docs/processes/shell-startup.md`
 - `installer/internal/config/tools.yaml`
 - `installer/internal/config/packagemap.yaml`
-- `docs/rfcs/RFC-0001-switch-to-uv-python-tooling.md`
-- `docs/rfcs/reviews/RFC-0001.rfc-architect-reviewer.md`
-- `docs/rfcs/reviews/RFC-0001.rfc-risk-reviewer.md`
-- `docs/rfcs/reviews/RFC-0001.rfc-clarity-reviewer.md`
+- `docs/rfcs/RFC-switch-to-uv-python-tooling.md`
+- `plans/features/switch-to-uv-python-tooling/progress.md`
 - https://docs.astral.sh/uv/concepts/python-versions/
 - https://docs.astral.sh/uv/concepts/tools/
 - https://docs.astral.sh/uv/getting-started/installation/
