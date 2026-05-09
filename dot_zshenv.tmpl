@@ -1,9 +1,15 @@
-export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
+typeset -U path PATH
+path=("$HOME/.local/bin" "$HOME/bin" /usr/local/bin $path)
+export PATH
 export GPG_TTY=$(tty)
 
 function load_brew_env() {
     # Load (home)brew
     eval "$("$BREW_BINARY" shellenv)"
+
+    # Homebrew prepends its bin directories; keep user-local defaults first.
+    path=("$HOME/.local/bin" "$HOME/bin" $path)
+    export PATH
 }
 
 if [[ ! -v BREW_LOADED || "$BREW_LOADED" == "false" ]]; then

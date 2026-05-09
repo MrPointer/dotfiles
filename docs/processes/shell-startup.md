@@ -72,12 +72,12 @@ flowchart TD
 
 ### `.zshenv` Phase (All Shells)
 
-1. **Set base PATH** — Add `~/.local/bin`, `~/bin`, `/usr/local/bin`
+1. **Set base PATH** — Add `~/.local/bin`, `~/bin`, `/usr/local/bin` with duplicate removal
 2. **Determine Homebrew location** — Based on OS and architecture:
    - Linux: `/home/linuxbrew/.linuxbrew`
    - macOS arm64: `/opt/homebrew`
    - macOS x86: `/usr/local`
-3. **Handle Homebrew loading** — Platform-dependent behavior (only if `BREW_LOADED` is not already set). See [deferred Homebrew loading][domain-deferred-brew] for the concept.
+3. **Handle Homebrew loading** — Platform-dependent behavior (only if `BREW_LOADED` is not already set). See [deferred Homebrew loading][domain-deferred-brew] for the concept. When Homebrew's `shellenv` is evaluated, `~/.local/bin` and `~/bin` are re-prepended so user-local defaults such as uv-managed `python`/`python3` symlinks take precedence over Homebrew binaries.
    - **macOS (non-devbox)**: Set `DEFER_BREW_LOAD=true` — postpone the expensive `shellenv` eval to `.zshrc`
    - **Linux**: Call `load_brew_env` immediately — PATH consistency is more important than startup speed
    - **Devbox**: Add brew directories to PATH directly — no `eval` needed
