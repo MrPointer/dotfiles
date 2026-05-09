@@ -107,21 +107,16 @@ func (b *BrewPackageManager) IsPackageInstalled(packageInfo pkgmanager.PackageIn
 
 	result, err := b.commander.RunCommand(
 		b.brewPath,
-		[]string{"list", "--versions", packageInfo.Name},
+		[]string{"--prefix", "--installed", packageInfo.Name},
 		utils.WithCaptureOutput(),
 	)
 	if err != nil {
-		if result != nil && result.ExitCode == 1 && strings.TrimSpace(result.String()) == "" && strings.TrimSpace(result.StderrString()) == "" {
+		if result != nil && result.ExitCode == 1 {
 			b.logger.Debug("Package %s is not installed with Homebrew", packageInfo.Name)
 			return false, nil
 		}
 
-		return false, errors.New("failed to list installed packages with Homebrew: " + err.Error())
-	}
-
-	if strings.TrimSpace(result.String()) == "" {
-		b.logger.Debug("Package %s is not installed with Homebrew", packageInfo.Name)
-		return false, nil
+		return false, errors.New("failed to check package installation with Homebrew: " + err.Error())
 	}
 
 	b.logger.Debug("Package %s is installed with Homebrew", packageInfo.Name)

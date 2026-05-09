@@ -219,8 +219,8 @@ func Test_InstallPackage_ReturnsError_WhenInstallationFails(t *testing.T) {
 func Test_IsPackageInstalled_ReturnsTrue_WhenPackageIsInstalled(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "/usr/local/bin/brew" && len(args) == 3 && args[0] == "list" && args[1] == "--versions" && args[2] == "git" {
-				output := "git 2.39.0\nnode 18.12.1\nvim 9.0.0500"
+			if name == "/usr/local/bin/brew" && len(args) == 3 && args[0] == "--prefix" && args[1] == "--installed" && args[2] == "git" {
+				output := "/opt/homebrew/opt/git"
 				return &utils.Result{
 					Stdout: []byte(output),
 				}, nil
@@ -242,10 +242,9 @@ func Test_IsPackageInstalled_ReturnsTrue_WhenPackageIsInstalled(t *testing.T) {
 func Test_IsPackageInstalled_ReturnsFalse_WhenPackageIsNotInstalled(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "/usr/local/bin/brew" && len(args) == 3 && args[0] == "list" && args[1] == "--versions" && args[2] == "nonexistent" {
-				output := ""
+			if name == "/usr/local/bin/brew" && len(args) == 3 && args[0] == "--prefix" && args[1] == "--installed" && args[2] == "nonexistent" {
 				return &utils.Result{
-					Stdout:   []byte(output),
+					Stderr:   []byte("Error: No such keg: /opt/homebrew/Cellar/nonexistent"),
 					ExitCode: 1,
 				}, errors.New("exit status 1")
 			}
@@ -263,13 +262,13 @@ func Test_IsPackageInstalled_ReturnsFalse_WhenPackageIsNotInstalled(t *testing.T
 	require.False(t, isInstalled)
 }
 
-func Test_IsPackageInstalled_UsesPackageSpecificBrewList(t *testing.T) {
+func Test_IsPackageInstalled_UsesPackageSpecificInstalledPrefixCheck(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			require.Equal(t, "/usr/local/bin/brew", name)
-			require.Equal(t, []string{"list", "--versions", "chezmoi"}, args)
+			require.Equal(t, []string{"--prefix", "--installed", "chezmoi"}, args)
 			return &utils.Result{
-				Stdout: []byte("chezmoi 2.65.0"),
+				Stdout: []byte("/opt/homebrew/opt/chezmoi"),
 			}, nil
 		},
 	}
@@ -284,7 +283,7 @@ func Test_IsPackageInstalled_UsesPackageSpecificBrewList(t *testing.T) {
 	require.True(t, isInstalled)
 }
 
-func Test_IsPackageInstalled_ReturnsError_WhenListInstalledPackagesFails(t *testing.T) {
+func Test_IsPackageInstalled_ReturnsError_WhenInstalledPrefixCheckFails(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			return nil, errors.New("command failed")
@@ -298,7 +297,7 @@ func Test_IsPackageInstalled_ReturnsError_WhenListInstalledPackagesFails(t *test
 	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
 
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "list installed packages")
+	require.Contains(t, err.Error(), "check package installation")
 	require.False(t, isInstalled)
 }
 
