@@ -22,7 +22,7 @@ Also consult `AGENTS.md` (or `CLAUDE.md`) for documented skill mappings and doma
 
 ## Reviewer Bindings
 
-**Launch mechanism**: Always launch reviewer agents with `subagent_type: "general-purpose"` so they inherit the full tool set declared in their agent definition — including `Write`/`Edit` for writing review output directly. Using a narrower or read-only `subagent_type` (e.g., `Explore`) silently strips write tools, which forces the planner to relay review output manually and defeats write-capable reviewer definitions.
+**Launch mechanism**: Launch each reviewer agent through its own `subagent_type` (for example, `subagent_type: "plan-rfc-fidelity-reviewer"`). The named agent's frontmatter declares both its persona and its `tools` list — including `Write`/`Edit` for write-capable reviewers — so direct dispatch loads both the right system prompt and the right tools. Do not launch reviewers as `general-purpose`: that bypasses the reviewer's specialized system prompt and replaces its declared tool list with general-purpose's broader set, defeating the reviewer definition. Read-only agent types like `Explore` are not a substitute either; pick the actual reviewer's `subagent_type`.
 
 **Dispatch parameters**: Pass the plan directory path and the requested review output path (e.g., `reviews/00-master.architect.md`).
 
@@ -54,6 +54,14 @@ Claude execution bindings are **file-defined worker agents** under the agent dir
 - Run independent reviewers in parallel using multiple sub-agent dispatches in a single message.
 - Re-run only affected reviewers during convergence; do not restart the full review.
 - The planner is responsible for checking that each expected review artifact was actually created, regardless of whether the reviewer wrote it directly or returned findings.
+
+## Execution Dispatch
+
+Direct feature plans with two or more sub-plans must include concrete lead-agent instructions and worker tables in the master plan. During execution, launch the assigned Claude worker agents rather than recreating their persona in prompt text. Do not rely on prompt wording to pick the right model, and do not let the coordinator execute a sub-plan directly when the plan assigned a worker or model tier.
+
+## TDD Isolation Mechanics
+
+If any sub-plan has testable acceptance criteria, the shared test-author worker must be paired with an isolation mechanism. Prefer Worktrunk when available, then Claude's native worktree mechanism, then `git worktree`. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a worktree plus worker dispatch path is available.
 
 ## Model Assignment
 

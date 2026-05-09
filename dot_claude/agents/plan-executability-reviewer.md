@@ -30,6 +30,8 @@ From the master plan and sub-plans, extract the facts that govern what an execut
 - Acceptance criteria and any verification commands or green-build claims
 - Public types, functions, methods, files, or commands a sub-plan says it removes, renames, or changes
 - Cross-sub-plan produces/consumes relationships and caller annotations
+- Assigned implementer workers, test-author workers, model tiers, and runtime dispatch instructions
+- TDD isolation gates and any documented skip reasons
 
 Use this matrix to judge whether each sub-plan can succeed without touching files it does not own.
 
@@ -95,6 +97,19 @@ For each sub-plan that uses a test-author-first workflow, or for which the maste
 
 If either compilation readiness or test infrastructure availability fails, flag it as a concern, or as a critical finding when it blocks multiple sub-plans or makes the stated execution order impossible. Recommend a concrete repair: add temporary stubs to restore compilation before test authoring, move mock generator configuration and regeneration into an earlier sub-plan, or adjust execution order so the test infrastructure exists before the test author is dispatched.
 
+### 9. Check Worker Dispatch And Model Enforcement
+
+For any plan with two or more sub-plans, or any plan that assigns model tiers, verify that the master plan contains executable lead-agent mechanics:
+
+- A worker table mapping every sub-plan to an implementer worker, model tier, and test-author worker when applicable.
+- A statement that worker agents are required for multi-sub-plan execution, unless the plan explicitly justifies a narrow exception.
+- Runtime-specific dispatch instructions or a pointer to the execution binding mechanism the executor must use.
+- Lead-agent instructions that say to spawn assigned workers, run independent groups concurrently where supported, wait for dependencies, relay prerequisite outputs, and synthesize results.
+- A stop condition for failed worker dispatch, model mismatch, or TDD isolation failure. The plan must not permit the coordinator to silently self-execute assigned work or fall back to a more expensive model.
+- Progress or audit expectations that let a resumed executor verify which worker/model actually executed each task.
+
+If any of these are missing from a multi-sub-plan plan, treat it as a critical finding. Without these mechanics, the executor can accidentally run all work in the coordinator context and defeat the plan's model, skill, and isolation assumptions.
+
 ## Output Format
 
 Write your findings to the review output file path provided by the calling agent. If no output path is provided, return your findings as your response instead.
@@ -135,6 +150,8 @@ Be direct and specific - findings should be organized per affected sub-plan when
 - **Review executability, not risk.** Do not focus on hidden complexity or migration danger unless it creates a direct execution contradiction.
 - **Review executability, not clarity.** Vague wording matters here only when it forces the executing agent to make an out-of-scope decision or makes acceptance criteria mechanically unattainable.
 - **Treat the executing agent as literal-minded and ownership-bound.** If success depends on the agent making a judgment call about foreign files, that is a plan problem.
+- **Treat worker dispatch as part of executability.** If a plan assigns workers or model tiers but does not make the lead agent use them mechanically, that is an execution contradiction, not a style issue.
+- **Treat structural TDD isolation as part of executability.** If a test author is assigned but no isolated workspace path is provided or the skip reason is generic despite an available runtime mechanism, flag it.
 - **Prefer plan-internal evidence.** Use the plan's ownership tables, dependency sections, caller annotations, and acceptance criteria as the primary evidence. Do not inspect source code just to prove the plan wrong when the contradiction is already visible in the plan.
 - **Every finding must be actionable.** Recommend a specific repair such as narrowing verification scope, changing ownership, changing execution order, merging work, or explicitly acknowledging expected intermediate-state failures.
 - **Do not invent new requirements.** Judge whether the plan can be executed as written, not whether you would have planned it differently.

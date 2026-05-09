@@ -15,15 +15,15 @@ This skill has one canonical workflow. Runtime files only map that workflow to t
 
 Before doing any work, determine the active runtime and read exactly one adapter:
 
-- **OpenCode runtime** → [references/runtime-opencode.md](references/runtime-opencode.md)
-- **Codex runtime** → [references/runtime-codex.md](references/runtime-codex.md)
-- **Claude runtime** → [references/runtime-claude.md](references/runtime-claude.md)
+- **OpenCode runtime** -> [references/runtime-opencode.md](references/runtime-opencode.md)
+- **Codex runtime** -> [references/runtime-codex.md](references/runtime-codex.md)
+- **Claude runtime** -> [references/runtime-claude.md](references/runtime-claude.md)
 
-**Determining the active runtime**: Check the system prompt and environment banner for identifying markers (e.g., "OpenCode", "Claude Code", "Codex CLI"). If the signal is ambiguous, ask the user rather than guessing — reading the wrong adapter silently breaks assumptions downstream.
+**Determining the active runtime**: Check the system prompt and environment banner for identifying markers (e.g., "OpenCode", "Claude Code", "Codex CLI"). If the signal is ambiguous, ask the user rather than guessing.
 
-Do not load or mix instructions from the other runtime adapter in the same turn. If a runtime adapter conflicts with this file, this file is authoritative.
+Do not load or mix instructions from another runtime adapter in the same turn. If a runtime adapter conflicts with this file, this file is authoritative.
 
-**Terminology bridge**: This skill uses runtime-neutral terms. Claude's runtime calls execution bindings "worker agent definitions"; Codex's runtime calls them "dispatch recipes"; OpenCode's runtime uses custom subagent definitions. Reviewer bindings follow the same pattern. Use whichever term is native to the active runtime when writing or reading concrete artifacts; the canonical workflow terms are used only in this file.
+**Terminology bridge**: This skill uses runtime-neutral terms. Claude's runtime calls execution bindings "worker agent definitions"; Codex's runtime calls them "dispatch recipes"; OpenCode's runtime uses custom subagent definitions. Reviewer bindings follow the same pattern. Use whichever term is native to the active runtime when writing or reading concrete artifacts.
 
 ## Core Principles
 
@@ -100,7 +100,7 @@ This is the most critical phase. Break the feature into sub-plans:
 
 Present the decomposition to the user for review before writing the actual plan files.
 
-### Phase 4: Plan Creation, Reviewer Assignment & Model Selection
+### Phase 4: Plan Creation, Reviewer Assignment, Model Selection, And Execution Binding
 
 Only after Phases 1-3 are complete:
 
@@ -154,20 +154,22 @@ When in doubt, prefer one tier up — the cost of a wrong model choice is rework
 
 Document the recommendation in each sub-plan's `## Execution Model` field with a brief rationale.
 
-6. **Establish execution bindings for execution**: Each sub-plan's model + skills combination needs a matching runtime-specific execution binding. The active runtime adapter defines what that binding looks like — for example, a persistent worker definition, a reusable dispatch recipe, or another runtime-native mechanism. Natural language alone is not a reliable way to control model selection or preload the right skills.
+6. **Establish execution bindings for execution**: Each sub-plan's model + skills combination needs a matching runtime-specific execution binding. The active runtime adapter defines what that binding looks like. Natural language alone is not a reliable way to control model selection or preload the right skills.
 
-   **Search for existing execution bindings**: Check the locations and mechanisms defined by the active runtime adapter. A binding is a match if it covers the sub-plan's required model tier and skill set. A partial match (correct model but incomplete skills, or correct skills but different model) can serve as a basis for an updated binding — adapt rather than starting from scratch.
+   **Search for existing execution bindings**: Check the locations and mechanisms defined by the active runtime adapter. A binding is a match if it covers the sub-plan's required model tier and skill set. A partial match can serve as a basis for an updated binding.
 
-   **Establish missing execution bindings**: If no matching binding exists, establish one using the mechanism defined by the active runtime adapter. If the runtime uses persistent bindings, create the required artifact. If the runtime uses ephemeral bindings, record the binding parameters in the runtime-specific way so retries and resumed execution use the same model and skills. The binding must make the sub-plan's model choice and required skills explicit enough that execution does not depend on prompt inference.
+   **Establish missing execution bindings**: If no matching binding exists, establish one using the mechanism defined by the active runtime adapter. If the runtime uses persistent bindings, create the required artifact. If the runtime uses ephemeral bindings, record the binding parameters in the runtime-specific way so retries and resumed execution use the same model and skills.
 
    - **Naming and placement**: Follow the active runtime adapter's conventions so the binding is discoverable by that runtime.
    - **Model control**: Set the target model using the runtime's actual model-selection mechanism.
    - **Skill preload**: Make the required skills explicit using the runtime's actual skill-loading mechanism.
    - **Identity/prompt**: Keep the binding itself minimal. The sub-plan provides the task context; the binding provides model, skills, and runtime-native agent identity.
 
-   **Create a test author binding**: If any sub-plan has testable acceptance criteria, create a single test author binding for the project. It always uses the **most capable model** — the task is finite (write tests from acceptance criteria, confirm they fail) and critical enough to justify the investment. Preload the project's testing and code-writing skills, plus `test-driven-development` if it's available. All sub-plans with testable AC share this single binding.
+   **Create a test author binding**: If any sub-plan has testable acceptance criteria, create or reuse one shared project-local test-author binding at the most capable model tier. Preload the project's testing and code-writing skills, plus `test-driven-development` if available. All sub-plans with testable AC share this single binding.
 
    **Warn the user**: If the runtime adapter says newly established persistent bindings require discovery, reload, or session restart before they become available, note that when presenting the plan.
+
+7. **Write lead-agent instructions into the master plan**: Multi-sub-plan plans must include explicit worker-dispatch instructions, coordination points, file ownership, cross-sub-plan data flow, and post-execution checks. The executor should not have to infer these mechanics from the planning skill.
 
 ### Phase 5: Initial Review Loop
 
@@ -238,14 +240,15 @@ Before presenting, run a final consistency check:
 
 1. **Model assignments** — verify each sub-plan's execution model matches the decision tree and any explicit rules
 2. **Skill conformance** — verify that reviewer-driven changes haven't introduced patterns that contradict required skills listed in each sub-plan
-3. **Cross-sub-plan prerequisites** — verify that every interface, type, or file referenced in a sub-plan's Prerequisites section is created by an earlier sub-plan in the dependency graph
-4. **Integration contract integrity** — verify that every "Produces" entry in one sub-plan has a matching "Consumes" entry in another (and vice versa), that the master plan's data flow table covers all cross-boundary data paths, and that interface wiring is assigned to a specific sub-plan when methods are accessed through interfaces
-5. **DAG validity** — verify the execution order forms a valid DAG: no cycles, no sub-plan depends on output from a later or same-group sub-plan, and every "Consumes" reference points to a sub-plan that completes before the consumer starts
-6. **Anchor boundaries** — if an active feature anchor exists, verify the plan does not duplicate anchor content and that any sub-plan using `anchoring-context` has a feature-level reason to update it
+3. **Execution bindings** — verify every multi-sub-plan worker assignment has a runtime-specific binding and lead-agent dispatch instructions
+4. **Cross-sub-plan prerequisites** — verify that every interface, type, or file referenced in a sub-plan's Prerequisites section is created by an earlier sub-plan in the dependency graph
+5. **Integration contract integrity** — verify that every "Produces" entry in one sub-plan has a matching "Consumes" entry in another (and vice versa), that the master plan's data flow table covers all cross-boundary data paths, and that interface wiring is assigned to a specific sub-plan when methods are accessed through interfaces
+6. **DAG validity** — verify the execution order forms a valid DAG: no cycles, no sub-plan depends on output from a later or same-group sub-plan, and every "Consumes" reference points to a sub-plan that completes before the consumer starts
+7. **Anchor boundaries** — if an active feature anchor exists, verify the plan does not duplicate anchor content and that any sub-plan using `anchoring-context` has a feature-level reason to update it
 
 Fix any inconsistencies before proceeding.
 
-Present the fully reviewed plan (master + sub-plans) along with a summary of review findings and how they were addressed. Only mark as ready when the user explicitly approves.
+Present the fully reviewed plan (master + sub-plans) along with a review summary, worker-dispatch summary, and how findings were addressed. Only mark as ready when the user explicitly approves.
 
 **Remind the user**: The plan intentionally omits implementation details — those are the executing agent's responsibility, guided by loaded skills. The user reviews architecture and constraints now; they review actual code after execution. This is by design, not a gap.
 
@@ -297,6 +300,7 @@ The documentation sub-plan follows the standard sub-plan template but its implem
 - **Which existing docs to update** — file paths, which sections, what to change
 - **Which new docs to create** — file paths, which existing doc to use as a structural pattern, what the new doc should cover
 - **Structural pattern matching** — if existing docs follow a pattern (e.g., process steps link to sub-process docs), new additions must follow it. Specify the pattern explicitly.
+- **Proportionality guard** — the target document's purpose, audience, and existing abstraction level outrank feature-local emphasis. Specify whether the feature should be described as a primary concept, a small example, or only as an implementation detail. Do not let a narrow feature become the center of a broad domain, architecture, or process doc unless the feature actually changes that doc's central subject.
 - **Required skills**: List the documenting skills the executing agent needs (e.g., `documenting-business-processes` for new process docs, `documenting-domain` for new domain entries)
 - **Execution model**: Always assign the most capable available model. Documentation requires understanding the full feature context, making judgments about what to include, and producing clear prose — this is not rote work.
 
@@ -310,7 +314,7 @@ Skip the documentation sub-plan when:
 ## Rules (Non-Negotiable)
 
 - **Always respect model assignments during execution** — Sub-plan model assignments are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used via the active runtime's actual model-selection mechanism. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
-- **Use runtime-specific execution bindings for multi-plan execution** — When a plan has 2+ sub-plans, dispatch each sub-plan through its assigned execution binding from Phase 4 step 6. That binding is the reliable mechanism for controlling model selection and skill preload; prompt wording alone is not. Run independent sub-plans in parallel where the runtime supports it. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a binding fails, diagnose and retry — do not silently execute on the main agent or fall back to a more expensive model. If the issue cannot be resolved, STOP and ask the user.
+- **Use runtime-specific execution bindings for multi-sub-plan execution** — When a plan has two or more sub-plans, dispatch each sub-plan through its assigned execution binding from Phase 4 step 6. That binding is the reliable mechanism for controlling model selection and skill preload; prompt wording alone is not. Run independent sub-plans in parallel where the runtime supports it. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a binding fails, diagnose and retry once. If it still cannot be resolved, stop and ask the user. Never silently execute on the coordinator or a more expensive model.
 - **Planner owns review output** — The planner passes the review output file path to each reviewer. Write-capable reviewers write the file directly; read-only reviewers return findings as their response, and the planner writes the file on their behalf. The planner checks whether the file exists after the reviewer finishes.
 - **Never write a plan based on incomplete information**
 - **Never invent requirements the user didn't specify**

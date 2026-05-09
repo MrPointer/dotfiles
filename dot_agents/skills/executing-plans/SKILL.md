@@ -31,6 +31,7 @@ Do not load or mix instructions from the other runtime adapter in the same turn.
 2. **Progress Is Always Persisted**: After every meaningful step, update the progress file. If the session drops, the executor resumes from the last checkpoint — not from scratch.
 3. **Tests Are Immutable to the Implementer**: The implementer cannot modify tests. If it believes a test is wrong, it reports this and moves on. Disputes are batched for human resolution.
 4. **Independent Work Continues**: When a task is blocked (test dispute, failure), the executor continues with independent tasks.
+5. **Execution Bindings Are Correctness, Not Optimization**: When a plan assigns worker bindings or model tiers, executing through those bindings is mandatory. The coordinator does not silently self-execute implementation work just because it can edit files.
 
 ## Workflow
 
@@ -61,11 +62,22 @@ Check for an existing progress file alongside the plan (`progress.md` in the pla
 
 The progress file is the source of truth for task-by-task execution status, tests, blockers, disputes, and completion. If an anchor is active, update it only for feature-level context: new durable decisions, changed constraints, spec/plan deviations, unresolved questions, or handoff state. Do not duplicate progress tables or per-task status in the anchor.
 
-### Step 3: Execute Tasks
+### Step 3: Execution Preflight
+
+Before editing implementation files, verify the execution mechanics and record them in progress.
+
+1. **Worker binding audit**: For every sub-plan, identify the planned implementer worker, test author worker, model tier, and runtime dispatch mechanism. If the plan has two or more sub-plans, or if any sub-plan has an explicit model tier, the coordinator must dispatch through the assigned execution binding. Coordinator self-execution is allowed only for progress files, coordination artifacts, or a single trivial sub-plan with no explicit binding requirement.
+2. **Binding availability check**: Use the active runtime adapter to verify every assigned worker is discoverable and invokable before executing any sub-plan. If a binding is missing or cannot be invoked, diagnose and retry once when the cause is mechanical (for example, stale discovery or permission shape). If it still cannot be invoked, stop and ask the user. Do not fall back to the coordinator or a more expensive model.
+3. **TDD isolation check**: For each task with testable acceptance criteria, verify whether the active runtime can route the test author into an isolated workspace. If the runtime adapter provides an isolation path, attempt or otherwise concretely verify that path before skipping structural TDD. If verification fails, record the attempted mechanism and stop to ask whether to fix isolation or explicitly skip structural TDD. Do not record a generic "runtime cannot provide isolated workspace" reason while an untried runtime-specific isolation path exists.
+4. **Progress audit update**: Add or update the progress file's execution audit with planned worker, actual worker, model/effort, dispatch evidence, and TDD gate status for each task.
+
+Only proceed once the audit is complete or the user explicitly authorizes a deviation.
+
+### Step 4: Execute Tasks
 
 For each task in execution order (respecting dependencies):
 
-#### 3a. Test Authoring
+#### 4a. Test Authoring
 
 **When to skip (no testable work)**: Some tasks don't have testable work — documentation updates, file moves, configuration changes, or tasks with no acceptance criteria. Skip test authoring for these and proceed directly to implementation.
 
@@ -82,11 +94,11 @@ For each task in execution order (respecting dependencies):
 
 If the code surface isn't ready for TDD, skip test authoring and proceed directly to implementation without structural separation. Record the decision briefly in the progress file (Tests column: `skipped`, Notes: e.g., "declared untestable in AGENTS.md" or "no testable seams"). The implementer still receives the full task with acceptance criteria — it just doesn't receive pre-written tests and isn't bound by the test immutability constraint.
 
-**Isolation capability gate**: Before structural TDD, use the active runtime adapter to verify that the runtime can place the test author in an isolated workspace that does not contain the planning artifacts. If the runtime cannot enforce that isolation, skip structural TDD and proceed directly to implementation. Record the decision briefly in the progress file (Tests column: `skipped`, Notes: e.g., "runtime cannot provide isolated test-author workspace").
+**Isolation capability gate**: Before structural TDD, use the active runtime adapter to verify that the runtime can place the test author in an isolated workspace that does not contain the planning artifacts. If the runtime has no enforceable isolation path, skip structural TDD and proceed directly to implementation. If the adapter names an isolation path but verification fails, stop and ask whether to fix isolation or explicitly skip structural TDD. Record the decision briefly in the progress file (Tests column: `skipped`, Notes: e.g., "no runtime isolation mechanism" or "user approved TDD skip after failed `<mechanism>` dispatch").
 
 **Compilation readiness gate**: Before spawning the test author, verify that the target package compiles at the current execution state and that the required test infrastructure already exists. Earlier sub-plans may have changed interfaces or compile-time assertions in ways that leave the package temporarily uncompilable even though the task is still meant to follow structural TDD. Check for missing or stale mocks, fixtures, and test helpers as well. If the project uses generated mocks, confirm that the mock for the dependency under test exists and is up to date.
 
-If either check fails, resolve the blocker within the TDD framework instead of skipping TDD or inverting the order. Acceptable scaffolding includes adding method stubs that panic or return zero values to satisfy interface assertions, adding the package to the mock generator configuration and regenerating mocks, or creating missing test helpers. These are temporary unblockers for the test author, not the task implementation itself. Record every scaffold created in the progress file so the implementer knows what must be replaced in step 3b.
+If either check fails, resolve the blocker within the TDD framework instead of skipping TDD or inverting the order. Acceptable scaffolding includes adding method stubs that panic or return zero values to satisfy interface assertions, adding the package to the mock generator configuration and regenerating mocks, or creating missing test helpers. These are temporary unblockers for the test author, not the task implementation itself. Record every scaffold created in the progress file so the implementer knows what must be replaced in step 4b.
 
 **Isolation via isolated workspace**: The test author must NOT have access to plan files. Use the active runtime adapter's isolation mechanism to create a temporary isolated workspace containing the relevant code surface but not the planning artifacts.
 
@@ -115,15 +127,15 @@ The test author writes tests grounded in the acceptance criteria and confirms th
 
 **Update progress**: Record test authoring as complete, note test file paths.
 
-#### 3b. Implementation
+#### 4b. Implementation
 
-**Without structural TDD** (test authoring was skipped due to testability): Spawn an implementer sub-agent with the complete task. No pre-written tests exist, so the immutability constraint doesn't apply. The implementer implements against the acceptance criteria directly. It returns implementation status and files created/modified. Existing tests must still pass — regressions are still caught in step 3c.
+**Without structural TDD** (test authoring was skipped due to testability): Spawn an implementer sub-agent with the complete task. No pre-written tests exist, so the immutability constraint doesn't apply. The implementer implements against the acceptance criteria directly. It returns implementation status and files created/modified. Existing tests must still pass — regressions are still caught in step 4c.
 
-**With structural TDD** (tests were written in 3a): Spawn an **implementer** sub-agent with full context:
+**With structural TDD** (tests were written in 4a): Spawn an **implementer** sub-agent with full context:
 
 **What the implementer receives:**
 - The complete task (all sections — design decisions, context, contracts, acceptance criteria)
-- The tests written in step 3a (file paths)
+- The tests written in step 4a (file paths)
 - The project's required skills (if the plan specifies them for this task, or via the implementer's execution binding)
 - Any outputs from prerequisite tasks (relayed by the executor)
 
@@ -141,7 +153,7 @@ The implementer implements the task and runs tests. It returns:
 
 **Update progress**: Record implementation status, note created files, record any disputes.
 
-#### 3c. Handle Results
+#### 4c. Handle Results
 
 **With structural TDD:**
 
@@ -155,7 +167,7 @@ The implementer implements the task and runs tests. It returns:
 - **Implementation complete, no regressions**: Mark task as `done`. Proceed to the next task.
 - **Existing tests regress**: Mark as `blocked: regression`. Same treatment as above — the implementation broke something outside its scope.
 
-### Step 4: Resolve Blocks
+### Step 5: Resolve Blocks
 
 When the executor reaches a natural breakpoint — all independent work is done, or all remaining tasks depend on a blocked one — present all blocked items to the user at once:
 
@@ -170,7 +182,7 @@ When the executor reaches a natural breakpoint — all independent work is done,
 
 The user resolves each item (fix the test, fix the AC, adjust the task, or accept as-is). The executor then re-runs the affected tasks from the appropriate step (test authoring if AC changed, implementation if tests changed).
 
-### Step 5: Completion
+### Step 6: Completion
 
 When all tasks are `done`:
 
@@ -198,13 +210,14 @@ If the plan specifies runtime-specific execution bindings, the executor uses the
 
 For tasks without testable AC (docs, config, file moves), only the implementer binding is needed.
 
-If no execution bindings are specified, the executor spawns sub-agents with the runtime's default model and tool configuration. The structural isolation requirements and prompt-hygiene rules still apply regardless, but agents may not have skills preloaded.
+If no execution bindings are specified, the executor may use the runtime's default sub-agent setup only for a single-sub-plan plan with no explicit model tier. For multi-sub-plan plans or plans with explicit model assignments, missing bindings are a blocker that must be resolved before implementation starts.
 
 ## Rules
 
 - **Never let the test author see design decisions** — the structural separation is the entire point. If the test author's prompt accidentally includes plan context, the separation is broken.
-- **Never claim structural TDD without enforced isolation** — if the active runtime cannot place the test author in the required isolated workspace, skip structural TDD and record the reason. Prompt hygiene alone does not satisfy the physical isolation requirement.
+- **Never claim structural TDD without enforced isolation** — if the active runtime cannot place the test author in the required isolated workspace, skip structural TDD only after the runtime-specific isolation path is verified unavailable or the user explicitly approves the skip. Prompt hygiene alone does not satisfy the physical isolation requirement.
 - **Never let the implementer modify tests** — disputes are recorded and batched, not resolved by the implementer.
+- **Never self-execute assigned worker tasks** — if a task has an assigned worker or model tier, dispatch it through the runtime binding. If dispatch fails, diagnose and retry once, then stop and ask the user rather than doing the task in the coordinator context.
 - **Always update progress after each step** — this is the checkpoint mechanism. If you skip an update and the session drops, work is lost.
 - **Do not use anchors as progress files** — anchors preserve feature-level rationale and handoff context. Progress files preserve mechanical execution state.
 - **Continue independent work when blocked** — don't stop the entire execution because one task has a dispute. If the plan specifies dependencies, use them to determine what can proceed. If no dependencies are specified, treat remaining tasks as sequential and pause at the blocked one.

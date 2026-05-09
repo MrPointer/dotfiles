@@ -9,6 +9,7 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to Codex-nat
 - Use Codex sub-agent dispatch for exploration, test authoring, and implementation work when sub-agents materially help.
 - Set the sub-agent `model` explicitly using Codex's actual dispatch mechanism when the plan assigns a tier.
 - Prefer narrow prompts with only the context required for the specific role.
+- Before executing a multi-sub-plan plan, verify every assigned dispatch recipe or worker can be invoked. If a binding fails, diagnose and retry once. If it still fails, stop and ask the user; do not perform assigned implementation in the coordinator context.
 
 ## Execution Bindings
 
@@ -28,7 +29,8 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to Codex-nat
 - Prefer `wt` to create an isolated workspace for the test author.
 - Use `git worktree` directly only as a fallback when `wt` is unavailable or unsuitable.
 - Structural TDD in Codex is allowed only when the test author can be dispatched into that isolated workspace.
-- If the active Codex environment cannot run the test-author worker inside the isolated workspace, skip structural TDD and record a reason such as `runtime cannot provide isolated test-author workspace`.
+- If `wt` or `git worktree` plus Codex worker dispatch is available, do not skip structural TDD without first attempting or concretely verifying the isolated dispatch path.
+- If the active Codex environment cannot run the test-author worker inside the isolated workspace after an attempted dispatch, record the exact attempted mechanism and failure, then stop and ask whether to fix isolation or explicitly skip structural TDD.
 - Do not reveal the plan path, task file path, feature name, or design rationale to the test author.
 - Pass only acceptance criteria and the code surface the tests interact with.
 - When structural TDD is used, prompt hygiene is mandatory in addition to physical isolation.
@@ -43,6 +45,7 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to Codex-nat
 
 - The parent executor owns `progress.md` and should update it after each meaningful step.
 - Even if a sub-agent writes files directly, the parent remains responsible for checkpointing and artifact verification.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, workspace path, and TDD isolation outcome.
 
 ## Model Assignment
 

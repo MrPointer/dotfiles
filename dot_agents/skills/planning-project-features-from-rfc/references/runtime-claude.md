@@ -29,7 +29,7 @@ Do not launch `plan-architect-reviewer`, `plan-risk-reviewer`, `plan-clarity-rev
 
 ## Reviewer Bindings
 
-Launch reviewer agents with `subagent_type: "general-purpose"` so they inherit their file-defined tools, including `Write`/`Edit` for review output.
+Launch each reviewer agent through its own `subagent_type` (for example, `subagent_type: "plan-rfc-fidelity-reviewer"`). The named agent's frontmatter declares both its persona and its `tools` list — including `Write`/`Edit` for write-capable reviewers — so direct dispatch loads both the right system prompt and the right tools. Do not launch reviewers as `general-purpose`: that bypasses the reviewer's specialized system prompt and replaces its declared tool list with general-purpose's broader set.
 
 Pass only:
 
@@ -53,6 +53,20 @@ Reuse first. A worker matches when its `model` and `skills` cover the sub-plan's
 - List preloaded `skills` in frontmatter.
 
 Newly created Claude worker agents are not discoverable to an already-running session. After creating or modifying a worker, tell the user the current session must be restarted before dispatch.
+
+## Execution Dispatch
+
+RFC-backed plans with two or more sub-plans must include concrete lead-agent instructions and worker tables in the master plan. During execution, launch the assigned Claude worker agents rather than recreating their persona in prompt text. Do not rely on prompt wording to pick the right model, and do not let the coordinator execute a sub-plan directly when the plan assigned a worker or model tier.
+
+## TDD Isolation Mechanics
+
+If any sub-plan has testable acceptance criteria, the shared test-author worker must be paired with an isolation mechanism. Prefer Worktrunk when available, then Claude's native worktree mechanism, then `git worktree`. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a worktree plus worker dispatch path is available.
+
+## Model Assignment
+
+- Use the worker agent's explicit `model` field as the source of truth.
+- Treat the plan's model tier as binding. Do not silently upgrade or downgrade.
+- If the requested model cannot be used in the current Claude environment, stop and ask the user how to proceed.
 
 ## Review Artifact Ownership
 

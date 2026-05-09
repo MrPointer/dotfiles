@@ -2,7 +2,7 @@
 
 ## Overview
 
-Describes how the Zsh shell environment initializes, including Homebrew loading, PATH setup, work environment activation, and plugin loading. The startup is split across `.zshenv` (all shells) and `.zshrc` (interactive shells) with an emphasis on keeping non-interactive shell startup fast.
+Describes how the Zsh shell environment initializes, including Homebrew loading, PATH setup, guarded completion setup, work environment activation, and plugin loading. The startup is split across `.zshenv` (all shells) and `.zshrc` (interactive shells) with an emphasis on keeping non-interactive shell startup fast.
 
 ## Trigger
 
@@ -31,10 +31,7 @@ flowchart TD
         D1 --> D4["BREW_LOADED=true"]
         D2 --> D4
         D3 --> D4
-        D4 --> E{~/.pyenv exists?}
-        E -- Yes --> E1[Add pyenv shims to PATH]
-        E -- No --> F
-        E1 --> F{Linux + mold?}
+        D4 --> F{Linux + mold?}
         F -- Yes --> F1[Set RUSTFLAGS for mold]
         F -- No --> G
         F1 --> G{work_env?}
@@ -51,8 +48,7 @@ flowchart TD
         L -- Yes --> L1[load_brew_env now]
         L -- No --> M
         L1 --> M[Aliases & tool PATHs]
-        M --> N[Lazy pyenv init]
-        N --> O[Cache completions]
+        M --> O[Cache guarded completions]
         O --> P{work_env?}
         P -- Yes --> P1[Source work RC extension]
         P -- No --> Q
@@ -76,37 +72,35 @@ flowchart TD
 
 ### `.zshenv` Phase (All Shells)
 
-1. **Set base PATH** — Add `~/.local/bin`, `~/bin`, `/usr/local/bin`
+1. **Set base PATH** — Add `~/.local/bin`, `~/bin`, `/usr/local/bin` with duplicate removal
 2. **Determine Homebrew location** — Based on OS and architecture:
    - Linux: `/home/linuxbrew/.linuxbrew`
    - macOS arm64: `/opt/homebrew`
    - macOS x86: `/usr/local`
-3. **Handle Homebrew loading** — Platform-dependent behavior (only if `BREW_LOADED` is not already set). See [deferred Homebrew loading][domain-deferred-brew] for the concept.
+3. **Handle Homebrew loading** — Platform-dependent behavior (only if `BREW_LOADED` is not already set). See [deferred Homebrew loading][domain-deferred-brew] for the concept. When Homebrew's `shellenv` is evaluated, `~/.local/bin` and `~/bin` are re-prepended so user-local defaults such as uv-managed `python`/`python3` symlinks take precedence over Homebrew binaries.
    - **macOS (non-devbox)**: Set `DEFER_BREW_LOAD=true` — postpone the expensive `shellenv` eval to `.zshrc`
    - **Linux**: Call `load_brew_env` immediately — PATH consistency is more important than startup speed
    - **Devbox**: Add brew directories to PATH directly — no `eval` needed
    - Set `BREW_LOADED=true` to prevent double-loading
-4. **Set up pyenv** — If `~/.pyenv` exists, add shims and bin directories to PATH (fast, no eval)
-5. **Set up Rust linker** — On Linux with mold available, configure `RUSTFLAGS` to use mold
-6. **Load work environment** — If `personal.work_env` is true, see the [work environment loading process][work-env-loading]
+4. **Set up Rust linker** — On Linux with mold available, configure `RUSTFLAGS` to use mold
+5. **Load work environment** — If `personal.work_env` is true, see the [work environment loading process][work-env-loading]
 
 ### `.zshrc` Phase (Interactive Shells Only)
 
 1. **Powerlevel10k instant prompt** — Load cached prompt for immediate visual feedback
 2. **Set editor and locale** — `VISUAL`, `EDITOR`, `LANG`, `LC_ALL`
 3. **Configure history** — History file, size, append mode
-4. **Set up completions** — Configure fpath, load Homebrew completions, run `compinit -C` (cached)
+4. **Set up completions** — Configure fpath, add Homebrew's `share/zsh/site-functions` directory before `compinit`, then run `compinit -C` (cached).
 5. **Complete deferred brew loading** — If `DEFER_BREW_LOAD` is `true`, call `load_brew_env` now
 6. **Set up aliases** — Git, neovim, GPG unlock
-7. **Configure pyenv** — Lazy initialization: full pyenv shell integration is loaded only when a Python-related command is detected or `.python-version`/`.envrc` is found in the directory tree
-8. **Add tool PATHs** — Cargo, Go, Ruby gems, clang-format, bun (conditional on tool availability)
-9. **Cache completions** — Generate completion files for cargo, poetry, pip, pipx only if missing or older than 7 days
-10. **Source work RC extension** — If `personal.work_env` is true, source `WORK_ZSH_RC_EXTENSION` (see [work environment loading][work-env-loading])
-11. **Load oh-my-zsh functions and plugins** — Vendored git functions, key-bindings, git, dotenv plugins
-12. **Load sheldon plugins** — `eval "$(sheldon source)"` loads the plugin set defined in [`plugins.toml`][sheldon-plugins]
-13. **Load Powerlevel10k theme** — Source `~/.p10k.zsh`
-14. **Configure fzf and fzf-tab** — Fuzzy finder integration with completion system
-15. **VS Code shell integration** — If running inside VS Code terminal, load VS Code's shell integration script
+7. **Add tool PATHs** — Cargo, Go, Ruby gems, clang-format, bun (conditional on tool availability)
+8. **Cache completions** — Generate completion files for cargo, poetry, pip, pipx only if missing or older than 7 days. `pipx` completion generation requires both `pipx` and `register-python-argcomplete` to exist before invoking argcomplete.
+9. **Source work RC extension** — If `personal.work_env` is true, source `WORK_ZSH_RC_EXTENSION` (see [work environment loading][work-env-loading])
+10. **Load oh-my-zsh functions and plugins** — Vendored git functions, key-bindings, git, dotenv plugins
+11. **Load sheldon plugins** — `eval "$(sheldon source)"` loads the plugin set defined in [`plugins.toml`][sheldon-plugins]
+12. **Load Powerlevel10k theme** — Source `~/.p10k.zsh`
+13. **Configure fzf and fzf-tab** — Fuzzy finder integration with completion system
+14. **VS Code shell integration** — If running inside VS Code terminal, load VS Code's shell integration script
 
 ### Failure Scenarios
 
@@ -124,17 +118,24 @@ flowchart TD
 - **Handling**: The `[[ -r ... ]]` guard skips sourcing. Shell starts without work config.
 - **User impact**: Work-specific environment variables and paths won't be set. Run the installer with `--work-env` to regenerate.
 
-#### pyenv not installed
+#### Optional Python tooling not installed
 
-- **Trigger**: `~/.pyenv` directory doesn't exist
-- **At step**: `.zshenv` step 4, `.zshrc` step 7
-- **Handling**: Conditional checks skip all pyenv setup
-- **User impact**: None — pyenv features simply aren't available
+- **Trigger**: `uv`, `pip`, `poetry`, `pipx`, or `register-python-argcomplete` is not installed
+- **At step**: `.zshrc` steps 4 and 8
+- **Handling**: Guarded completion setup skips missing tools. Brew-installed uv/uvx completions are available only when Homebrew provides completion files on `fpath` and zsh's completion cache recognizes them.
+- **User impact**: Shell startup succeeds. Missing tools simply do not provide completions or commands until the user installs or activates them.
+
+#### Stale zsh completion cache after Homebrew uv installation
+
+- **Trigger**: `uv` is installed by Homebrew outside the interactive `brew` wrapper path, but `compinit -C` reuses an older `~/.zcompdump`
+- **At step**: `.zshrc` step 4
+- **Handling**: The Homebrew completion directory remains on `fpath`, but zsh may not immediately discover new `_uv` or `_uvx` completion files until the cache is refreshed
+- **User impact**: uv commands work if installed, but uv/uvx completions may appear only after normal completion cache refresh or manual cache invalidation
 
 ## State Changes
 
 - **Environment variables**: PATH, BREW_HOME, BREW_LOADED, DEFER_BREW_LOAD, WORK_ENV_LOADED, and tool-specific vars
-- **Shell functions**: `load_brew_env`, `brew` wrapper (invalidates completion cache on install/uninstall), pyenv lazy loaders
+- **Shell functions**: `load_brew_env`, `brew` wrapper (invalidates completion cache on install/uninstall)
 - **Completion system**: `compinit` initialized with cache, fpath populated
 
 ## Dependencies

@@ -115,6 +115,47 @@ func Test_LoadPackageMappings_CanLoadFromEmbeddedConfig(t *testing.T) {
 	// We don't assert specific content since it might change, but verify it loads
 }
 
+func Test_Resolver_ResolvesUVForBrewOnly(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	v := viper.New()
+	mappings, err := packageresolver.LoadPackageMappings(v, "")
+	require.NoError(t, err)
+
+	sysInfo := &compatibility.SystemInfo{
+		OSName:     "darwin",
+		DistroName: "macOS",
+		Arch:       "arm64",
+	}
+
+	brewPM := &pkgmanager.MoqPackageManager{
+		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+			return pkgmanager.PackageManagerInfo{Name: "brew"}, nil
+		},
+	}
+	brewResolver, err := packageresolver.NewResolver(mappings, brewPM, sysInfo)
+	require.NoError(t, err)
+
+	result, err := brewResolver.Resolve("uv", "")
+	require.NoError(t, err)
+	require.Equal(t, "uv", result.Name)
+	require.Nil(t, result.VersionConstraints)
+
+	aptPM := &pkgmanager.MoqPackageManager{
+		GetInfoFunc: func() (pkgmanager.PackageManagerInfo, error) {
+			return pkgmanager.PackageManagerInfo{Name: "apt"}, nil
+		},
+	}
+	aptResolver, err := packageresolver.NewResolver(mappings, aptPM, sysInfo)
+	require.NoError(t, err)
+
+	_, err = aptResolver.Resolve("uv", "")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no package mapping found")
+}
+
 func Test_LoadPackageMappings_HandlesLargeConfigFile(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

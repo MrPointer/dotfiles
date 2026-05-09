@@ -15,6 +15,7 @@ Create focused, accurate documentation for specific components or areas of a cod
 4. **Accurate Over Comprehensive**: Only document what you can verify from the code. Never invent or assume behavior.
 5. **Discover, Don't Assume**: Find the project's existing documentation structure before creating new files.
 6. **No Duplication Across Levels**: Before documenting a concept, check if it already exists at a higher documentation level (domain, architecture, or business processes). If it does, **reference it** instead of redefining it. Component docs are the lowest layer — they reference all layers above.
+7. **Proportionality To Component Scope**: Document the component's durable responsibilities, interfaces, and gotchas. Do not let a recent feature dominate the component doc unless it fundamentally changes the component's purpose or primary API.
 
 ## Documentation Hierarchy
 
@@ -111,5 +112,6 @@ After documentation is created, future planning sessions and executing agents be
 - **Match existing doc style** — don't introduce a new format if docs already exist
 - **Propose, don't force** — if unsure about structure, location, or scope, ask the user
 - **Keep it maintainable** — shorter accurate docs beat comprehensive stale docs
+- **Preserve proportional emphasis** — when updating existing component docs for a feature, change the relevant section only. Avoid converting component documentation into a feature changelog.
 - **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **No meta-commentary** — don't add "this doc was auto-generated" or session timestamps

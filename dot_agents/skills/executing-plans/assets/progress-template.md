@@ -24,6 +24,12 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 ## Current State
 <What the executor is currently doing or waiting on>
 
+## Execution Audit
+
+| Task | Planned Worker | Actual Worker | Model / Effort | Dispatch Evidence | TDD Gate |
+|------|----------------|---------------|----------------|-------------------|----------|
+| <task 01> | <worker from plan> | <worker actually used> | <model and effort> | <runtime command, subagent id, or reason not applicable> | <used isolated workspace | skipped: reason | not testable> |
+
 ## Test Artifacts
 <Map of tasks to their test file paths — the implementer needs these>
 

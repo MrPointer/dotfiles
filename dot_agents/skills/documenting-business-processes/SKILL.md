@@ -14,6 +14,7 @@ Document the business processes and workflows a system implements: how domain en
 3. **NOT Development Processes**: This skill documents business workflows the system implements (user registration, order fulfillment). Development processes (how to test, deploy, contribute) belong in skills and contribution guidelines — not here.
 4. **No Duplication Across Levels**: Reference domain docs for entity definitions and architecture docs for system structure. Process docs describe the FLOW — how entities traverse the architecture. Don't redefine domain terms or re-explain architectural patterns.
 5. **Include Failure Paths**: Happy paths are easy. Document what happens when things go wrong — failed payments, validation errors, timeouts, partial completions.
+6. **Proportionality To Process Scope**: A feature can change one step of a process without becoming the whole process. Preserve the existing process's trigger, actors, and end-to-end emphasis. Mention feature-specific tools or mechanisms only where they affect the flow, decisions, outcomes, or failure handling.
 
 ## Documentation Hierarchy
 
@@ -163,6 +164,7 @@ See `docs/processes/<process>.md` for <brief description>.
 - **Never redefine domain concepts or architectural patterns** — reference the appropriate docs
 - **Always include failure paths** — happy-path-only docs are incomplete and misleading
 - **Business language first** — describe what happens from the business perspective, then note which components are involved
+- **Preserve proportional emphasis** — if updating an existing broad process doc, adjust the affected steps and failure scenarios without turning the process into a feature-specific walkthrough.
 - **Use reference-style links** — when linking to other docs or source files, use reference links (`[text][ref]` with `[ref]: path` at the bottom of the file) rather than inline links. They read better in source and are easier to maintain.
 - **Decompose complex steps into sub-processes** — if a step has its own decision branches, failure modes, or multiple sequential actions, it needs its own doc. Don't inline what should be a sub-process.
 - **Match existing sub-process patterns** — if a parent doc already has sub-process links, new sub-processes must follow the exact same structure and link style

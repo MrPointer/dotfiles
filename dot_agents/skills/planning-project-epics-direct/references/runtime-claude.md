@@ -17,7 +17,7 @@ Direct epic planning uses exactly these reviewers before user approval:
 
 ## Reviewer Bindings
 
-Launch reviewer agents with `subagent_type: "general-purpose"` so they inherit their file-defined tools, including `Write`/`Edit` for review output.
+Launch each reviewer agent through its own `subagent_type` (for example, `subagent_type: "plan-architect-reviewer"`). The named agent's frontmatter declares both its persona and its `tools` list — including `Write`/`Edit` for write-capable reviewers — so direct dispatch loads both the right system prompt and the right tools. Do not launch reviewers as `general-purpose`: that bypasses the reviewer's specialized system prompt and replaces its declared tool list with general-purpose's broader set.
 
 Pass only:
 

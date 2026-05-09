@@ -63,73 +63,6 @@ function brew() {
   return $ret
 }
 
-# Lazy pyenv shell integration (interactive only)
-# - Keep startup fast by avoiding `pyenv init` during shell start.
-# - Load `pyenv-virtualenv` integration only when Python tooling is used.
-if [[ -o interactive ]] && [[ -d "$HOME/.pyenv" ]]; then
-    _pyenv_find_up() {
-        local target="$1"
-        local dir="$PWD"
-
-        while [[ -n "$dir" && "$dir" != "/" && "$dir" != "$HOME" ]]; do
-            [[ -e "$dir/$target" ]] && return 0
-            dir="${dir:h}"
-        done
-
-        [[ -e "$dir/$target" ]] && return 0
-        return 1
-    }
-
-    _pyenv_lazy_init() {
-        # Guard against re-entrancy.
-        if [[ -n "${_PYENV_LAZY_INIT_DONE:-}" ]]; then
-            return 0
-        fi
-        _PYENV_LAZY_INIT_DONE=1
-
-        # Load full shell integration.
-        # Use `command` to ensure we call the pyenv binary (not a shell function).
-        eval "$(command pyenv init - zsh)"
-        eval "$(command pyenv virtualenv-init - zsh)"
-
-        # Remove hook + helpers to keep runtime overhead at ~0.
-        autoload -U add-zsh-hook
-        add-zsh-hook -d preexec _pyenv_lazy_preexec
-        typeset -ga precmd_functions
-        precmd_functions=(${precmd_functions:#_pyenv_lazy_precmd})
-        unfunction _pyenv_lazy_precmd _pyenv_lazy_preexec _pyenv_lazy_init _pyenv_find_up 2>/dev/null
-    }
-
-    _pyenv_lazy_precmd() {
-        # Initialize before the first prompt if the current directory (or an ancestor)
-        # indicates that pyenv integration is needed.
-        #
-        # - `.python-version` enables pyenv local versions / pyenv-virtualenv activation.
-        # - `.envrc` is a common driver via direnv (`use pyenv ...`), which would otherwise
-        #   call `pyenv shell` without shell integration and print warnings.
-        if _pyenv_find_up ".python-version" || _pyenv_find_up ".envrc"; then
-            _pyenv_lazy_init
-        fi
-    }
-
-    _pyenv_lazy_preexec() {
-        # Only trigger on commands that plausibly need Python/pyenv.
-        local cmd="$1"
-        case "$cmd" in
-            pyenv*|python*|pip*|poetry*|pipx*|pytest*|tox*|uv*|ruff*|mypy*)
-                _pyenv_lazy_init
-                ;;
-        esac
-    }
-
-    autoload -U add-zsh-hook
-    typeset -ga precmd_functions
-    if (( ${precmd_functions[(I)_pyenv_lazy_precmd]} == 0 )); then
-        precmd_functions=(_pyenv_lazy_precmd $precmd_functions)
-    fi
-    add-zsh-hook preexec _pyenv_lazy_preexec
-fi
-
 # Fast PATH additions (no expensive operations)
 if command -v cargo &>/dev/null; then
     export PATH="$PATH:$HOME/.cargo/bin"
@@ -162,7 +95,7 @@ fi
 [[ -x "$(command -v pip)" && ( ! -f "$HOME/.zfunc/_pip" || -n "$(find "$HOME/.zfunc/_pip" -mtime +7 2>/dev/null)" ) ]] && pip completion --zsh > "$HOME/.zfunc/_pip" 2>/dev/null
 
 # pipx uses argcomplete - cache the generated completion
-[[ -x "$(command -v pipx)" && ( ! -f "$HOME/.zfunc/_pipx" || -n "$(find "$HOME/.zfunc/_pipx" -mtime +7 2>/dev/null)" ) ]] && register-python-argcomplete pipx > "$HOME/.zfunc/_pipx" 2>/dev/null
+[[ -x "$(command -v pipx)" && -x "$(command -v register-python-argcomplete)" && ( ! -f "$HOME/.zfunc/_pipx" || -n "$(find "$HOME/.zfunc/_pipx" -mtime +7 2>/dev/null)" ) ]] && register-python-argcomplete pipx > "$HOME/.zfunc/_pipx" 2>/dev/null
 
 # Load dotnet completions if available
 if command -v dotnet &>/dev/null; then
