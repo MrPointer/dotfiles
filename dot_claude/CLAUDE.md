@@ -25,6 +25,12 @@
 - Write the subject as a present-simple verb phrase so it reads naturally after: "If I were to apply this commit, it would <subject>". Always start with a lowercase verb.
 - Use the body to explain the motivation for the change and, when helpful, a high-level summary of what changed. Avoid low-level implementation detail.
 
+## Signed Git Commits
+
+- Use `rtk git` for Git commands by default, including read-only inspection and ordinary write operations, to reduce output.
+- Do not use `rtk git` for creating or rewriting signed commit objects. Use `/usr/bin/git` directly for `commit`, `commit-tree`, `commit --amend`, `rebase --exec ... commit ...`, and any command whose purpose is to create or recreate signed commits.
+- All commits are expected to be signed, so commit creation should use `/usr/bin/git` rather than `rtk git`.
+
 ## Plan Execution
 
 - If a sub-agent fails, diagnose the failure and retry with a fix — do NOT silently take over the work yourself.
