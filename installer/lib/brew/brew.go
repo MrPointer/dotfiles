@@ -105,21 +105,27 @@ func (b *BrewPackageManager) InstallPackage(requestedPackageInfo pkgmanager.Requ
 func (b *BrewPackageManager) IsPackageInstalled(packageInfo pkgmanager.PackageInfo) (bool, error) {
 	b.logger.Debug("Checking if package %s is installed with Homebrew", packageInfo.Name)
 
-	// Check if the package is installed by listing all installed packages and checking for the package name.
-	packages, err := b.ListInstalledPackages()
+	result, err := b.commander.RunCommand(
+		b.brewPath,
+		[]string{"list", "--versions", packageInfo.Name},
+		utils.WithCaptureOutput(),
+	)
 	if err != nil {
+		if result != nil && result.ExitCode == 1 && strings.TrimSpace(result.String()) == "" && strings.TrimSpace(result.StderrString()) == "" {
+			b.logger.Debug("Package %s is not installed with Homebrew", packageInfo.Name)
+			return false, nil
+		}
+
 		return false, errors.New("failed to list installed packages with Homebrew: " + err.Error())
 	}
 
-	for _, pkg := range packages {
-		if pkg.Name == packageInfo.Name {
-			b.logger.Debug("Package %s is installed with Homebrew", packageInfo.Name)
-			return true, nil
-		}
+	if strings.TrimSpace(result.String()) == "" {
+		b.logger.Debug("Package %s is not installed with Homebrew", packageInfo.Name)
+		return false, nil
 	}
 
-	b.logger.Debug("Package %s is not installed with Homebrew", packageInfo.Name)
-	return false, nil
+	b.logger.Debug("Package %s is installed with Homebrew", packageInfo.Name)
+	return true, nil
 }
 
 // ListInstalledPackages implements pkgmanager.PackageManager.

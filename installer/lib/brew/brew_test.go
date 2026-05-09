@@ -219,7 +219,7 @@ func Test_InstallPackage_ReturnsError_WhenInstallationFails(t *testing.T) {
 func Test_IsPackageInstalled_ReturnsTrue_WhenPackageIsInstalled(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
+			if name == "/usr/local/bin/brew" && len(args) == 3 && args[0] == "list" && args[1] == "--versions" && args[2] == "git" {
 				output := "git 2.39.0\nnode 18.12.1\nvim 9.0.0500"
 				return &utils.Result{
 					Stdout: []byte(output),
@@ -242,11 +242,12 @@ func Test_IsPackageInstalled_ReturnsTrue_WhenPackageIsInstalled(t *testing.T) {
 func Test_IsPackageInstalled_ReturnsFalse_WhenPackageIsNotInstalled(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
-			if name == "/usr/local/bin/brew" && len(args) == 2 && args[0] == "list" && args[1] == "--versions" {
-				output := "git 2.39.0\nvim 9.0.0500"
+			if name == "/usr/local/bin/brew" && len(args) == 3 && args[0] == "list" && args[1] == "--versions" && args[2] == "nonexistent" {
+				output := ""
 				return &utils.Result{
-					Stdout: []byte(output),
-				}, nil
+					Stdout:   []byte(output),
+					ExitCode: 1,
+				}, errors.New("exit status 1")
 			}
 			return nil, errors.New("unexpected command")
 		},
@@ -260,6 +261,27 @@ func Test_IsPackageInstalled_ReturnsFalse_WhenPackageIsNotInstalled(t *testing.T
 
 	require.NoError(t, err)
 	require.False(t, isInstalled)
+}
+
+func Test_IsPackageInstalled_UsesPackageSpecificBrewList(t *testing.T) {
+	mockCommander := &utils.MoqCommander{
+		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			require.Equal(t, "/usr/local/bin/brew", name)
+			require.Equal(t, []string{"list", "--versions", "chezmoi"}, args)
+			return &utils.Result{
+				Stdout: []byte("chezmoi 2.65.0"),
+			}, nil
+		},
+	}
+	mockProgramQuery := &osmanager.MoqProgramQuery{}
+
+	packageManager := brew.NewBrewPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, "/usr/local/bin/brew", utils.DisplayModeProgress)
+	packageInfo := pkgmanager.NewPackageInfo("chezmoi", "")
+
+	isInstalled, err := packageManager.IsPackageInstalled(packageInfo)
+
+	require.NoError(t, err)
+	require.True(t, isInstalled)
 }
 
 func Test_IsPackageInstalled_ReturnsError_WhenListInstalledPackagesFails(t *testing.T) {
