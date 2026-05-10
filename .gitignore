@@ -1,11 +1,57 @@
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
+# Allowlisting gitignore template for GO projects prevents us
+# from adding various unwanted local files, such as generated
+# files, developer configurations or IDE-specific files etc.
 
-# Local History for Visual Studio Code
-.history/
+# Ignore everything
+*
 
-package-lock.json
+# Except these...
+
+# Github
+!.github/**/*
+
+# chezmoi files and templates
+!.chezmoiignore
+!.chezmoiexternal.toml
+!run_after_*
+!executeable_*
+!private_dot*
+!private_dot*/
+!private_dot*/**/*
+!dot_zfunc/_*
+!*.tmpl
+
+# Installer sub-project
+!/installer
+!/get.sh
+
+# General
+!README.md
+!LICENSE
+!img/**/*
+!docs/**/*
+
+# Typos
+!.typos.toml
+!cspell.json
+
+# Task
+!Taskfile.yml
+
+# Agents
+!AGENTS.md
+!CLAUDE.md
+!dot_agents/
+!dot_agents/**/*
+!dot_claude/
+!dot_claude/**/*
+!dot_codex/
+!dot_codex/**/*
+!.claude/
+!.claude/agents/**/*
+!.opencode/agents/**/*
+!.claude/skills/**/*
+!.opencode/skills/**/*
+
+# ...even if they are in subdirectories
+!*/
