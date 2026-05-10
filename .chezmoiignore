@@ -12,6 +12,13 @@ dist/
 cspell.json
 Taskfile.yml
 
+# OpenCode installs plugin dependencies into its config directory at runtime.
+.config/opencode/.gitignore
+.config/opencode/bun.lock
+.config/opencode/node_modules/
+.config/opencode/package-lock.json
+.config/opencode/package.json
+
 {{- if not .personal.work_env }}
 .work/ # only manage work state on work machines
 {{- end }}
