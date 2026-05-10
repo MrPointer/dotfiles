@@ -1,0 +1,24 @@
+#!/bin/sh
+
+input=$(cat)
+
+if [ -z "$input" ] || ! printf '%s' "$input" | jq empty >/dev/null 2>&1; then
+  input='{}'
+fi
+
+printf '%s' "$input" | jq '
+  {
+    matcher: "Grep|Glob",
+    hooks: [
+      {
+        type: "command",
+        command: "~/.claude/hooks/semble-reminder.sh"
+      }
+    ]
+  } as $entry
+  | if (.hooks.PreToolUse // [] | map(.hooks // [] | any(.command == $entry.hooks[0].command)) | any) then
+      .
+    else
+      .hooks = ((.hooks // {}) + {PreToolUse: ((.hooks.PreToolUse // []) + [$entry])})
+    end
+'
