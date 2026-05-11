@@ -10,6 +10,12 @@
 - `AGENTS.md` is the canonical rules file. If a tool requires `CLAUDE.md`, create a local symlink between `AGENTS.md` and `CLAUDE.md` instead of maintaining separate copies.
 - When reading `AGENTS.md` or `CLAUDE.md`, their contents should appear identical because both names should resolve to the same underlying file.
 
+## Agent Dispatch
+
+- Prefer making implementation changes and file edits in a dedicated worker agent when the current project or an installed plugin defines a suitable one.
+- Use the active runtime's native worker or sub-agent binding. For example, a Claude Go project might provide `sonnet-go-worker`; OpenCode or Codex should use the equivalent project-local or plugin-defined worker instead of assuming Claude-specific names exist.
+- Keep the coordinating agent focused on context gathering, orchestration, verification, and user communication. Edit directly only when the task is trivial, no suitable worker exists, or the required sub-agent dispatch path is unavailable and the user has approved continuing without it.
+
 ## Coding Guidelines
 
 - NEVER write example code unless expressly asked.
