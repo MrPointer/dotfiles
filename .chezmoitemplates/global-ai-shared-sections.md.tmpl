@@ -1,21 +1,3 @@
-# Global Rules
-
-## General Guidelines
-
-- Do only what you've been asked for. If you think more could be done, consult before doing it.
-- Ask for clarification if the request is ambiguous.
-- Reviewer or sub-agent feedback does not override explicit user decisions. When a reviewer flags something the user already decided, note the concern in the review but do not change the plan. Present the concern to the user and let them decide whether to revisit.
-- Always use the cheapest model for exploring code.
-- When docs exist, always read them fully before re-exploring the code.
-- `AGENTS.md` is the canonical OpenCode rules file.
-
-## Agent Dispatch
-
-- Prefer OpenCode custom agents for non-trivial implementation and file-editing work when a suitable project-local or global agent exists.
-- Use OpenCode-native dispatch such as the Task tool or runtime agent picker when it can invoke the intended agent with the right workspace, model, and permissions.
-- Reuse a prior Task or agent session only when OpenCode exposes a resumable session with relevant context, such as an existing `task_id`.
-- Keep the coordinating agent focused on context gathering, orchestration, verification, and user communication. Edit directly when the task is trivial, no suitable OpenCode agent exists, or the required dispatch path is unavailable.
-
 ## Coding Guidelines
 
 - NEVER write example code unless expressly asked.
@@ -63,5 +45,3 @@
 - Keep summaries concise with bullet points.
 - Highlight key changes and important information.
 - Use a few emojis sparingly to make summaries more engaging (don't overdo it).
-
-@RTK.md

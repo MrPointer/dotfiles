@@ -1,0 +1,17 @@
+# Global Rules
+
+## General Guidelines
+
+{{ template "global-ai-general-guidelines.md.tmpl" . -}}
+- In repositories, `AGENTS.md` is the canonical project rules file. Treat any repository `CLAUDE.md` as a Claude compatibility entry point that should resolve to the same underlying file, preferably as a symlink to `AGENTS.md`.
+- If both `AGENTS.md` and `CLAUDE.md` exist in a repository and their contents differ, follow `AGENTS.md` as the source of truth and ask before editing either rules file.
+
+## Agent Dispatch
+
+- Prefer making implementation changes and file edits in a dedicated Claude-native worker when the current project or an installed plugin defines a suitable one.
+- Use project/plugin-defined Claude worker names when available. For example, a Claude Go project might provide `sonnet-go-worker`.
+- Prefer `SendMessage` to an already spawned suitable online worker after the first spawn instead of starting a fresh one.
+- Keep the coordinating agent focused on context gathering, orchestration, verification, and user communication. Edit directly only when the task is trivial, no suitable worker exists, or the required worker dispatch path is unavailable and the user has approved continuing without it.
+
+{{ template "global-ai-shared-sections.md.tmpl" . }}
+@RTK.md

@@ -1,0 +1,16 @@
+# Global Rules
+
+## General Guidelines
+
+{{ template "global-ai-general-guidelines.md.tmpl" . -}}
+- `AGENTS.md` is the canonical Codex rules file.
+
+## Agent Dispatch
+
+- Use Codex-native worker/sub-agent dispatch or an explicit dispatch recipe when available.
+- Prefer project-specific or plugin-provided workers and skills over generic coordinator edits.
+- Keep model and skill bindings explicit when dispatching work.
+- Keep the coordinating agent focused on context gathering, orchestration, verification, and user communication. Edit directly only when the task is trivial, no suitable Codex dispatch exists, or the required dispatch path is unavailable.
+
+{{ template "global-ai-shared-sections.md.tmpl" . }}
+@RTK.md
