@@ -5,4 +5,8 @@
 {{ template "global-ai-general-guidelines.md.tmpl" . -}}
 - `AGENTS.md` is the canonical OpenCode rules file.
 
+## Agent Dispatch
+
+- When code exploration should be delegated to a subagent, dispatch `semble-search` instead of the built-in `explore` agent. Use `explore` only when `semble-search` is unavailable, unsuitable, or has already failed.
+
 {{ template "global-ai-shared-sections.md.tmpl" . }}
