@@ -7,15 +7,14 @@
 - Reviewer or sub-agent feedback does not override explicit user decisions. When a reviewer flags something the user already decided, note the concern in the review but do not change the plan. Present the concern to the user and let them decide whether to revisit.
 - Always use the cheapest model for exploring code.
 - When docs exist, always read them fully before re-exploring the code.
-- In repositories, `AGENTS.md` is the canonical project rules file. Treat any repository `CLAUDE.md` as a Claude compatibility entry point that should resolve to the same underlying file, preferably as a symlink to `AGENTS.md`.
-- If both `AGENTS.md` and `CLAUDE.md` exist in a repository and their contents differ, follow `AGENTS.md` as the source of truth and ask before editing either rules file.
+- `AGENTS.md` is the canonical OpenCode rules file.
 
 ## Agent Dispatch
 
-- Prefer making implementation changes and file edits in a dedicated Claude-native worker when the current project or an installed plugin defines a suitable one.
-- Use project/plugin-defined Claude worker names when available. For example, a Claude Go project might provide `sonnet-go-worker`.
-- Prefer `SendMessage` to an already spawned suitable online worker after the first spawn instead of starting a fresh one.
-- Keep the coordinating agent focused on context gathering, orchestration, verification, and user communication. Edit directly only when the task is trivial, no suitable worker exists, or the required worker dispatch path is unavailable and the user has approved continuing without it.
+- Prefer OpenCode custom agents for non-trivial implementation and file-editing work when a suitable project-local or global agent exists.
+- Use OpenCode-native dispatch such as the Task tool or runtime agent picker when it can invoke the intended agent with the right workspace, model, and permissions.
+- Reuse a prior Task or agent session only when OpenCode exposes a resumable session with relevant context, such as an existing `task_id`.
+- Keep the coordinating agent focused on context gathering, orchestration, verification, and user communication. Edit directly when the task is trivial, no suitable OpenCode agent exists, or the required dispatch path is unavailable.
 
 ## Coding Guidelines
 
