@@ -20,37 +20,41 @@ Claude execution bindings are **file-defined worker agents** under `.claude/agen
 - If a worker is missing, the planning skill should have created it. If it was missed, create one in the project-local agent directory following the frontmatter rules documented in the planning skill's Claude adapter.
 - Warn the user if new workers were just created — a session restart is required before they become discoverable.
 
-## Test Author Isolation
+## Workspace Isolation Strategy
 
-**Worktree creation** (priority order):
+Use one ordered fallback chain for both structural TDD workspaces and task-scoped implementer worktrees:
 
-1. **Worktrunk** — if the `worktrunk:worktrunk` skill is installed, load it and use `wt switch <branch-name>`. Preferred because it handles setup hooks and cleanup automatically.
-2. **`EnterWorktree`** — Claude Code's native worktree tool. Use when available and worktrunk is not.
+1. **`EnterWorktree` / `ExitWorktree`** — Claude Code's native worktree tools. Prefer these when available because they are runtime-aware and provide verifiable entry, exit, result collection, and cleanup.
+2. **Worktrunk (`wt`)** — if the `worktrunk:worktrunk` skill is installed, load it and use `wt switch <branch-name>` when native Claude worktree tooling is unavailable or unsuitable.
 3. **Git CLI** (`git worktree add`) — always available as a fallback.
 
-**Physical isolation**: The plan directory lives outside the tracked codebase (under `plans/`, typically gitignored). A fresh worktree therefore contains the source code but not the plan files — an agent cannot read what isn't present. This is the foundation of physical isolation; do not undermine it by copying plan files into the worktree.
+## Test Author Isolation
+
+**Physical isolation**: The plan directory lives outside the tracked codebase (under `plans/`, typically gitignored). A fresh worktree therefore contains the source code but not the plan files — an agent cannot read what isn't present. This is the foundation of physical isolation; do not undermine it by copying plan files, review files, or `progress.md` into the worktree.
 
 **Contextual isolation**: Even with physical isolation, the test author's prompt must not reveal the plan path, task file path, feature name, or design rationale. Pass only acceptance criteria (inline as text, not as a file path) and the code surface the tests interact with.
 
 **Structural TDD gate**: If Claude cannot create the isolated worktree (e.g., the repository has uncommitted changes that block worktree creation and the user declines to resolve them), skip structural TDD only after recording the attempted mechanism and failure. If an isolation mechanism exists but dispatch into it fails, stop and ask whether to fix isolation or explicitly skip structural TDD.
 
-**Bringing test files back**: After the test author finishes, return the test files to the main execution workspace:
+**Bringing test files back**: If the test author ran in a task-scoped implementer worktree, leave the test files there for the implementer. Otherwise, after the test author finishes, return the test files to the main execution workspace:
 
 - If the worktree was created via `EnterWorktree`, use `ExitWorktree` to merge the changes back.
-- If created via worktrunk or `git worktree add`, merge the worktree's branch into the main branch or cherry-pick the commit containing the tests.
+- If created via Worktrunk (`wt`) or `git worktree add`, merge the worktree's branch into the main branch or cherry-pick the commit containing the tests.
 - Remove the worktree once the test files are back.
 
 ## Implementer Dispatch
 
-- Dispatch a separate implementer worker with the full task, test file paths, prerequisite outputs, and required skills.
+- For implementation tasks that run concurrently with any other implementation task, create or enter a task-scoped worktree using the Workspace Isolation Strategy.
+- Dispatch a separate implementer worker in the chosen workspace with the full task packet, test file paths, prerequisite outputs, and required skills. Pass the task content inline; do not rely on plan file paths inside worker worktrees.
 - Tell the implementer explicitly that tests are immutable.
 - If the implementer reports a dispute, record it in progress and continue with independent tasks per the canonical workflow.
+- After a task-scoped worktree worker finishes, inspect and integrate the result using `ExitWorktree` when the native tool created it, `wt merge` from Worktrunk (`wt`) when that tool created it, or git merge/cherry-pick/patch transfer when plain git created it. Remove the worktree only after the result is integrated or intentionally abandoned.
 
 ## Progress and Artifacts
 
 - The parent executor owns `progress.md` and updates it after each meaningful step.
 - Even if a worker writes files directly, the parent remains responsible for checkpointing and verifying that expected artifacts exist.
-- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, workspace path, and TDD isolation outcome.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, integration status, and TDD isolation outcome.
 
 ## Model Assignment
 

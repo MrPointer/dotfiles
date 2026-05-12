@@ -63,7 +63,7 @@ After establishing a new persistent binding, verify that OpenCode can invoke it.
 
 ## Execution Dispatch
 
-RFC-backed plans with two or more sub-plans must include concrete lead-agent instructions and worker tables in the master plan. During execution, OpenCode workers are invoked through the runtime's native subagent mechanism. In interactive sessions, `@<worker-name>` mention is a valid native invocation path when it can invoke the named worker and preserve the worker's configured model and permissions.
+RFC-backed plans with two or more sub-plans must include concrete lead-agent instructions, worker tables, implementer worktree isolation, and result-integration mechanics in the master plan. During execution, OpenCode workers are invoked through the runtime's native subagent mechanism. In interactive sessions, `@<worker-name>` mention is a valid native invocation path when it can invoke the named worker and preserve the worker's configured model and permissions.
 
 The CLI is an acceptable fallback when the current runtime surface cannot invoke project-local custom subagents directly, or when explicit workspace routing is required:
 
@@ -73,9 +73,15 @@ opencode run --agent <worker-name> --dir <workspace-path> "<task prompt>"
 
 Do not rely on prompt text alone to pick the right model, and do not let the coordinator execute a sub-plan directly when the plan assigned a worker or model tier.
 
+## Implementer Worktree Mechanics
+
+For sub-plans in the same parallel group, the master plan must require task-scoped implementer worktrees rather than concurrent workers in the coordinator workspace. It should reference the active execution adapter's Workspace Isolation Strategy instead of repeating the fallback chain. If no isolated implementer path can be verified, the plan must instruct the executor to serialize the group or ask the user.
+
+The plan must keep plan files, review files, and `progress.md` coordinator-owned. Implementers receive inline task packets and prerequisite outputs, not plan paths copied into worker worktrees.
+
 ## TDD Isolation Mechanics
 
-If any sub-plan has testable acceptance criteria, the test-author binding must be paired with an isolation mechanism. Prefer `wt` when available in the project workflow, then dispatch the test author into the isolated workspace. Same-workspace `@<test-author-worker>` invocation is not sufficient for structural TDD unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable routing includes a verified native isolated-workspace dispatch mechanism or `opencode run --agent <test-author-worker> --dir <isolated-workspace>`. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when `wt` plus either native isolated-workspace dispatch or `opencode run --dir` is available.
+If any sub-plan has testable acceptance criteria, the test-author binding must be paired with an isolation mechanism from the active execution adapter's Workspace Isolation Strategy. Same-workspace `@<test-author-worker>` invocation is not sufficient for structural TDD unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable routing includes a verified native isolated-workspace dispatch mechanism or `opencode run --agent <test-author-worker> --dir <isolated-workspace>`. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a priority-order worktree plus either native isolated-workspace dispatch or `opencode run --dir` is available.
 
 ## Model Assignment
 

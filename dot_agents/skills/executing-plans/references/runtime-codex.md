@@ -24,20 +24,34 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to Codex-nat
 - Do not rely on prompt text alone for skill loading when the runtime can attach the skills directly.
 - If the binding is ephemeral rather than file-backed, record its parameters in the plan metadata or execution context so retries and resumed execution reuse the same model and skills.
 
+## Workspace Isolation Strategy
+
+Use one ordered fallback chain for both structural TDD workspaces and task-scoped implementer worktrees:
+
+1. Prefer Codex's native isolated-workspace or worktree mechanism when the current environment provides one and the executor can verify creation, worker dispatch, result collection, and cleanup.
+2. Otherwise use Worktrunk (`wt`) to create an isolated workspace.
+3. Otherwise use `git worktree` directly.
+
 ## Test Author Isolation
 
-- Prefer `wt` to create an isolated workspace for the test author.
-- Use `git worktree` directly only as a fallback when `wt` is unavailable or unsuitable.
 - Structural TDD in Codex is allowed only when the test author can be dispatched into that isolated workspace.
-- If `wt` or `git worktree` plus Codex worker dispatch is available, do not skip structural TDD without first attempting or concretely verifying the isolated dispatch path.
+- If any priority-order worktree mechanism plus Codex worker dispatch is available, do not skip structural TDD without first attempting or concretely verifying the isolated dispatch path.
 - If the active Codex environment cannot run the test-author worker inside the isolated workspace after an attempted dispatch, record the exact attempted mechanism and failure, then stop and ask whether to fix isolation or explicitly skip structural TDD.
 - Do not reveal the plan path, task file path, feature name, or design rationale to the test author.
 - Pass only acceptance criteria and the code surface the tests interact with.
 - When structural TDD is used, prompt hygiene is mandatory in addition to physical isolation.
 
+## Implementer Worktree Isolation
+
+- For implementation tasks that run concurrently with any other implementation task, create or enter a task-scoped worktree using the Workspace Isolation Strategy.
+- Dispatch the assigned implementer worker inside that worktree using Codex's actual worker dispatch mechanism and explicit model/skill binding.
+- Do not copy plan files, review files, or `progress.md` into the worktree. The parent executor passes the full sub-plan content, prerequisite outputs, and test file paths as inline task context.
+- After the implementer finishes, inspect the task worktree diff and integrate it into the coordinator workspace using native Codex result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
+- If integration conflicts or verification fails after integration, record the task as blocked and keep enough worktree state for diagnosis. Remove the worktree only after the result is integrated or intentionally abandoned.
+
 ## Implementer Dispatch
 
-- Spawn a separate implementer sub-agent with the full task, test file paths, prerequisite outputs, and required skills/reference material.
+- Spawn a separate implementer sub-agent with the full task packet, test file paths, prerequisite outputs, and required skills/reference material.
 - Tell the implementer explicitly that tests are immutable.
 - If the implementer reports a dispute, record it and continue according to the canonical workflow.
 
@@ -45,7 +59,7 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to Codex-nat
 
 - The parent executor owns `progress.md` and should update it after each meaningful step.
 - Even if a sub-agent writes files directly, the parent remains responsible for checkpointing and artifact verification.
-- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, workspace path, and TDD isolation outcome.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, integration status, and TDD isolation outcome.
 
 ## Model Assignment
 

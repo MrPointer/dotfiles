@@ -31,7 +31,8 @@ Do not load or mix instructions from the other runtime adapter in the same turn.
 2. **Progress Is Always Persisted**: After every meaningful step, update the progress file. If the session drops, the executor resumes from the last checkpoint — not from scratch.
 3. **Tests Are Immutable to the Implementer**: The implementer cannot modify tests. If it believes a test is wrong, it reports this and moves on. Disputes are batched for human resolution.
 4. **Independent Work Continues**: When a task is blocked (test dispute, failure), the executor continues with independent tasks.
-5. **Execution Bindings Are Correctness, Not Optimization**: When a plan assigns worker bindings or model tiers, executing through those bindings is mandatory. The coordinator does not silently self-execute implementation work just because it can edit files.
+5. **Parallel Implementation Is Workspace-Isolated**: DAG independence means tasks do not need each other's outputs; it does not make a shared dirty workspace safe. When implementation tasks run concurrently, dispatch each task in its own isolated worktree and integrate the result deliberately. If isolated dispatch cannot be verified, serialize the tasks or ask the user rather than running concurrent implementers in the same workspace.
+6. **Execution Bindings Are Correctness, Not Optimization**: When a plan assigns worker bindings or model tiers, executing through those bindings is mandatory. The coordinator does not silently self-execute implementation work just because it can edit files.
 
 ## Workflow
 
@@ -49,6 +50,7 @@ Extract what's available:
 - Which tasks can run independently / in parallel (if specified)
 - Execution binding assignments (if specified)
 - File ownership per task (if specified — helps prevent conflicts during parallel execution)
+- Whether each parallel group is concurrency-ready: non-overlapping file ownership, no unsequenced shared artifact, and an isolated implementer worktree path available through the active runtime adapter
 
 If the plan or user references an active feature anchor, read it for feature-level context before executing. If the plan names a feature but not an anchor path, look for one using project conventions, then `docs/context/<topic>-anchor.md`. The anchor explains intent, constraints, rationale, rejected alternatives, and handoff context; it is not the execution checkpoint. Do not infer an anchor from unrelated old feature docs.
 
@@ -69,13 +71,25 @@ Before editing implementation files, verify the execution mechanics and record t
 1. **Worker binding audit**: For every sub-plan, identify the planned implementer worker, test author worker, model tier, and runtime dispatch mechanism. If the plan has two or more sub-plans, or if any sub-plan has an explicit model tier, the coordinator must dispatch through the assigned execution binding. Coordinator self-execution is allowed only for progress files, coordination artifacts, or a single trivial sub-plan with no explicit binding requirement.
 2. **Binding availability check**: Use the active runtime adapter to verify every assigned worker is discoverable and invokable before executing any sub-plan. If a binding is missing or cannot be invoked, diagnose and retry once when the cause is mechanical (for example, stale discovery or permission shape). If it still cannot be invoked, stop and ask the user. Do not fall back to the coordinator or a more expensive model.
 3. **TDD isolation check**: For each task with testable acceptance criteria, verify whether the active runtime can route the test author into an isolated workspace. If the runtime adapter provides an isolation path, attempt or otherwise concretely verify that path before skipping structural TDD. If verification fails, record the attempted mechanism and stop to ask whether to fix isolation or explicitly skip structural TDD. Do not record a generic "runtime cannot provide isolated workspace" reason while an untried runtime-specific isolation path exists.
-4. **Progress audit update**: Add or update the progress file's execution audit with planned worker, actual worker, model/effort, dispatch evidence, and TDD gate status for each task.
+4. **Implementer workspace check**: For every task that may run concurrently with another implementation task, verify the active runtime can create a task-scoped implementer worktree and dispatch the assigned worker inside it. Prefer the active runtime's native isolated-workspace or worktree mechanism when it provides verifiable creation, dispatch, result collection, and cleanup. Otherwise use Worktrunk (`wt`) when available and suitable. Otherwise fall back to `git worktree`. If no isolated implementation path can be verified, serialize that parallel group or ask the user for approval before weakening isolation.
+5. **Progress audit update**: Add or update the progress file's execution audit with planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, integration status, and TDD gate status for each task.
 
 Only proceed once the audit is complete or the user explicitly authorizes a deviation.
 
 ### Step 4: Execute Tasks
 
 For each task in execution order (respecting dependencies):
+
+#### 4.0 Workspace Selection
+
+Before launching a task, choose its implementation workspace:
+
+- **Sequential task**: The main execution workspace is acceptable unless the plan or user requests isolation.
+- **Concurrent task**: Create a task-scoped implementer worktree using the active runtime adapter's priority order: runtime-native isolated workspace/worktree tooling first, then Worktrunk (`wt`), then `git worktree`.
+
+Create the task worktree from the current integration state that already includes all prerequisite outputs, using the runtime adapter's branch, merge, or patch-transfer mechanism as needed. If prerequisite outputs exist only as local changes that cannot be represented in the task worktree, do not create a stale worktree; integrate the prerequisites first or serialize the dependent task. Do not copy plan files, review files, or `progress.md` into the task worktree. The coordinator keeps those artifacts in the original workspace and passes the sub-plan to the implementer as an inline task packet, not as a file path.
+
+If the runtime cannot verify isolated dispatch for a concurrent task, do not run that task concurrently in the shared workspace. Serialize it or stop and ask the user.
 
 #### 4a. Test Authoring
 
@@ -100,9 +114,9 @@ If the code surface isn't ready for TDD, skip test authoring and proceed directl
 
 If either check fails, resolve the blocker within the TDD framework instead of skipping TDD or inverting the order. Acceptable scaffolding includes adding method stubs that panic or return zero values to satisfy interface assertions, adding the package to the mock generator configuration and regenerating mocks, or creating missing test helpers. These are temporary unblockers for the test author, not the task implementation itself. Record every scaffold created in the progress file so the implementer knows what must be replaced in step 4b.
 
-**Isolation via isolated workspace**: The test author must NOT have access to plan files. Use the active runtime adapter's isolation mechanism to create a temporary isolated workspace containing the relevant code surface but not the planning artifacts.
+**Isolation via isolated workspace**: The test author must NOT have access to plan files. Use the active runtime adapter's isolation mechanism to provide an isolated workspace containing the relevant code surface but not the planning artifacts.
 
-The isolated workspace is temporary — remove it after the test author finishes. The test files it writes must be brought back to the main execution workspace using the active runtime adapter's mechanism.
+If the task already has a task-scoped implementer worktree, run the test author in that worktree and keep it for implementation. If the task will implement in the main workspace, create a temporary test-author workspace and remove it after the test files are brought back.
 
 **Spawn a test author sub-agent inside the isolated workspace** with a deliberately limited context:
 
@@ -123,18 +137,18 @@ The test author's skills (`test-driven-development` + project-specific testing s
 
 The test author writes tests grounded in the acceptance criteria and confirms they fail (RED). It returns the test file paths and a summary of what each test verifies.
 
-**After the test author finishes**: Bring the test files back to the main execution workspace using the active runtime adapter's mechanism, then remove the isolated workspace.
+**After the test author finishes**: If the test author ran in the task's implementer worktree, leave the tests there for the implementer. Otherwise, bring the test files back to the main execution workspace using the active runtime adapter's mechanism, then remove the temporary isolated workspace.
 
 **Update progress**: Record test authoring as complete, note test file paths.
 
 #### 4b. Implementation
 
-**Without structural TDD** (test authoring was skipped due to testability): Spawn an implementer sub-agent with the complete task. No pre-written tests exist, so the immutability constraint doesn't apply. The implementer implements against the acceptance criteria directly. It returns implementation status and files created/modified. Existing tests must still pass — regressions are still caught in step 4c.
+**Without structural TDD** (test authoring was skipped due to testability): Spawn an implementer sub-agent in the chosen implementation workspace with the complete task as an inline task packet. No pre-written tests exist, so the immutability constraint doesn't apply. The implementer implements against the acceptance criteria directly. It returns implementation status and files created/modified. Existing tests must still pass — regressions are still caught in step 4c.
 
-**With structural TDD** (tests were written in 4a): Spawn an **implementer** sub-agent with full context:
+**With structural TDD** (tests were written in 4a): Spawn an **implementer** sub-agent in the chosen implementation workspace with full context:
 
 **What the implementer receives:**
-- The complete task (all sections — design decisions, context, contracts, acceptance criteria)
+- The complete task as an inline task packet (all sections — design decisions, context, contracts, acceptance criteria), not a plan file path
 - The tests written in step 4a (file paths)
 - The project's required skills (if the plan specifies them for this task, or via the implementer's execution binding)
 - Any outputs from prerequisite tasks (relayed by the executor)
@@ -157,15 +171,17 @@ The implementer implements the task and runs tests. It returns:
 
 **With structural TDD:**
 
-- **All tests pass**: Mark task as `done`. Proceed to the next task.
+- **All tests pass**: Mark task as `ready for integration` if it ran in a task worktree; otherwise mark it `done`. Proceed according to the task worktree integration rule below.
 - **Tests fail, no disputes**: The implementer couldn't make tests pass but doesn't claim they're wrong. Mark as `blocked: implementation failure`. Continue with independent tasks.
 - **Disputes reported**: Record each dispute in the progress file with the implementer's explanation. Mark the task as `blocked: test dispute`. Continue with independent tasks.
 - **Existing tests regress**: Mark as `blocked: regression`. This takes priority — it means the implementation broke something outside its scope. Continue with independent tasks.
 
 **Without structural TDD:**
 
-- **Implementation complete, no regressions**: Mark task as `done`. Proceed to the next task.
+- **Implementation complete, no regressions**: Mark task as `ready for integration` if it ran in a task worktree; otherwise mark it `done`. Proceed according to the task worktree integration rule below.
 - **Existing tests regress**: Mark as `blocked: regression`. Same treatment as above — the implementation broke something outside its scope.
+
+**Task worktree integration**: If the task ran in a task-scoped implementer worktree, inspect and integrate its result into the coordinator's workspace using the active runtime adapter's mechanism before marking the task `done`. After successful integration, mark the task `done`. If integration conflicts or post-merge verification fails, mark the task `blocked: integration` or `blocked: regression`, keep enough workspace state for diagnosis, and continue with independent tasks where possible. Remove the task worktree only after its result has been integrated or intentionally abandoned.
 
 ### Step 5: Resolve Blocks
 
@@ -217,6 +233,8 @@ If no execution bindings are specified, the executor may use the runtime's defau
 - **Never let the test author see design decisions** — the structural separation is the entire point. If the test author's prompt accidentally includes plan context, the separation is broken.
 - **Never claim structural TDD without enforced isolation** — if the active runtime cannot place the test author in the required isolated workspace, skip structural TDD only after the runtime-specific isolation path is verified unavailable or the user explicitly approves the skip. Prompt hygiene alone does not satisfy the physical isolation requirement.
 - **Never let the implementer modify tests** — disputes are recorded and batched, not resolved by the implementer.
+- **Never run concurrent implementers in the same workspace** — DAG independence is not workspace isolation. Use task-scoped implementer worktrees for concurrent work, or serialize the tasks.
+- **Never copy plan/progress artifacts into worker worktrees** — plan files, review files, and `progress.md` stay in the coordinator workspace. Workers receive task packets and prerequisite outputs through the executor.
 - **Never self-execute assigned worker tasks** — if a task has an assigned worker or model tier, dispatch it through the runtime binding. If dispatch fails, diagnose and retry once, then stop and ask the user rather than doing the task in the coordinator context.
 - **Always update progress after each step** — this is the checkpoint mechanism. If you skip an update and the session drops, work is lost.
 - **Do not use anchors as progress files** — anchors preserve feature-level rationale and handoff context. Progress files preserve mechanical execution state.

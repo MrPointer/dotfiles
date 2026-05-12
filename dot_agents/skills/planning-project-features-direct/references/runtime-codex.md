@@ -52,11 +52,17 @@ This adapter maps the canonical planning workflow in `../SKILL.md` to Codex-nati
 
 ## Execution Dispatch
 
-Direct feature plans with two or more sub-plans must include concrete lead-agent instructions and worker/dispatch-recipe tables in the master plan. During execution, use Codex's actual worker dispatch mechanism with the recipe's explicit model and skills. Do not rely on prompt text alone to pick the right model, and do not let the coordinator execute a sub-plan directly when the plan assigned a worker or model tier.
+Direct feature plans with two or more sub-plans must include concrete lead-agent instructions, worker/dispatch-recipe tables, implementer worktree isolation, and result-integration mechanics in the master plan. During execution, use Codex's actual worker dispatch mechanism with the recipe's explicit model and skills. Do not rely on prompt text alone to pick the right model, and do not let the coordinator execute a sub-plan directly when the plan assigned a worker or model tier.
+
+## Implementer Worktree Mechanics
+
+For sub-plans in the same parallel group, the master plan must require task-scoped implementer worktrees rather than concurrent workers in the coordinator workspace. It should reference the active execution adapter's Workspace Isolation Strategy instead of repeating the fallback chain. If no isolated implementer path can be verified, the plan must instruct the executor to serialize the group or ask the user.
+
+The plan must keep plan files, review files, and `progress.md` coordinator-owned. Implementers receive inline task packets and prerequisite outputs, not plan paths copied into worker worktrees.
 
 ## TDD Isolation Mechanics
 
-If any sub-plan has testable acceptance criteria, the test-author dispatch recipe must be paired with an isolation mechanism. Prefer `wt` when available in the project workflow, then dispatch the test author into the isolated workspace. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a worktree plus worker dispatch path is available.
+If any sub-plan has testable acceptance criteria, the test-author dispatch recipe must be paired with an isolation mechanism from the active execution adapter's Workspace Isolation Strategy. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a priority-order worktree plus worker dispatch path is available.
 
 ## Model Assignment
 
