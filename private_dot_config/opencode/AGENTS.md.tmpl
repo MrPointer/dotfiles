@@ -7,6 +7,11 @@
 
 ## Agent Dispatch
 
-- When code exploration should be delegated to a subagent, dispatch `semble-search` instead of the built-in `explore` agent. Use `explore` only when `semble-search` is unavailable, unsuitable, or has already failed.
+- When code exploration should be delegated to a subagent, dispatch `semble-search` instead of the built-in `explore`
+  agent. Use `explore` only when `semble-search` is unavailable, unsuitable, or has already failed.
+- When spawning search/exploration agents (`semble-search`, Explore, or similar), write prompts that describe what you
+  need to know, not how to find it. State the question or goal; do not prescribe file paths, line numbers, or search
+  commands. The agent has its own search strategy - over-specifying the approach overrides it and defeats the purpose of
+  delegation.
 
 {{ template "global-ai-shared-sections.md.tmpl" . }}
