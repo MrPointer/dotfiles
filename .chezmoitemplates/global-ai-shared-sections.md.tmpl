@@ -19,10 +19,10 @@
 
 - Use `rtk git` for Git commands by default, including read-only inspection and ordinary write operations, to reduce
   output.
-- Do not use `rtk git` for creating or rewriting signed commit objects. Use `/usr/bin/git` directly for `commit`,
-  `commit-tree`, `commit --amend`, `rebase --exec ... commit ...`, and any command whose purpose is to create or
-  recreate signed commits.
-- All commits are expected to be signed, so commit creation should use `/usr/bin/git` rather than `rtk git`.
+- Do not use `rtk git` for creating or rewriting signed commit objects. Use plain `git` for `commit`, `commit-tree`,
+  `commit --amend`, `rebase --exec ... commit ...`, and any command whose purpose is to create or recreate signed
+  commits.
+- All commits are expected to be signed, so commit creation should use `git` rather than `rtk git`.
 
 ## Plan Execution
 
