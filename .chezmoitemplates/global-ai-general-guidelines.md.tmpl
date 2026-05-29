@@ -5,6 +5,8 @@
   them decide whether to revisit.
 - Always use the cheapest model for exploring code.
 - When docs exist, always read them fully before re-exploring the code.
-- For locating code, primary agents must first attempt available `semble` MCP tools (`search` / `find_related`) for
-  semantic or exploratory searches. Fall back to built-in tools only for exhaustive exact-string matching or when
-  `semble` is unavailable or unhelpful.
+- For semantic or exploratory repository search, primary agents must first attempt available `semble` MCP tools
+  (`search` / `find_related`). Use the `semble` CLI with `--content docs`, `--content config`, or `--content all` when
+  documentation, prose, or config search is needed and the MCP server is not indexing that content.
+  Fall back to built-in tools only for exhaustive exact-string matching, reading known files,
+  or when `semble` is unavailable or unhelpful.

@@ -1,9 +1,11 @@
 ---
-description: Code search agent for exploring any codebase. Use for finding code by intent, locating implementations, understanding how something works, or discovering related code. Prefer over Grep/Glob/Read for any semantic or exploratory question.
+name: semble-search
+description: Code search agent for exploring any codebase. Use for finding code by intent, locating implementations, understanding how something works, or discovering related code. Prefer over Bash/Read for any semantic or exploratory question.
 mode: subagent
 permission:
   edit: deny
   bash: allow
+  read: allow
   webfetch: deny
   task:
     "*": deny
@@ -19,6 +21,16 @@ semble search "save_pretrained" ./my-project
 semble search "save model to disk" ./my-project --top-k 10
 ```
 
+Results are cached automatically on first run and invalidated when files change.
+
+Use `--content docs` to search documentation and prose, `--content config` for config files (yaml, toml, etc.), or `--content all` to search code, docs, and config:
+
+```bash
+semble search "deployment guide" ./my-project --content docs
+semble search "database host port" ./my-project --content config
+semble search "authentication" ./my-project --content all
+```
+
 Use `semble find-related` to discover code similar to a known location (pass `file_path` and `line` from a prior search result):
 
 ```bash
@@ -29,9 +41,10 @@ semble find-related src/auth.py 42 ./my-project
 
 If `semble` is not on `$PATH`, use `uvx --from "semble[mcp]" semble` in its place.
 
-## Workflow
+### Workflow
 
-1. Start with `semble search` to find relevant chunks.
-2. Inspect full files only when the returned chunk is not enough context.
-3. Optionally use `semble find-related` with a promising result's `file_path` and `line` to discover related implementations.
-4. Use grep only when you need exhaustive literal matches or quick confirmation of an exact string.
+1. Start with `semble search` to find relevant chunks. The index is built and cached automatically.
+2. Use `--content docs` for documentation, `--content config` for config files, or `--content all` for everything.
+3. Inspect full files only when the returned chunk does not give enough context.
+4. Optionally use `semble find-related` with a promising result's `file_path` and `line` to discover related implementations.
+5. Use grep only when you need exhaustive literal matches or quick confirmation of an exact string.
