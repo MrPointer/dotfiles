@@ -15,14 +15,17 @@
 - Use the body to explain the motivation for the change and, when helpful, a high-level summary of what changed. Avoid
   low-level implementation detail.
 
-## Signed Git Commits
+## Git Commands and Signed Commits
 
-- Use `rtk git` for Git commands by default, including read-only inspection and ordinary write operations, to reduce
-  output.
-- Do not use `rtk git` for creating or rewriting signed commit objects. Use plain `git` for `commit`, `commit-tree`,
-  `commit --amend`, `rebase --exec ... commit ...`, and any command whose purpose is to create or recreate signed
-  commits.
-- All commits are expected to be signed, so commit creation should use `git` rather than `rtk git`.
+- Use `rtk git` for Git commands by default only when the command cannot create, rewrite, or continue creation of a Git
+  object: status, diff, log, show, add, and similar inspection/staging commands.
+- NEVER use `rtk git` for any command that can create or rewrite commits or tags. Use plain `git` for `commit`,
+  `commit-tree`, `commit --amend`, `merge`, `revert`, `cherry-pick`, `rebase`, `rebase --continue`,
+  `rebase --exec ... commit ...`, `tag -s`, and any command whose purpose is to create or recreate signed Git objects.
+- All commits are expected to be signed. If a commit needs special signing environment variables, prefix them on the
+  plain `git` command; do not switch back to `rtk git`.
+- If a commit command fails or accidentally creates an unsigned commit, stop and ask before retrying, amending, or
+  rewriting history.
 
 ## Plan Execution
 
