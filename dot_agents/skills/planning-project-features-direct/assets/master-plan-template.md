@@ -82,7 +82,7 @@ The master plan is the orchestration document. It does NOT contain implementatio
 - Keep plan files, review files, and `progress.md` in the coordinator workspace. Do not copy them into worker worktrees
 - Pass each implementer an inline sub-plan task packet plus prerequisite context. Do not rely on sub-plan file paths inside worker worktrees
 - For test-author workers, pass only acceptance criteria and code-surface context through an isolated workspace; do not pass plan paths, feature names, or design rationale. When a task has an implementer worktree, use that worktree for test authoring and then implementation. Same-workspace subagent invocation is not enough for structural TDD unless the runtime can prove it routes the worker into the isolated workspace
-- Integrate each completed task worktree back into the coordinator workspace before marking the task done. Record merge conflicts, integration failures, or regressions in `progress.md`
+- Follow `executing-plans` for task worktree integration and final review materialization. Record merge conflicts, integration failures, or regressions in `progress.md`
 - If a worker binding, model assignment, implementer worktree, or TDD isolation mechanism cannot be used, diagnose and retry once. If it still cannot be used, stop and ask the user rather than falling back to coordinator execution, shared-workspace parallelism, or a different model tier
 - Synthesize results when all sub-plans finish
 

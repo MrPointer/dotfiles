@@ -10,6 +10,11 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 - **Started**: <timestamp>
 - **Last updated**: <timestamp>
 - **Status**: in-progress | blocked | complete
+- **Review branch**: <branch or detached HEAD where execution started>
+- **Execution base**: <commit SHA before execution started>
+- **Integration branch**: <local agent/<plan-id> branch used for checkpoint commits>
+- **Final review mode**: mixed reset to execution base, leaving aggregate changes dirty
+- **Checkpoint range**: <execution-base>..<final checkpoint commit, once complete>
 
 ## Tasks
 
@@ -26,9 +31,9 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 
 ## Execution Audit
 
-| Task | Planned Worker | Actual Worker | Model / Effort | Dispatch Evidence | Implementation Workspace | Build/Cache Seeding | Integration Status | TDD Gate |
-|------|----------------|---------------|----------------|-------------------|--------------------------|---------------------|--------------------|----------|
-| <task 01> | <worker from plan> | <worker actually used> | <model and effort> | <runtime command, subagent id, or reason not applicable> | <main workspace / worktree path / serialized: reason> | <seeded: target/ / none required / blocked: reason> | <pending / merged / blocked: reason / not applicable> | <used isolated workspace / skipped: reason / not testable> |
+| Task | Planned Worker | Actual Worker | Model / Effort | Dispatch Evidence | Implementation Workspace | Build/Cache Seeding | Checkpoint Commit | Integration Status | TDD Gate |
+|------|----------------|---------------|----------------|-------------------|--------------------------|---------------------|-------------------|--------------------|----------|
+| <task 01> | <worker from plan> | <worker actually used> | <model and effort> | <runtime command, subagent id, or reason not applicable> | <main workspace / worktree path / serialized: reason> | <seeded: target/ / none required / blocked: reason> | <commit SHA / pending / not applicable> | <pending / merged / blocked: reason / not applicable> | <used isolated workspace / skipped: reason / not testable> |
 
 ## Test Artifacts
 <Map of tasks to their test file paths — the implementer needs these>

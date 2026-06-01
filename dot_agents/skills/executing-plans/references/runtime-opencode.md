@@ -45,6 +45,13 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 
 Do not assume structural TDD or implementer isolation is possible just because subagents exist. The executor must verify that the worker actually runs in the isolated worktree rather than the main workspace.
 
+## Integration Branch And Checkpoints
+
+- Create or resume the canonical execution integration branch from the recorded execution base before dispatching implementation workers.
+- Create task worktrees from the integration branch checkpoint that contains the task's prerequisites.
+- After integrating a task result into the integration branch and passing verification, create a local checkpoint commit using the project's normal signing policy.
+- Do not push checkpoint commits. At completion, leave the aggregate result for review by mixed-resetting the integration branch to the execution base.
+
 ## Test Author Isolation
 
 For OpenCode structural TDD, the required verification is that the test-author process actually runs in the isolated workspace. Same-workspace `@<subagent-name>` invocation is not sufficient for this gate unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable isolation-routing mechanisms include:
@@ -65,8 +72,8 @@ OpenCode's public docs describe subagents, custom agent files, and permissions, 
 
 **Bringing test files back**: If the test author ran in a task-scoped implementer worktree, leave the test files there for the implementer. Otherwise, return the resulting test files to the main workspace using the mechanism that matches the isolation method:
 
-- If the isolated workspace was created with Worktrunk (`wt`), prefer `wt merge` so the branch is merged back and the worktree is removed in the same documented workflow.
-- If the isolated workspace was created with plain `git worktree`, use normal git/worktree mechanics that preserve the authored tests without exposing the planning artifacts. Prefer a small commit plus cherry-pick, or another explicit patch-transfer mechanism you can verify.
+- If the isolated workspace was created with Worktrunk (`wt`), prefer `wt merge` so the branch is merged back into the integration branch and the worktree is removed in the same documented workflow.
+- If the isolated workspace was created with plain `git worktree`, use normal git/worktree mechanics that preserve the authored tests without exposing the planning artifacts. Prefer a small commit plus cherry-pick into the integration branch, or another explicit patch-transfer mechanism you can verify.
 
 In both cases, verify that the test files now exist in the main execution workspace and that the isolated workspace has been removed unless there is an explicit reason to keep it.
 
@@ -76,8 +83,8 @@ In both cases, verify that the test files now exist in the main execution worksp
 - Before dispatch, hard-link seed required ignored build/cache artifact directories into the task worktree when the project is build-heavy.
 - Dispatch the implementer with `opencode run --agent <implementer-worker> --dir <task-worktree-path> "<full task packet>"` unless a native OpenCode dispatch path can target that worktree and preserve the worker's configured model and permissions.
 - Do not copy plan files, review files, or `progress.md` into the task worktree. The parent executor passes the full sub-plan content, prerequisite outputs, and test file paths as inline task context.
-- After the implementer finishes, inspect the task worktree diff and integrate it into the coordinator workspace using the mechanism that matches how the worktree was created. Prefer native result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
-- If integration conflicts or verification fails after integration, record the task as blocked and keep enough worktree state for diagnosis. Remove the worktree only after the result is integrated or intentionally abandoned.
+- After the implementer finishes, inspect the task worktree diff and integrate it into the execution integration branch using the mechanism that matches how the worktree was created. Prefer native result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
+- If integration conflicts, checkpoint commit creation fails, or verification fails after integration, record the task as blocked and keep enough worktree state for diagnosis. Remove the worktree only after the result is integrated and checkpointed or intentionally abandoned.
 
 ## Implementer Dispatch
 
@@ -90,7 +97,7 @@ In both cases, verify that the test files now exist in the main execution worksp
 
 - The parent executor owns `progress.md` and updates it after each meaningful step.
 - Even if a subagent writes files directly, the parent remains responsible for checkpointing and verifying that expected artifacts exist.
-- Record dispatch evidence in progress: planned worker, actual worker, model/effort from the worker binding, command or runtime mechanism used, implementation workspace path, build/cache seeding status, integration status, and TDD isolation outcome.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort from the worker binding, command or runtime mechanism used, implementation workspace path, build/cache seeding status, checkpoint commit, integration status, and TDD isolation outcome.
 
 ## Model Assignment
 

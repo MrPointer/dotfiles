@@ -34,6 +34,13 @@ Use one ordered fallback chain for both structural TDD workspaces and task-scope
 
 After creating or entering an isolated workspace, seed ignored build/cache artifacts when the project needs them for practical compile or test performance. Identify the relative cache directories from project docs or config, such as Rust `target/`. When the source cache exists in the coordinator workspace and the paths are on the same filesystem, create the destination directory and hard-link copy the contents, for example with `cp -al <source-dir>/. <worktree-dir>/<relative-dir>/` when supported. Verify the expected files exist in the worktree. If hard-link seeding is required for a build-heavy project but cannot be verified, record the failure and ask before dispatching the worker.
 
+## Integration Branch And Checkpoints
+
+- Create or resume the canonical execution integration branch from the recorded execution base before dispatching implementation workers.
+- Create task worktrees from the integration branch checkpoint that contains the task's prerequisites.
+- After integrating a task result into the integration branch and passing verification, create a local checkpoint commit using the project's normal signing policy.
+- Do not push checkpoint commits. At completion, leave the aggregate result for review by mixed-resetting the integration branch to the execution base.
+
 ## Test Author Isolation
 
 - Structural TDD in Codex is allowed only when the test author can be dispatched into that isolated workspace.
@@ -50,8 +57,8 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 - Before dispatch, hard-link seed required ignored build/cache artifact directories into the task worktree when the project is build-heavy.
 - Dispatch the assigned implementer worker inside that worktree using Codex's actual worker dispatch mechanism and explicit model/skill binding.
 - Do not copy plan files, review files, or `progress.md` into the worktree. The parent executor passes the full sub-plan content, prerequisite outputs, and test file paths as inline task context.
-- After the implementer finishes, inspect the task worktree diff and integrate it into the coordinator workspace using native Codex result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
-- If integration conflicts or verification fails after integration, record the task as blocked and keep enough worktree state for diagnosis. Remove the worktree only after the result is integrated or intentionally abandoned.
+- After the implementer finishes, inspect the task worktree diff and integrate it into the execution integration branch using native Codex result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
+- If integration conflicts, checkpoint commit creation fails, or verification fails after integration, record the task as blocked and keep enough worktree state for diagnosis. Remove the worktree only after the result is integrated and checkpointed or intentionally abandoned.
 
 ## Implementer Dispatch
 
@@ -63,7 +70,7 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 
 - The parent executor owns `progress.md` and should update it after each meaningful step.
 - Even if a sub-agent writes files directly, the parent remains responsible for checkpointing and artifact verification.
-- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, build/cache seeding status, integration status, and TDD isolation outcome.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, build/cache seeding status, checkpoint commit, integration status, and TDD isolation outcome.
 
 ## Model Assignment
 
