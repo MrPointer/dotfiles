@@ -48,9 +48,11 @@ if command -v nvim &>/dev/null; then
   alias vi="nvim"
   alias vim="nvim"
 fi
-alias opencode='GIT_CONFIG_GLOBAL="$HOME/.config/opencode/gitconfig" opencode'
-alias claude='GIT_CONFIG_GLOBAL="$HOME/.claude/gitconfig" claude'
-alias codex='GIT_CONFIG_GLOBAL="$HOME/.config/opencode/gitconfig" codex'
+
+### Sandboxed coding agents
+alias opencode='GIT_CONFIG_GLOBAL="$HOME/.config/opencode/gitconfig" nono run --profile my-opencode --allow-cwd -- opencode'
+alias claude='GIT_CONFIG_GLOBAL="$HOME/.claude/gitconfig" nono run --profile my-claude-code --allow-cwd -- claude'
+alias codex='GIT_CONFIG_GLOBAL="$HOME/.config/opencode/gitconfig" nono run --profile my-codex --allow-cwd -- codex'
 
 # Brew wrapper: invalidate completion cache after package changes
 function brew() {
