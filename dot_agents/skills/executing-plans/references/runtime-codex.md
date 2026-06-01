@@ -32,9 +32,12 @@ Use one ordered fallback chain for both structural TDD workspaces and task-scope
 2. Otherwise use Worktrunk (`wt`) to create an isolated workspace.
 3. Otherwise use `git worktree` directly.
 
+After creating or entering an isolated workspace, seed ignored build/cache artifacts when the project needs them for practical compile or test performance. Identify the relative cache directories from project docs or config, such as Rust `target/`. When the source cache exists in the coordinator workspace and the paths are on the same filesystem, create the destination directory and hard-link copy the contents, for example with `cp -al <source-dir>/. <worktree-dir>/<relative-dir>/` when supported. Verify the expected files exist in the worktree. If hard-link seeding is required for a build-heavy project but cannot be verified, record the failure and ask before dispatching the worker.
+
 ## Test Author Isolation
 
 - Structural TDD in Codex is allowed only when the test author can be dispatched into that isolated workspace.
+- For build-heavy projects, seed required ignored build/cache artifacts in the isolated workspace before dispatching the test author.
 - If any priority-order worktree mechanism plus Codex worker dispatch is available, do not skip structural TDD without first attempting or concretely verifying the isolated dispatch path.
 - If the active Codex environment cannot run the test-author worker inside the isolated workspace after an attempted dispatch, record the exact attempted mechanism and failure, then stop and ask whether to fix isolation or explicitly skip structural TDD.
 - Do not reveal the plan path, task file path, feature name, or design rationale to the test author.
@@ -44,6 +47,7 @@ Use one ordered fallback chain for both structural TDD workspaces and task-scope
 ## Implementer Worktree Isolation
 
 - For implementation tasks that run concurrently with any other implementation task, create or enter a task-scoped worktree using the Workspace Isolation Strategy.
+- Before dispatch, hard-link seed required ignored build/cache artifact directories into the task worktree when the project is build-heavy.
 - Dispatch the assigned implementer worker inside that worktree using Codex's actual worker dispatch mechanism and explicit model/skill binding.
 - Do not copy plan files, review files, or `progress.md` into the worktree. The parent executor passes the full sub-plan content, prerequisite outputs, and test file paths as inline task context.
 - After the implementer finishes, inspect the task worktree diff and integrate it into the coordinator workspace using native Codex result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
@@ -59,7 +63,7 @@ Use one ordered fallback chain for both structural TDD workspaces and task-scope
 
 - The parent executor owns `progress.md` and should update it after each meaningful step.
 - Even if a sub-agent writes files directly, the parent remains responsible for checkpointing and artifact verification.
-- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, integration status, and TDD isolation outcome.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, build/cache seeding status, integration status, and TDD isolation outcome.
 
 ## Model Assignment
 

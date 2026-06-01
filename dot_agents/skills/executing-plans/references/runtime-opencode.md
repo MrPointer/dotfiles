@@ -41,6 +41,8 @@ Use one ordered fallback chain for both structural TDD workspaces and task-scope
 
 When Worktrunk (`wt`) is used, create or enter the isolated workspace with `wt switch`. Per Worktrunk (`wt`) documentation, `wt switch` is the command that switches to a worktree and creates one if needed; use `wt switch --create <branch>` when the isolation branch does not exist yet. Its `--execute` mode can also be useful when you need to launch the agent directly inside the isolated worktree.
 
+After creating or entering an isolated workspace, seed ignored build/cache artifacts when the project needs them for practical compile or test performance. Identify the relative cache directories from project docs or config, such as Rust `target/`. When the source cache exists in the coordinator workspace and the paths are on the same filesystem, create the destination directory and hard-link copy the contents, for example with `cp -al <source-dir>/. <worktree-dir>/<relative-dir>/` when supported. Verify the expected files exist in the worktree. If hard-link seeding is required for a build-heavy project but cannot be verified, record the failure and ask before dispatching the worker.
+
 Do not assume structural TDD or implementer isolation is possible just because subagents exist. The executor must verify that the worker actually runs in the isolated worktree rather than the main workspace.
 
 ## Test Author Isolation
@@ -57,7 +59,7 @@ OpenCode's public docs describe subagents, custom agent files, and permissions, 
 - If any priority-order isolation mechanism plus `opencode run --agent --dir` or verifiable native subagent routing is available, do not skip structural TDD without first attempting or otherwise concretely verifying one of those routing paths.
 - If routing cannot be verified after an attempted dispatch, record the exact attempted mechanism and failure in progress, then stop and ask whether to fix isolation or explicitly skip structural TDD.
 
-**Physical isolation**: The isolated worktree must contain only the tracked code surface the test author needs. Do not copy plan files, review files, or `progress.md` into it.
+**Physical isolation**: The isolated worktree must contain only the tracked code surface and explicitly seeded ignored build/cache artifacts the test author needs. Do not copy plan files, review files, or `progress.md` into it.
 
 **Contextual isolation**: Even with a separate worktree, do not reveal the plan path, task file path, feature name, or design rationale to the test author. Pass only acceptance criteria and the relevant code surface.
 
@@ -71,6 +73,7 @@ In both cases, verify that the test files now exist in the main execution worksp
 ## Implementer Worktree Isolation
 
 - For implementation tasks that run concurrently with any other implementation task, create or enter a task-scoped worktree using the Workspace Isolation Strategy.
+- Before dispatch, hard-link seed required ignored build/cache artifact directories into the task worktree when the project is build-heavy.
 - Dispatch the implementer with `opencode run --agent <implementer-worker> --dir <task-worktree-path> "<full task packet>"` unless a native OpenCode dispatch path can target that worktree and preserve the worker's configured model and permissions.
 - Do not copy plan files, review files, or `progress.md` into the task worktree. The parent executor passes the full sub-plan content, prerequisite outputs, and test file paths as inline task context.
 - After the implementer finishes, inspect the task worktree diff and integrate it into the coordinator workspace using the mechanism that matches how the worktree was created. Prefer native result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
@@ -87,7 +90,7 @@ In both cases, verify that the test files now exist in the main execution worksp
 
 - The parent executor owns `progress.md` and updates it after each meaningful step.
 - Even if a subagent writes files directly, the parent remains responsible for checkpointing and verifying that expected artifacts exist.
-- Record dispatch evidence in progress: planned worker, actual worker, model/effort from the worker binding, command or runtime mechanism used, implementation workspace path, integration status, and TDD isolation outcome.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort from the worker binding, command or runtime mechanism used, implementation workspace path, build/cache seeding status, integration status, and TDD isolation outcome.
 
 ## Model Assignment
 

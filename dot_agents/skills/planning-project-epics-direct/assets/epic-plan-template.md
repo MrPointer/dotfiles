@@ -20,6 +20,10 @@ The epic plan is a coordination document that persists across sessions. It track
 - <Concern>: <How it should be handled across features>
 ...
 
+## Build/Workspace Constraints
+<Use "None" when there are no known build-heavy isolated-worktree constraints. Otherwise, list ignored in-repository build/cache directories that future feature plans should make available in isolated worktrees before TDD or implementation dispatch.>
+- <Relative build/cache dir>: <Why feature planners must preserve this constraint>
+
 ## Features
 
 <!-- Status values: not-started | planning | planned | in-progress | done -->
@@ -35,6 +39,9 @@ The epic plan is a coordination document that persists across sessions. It track
 
 **Context**:
 <Domain knowledge, spec references, relevant existing code/packages, architectural context>
+
+**Build/Workspace Notes**:
+<Known build-heavy constraints for this feature, or "None beyond epic-level constraints">
 
 **Scope Boundaries**:
 - Includes: ...

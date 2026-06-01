@@ -66,6 +66,7 @@ With documentation context in hand, explore what documentation didn't cover:
 3. **Find architectural seams**: Look for natural boundaries where features can be separated — different layers, different domains, different packages.
 4. **Note conventions and patterns**: Existing patterns that features will need to follow.
 5. **Identify required skills**: Determine which skills (global and local) feature planners will need. Check the project's `AGENTS.md` for documented skill mappings.
+6. **Identify workspace/build-cache constraints**: If future feature plans will likely use isolated worktrees in a build-heavy ecosystem, note ignored in-repository build/cache directories that feature planners should carry into master-plan seeding requirements, such as Rust `target/`.
 
 Share findings with the user and confirm understanding before proceeding.
 
@@ -95,7 +96,9 @@ This is the most critical phase. Break the epic into features:
 
 4. **Identify parallel opportunities**: Features with no dependencies between them can be planned and executed independently — note this for the user's scheduling.
 
-5. **Watch for cross-cutting concerns**: Some concerns span multiple features (error handling strategy, logging conventions, testing approach). Call these out in the epic plan so they don't get decided inconsistently across features.
+5. **Capture build-heavy workspace constraints**: If isolated feature execution will be expensive without ignored build/cache artifacts, record the cache directories as a cross-cutting concern for later feature planning. Do not define implementation steps; just preserve the constraint.
+
+6. **Watch for cross-cutting concerns**: Some concerns span multiple features (error handling strategy, logging conventions, testing approach). Call these out in the epic plan so they don't get decided inconsistently across features.
 
 Present the decomposition to the user for review before writing the epic plan.
 
@@ -111,6 +114,7 @@ Only after Phases 1-5 are complete:
    - Dependencies on other features (existence only — not contract shapes)
    - Scope boundaries — what's in this feature vs. adjacent ones
    - Required skills for the feature planner and executing agents
+   - Any known build-heavy workspace constraints the feature planner must carry forward, including ignored build/cache directories isolated worktrees need available
 
 3. **Set initial status**: All features start as `not-started`.
 

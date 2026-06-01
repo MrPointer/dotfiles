@@ -31,7 +31,7 @@ Do not load or mix instructions from another runtime adapter in the same turn. I
 2. **Relentless Clarification**: Ask as many questions as needed. A plan built on assumptions is worse than no plan. Requirement gathering doesn't end at Phase 1 — when later phases surface new ambiguities or decision points not resolved earlier, **STOP and present them to the user**. Do not make autonomous architectural decisions.
 3. **Atomic Decomposition**: Break work into the smallest self-contained sub-plans possible. Each sub-plan should be executable in isolation.
 4. **Embedded Context**: Each sub-plan includes everything an executing agent needs — no reliance on reading other sub-plans or external documents.
-5. **DAG Independence Is Not Workspace Safety**: A parallel group means sub-plans do not need each other's outputs. It does not authorize concurrent workers in one dirty workspace. Plans must require isolated implementer worktrees for concurrent execution or serialize the work.
+5. **DAG Independence Is Not Workspace Safety**: A parallel group means sub-plans do not need each other's outputs. It does not authorize concurrent workers in one dirty workspace. Plans must require isolated implementer worktrees for concurrent execution or serialize the work. For build-heavy ecosystems, the plan must also identify ignored build/cache directories that isolated execution should seed before TDD or implementation dispatch.
 6. **Convergent Review**: Plans are reviewed iteratively by specialized sub-agents until no new issues are found.
 
 ## Workflow
@@ -64,14 +64,15 @@ Once requirements are clear:
 4. Note any architectural constraints or patterns to follow
 5. Flag potential conflicts or risks
 6. **Identify required skills**: Determine which skills available in the active runtime the executing agent will need to follow project conventions correctly (e.g., `writing-go-code` for Go changes, `managing-chezmoi` for dotfile edits). Check the project's `AGENTS.md` for documented skill mappings, then use the active runtime adapter for the exact discovery/loading mechanism.
-7. **Flag documentation gaps**: If critical areas needed for the plan are undocumented, note them. Recommend the appropriate documenting skill:
+7. **Identify isolated-worktree build/cache needs**: If the project compiles inside ignored in-repository build directories, identify the relative paths that isolated execution should seed before structural TDD or parallel implementation. Examples include Rust `target/`, Bazel output trees, or other project-local compiler caches named by docs or config. If there are no such directories, record that no build/cache seeding is required.
+8. **Flag documentation gaps**: If critical areas needed for the plan are undocumented, note them. Recommend the appropriate documenting skill:
    - Missing domain knowledge → `documenting-domain`
    - Missing architecture overview → `documenting-architecture`
    - Missing business workflow docs → `documenting-business-processes`
    - Missing component docs → `documenting-components`
 
    Present gaps to the user — they may want to create docs before planning continues, or accept the gap and proceed.
-8. **Flag specification gaps**: When the plan depends on a specification or requirements document that doesn't cover a case the implementation needs, treat it as a **blocking gap** — not a documentation gap. Present the gap and options to the user before proceeding. Examples: an API spec that doesn't define error responses, a data model that doesn't cover edge-case states, a workflow description that omits failure paths.
+9. **Flag specification gaps**: When the plan depends on a specification or requirements document that doesn't cover a case the implementation needs, treat it as a **blocking gap** — not a documentation gap. Present the gap and options to the user before proceeding. Examples: an API spec that doesn't define error responses, a data model that doesn't cover edge-case states, a workflow description that omits failure paths.
 
 Share findings with the user and confirm understanding before proceeding.
 
@@ -170,7 +171,7 @@ Document the recommendation in each sub-plan's `## Execution Model` field with a
 
    **Warn the user**: If the runtime adapter says newly established persistent bindings require discovery, reload, or session restart before they become available, note that when presenting the plan.
 
-7. **Write lead-agent instructions into the master plan**: Multi-sub-plan plans must include explicit worker-dispatch instructions, coordination points, file ownership, implementer worktree isolation, cross-sub-plan data flow, result integration, and post-execution checks. The executor should not have to infer these mechanics from the planning skill. For concurrent work, the plan must say that the lead keeps plan/progress artifacts in the coordinator workspace and passes each worker an inline task packet rather than copying plan files into worker worktrees.
+7. **Write lead-agent instructions into the master plan**: Multi-sub-plan plans must include explicit worker-dispatch instructions, coordination points, file ownership, implementer worktree isolation, build/cache seeding requirements, cross-sub-plan data flow, result integration, and post-execution checks. The executor should not have to infer these mechanics from the planning skill. For concurrent work, the plan must say that the lead keeps plan/progress artifacts in the coordinator workspace, identifies only ignored build/cache artifact directories for seeding when needed, and passes each worker an inline task packet rather than copying plan files into worker worktrees.
 
 ### Phase 5: Initial Review Loop
 
@@ -245,7 +246,7 @@ Before presenting, run a final consistency check:
 4. **Cross-sub-plan prerequisites** — verify that every interface, type, or file referenced in a sub-plan's Prerequisites section is created by an earlier sub-plan in the dependency graph
 5. **Integration contract integrity** — verify that every "Produces" entry in one sub-plan has a matching "Consumes" entry in another (and vice versa), that the master plan's data flow table covers all cross-boundary data paths, and that interface wiring is assigned to a specific sub-plan when methods are accessed through interfaces
 6. **DAG validity** — verify the execution order forms a valid DAG: no cycles, no sub-plan depends on output from a later or same-group sub-plan, and every "Consumes" reference points to a sub-plan that completes before the consumer starts
-7. **Parallel execution safety** — verify every same-group sub-plan has non-overlapping primary file ownership and lead-agent instructions require task-scoped implementer worktrees, result integration, and serialization when isolation cannot be verified
+7. **Parallel execution safety** — verify every same-group sub-plan has non-overlapping primary file ownership and lead-agent instructions require task-scoped implementer worktrees, required build/cache seeding, result integration, and serialization when isolation cannot be verified
 8. **Anchor boundaries** — if an active feature anchor exists, verify the plan does not duplicate anchor content and that any sub-plan using `anchoring-context` has a feature-level reason to update it
 
 Fix any inconsistencies before proceeding.
@@ -316,7 +317,7 @@ Skip the documentation sub-plan when:
 ## Rules (Non-Negotiable)
 
 - **Always respect model assignments during execution** — Sub-plan model assignments are deliberate cost-optimization decisions. When executing a plan, the assigned model MUST be used via the active runtime's actual model-selection mechanism. If a sub-agent fails at the assigned model, diagnose and fix the failure (e.g., permission mode, tool access). Never silently fall back to executing the work on a more expensive model. If the issue cannot be resolved, stop and ask the user how to proceed.
-- **Use runtime-specific execution bindings for multi-sub-plan execution** — When a plan has two or more sub-plans, dispatch each sub-plan through its assigned execution binding from Phase 4 step 6. That binding is the reliable mechanism for controlling model selection and skill preload; prompt wording alone is not. Run independent sub-plans in parallel only when the runtime can provide task-scoped implementer worktrees; otherwise serialize or ask the user. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a binding fails, diagnose and retry once. If it still cannot be resolved, stop and ask the user. Never silently execute on the coordinator or a more expensive model.
+- **Use runtime-specific execution bindings for multi-sub-plan execution** — When a plan has two or more sub-plans, dispatch each sub-plan through its assigned execution binding from Phase 4 step 6. That binding is the reliable mechanism for controlling model selection and skill preload; prompt wording alone is not. Run independent sub-plans in parallel only when the runtime can provide task-scoped implementer worktrees and any required build/cache seeding; otherwise serialize or ask the user. The lead coordinates handoffs between sequential sub-plans by relaying information (sub-agents cannot communicate with each other). If a binding fails, diagnose and retry once. If it still cannot be resolved, stop and ask the user. Never silently execute on the coordinator or a more expensive model.
 - **Planner owns review output** — The planner passes the review output file path to each reviewer. Write-capable reviewers write the file directly; read-only reviewers return findings as their response, and the planner writes the file on their behalf. The planner checks whether the file exists after the reviewer finishes.
 - **Never write a plan based on incomplete information**
 - **Never invent requirements the user didn't specify**

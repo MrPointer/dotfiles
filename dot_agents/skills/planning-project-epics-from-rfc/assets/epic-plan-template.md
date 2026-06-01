@@ -25,6 +25,10 @@ The epic plan is a coordination document that decomposes a reviewed RFC into seq
 <RFC decisions or patterns that span multiple features and must be consistent across them>
 - <Concern>: <How it should be preserved across feature plans>
 
+## Build/Workspace Constraints
+<Use "None" when there are no known build-heavy isolated-worktree constraints. Otherwise, list ignored in-repository build/cache directories that future feature plans should make available in isolated worktrees before TDD or implementation dispatch.>
+- <Relative build/cache dir>: <Why feature planners must preserve this constraint>
+
 ## Features
 
 <!-- Status values: not-started | planning | planned | in-progress | done -->
@@ -41,6 +45,9 @@ The epic plan is a coordination document that decomposes a reviewed RFC into seq
 
 **Context**:
 <RFC decisions, domain knowledge, relevant existing code/packages, architectural context>
+
+**Build/Workspace Notes**:
+<Known build-heavy constraints for this feature, or "None beyond epic-level constraints">
 
 **Scope Boundaries**:
 - Includes: ...

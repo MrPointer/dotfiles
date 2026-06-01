@@ -53,6 +53,14 @@ The master plan is the orchestration document. It does NOT contain implementatio
 | 02       | <files this sub-plan creates/modifies> |
 ...
 
+**Build/Cache Seeding** (for isolated worktrees):
+<Use "None" when no ignored in-repository build/cache artifacts need seeding. For build-heavy projects, list the relative directories that isolated TDD and implementer worktrees need available before dispatch. The execution skill owns the seeding mechanics.>
+
+| Relative Path | Applies To | Purpose | Notes |
+|---------------|------------|---------|-------|
+| `target/`     | all code sub-plans | Rust build cache for isolated execution | Seed before dispatch |
+...
+
 ## Cross-Sub-Plan Data Flow
 <Trace every data path that crosses sub-plan boundaries. Each row is one piece of data that is produced in one sub-plan and consumed in another.>
 
@@ -65,9 +73,10 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 **Lead Agent Instructions**:
 - Use this master plan as the roadmap
-- Before editing implementation files, initialize or resume `progress.md` and fill the execution audit with planned workers, model tiers, dispatch mechanisms, implementation workspace, integration status, and TDD gate status
+- Before editing implementation files, initialize or resume `progress.md` and fill the execution audit with planned workers, model tiers, dispatch mechanisms, implementation workspace, build/cache seeding status, integration status, and TDD gate status
 - Spawn each sub-plan's assigned worker agent from the table above using the active runtime adapter's dispatch mechanism. Do not self-execute assigned worker tasks in the coordinator context
 - Run sub-plans in the same parallel group concurrently only through task-scoped implementer worktrees where the runtime supports isolated dispatch and file ownership does not conflict. If isolation cannot be verified, serialize the group or ask the user
+- Use the Build/Cache Seeding table as the source of cache directories for isolated TDD or implementer worktrees. Follow `executing-plans` for seeding mechanics, verification, and progress recording
 - For sequential dependencies, wait for the prior worker to complete before spawning the next
 - The lead relays information between workers when needed (workers cannot communicate directly)
 - Keep plan files, review files, and `progress.md` in the coordinator workspace. Do not copy them into worker worktrees

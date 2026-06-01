@@ -46,7 +46,7 @@ active runtime when writing or reading concrete artifacts.
 4. **Direct-Planning Mechanics Remain**: RFC-backed planning uses the direct workflow's decomposition, model selection, execution binding, worker-dispatch, documentation sub-plan, and approval mechanics unless this file explicitly replaces a step for RFC reasons.
 5. **Atomic Decomposition**: Break work into the smallest self-contained sub-plans possible. Each sub-plan should be executable in isolation.
 6. **Embedded Context**: Each sub-plan includes everything an executing agent needs. The agent should not have to read the RFC, master plan, or other sub-plans to understand its assigned work.
-7. **DAG Independence Is Not Workspace Safety**: A parallel group means sub-plans do not need each other's outputs. It does not authorize concurrent workers in one dirty workspace. Plans must require isolated implementer worktrees for concurrent execution or serialize the work.
+7. **DAG Independence Is Not Workspace Safety**: A parallel group means sub-plans do not need each other's outputs. It does not authorize concurrent workers in one dirty workspace. Plans must require isolated implementer worktrees for concurrent execution or serialize the work. For build-heavy ecosystems, the plan must also identify ignored build/cache directories that isolated execution should seed before TDD or implementation dispatch.
 8. **RFC-Specific Review**: Reviewed RFC-backed plans use `plan-rfc-fidelity-reviewer` and `plan-executability-reviewer`. The RFC's own architecture, risk, and clarity reviews replace direct planning's full design review loop.
 
 ## Workflow
@@ -83,14 +83,15 @@ Existing documentation is dramatically cheaper than re-exploring code from scrat
 4. Confirm existing interfaces, commands, schemas, config files, or runtime bindings named by the RFC.
 5. Identify tests, packages, or verification scopes that acceptance criteria can reference.
 6. **Identify required skills**: Determine which skills available in the active runtime the executing agent will need to follow project conventions correctly. Check the project's `AGENTS.md` for documented skill mappings, then use the active runtime adapter for exact discovery/loading mechanics.
-7. **Flag documentation gaps**: If critical areas needed for the plan are undocumented, note them. Recommend the appropriate documenting skill:
+7. **Identify isolated-worktree build/cache needs**: If the project compiles inside ignored in-repository build directories, identify the relative paths that isolated execution should seed before structural TDD or parallel implementation. Examples include Rust `target/`, Bazel output trees, or other project-local compiler caches named by docs or config. If there are no such directories, record that no build/cache seeding is required.
+8. **Flag documentation gaps**: If critical areas needed for the plan are undocumented, note them. Recommend the appropriate documenting skill:
    - Missing domain knowledge -> `documenting-domain`
    - Missing architecture overview -> `documenting-architecture`
    - Missing business workflow docs -> `documenting-business-processes`
    - Missing component docs -> `documenting-components`
 
    Present gaps to the user. They may want to create docs before planning continues, or accept the gap and proceed.
-8. **Flag RFC/specification gaps**: When implementation planning depends on behavior the RFC does not define, treat it as a blocking gap. Do not fill it with a reasonable default. Ask whether to revise the RFC or approve an explicit plan deviation.
+9. **Flag RFC/specification gaps**: When implementation planning depends on behavior the RFC does not define, treat it as a blocking gap. Do not fill it with a reasonable default. Ask whether to revise the RFC or approve an explicit plan deviation.
 
 Do not use exploration to redesign the RFC. If exploration contradicts the RFC,
 stop and ask whether to revise the RFC or abandon RFC-backed planning.
@@ -188,7 +189,7 @@ sub-plan's `## Execution Model` field with a brief rationale.
 
    **Warn the user**: If the runtime adapter says newly established persistent bindings require discovery, reload, or session restart before they become available, note that when presenting the plan.
 
-4. **Write lead-agent instructions into the master plan**: Multi-sub-plan plans must include explicit worker-dispatch instructions, coordination points, file ownership, implementer worktree isolation, cross-sub-plan data flow, result integration, and post-execution checks. The executor should not have to infer these mechanics from the planning skill. For concurrent work, the plan must say that the lead keeps plan/progress artifacts in the coordinator workspace and passes each worker an inline task packet rather than copying plan files into worker worktrees.
+4. **Write lead-agent instructions into the master plan**: Multi-sub-plan plans must include explicit worker-dispatch instructions, coordination points, file ownership, implementer worktree isolation, build/cache seeding requirements, cross-sub-plan data flow, result integration, and post-execution checks. The executor should not have to infer these mechanics from the planning skill. For concurrent work, the plan must say that the lead keeps plan/progress artifacts in the coordinator workspace, identifies only ignored build/cache artifact directories for seeding when needed, and passes each worker an inline task packet rather than copying plan files into worker worktrees.
 
 ### Phase 5: RFC-Specific Review Loop
 
@@ -234,7 +235,7 @@ Before presenting, run a final consistency check:
 7. **Cross-sub-plan prerequisites** — every interface, type, file, or artifact referenced in a sub-plan's Prerequisites section is created by an earlier sub-plan in the dependency graph.
 8. **Integration contract integrity** — every "Produces" entry in one sub-plan has a matching "Consumes" entry in another when cross-sub-plan consumption exists, and the master plan's data flow table covers every cross-boundary data path.
 9. **DAG validity** — execution order forms a valid DAG: no cycles, no sub-plan depends on output from a later or same-group sub-plan, and every consumed prerequisite points to an earlier group.
-10. **Parallel execution safety** — every same-group sub-plan has non-overlapping primary file ownership and lead-agent instructions require task-scoped implementer worktrees, result integration, and serialization when isolation cannot be verified.
+10. **Parallel execution safety** — every same-group sub-plan has non-overlapping primary file ownership and lead-agent instructions require task-scoped implementer worktrees, required build/cache seeding, result integration, and serialization when isolation cannot be verified.
 11. **Anchor boundaries** — if an active feature anchor exists, the plan does not duplicate anchor content and any sub-plan using `anchoring-context` has a feature-level reason to update it.
 12. **Review status** — `plan-rfc-fidelity-reviewer` and `plan-executability-reviewer` findings are resolved or explicitly documented as non-blocking.
 
@@ -325,7 +326,7 @@ Skip the documentation sub-plan when:
 - **Each sub-plan must be self-contained.** Embed context, contracts, constraints, and acceptance criteria directly.
 - **Always list required skills in every sub-plan.** An executing agent without the right skills will produce subpar results or get stuck.
 - **Always respect model assignments during execution.** Sub-plan model assignments are deliberate cost-optimization decisions. The assigned model must be used through the active runtime's actual model-selection mechanism.
-- **Use runtime-specific execution bindings for multi-sub-plan execution.** When a plan has two or more sub-plans, dispatch each sub-plan through its assigned execution binding. Run independent sub-plans in parallel only when the runtime can provide task-scoped implementer worktrees; otherwise serialize or ask the user. If a binding fails, diagnose and retry once. If it still cannot be resolved, stop and ask the user. Never silently execute on the coordinator or a more expensive model.
+- **Use runtime-specific execution bindings for multi-sub-plan execution.** When a plan has two or more sub-plans, dispatch each sub-plan through its assigned execution binding. Run independent sub-plans in parallel only when the runtime can provide task-scoped implementer worktrees and any required build/cache seeding; otherwise serialize or ask the user. If a binding fails, diagnose and retry once. If it still cannot be resolved, stop and ask the user. Never silently execute on the coordinator or a more expensive model.
 - **Write lead-agent execution instructions into every multi-sub-plan master plan.** Do not rely on the executor remembering this skill.
 - **Always run `plan-rfc-fidelity-reviewer` and `plan-executability-reviewer` before presenting the plan.**
 - **Never run full direct-planning design reviewers in this workflow unless the user explicitly exits RFC-backed planning.** RFC architecture, risk, and clarity were already reviewed at RFC time.

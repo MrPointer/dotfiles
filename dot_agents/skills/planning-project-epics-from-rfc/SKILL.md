@@ -51,6 +51,7 @@ Read existing docs first, then inspect code only for epic mechanics:
 - Confirm existing systems, packages, or boundaries named by the RFC.
 - Identify natural feature seams implied by existing architecture and the RFC design.
 - Identify required skills later feature planners and executing agents will need.
+- Identify workspace/build-cache constraints later feature planners must preserve, including ignored in-repository build/cache directories that isolated worktrees need in build-heavy ecosystems.
 - Identify documentation gaps that could make future feature planning difficult.
 
 Do not use exploration to redesign the RFC. If exploration contradicts the RFC, stop and ask whether to revise the RFC or abandon RFC-backed epic planning.
@@ -64,7 +65,8 @@ Break the RFC into features:
 3. **Find natural boundaries**: Prefer features split by domain, architectural layer, infrastructure concern, migration phase, or independently meaningful design tradeoff.
 4. **Sequence by feature dependency**: Feature dependencies are existence-level dependencies only. Do not specify contracts.
 5. **Identify parallel opportunities**: Features with no dependency between them can be planned independently.
-6. **Capture cross-cutting concerns**: RFC decisions that span features must be recorded so later feature plans do not diverge.
+6. **Capture build-heavy workspace constraints**: If isolated feature execution will be expensive without ignored build/cache artifacts, record the cache directories as a cross-cutting concern for later feature planning. Do not define implementation steps; just preserve the constraint.
+7. **Capture cross-cutting concerns**: RFC decisions that span features must be recorded so later feature plans do not diverge.
 
 Present the decomposition to the user for review before writing the epic plan.
 
@@ -84,6 +86,7 @@ Each feature description must contain enough context for a feature planner start
 - Dependencies on other features by existence only.
 - Scope boundaries and non-goals.
 - Required skills likely needed during feature planning and execution.
+- Known build-heavy workspace constraints, including ignored build/cache directories isolated worktrees need available.
 
 Set all features to `not-started`.
 
