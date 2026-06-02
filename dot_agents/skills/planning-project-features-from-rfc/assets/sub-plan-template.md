@@ -30,7 +30,8 @@ sub-plans.
 
 Examples:
 
-- Cheapest: "Straightforward configuration change following existing patterns"
+- Cheapest: "Rename-only task with all paths and reference updates listed"
+- Mid-tier: "Straightforward configuration change following existing patterns"
 - Mid-tier: "Shell/runtime change where regressions are costly"
 - Most capable: "Documentation synthesis across final implementation state"
 

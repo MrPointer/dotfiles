@@ -20,8 +20,8 @@ Each sub-plan is a **self-contained execution unit**. An agent should be able to
 **Rationale**: <Why this model tier is appropriate for this sub-plan>
 
 Examples:
-- Cheapest: "Standard CRUD implementation following established patterns in the codebase"
-- Mid-tier: "Complex business logic with multiple edge cases and error handling scenarios"
+- Cheapest: "Rename-only task with all paths and reference updates listed"
+- Mid-tier: "Standard CRUD or configuration work following established patterns"
 - Most capable: "Novel architectural approach requiring creative problem-solving" (rare)
 
 ## Prerequisites

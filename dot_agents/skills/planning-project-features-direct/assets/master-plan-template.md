@@ -19,9 +19,9 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 | #  | Sub-Plan                | Depends On | Model  | Description                          |
 |----|-------------------------|------------|--------|--------------------------------------|
-| 01 | `01-<name>.md`          | —          | Cheapest      | <What this sub-plan accomplishes>    |
+| 01 | `01-<name>.md`          | —          | Mid-tier      | <What this sub-plan accomplishes>    |
 | 02 | `02-<name>.md`          | 01         | Mid-tier      | <What this sub-plan accomplishes>    |
-| 03 | `03-<name>.md`          | —          | Cheapest      | <What this sub-plan accomplishes>    |
+| 03 | `03-<name>.md`          | —          | Mid-tier      | <What this sub-plan accomplishes>    |
 ...
 
 ## Execution Order

@@ -29,7 +29,7 @@ It does NOT redefine the RFC design, and it DOES carry the same execution mechan
 
 | #  | Sub-Plan | Depends On | Model | Description |
 |----|----------|------------|-------|-------------|
-| 01 | `01-<name>.md` | - | Cheapest | <What this sub-plan accomplishes> |
+| 01 | `01-<name>.md` | - | Mid-tier | <What this sub-plan accomplishes> |
 | 02 | `02-<name>.md` | 01 | Mid-tier | <What this sub-plan accomplishes> |
 | 03 | `03-<name>.md` | - | Most capable | <What this sub-plan accomplishes> |
 
