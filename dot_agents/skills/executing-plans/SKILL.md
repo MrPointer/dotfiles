@@ -32,6 +32,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 - **Dependent work starts from checkpointed prerequisites**: a prerequisite is not complete until its output is in an integration-branch checkpoint commit.
 - **Checkpoint commits are local plumbing**: never push them. Final review is the aggregate dirty diff after mixed reset, not checkpoint history.
 - **Plan artifacts stay with the coordinator**: never copy plan files, review files, anchors, or `progress.md` into worker worktrees. Pass task packets inline.
+- **Dirty worktree creation is user-authorized only**: before creating isolated worktrees, stop on tracked or untracked non-ignored dirty files unless the user explicitly accepts the risk.
 - **Anchors are not progress files**: anchors preserve feature-level rationale and handoff context; `progress.md` preserves mechanical execution state.
 
 ## Conditional References
@@ -40,7 +41,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 |---------|------|
 | Creating or repairing progress | [assets/progress-template.md](assets/progress-template.md) |
 | Any task has testable acceptance criteria and structural TDD may apply | [references/structural-tdd.md](references/structural-tdd.md) |
-| Any task uses an isolated worktree, parallel implementation, or build/cache seeding | [references/workspace-isolation.md](references/workspace-isolation.md) |
+| Any task uses an isolated worktree, parallel implementation, or build/cache reuse | [references/workspace-isolation.md](references/workspace-isolation.md) |
 | Plan has multiple sub-plans, dependencies, checkpoint commits, or task worktree integration | [references/checkpoint-integration.md](references/checkpoint-integration.md) |
 
 ## Workflow
@@ -55,7 +56,7 @@ Read the plan file or directory at the given path. Plans vary in shape, so extra
 - execution binding and model assignments
 - file ownership and conflict boundaries
 - required verification per task
-- build/cache artifact notes for isolated workspaces
+- build/cache reuse notes for isolated workspaces
 
 If the plan or user references an active feature anchor, read it for intent, constraints, rationale, rejected alternatives, unresolved questions, and handoff context. If the plan names a feature but not an anchor path, look for one using project conventions, then `docs/context/<topic>-anchor.md`. Do not infer an anchor from unrelated old feature docs.
 
@@ -81,8 +82,8 @@ Check these items:
 - whether coordinator self-execution is allowed; it is allowed only for progress/coordination artifacts or a single trivial sub-plan with no explicit binding requirement
 - whether checkpoint integration is required; if yes, load [checkpoint-integration.md](references/checkpoint-integration.md) and establish or resume the integration branch before implementation
 - whether structural TDD is applicable; if yes, load [structural-tdd.md](references/structural-tdd.md)
-- whether isolated workspaces or cache seeding are required; if yes, load [workspace-isolation.md](references/workspace-isolation.md)
-- planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, cache seeding, checkpoint commit, integration status, and TDD gate for each task
+- whether isolated workspaces or cache reuse is required; if yes, load [workspace-isolation.md](references/workspace-isolation.md) and run its dirty-state preflight before creating worktrees
+- planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, dirty-state preflight, cache reuse, checkpoint commit, integration status, and TDD gate for each task
 
 Proceed only after the audit is complete or the user explicitly authorizes a deviation.
 
@@ -166,6 +167,7 @@ When all tasks are `done`:
 - Do not let implementers modify test-author tests.
 - Do not run concurrent implementers in one workspace.
 - Do not launch dependent work from uncheckpointed dirty state.
+- Do not create isolated worktrees from a dirty workspace unless the user explicitly authorizes it after being warned.
 - Do not push checkpoint commits.
 - Do not copy plan/progress artifacts into worker worktrees.
 - Do not assume fresh worktrees contain ignored build artifacts.

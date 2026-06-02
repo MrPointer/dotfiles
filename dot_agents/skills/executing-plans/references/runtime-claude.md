@@ -29,7 +29,9 @@ Use one ordered fallback chain for both structural TDD workspaces and task-scope
 
 Do not use `EnterWorktree` / `ExitWorktree` or other runtime-native worktree switching for isolated workspace creation or switching. Use Claude-native mechanics to dispatch workers into the selected Worktrunk or git worktree and to verify the worker actually ran there.
 
-After creating or entering an isolated workspace, seed ignored build/cache artifacts when the project needs them for practical compile or test performance. Identify the relative cache directories from project docs or config, such as Rust `target/`. When the source cache exists in the coordinator workspace and the paths are on the same filesystem, create the destination directory and hard-link copy the contents, for example with `cp -al <source-dir>/. <worktree-dir>/<relative-dir>/` when supported. Verify the expected files exist in the worktree. If hard-link seeding is required for a build-heavy project but cannot be verified, record the failure and ask before dispatching the worker.
+Before creating or entering an isolated workspace, apply the dirty-state preflight and build/cache reuse rules in [workspace-isolation.md](workspace-isolation.md).
+
+After creating or entering an isolated workspace, verify its initial status according to [workspace-isolation.md](workspace-isolation.md) before dispatching a worker.
 
 ## Integration Branch And Checkpoints
 
@@ -40,7 +42,7 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 
 ## Test Author Isolation
 
-**Physical isolation**: The plan directory lives outside the tracked codebase (under `plans/`, typically gitignored). A fresh worktree therefore contains the source code but not the plan files; build-heavy projects may also hard-link seed ignored build/cache artifacts. This is the foundation of physical isolation; do not undermine it by copying plan files, review files, or `progress.md` into the worktree.
+**Physical isolation**: The plan directory lives outside the tracked codebase (under `plans/`, typically gitignored). A fresh worktree therefore contains the source code but not the plan files; build-heavy projects may also use explicitly allowed build/cache artifacts. This is the foundation of physical isolation; do not undermine it by copying plan files, review files, or `progress.md` into the worktree.
 
 **Contextual isolation**: Even with physical isolation, the test author's prompt must not reveal the plan path, task file path, feature name, or design rationale. Pass only acceptance criteria (inline as text, not as a file path) and the code surface the tests interact with.
 
@@ -55,7 +57,7 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 ## Implementer Dispatch
 
 - For implementation tasks that run concurrently with any other implementation task, create or enter a task-scoped worktree using the Workspace Isolation Strategy.
-- Before dispatch, hard-link seed required ignored build/cache artifact directories into the task worktree when the project is build-heavy.
+- Before dispatch, apply only the project-documented build/cache reuse strategy allowed by [workspace-isolation.md](workspace-isolation.md).
 - Dispatch a separate implementer worker in the chosen workspace with the full task packet, test file paths, prerequisite outputs, and required skills. Pass the task content inline; do not rely on plan file paths inside worker worktrees.
 - Tell the implementer explicitly that tests are immutable.
 - If the implementer reports a dispute, record it in progress and continue with independent tasks per the canonical workflow.
@@ -65,7 +67,7 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 
 - The parent executor owns `progress.md` and updates it after each meaningful step.
 - Even if a worker writes files directly, the parent remains responsible for checkpointing and verifying that expected artifacts exist.
-- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, build/cache seeding status, checkpoint commit, integration status, and TDD isolation outcome.
+- Record dispatch evidence in progress: planned worker, actual worker, model/effort, runtime dispatch mechanism, implementation workspace path, dirty-state preflight result, build/cache reuse status, checkpoint commit, integration status, and TDD isolation outcome.
 
 ## Model Assignment
 

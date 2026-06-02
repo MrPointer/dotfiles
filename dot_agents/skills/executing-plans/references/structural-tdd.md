@@ -30,7 +30,7 @@ Do not analyze how to make the area testable. Record a short skip reason such as
 
 Structural TDD requires physical isolation and prompt isolation.
 
-- **Physical isolation**: the test author runs in a Worktrunk or plain `git worktree` workspace containing the relevant code and explicitly seeded ignored build/cache artifacts, but not plan files, review files, anchors, or `progress.md`.
+- **Physical isolation**: the test author runs in a Worktrunk or plain `git worktree` workspace containing the relevant code and explicitly allowed build/cache artifacts, but not plan files, review files, anchors, or `progress.md`.
 - **Prompt isolation**: the test author's prompt contains no design rationale, plan path, task path, feature name, or breadcrumb that could lead to the plan.
 
 Use the active runtime adapter to verify that the test author can be dispatched inside the isolated workspace. Prompt hygiene alone is not enough.
@@ -43,7 +43,7 @@ Before spawning the test author:
 
 1. Verify that the target package compiles at the current execution state.
 2. Verify that required test infrastructure, fixtures, helpers, and generated mocks exist and are current.
-3. For build-heavy projects, seed required ignored build/cache artifacts in the isolated workspace according to [workspace-isolation.md](workspace-isolation.md).
+3. For build-heavy projects, configure or seed build/cache reuse only according to [workspace-isolation.md](workspace-isolation.md).
 
 If compilation or test infrastructure is blocked, resolve the blocker within the TDD framework instead of skipping TDD or inverting the order.
 

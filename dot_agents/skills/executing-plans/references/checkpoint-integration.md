@@ -14,9 +14,10 @@ Before implementation begins:
 2. Record the execution base commit: `HEAD` before execution starts.
 3. Record a local temporary integration branch name, such as `agent/<plan-id>` or the project convention.
 4. Verify coordinator-owned dirty files are limited to plan files, review files, `progress.md`, anchors, or other explicit coordination artifacts.
-5. If implementation source, tests, config, generated code, or build-affecting files are dirty, stop and ask the user how to isolate them before checkpoint execution starts.
-6. Create the integration branch from the execution base, or resume the branch recorded in progress.
-7. Verify the resumed branch still descends from the recorded execution base.
+5. If task-scoped worktrees may be created, run the dirty-state preflight in [workspace-isolation.md](workspace-isolation.md). Coordination artifacts that appear in git status must be ignored, resolved, or explicitly authorized by the user before worktree creation.
+6. If implementation source, tests, config, generated code, or build-affecting files are dirty, stop and ask the user how to isolate them before checkpoint execution starts.
+7. Create the integration branch from the execution base, or resume the branch recorded in progress.
+8. Verify the resumed branch still descends from the recorded execution base.
 
 Do not remove, stash, or commit coordinator-owned plan/progress artifacts as checkpoints.
 
@@ -43,6 +44,8 @@ When a task ran in a task-scoped worktree:
 5. Run the task's required verification after integration.
 6. Create the checkpoint commit only after verification passes.
 7. Mark the task `done` only after integration, verification, and checkpointing succeed.
+
+Before running `wt merge` or any equivalent integration operation, verify the task worktree status contains only expected task outputs. If the tool requires committing unrelated carried files, plan/RFC/review/progress artifacts, or other unexpected untracked files, stop and ask; do not create a cleanup commit just to satisfy the tool.
 
 If integration conflicts, checkpoint creation fails, or post-integration verification fails, mark the task `blocked: integration` or `blocked: regression`, keep enough workspace state for diagnosis, and continue with independent tasks when possible.
 
