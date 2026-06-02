@@ -34,23 +34,21 @@ If no isolated implementation path can be verified for a concurrent task, serial
 - Pass prerequisite outputs through the executor, not by letting subagents communicate with each other.
 - Verify the assigned worker can be dispatched inside the selected worktree before treating isolation as available.
 
-## Build And Cache Seeding
+## Build And Cache Reuse
 
-Fresh worktrees do not contain ignored build artifacts. For build-heavy projects, identify ignored in-repository build/cache directories that materially affect compile or test performance.
+Fresh worktrees do not contain ignored build artifacts. Treat build/cache reuse as a best-effort performance optimization, not as a property of workspace isolation.
 
-Examples include Rust `target/`, Bazel output trees, or project-local build directories named by docs or config.
+Before configuring shared caches or seeding ignored artifacts, read project-local instructions such as `AGENTS.md`, runtime adapter notes, plan instructions, repository docs, or build configuration. Use the project-documented strategy when one exists.
 
-Seed only ignored build/cache artifacts. Never seed source files, plan files, review files, anchors, or `progress.md`.
+Build caches may be sensitive to absolute paths, environment variables, config files, compiler flags, generated metadata, or dependency graph state. Filesystem-level hard-link success does not prove that a build cache is valid in a different worktree path.
 
-When the source cache exists in the coordinator workspace and both paths are on the same filesystem, a hard-link-preserving copy is acceptable, such as:
+Prefer project-documented shared cache mechanisms over copying artifacts. If a project documents a safe shared cache directory, tool cache, environment variable, or task-runner cache configuration, apply that mechanism and record it in progress.
 
-```bash
-cp -al <source-dir>/. <worktree-dir>/<relative-dir>/
-```
+Seed only ignored build/cache artifacts, and only when the project instructions or a targeted verification show that artifact copying is safe across worktree paths. Never seed source files, plan files, review files, anchors, or `progress.md`.
 
-Use an equivalent hard-link-preserving copy when `cp -al` is unavailable. Verify the destination contains expected files and record the seeded relative paths in progress.
+If no safe project-specific cache reuse strategy is documented, skip cache seeding, record that the isolated worktree may rebuild from scratch, and proceed unless the plan or user explicitly requires cache reuse because rebuild cost is unacceptable.
 
-If required hard-link seeding cannot be verified for a build-heavy project, record the failure and ask before dispatching a worker that would rebuild from an empty worktree.
+If required cache reuse cannot be verified, record the failure and ask before dispatching a worker that would rebuild from an empty worktree.
 
 ## Integration And Cleanup
 
