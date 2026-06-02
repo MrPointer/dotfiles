@@ -28,9 +28,10 @@ This adapter maps the canonical execution workflow in `../SKILL.md` to Codex-nat
 
 Use one ordered fallback chain for both structural TDD workspaces and task-scoped implementer worktrees:
 
-1. Prefer Codex's native isolated-workspace or worktree mechanism when the current environment provides one and the executor can verify creation, worker dispatch, result collection, and cleanup.
-2. Otherwise use Worktrunk (`wt`) to create an isolated workspace.
-3. Otherwise use `git worktree` directly.
+1. Use Worktrunk (`wt`) if it is installed and suitable.
+2. Otherwise use `git worktree` directly.
+
+Do not use runtime-native worktree switching for isolated workspace creation or switching. Use Codex-native mechanics to dispatch workers into the selected Worktrunk or git worktree and to verify the worker actually ran there.
 
 After creating or entering an isolated workspace, seed ignored build/cache artifacts when the project needs them for practical compile or test performance. Identify the relative cache directories from project docs or config, such as Rust `target/`. When the source cache exists in the coordinator workspace and the paths are on the same filesystem, create the destination directory and hard-link copy the contents, for example with `cp -al <source-dir>/. <worktree-dir>/<relative-dir>/` when supported. Verify the expected files exist in the worktree. If hard-link seeding is required for a build-heavy project but cannot be verified, record the failure and ask before dispatching the worker.
 
@@ -57,7 +58,7 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 - Before dispatch, hard-link seed required ignored build/cache artifact directories into the task worktree when the project is build-heavy.
 - Dispatch the assigned implementer worker inside that worktree using Codex's actual worker dispatch mechanism and explicit model/skill binding.
 - Do not copy plan files, review files, or `progress.md` into the worktree. The parent executor passes the full sub-plan content, prerequisite outputs, and test file paths as inline task context.
-- After the implementer finishes, inspect the task worktree diff and integrate it into the execution integration branch using native Codex result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
+- After the implementer finishes, inspect the task worktree diff and integrate it into the execution integration branch using the mechanism that matches how the worktree was created: `wt merge` from Worktrunk (`wt`), or explicit git merge/cherry-pick/patch transfer for plain `git worktree`.
 - If integration conflicts, checkpoint commit creation fails, or verification fails after integration, record the task as blocked and keep enough worktree state for diagnosis. Remove the worktree only after the result is integrated and checkpointed or intentionally abandoned.
 
 ## Implementer Dispatch

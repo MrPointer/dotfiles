@@ -35,9 +35,10 @@ OpenCode execution bindings should be **markdown-defined custom subagents** unde
 
 Use one ordered fallback chain for both structural TDD workspaces and task-scoped implementer worktrees:
 
-1. Prefer a runtime-native OpenCode isolated-workspace or worktree dispatch mechanism when the current environment provides one and the executor can verify creation, worker dispatch, result collection, and cleanup.
-2. Otherwise use Worktrunk (`wt`) if it is installed.
-3. Otherwise use `git worktree` via Bash to create an isolated workspace.
+1. Use Worktrunk (`wt`) if it is installed and suitable.
+2. Otherwise use `git worktree` via Bash to create an isolated workspace.
+
+Do not use runtime-native worktree switching for isolated workspace creation or switching. Use OpenCode-native mechanics to dispatch workers into the selected Worktrunk or git worktree and to verify the worker actually ran there.
 
 When Worktrunk (`wt`) is used, create or enter the isolated workspace with `wt switch`. Per Worktrunk (`wt`) documentation, `wt switch` is the command that switches to a worktree and creates one if needed; use `wt switch --create <branch>` when the isolation branch does not exist yet. Its `--execute` mode can also be useful when you need to launch the agent directly inside the isolated worktree.
 
@@ -56,7 +57,6 @@ Do not assume structural TDD or implementer isolation is possible just because s
 
 For OpenCode structural TDD, the required verification is that the test-author process actually runs in the isolated workspace. Same-workspace `@<subagent-name>` invocation is not sufficient for this gate unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable isolation-routing mechanisms include:
 
-- A native OpenCode isolated-workspace dispatch mechanism that explicitly targets the isolated worktree and can be verified before the test author sees context.
 - Worktrunk (`wt`) command: `wt switch --create <isolation-branch> --execute 'opencode run --agent <test-author-worker> --dir "$PWD" "<AC-only prompt>"'`
 - Creating the isolated worktree with Worktrunk (`wt`), determining its path, then running `opencode run --agent <test-author-worker> --dir <isolated-worktree-path> "<AC-only prompt>"`
 - Creating the isolated worktree with `git worktree`, determining its path, then running `opencode run --agent <test-author-worker> --dir <isolated-worktree-path> "<AC-only prompt>"`
@@ -83,7 +83,7 @@ In both cases, verify that the test files now exist in the main execution worksp
 - Before dispatch, hard-link seed required ignored build/cache artifact directories into the task worktree when the project is build-heavy.
 - Dispatch the implementer with `opencode run --agent <implementer-worker> --dir <task-worktree-path> "<full task packet>"` unless a native OpenCode dispatch path can target that worktree and preserve the worker's configured model and permissions.
 - Do not copy plan files, review files, or `progress.md` into the task worktree. The parent executor passes the full sub-plan content, prerequisite outputs, and test file paths as inline task context.
-- After the implementer finishes, inspect the task worktree diff and integrate it into the execution integration branch using the mechanism that matches how the worktree was created. Prefer native result collection when available, then `wt merge` from Worktrunk (`wt`), then explicit git merge/cherry-pick/patch transfer.
+- After the implementer finishes, inspect the task worktree diff and integrate it into the execution integration branch using the mechanism that matches how the worktree was created: `wt merge` from Worktrunk (`wt`), or explicit git merge/cherry-pick/patch transfer for plain `git worktree`.
 - If integration conflicts, checkpoint commit creation fails, or verification fails after integration, record the task as blocked and keep enough worktree state for diagnosis. Remove the worktree only after the result is integrated and checkpointed or intentionally abandoned.
 
 ## Implementer Dispatch

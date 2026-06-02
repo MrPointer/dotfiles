@@ -24,9 +24,10 @@ Claude execution bindings are **file-defined worker agents** under `.claude/agen
 
 Use one ordered fallback chain for both structural TDD workspaces and task-scoped implementer worktrees:
 
-1. **`EnterWorktree` / `ExitWorktree`** — Claude Code's native worktree tools. Prefer these when available because they are runtime-aware and provide verifiable entry, exit, result collection, and cleanup.
-2. **Worktrunk (`wt`)** — if the `worktrunk:worktrunk` skill is installed, load it and use `wt switch <branch-name>` when native Claude worktree tooling is unavailable or unsuitable.
-3. **Git CLI** (`git worktree add`) — always available as a fallback.
+1. **Worktrunk (`wt`)** — if Worktrunk is installed, load the `worktrunk:worktrunk` skill when available and use `wt switch <branch-name>`.
+2. **Git CLI** (`git worktree add`) — use plain git as the fallback.
+
+Do not use `EnterWorktree` / `ExitWorktree` or other runtime-native worktree switching for isolated workspace creation or switching. Use Claude-native mechanics to dispatch workers into the selected Worktrunk or git worktree and to verify the worker actually ran there.
 
 After creating or entering an isolated workspace, seed ignored build/cache artifacts when the project needs them for practical compile or test performance. Identify the relative cache directories from project docs or config, such as Rust `target/`. When the source cache exists in the coordinator workspace and the paths are on the same filesystem, create the destination directory and hard-link copy the contents, for example with `cp -al <source-dir>/. <worktree-dir>/<relative-dir>/` when supported. Verify the expected files exist in the worktree. If hard-link seeding is required for a build-heavy project but cannot be verified, record the failure and ask before dispatching the worker.
 
@@ -43,12 +44,12 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 
 **Contextual isolation**: Even with physical isolation, the test author's prompt must not reveal the plan path, task file path, feature name, or design rationale. Pass only acceptance criteria (inline as text, not as a file path) and the code surface the tests interact with.
 
-**Structural TDD gate**: If Claude cannot create the isolated worktree (e.g., the repository has uncommitted changes that block worktree creation and the user declines to resolve them), skip structural TDD only after recording the attempted mechanism and failure. If an isolation mechanism exists but dispatch into it fails, stop and ask whether to fix isolation or explicitly skip structural TDD.
+**Structural TDD gate**: If neither Worktrunk nor plain git can create the isolated worktree (e.g., the repository has uncommitted changes that block worktree creation and the user declines to resolve them), skip structural TDD only after recording the attempted mechanism and failure. If an isolation mechanism exists but dispatch into it fails, stop and ask whether to fix isolation or explicitly skip structural TDD.
 
 **Bringing test files back**: If the test author ran in a task-scoped implementer worktree, leave the test files there for the implementer. Otherwise, after the test author finishes, return the test files to the main execution workspace:
 
-- If the worktree was created via `EnterWorktree`, use `ExitWorktree` to merge the changes back into the integration branch.
-- If created via Worktrunk (`wt`) or `git worktree add`, merge the worktree's branch into the integration branch or cherry-pick the commit containing the tests.
+- If the worktree was created via Worktrunk (`wt`), prefer `wt merge`.
+- If created via `git worktree add`, merge the worktree's branch into the integration branch or cherry-pick the commit containing the tests.
 - Remove the worktree once the test files are back.
 
 ## Implementer Dispatch
@@ -58,7 +59,7 @@ After creating or entering an isolated workspace, seed ignored build/cache artif
 - Dispatch a separate implementer worker in the chosen workspace with the full task packet, test file paths, prerequisite outputs, and required skills. Pass the task content inline; do not rely on plan file paths inside worker worktrees.
 - Tell the implementer explicitly that tests are immutable.
 - If the implementer reports a dispute, record it in progress and continue with independent tasks per the canonical workflow.
-- After a task-scoped worktree worker finishes, inspect and integrate the result into the integration branch using `ExitWorktree` when the native tool created it, `wt merge` from Worktrunk (`wt`) when that tool created it, or git merge/cherry-pick/patch transfer when plain git created it. Create the checkpoint commit after verification. Remove the worktree only after the result is integrated and checkpointed or intentionally abandoned.
+- After a task-scoped worktree worker finishes, inspect and integrate the result into the integration branch using `wt merge` from Worktrunk (`wt`) when that tool created it, or git merge/cherry-pick/patch transfer when plain git created it. Create the checkpoint commit after verification. Remove the worktree only after the result is integrated and checkpointed or intentionally abandoned.
 
 ## Progress and Artifacts
 
