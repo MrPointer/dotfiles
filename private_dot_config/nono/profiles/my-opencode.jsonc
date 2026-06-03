@@ -1,0 +1,54 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "opencode"
+   ],
+   "meta": {
+      "name": "my-opencode",
+      "description": "Generic opencode profile for daily dev work"
+   },
+   "filesystem": {
+      "allow": [
+         "$XDG_CACHE_HOME/uv",
+         "$XDG_DATA_HOME/uv/tools/semble", // semble search
+         "$HOME/.npm/_cacache"
+      ],
+      "read": [
+         "$HOME/.agents/skills",
+         "$HOME/lcp-docs"
+      ],
+      "write": [],
+      "allow_file": [],
+      "read_file": [
+         "$HOME/.ssh/id_ed25519.pub",
+         "$HOME/.ssh/known_hosts",
+         "$HOME/.ssh/config",
+         "$XDG_CONFIG_HOME/git/common.gitconfig",
+         "$XDG_CONFIG_HOME/git/allowed_signers"
+      ],
+      "write_file": [],
+      "deny": [],
+      "bypass_protection": [
+         "$HOME/.ssh/id_ed25519.pub",
+         "$HOME/.ssh/known_hosts",
+         "$HOME/.ssh/config"
+      ],
+      "suppress_save_prompt": [
+         "/Users",
+         "$HOME",
+         "$HOME/.claude",
+         "$HOME/.claude/ide",
+         "$XDG_CONFIG_HOME",
+         "$HOME/.local",
+         "$HOME/Library/Application Support/Zed/db/0-stable/db.sqlite"
+      ]
+   },
+   "network": {
+      "block": false,
+      "allow_domain": []
+   },
+   "environment": null,
+   "workdir": {
+      "access": "readwrite"
+   }
+}

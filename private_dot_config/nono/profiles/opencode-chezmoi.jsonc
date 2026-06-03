@@ -1,0 +1,43 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "my-opencode"
+   ],
+   "meta": {
+      "name": "opencode-chezmoi",
+      "description": "opencode profile for maintaining this chezmoi dotfiles repository"
+   },
+   "filesystem": {
+      "allow": [
+         "$XDG_CONFIG_HOME/chezmoi",
+         "$XDG_CACHE_HOME/chezmoi"
+      ],
+      "read": [
+         "$HOME/.agents",
+         "$HOME/.claude",
+         "$HOME/.codex",
+         "$HOME/.zfunc",
+         "$HOME/.local/bin",
+         "$XDG_CONFIG_HOME/git",
+         "$XDG_CONFIG_HOME/nono",
+         "$XDG_CONFIG_HOME/nvim",
+         "$XDG_CONFIG_HOME/opencode",
+         "$XDG_CONFIG_HOME/rio",
+         "$XDG_CONFIG_HOME/sheldon",
+         "$XDG_DATA_HOME/nvim",
+         "$XDG_DATA_HOME/zsh"
+      ],
+      "read_file": [
+         "$HOME/.gitconfig",
+         "$HOME/.zshenv",
+         "$HOME/.zshrc"
+      ],
+      "bypass_protection": [
+         "$HOME/.zshenv",
+         "$HOME/.zshrc"
+      ],
+      "suppress_save_prompt": [
+         "$HOME/.work"
+      ]
+   }
+}
