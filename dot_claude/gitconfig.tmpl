@@ -2,7 +2,9 @@
    path = {{ .chezmoi.homeDir }}/.config/git/common.gitconfig
 [user]
 {{- if and .personal.work_env (eq .personal.work_name "sedg") }}
-   signingkey = {{ .chezmoi.homeDir }}/.ssh/id_rsa_sedg.pub
+   signingkey = {{ .chezmoi.homeDir }}/.ssh/id_rsa_{{ .personal.work_name }}.pub
+{{- else if .personal.work_env }}
+   signingkey = {{ .chezmoi.homeDir }}/.ssh/id_ed25519_{{ .personal.work_name }}.pub
 {{- else }}
    signingkey = {{ .chezmoi.homeDir }}/.ssh/id_ed25519.pub
 {{- end }}

@@ -1,0 +1,59 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "claude-code"
+   ],
+   "meta": {
+      "name": "my-claude-code"
+   },
+   "filesystem": {
+      "allow": [
+         "$XDG_CACHE_HOME/uv",
+         "$XDG_DATA_HOME/uv",
+         "$HOME/.azure",
+         "$HOME/.azure-devops",
+         "$TMPDIR"
+      ],
+      "read": [
+         "$HOME/.agents/skills",
+         "$HOME/lcp-docs",
+         "$HOME/.context7"
+      ],
+      "write": [
+         "$HOME/Applications/Claude Code URL Handler.app/Contents/MacOS"
+      ],
+      "allow_file": [],
+      "read_file": [
+         "$HOME/.ssh/id_rsa_{{ .personal.work_name }}.pub",
+         "$HOME/.ssh/id_ed25519_{{ .personal.work_name }}.pub",
+         "$HOME/.ssh/known_hosts",
+         "$HOME/.ssh/config",
+         "$XDG_CONFIG_HOME/git/common.gitconfig"
+      ],
+      "write_file": [],
+      "deny": [],
+      "bypass_protection": [
+         "$HOME/.ssh/id_rsa_{{ .personal.work_name }}.pub",
+         "$HOME/.ssh/id_ed25519_{{ .personal.work_name }}.pub",
+         "$HOME/.ssh/known_hosts",
+         "$HOME/.ssh/config"
+      ],
+      "suppress_save_prompt": [
+         "/Users",
+         "$HOME",
+         "$HOME/Library/Application Support/Microsoft Edge",
+         "$HOME/Projects",
+         "$HOME/Projects/{{ .personal.work_name }}",
+         "$HOME/Projects/{{ .personal.work_name }}/hark"
+      ]
+   },
+   "network": {
+      "block": false,
+      "allow_domain": []
+   },
+   "env_credentials": {},
+   "environment": null,
+   "workdir": {
+      "access": "readwrite"
+   }
+}
