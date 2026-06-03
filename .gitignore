@@ -6,6 +6,8 @@
 *
 
 # Except these...
+### Don't ignore ourselves!
+!.gitignore
 
 # Github
 !.github/**/*
@@ -55,3 +57,7 @@
 
 # ...even if they are in subdirectories
 !*/
+
+# Do ignore local context anchors, however
+**/docs/context/
+**/docs/rfcs/
