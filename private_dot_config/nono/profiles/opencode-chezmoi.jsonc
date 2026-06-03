@@ -17,6 +17,7 @@
          "$HOME/.claude",
          "$HOME/.codex",
          "$HOME/.zfunc",
+         "$HOME/.work",
          "$HOME/.local/bin",
          "$XDG_CONFIG_HOME/git",
          "$XDG_CONFIG_HOME/nono",
