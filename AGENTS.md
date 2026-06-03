@@ -13,6 +13,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 | `linting-go-code`            | Running linters, fixing lint errors, formatting code                         |
 | `testing-go-code`            | Running unit tests, coverage, benchmarks, regenerating mocks                 |
 | `managing-chezmoi`           | Editing `dot_*`, `private_dot_*`, or `.tmpl` files; chezmoi commands        |
+| `managing-nono-profiles`     | Managing nono profiles, profile schemas, or agent shell wrappers             |
 | `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                                 |
 | `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                                     |
 | `testing-e2e-containers`     | E2E testing installer in Docker containers (Ubuntu, Debian, Fedora)         |
@@ -29,6 +30,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 ```
 .
 ├── dot_claude/                 # ~/.claude (Claude global config)
+├── dot_agents/                 # ~/.agents (agent skills and shell wrappers)
 ├── .github/workflows/          # CI/CD pipelines
 ├── installer/                  # Go installer/bootstrapper (has own AGENTS.md)
 ├── dot_config/                 # ~/.config/* files (sheldon, etc.)
@@ -51,7 +53,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 3. **Templates for conditional config** - `{{ .chezmoi.os }}` for OS-specific logic
 4. **Separate work/personal dotfiles** - Work configs loaded conditionally in work environments
 5. **Global skills and agents live in `dot_claude/`** - Edit `dot_claude/skills/` and `dot_claude/agents/` here, never under `~/.claude/` directly
-6. **Nono profiles are managed in source** - Edit `private_dot_config/nono/profiles/` here, not `~/.config/nono/profiles/`, unless explicitly doing a one-off local profile draft or promotion
+6. **Nono profile work has a dedicated skill** - Load `managing-nono-profiles` before editing nono profiles, schemas, or agent shell wrappers.
 
 ## Project Motivation
 

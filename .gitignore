@@ -51,6 +51,8 @@
 !dot_codex/**/*
 !.claude/
 !.claude/agents/**/*
+!.agents/
+!.agents/skills/**/*
 !.opencode/agents/**/*
 !.claude/skills/**/*
 !.opencode/skills/**/*

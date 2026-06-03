@@ -1,0 +1,39 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "my-claude-code"
+   ],
+   "meta": {
+      "name": "claude-code-go",
+      "description": "Profile for developing Go applications with Claude Code"
+   },
+   "groups": {
+      "include": [
+         "go_runtime"
+      ],
+      "exclude": []
+   },
+   "filesystem": {
+      "allow": [
+         // "$HOME/Library/Caches/go-build"
+      ],
+      "read": [
+         // "$HOME/go"
+      ],
+      "write": [],
+      "allow_file": [],
+      "read_file": [],
+      "write_file": [],
+      "deny": [],
+      "bypass_protection": [],
+      "suppress_save_prompt": []
+   },
+   "network": {
+      "block": false,
+      "allow_domain": [],
+      "open_port": [
+         1502 // Required for Modbus
+      ],
+      "listen_port": []
+   }
+}
