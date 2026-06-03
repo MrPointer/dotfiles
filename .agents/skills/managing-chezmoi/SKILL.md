@@ -14,10 +14,11 @@ Operate as a chezmoi power-user: understand source/target model, CLI workflows, 
 
 ## Default Workflow
 
-1. **Inspect state**: `chezmoi status` and `chezmoi diff`
-2. **Edit source directly**: modify files in this repo (the source state)
-3. **Apply safely**: `chezmoi apply --dry-run -v`, then `chezmoi apply`
-4. **Verify**: `chezmoi verify` after larger refactors
+1. **Confirm source ownership**: before editing a file under `~`, check whether chezmoi manages it from `dot_*`, `private_dot_*`, `dot_config/`, `private_dot_config/`, or a template source
+2. **Inspect state**: `chezmoi status` and `chezmoi diff`
+3. **Edit source directly**: modify files in this repo (the source state)
+4. **Apply safely**: `chezmoi apply --dry-run -v`, then `chezmoi apply`
+5. **Verify**: `chezmoi verify` after larger refactors
 
 ## Complexity Decision Tree
 
@@ -34,6 +35,7 @@ Operate as a chezmoi power-user: understand source/target model, CLI workflows, 
 When helping with a request, consider:
 
 - **Source vs target**: User might be editing the wrong side
+- **Managed config files**: For target config under `~/.config`, look for matching `dot_config/` or `private_dot_config/` source before editing the target
 - **Source file naming**: `dot_` prefixes, `private_` files, `.tmpl` suffix
 - **Ignore rules**: `.chezmoiignore` patterns and conditionals
 - **Templates**: `{{ ... }}` logic, `chezmoi data`

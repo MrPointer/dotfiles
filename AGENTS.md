@@ -51,6 +51,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 3. **Templates for conditional config** - `{{ .chezmoi.os }}` for OS-specific logic
 4. **Separate work/personal dotfiles** - Work configs loaded conditionally in work environments
 5. **Global skills and agents live in `dot_claude/`** - Edit `dot_claude/skills/` and `dot_claude/agents/` here, never under `~/.claude/` directly
+6. **Nono profiles are managed in source** - Edit `private_dot_config/nono/profiles/` here, not `~/.config/nono/profiles/`, unless explicitly doing a one-off local profile draft or promotion
 
 ## Project Motivation
 
