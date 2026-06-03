@@ -10,7 +10,8 @@
    "filesystem": {
       "allow": [
          "$XDG_CACHE_HOME/uv",
-         "$XDG_DATA_HOME/uv/tools/semble", // semble search
+         "$XDG_DATA_HOME/uv/tools", // Mostly for semble search
+         "$XDG_CACHE_HOME/huggingface/hub/models--minishlab--potion-code-16M", // Semble model cache
          "$HOME/.npm/_cacache"
       ],
       "read": [
