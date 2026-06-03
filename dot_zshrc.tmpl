@@ -49,11 +49,6 @@ if command -v nvim &>/dev/null; then
   alias vim="nvim"
 fi
 
-### Sandboxed coding agents
-alias opencode='GIT_CONFIG_GLOBAL="$HOME/.config/opencode/gitconfig" nono run --profile my-opencode --allow-cwd -- opencode'
-alias claude='GIT_CONFIG_GLOBAL="$HOME/.claude/gitconfig" nono run --profile my-claude-code --allow-cwd -- claude'
-alias codex='GIT_CONFIG_GLOBAL="$HOME/.config/opencode/gitconfig" nono run --profile my-codex --allow-cwd -- codex'
-
 # Brew wrapper: invalidate completion cache after package changes
 function brew() {
   command brew "$@"
@@ -123,6 +118,18 @@ alias gpg-unlock='gpg --sign --local-user {{ .personal.signing_key }} --output /
 {{ if .personal.work_env -}}
 [[ -f "$WORK_ZSH_RC_EXTENSION" ]] && source "$WORK_ZSH_RC_EXTENSION"
 {{- end }}
+
+# Use sandboxed agents if nono is installed
+if command -v nono >/dev/null 2>&1; then
+  for agent_shell_config in \
+    "$HOME/.agents/shell/nono.zsh" \
+    "$HOME/.agents/shell/opencode.zsh" \
+    "$HOME/.agents/shell/claude.zsh" \
+    "$HOME/.agents/shell/codex.zsh"; do
+    [[ -r "$agent_shell_config" ]] && source "$agent_shell_config"
+  done
+  unset agent_shell_config
+fi
 
 # Load custom functions and plugins (fast local file operations)
 function load_zsh_function {

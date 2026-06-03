@@ -1,0 +1,16 @@
+{{- $workName := .personal.work_name -}}
+function claude() {
+  _nono_agent_ensure_ssh_signing_keys \
+    "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}.pub}" \
+    "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}}" \
+    "${CLAUDE_ED25519_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519_{{ $workName }}.pub}" \
+    "${CLAUDE_ED25519_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519_{{ $workName }}}"
+
+  _nono_agent_run \
+    my-claude-code \
+    "$HOME/.claude/gitconfig" \
+    claude \
+    "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}.pub}" \
+    "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}}" \
+    "$@"
+}
