@@ -4,19 +4,19 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 
 ## Available Skills
 
-| Skill                        | Use When                                                                    |
-| ---------------------------- | --------------------------------------------------------------------------- |
+| Skill                        | Use When                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------- |
 | `writing-go-code`            | Writing/editing Go code, interfaces, dependency injection                    |
 | `writing-go-tests`           | Writing test files, assertions, mock selection, test naming                  |
 | `developing-cli-apps`        | CLI commands, flags, Cobra patterns, Huh interactive UI, signal handling     |
 | `building-go-binaries`       | Compiling the project, troubleshooting build failures                        |
 | `linting-go-code`            | Running linters, fixing lint errors, formatting code                         |
 | `testing-go-code`            | Running unit tests, coverage, benchmarks, regenerating mocks                 |
-| `managing-chezmoi`           | Editing `dot_*`, `private_dot_*`, or `.tmpl` files; chezmoi commands        |
+| `managing-chezmoi`           | Editing `dot_*`, `private_dot_*`, or `.tmpl` files; chezmoi commands         |
 | `managing-nono-profiles`     | Managing nono profiles, profile schemas, or agent shell wrappers             |
-| `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                                 |
-| `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                                     |
-| `testing-e2e-containers`     | E2E testing installer in Docker containers (Ubuntu, Debian, Fedora)         |
+| `configuring-zsh`            | .zshrc, .zshenv, plugins, PATH, completions                                  |
+| `configuring-github-actions` | .github/workflows, CI/CD, matrix builds                                      |
+| `testing-e2e-containers`     | E2E testing installer in Docker containers (Ubuntu, Debian, Fedora)          |
 
 ## Workflow
 
