@@ -13,4 +13,6 @@ function _opencode_nono() {
 
 function opencode() { _opencode_nono my-opencode "$@" }
 
+function opencode-go() { _opencode_nono opencode-go "$@" }
+
 function opencode-chezmoi() { _opencode_nono opencode-chezmoi "$@" }

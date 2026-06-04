@@ -1,0 +1,37 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "my-opencode"
+   ],
+   "meta": {
+      "name": "opencode-go",
+      "description": "Profile for developing Go applications with OpenCode"
+   },
+   "groups": {
+      "include": [
+         "go_runtime"
+      ],
+      "exclude": []
+   },
+   "filesystem": {
+      "allow": [],
+      "read": [
+{{- if eq .chezmoi.os "darwin" }}
+         "$HOME/Library/Application Support/go" // Go telemetry state on macOS
+{{- end }}
+      ],
+      "write": [],
+      "allow_file": [],
+      "read_file": [],
+      "write_file": [],
+      "deny": [],
+      "bypass_protection": [],
+      "suppress_save_prompt": []
+   },
+   "network": {
+      "block": false,
+      "allow_domain": [],
+      "open_port": [],
+      "listen_port": []
+   }
+}

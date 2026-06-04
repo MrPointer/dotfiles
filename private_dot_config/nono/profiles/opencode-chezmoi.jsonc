@@ -1,7 +1,8 @@
 {
    "$schema": "../schemas/nono-profile.schema.json",
    "extends": [
-      "my-opencode"
+      "my-opencode",
+      "opencode-go"
    ],
    "meta": {
       "name": "opencode-chezmoi",

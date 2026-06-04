@@ -14,11 +14,11 @@
       "exclude": []
    },
    "filesystem": {
-      "allow": [
-         // "$HOME/Library/Caches/go-build"
-      ],
+      "allow": [],
       "read": [
-         // "$HOME/go"
+{{- if eq .chezmoi.os "darwin" }}
+         "$HOME/Library/Application Support/go" // Go telemetry state on macOS
+{{- end }}
       ],
       "write": [],
       "allow_file": [],
