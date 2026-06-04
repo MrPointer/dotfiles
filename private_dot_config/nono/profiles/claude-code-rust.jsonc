@@ -1,0 +1,35 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "my-claude-code"
+   ],
+   "meta": {
+      "name": "claude-code-rust",
+      "description": "Profile for developing Rust applications with Claude Code"
+   },
+   "groups": {
+      "include": [
+         "rust_runtime"
+      ],
+      "exclude": []
+   },
+   "filesystem": {
+      "allow": [],
+      "read": [],
+      "write": [],
+      "allow_file": [],
+      "read_file": [],
+      "write_file": [],
+      "deny": [],
+      "bypass_protection": [],
+      "suppress_save_prompt": []
+   },
+   "network": {
+      "block": false,
+      "allow_domain": [],
+      "open_port": [],
+      "listen_port": [
+         50002 // HEC serves an HTTP server here
+      ]
+   }
+}
