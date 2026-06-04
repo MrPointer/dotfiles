@@ -46,7 +46,12 @@
    },
    "network": {
       "block": false,
-      "allow_domain": []
+      "network_profile": "developer",
+      "allow_domain": [
+         "chatgpt.com",
+         "openai.com",
+         "mcp.context7.com"
+      ]
    },
    "environment": null,
    "workdir": {
