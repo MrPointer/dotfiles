@@ -25,7 +25,8 @@
          "$HOME/.ssh/known_hosts",
          "$HOME/.ssh/config",
          "$XDG_CONFIG_HOME/git/common.gitconfig",
-         "$XDG_CONFIG_HOME/git/allowed_signers"
+         "$XDG_CONFIG_HOME/git/allowed_signers",
+         "$XDG_CONFIG_HOME/worktrunk/config.toml"
       ],
       "write_file": [],
       "deny": [],
