@@ -38,7 +38,8 @@
          "$HOME/.ssh/id_rsa_{{ .personal.work_name }}.pub",
          "$HOME/.ssh/id_ed25519_{{ .personal.work_name }}.pub",
          "$HOME/.ssh/known_hosts",
-         "$HOME/.ssh/config"
+         "$HOME/.ssh/config",
+         "$HOME/.azure"
       ],
       "suppress_save_prompt": [
          "/Users",
@@ -54,6 +55,8 @@
       "network_profile": "claude-code",
       "allow_domain": [
          "mcp.context7.com",
+         "mcp.atlassian.com",
+         "mcp-proxy.anthropic.com",
          "gitlab.solaredge.com",
          "solaredge-prod.atlassian.net",
          "dev.azure.com",
