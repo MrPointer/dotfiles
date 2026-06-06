@@ -14,13 +14,13 @@
 ## I edited a file but nothing changed
 
 - You likely edited the **target** file directly.
-- Use `chezmoi edit <target-path>` to edit the source, then `chezmoi apply`.
+- Use `chezmoi source-path <target-path>` to find the source, edit that file directly, then validate with `chezmoi diff` and `chezmoi apply --dry-run -v`.
 
 ## chezmoi apply keeps overwriting my manual changes
 
 - That's expected: source-of-truth is the chezmoi **source**.
 - If the manual change is desired, either:
-  - re-apply it into the source via `chezmoi edit <target-path>`, or
+  - locate the source with `chezmoi source-path <target-path>` and port it there, or
   - stop managing that file (remove from source)
 
 ## Template variables not available / data missing
@@ -31,13 +31,13 @@
 ## Why is a file encrypted / how to edit it?
 
 - Encrypted source files can use patterns like `*.age`, `*.gpg`, etc., depending on setup.
-- Use `chezmoi edit <target-path>`; chezmoi will transparently decrypt/encrypt when configured.
+- Use `chezmoi source-path <target-path>` to identify the encrypted source and follow the repo's encryption workflow; do not spawn an interactive editor from an agent.
 
 ## Conflict / merge issues
 
 - Use `chezmoi diff` to understand source vs target.
-- Re-run apply with `--verbose`.
-- Consider `--force` only when you're sure the source is correct.
+- Re-run `chezmoi apply --dry-run -v` for verbose validation without writing target files.
+- Avoid `--force` during sandboxed agent work.
 
 ## File exists only on some machines
 
