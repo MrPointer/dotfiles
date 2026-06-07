@@ -155,7 +155,7 @@ See `docs/processes/<process>.md` for <brief description>.
 - **documenting-domain**: Process docs reference domain entities (e.g., "creates a new User — see domain/users.md for the User entity definition"). Never redefine domain terms here.
 - **documenting-architecture**: Process docs reference architectural patterns when relevant (e.g., "this step publishes an event via the event bus — see architecture/event-bus.md"). Never re-explain the architecture here.
 - **documenting-components**: Component docs describe how individual steps are implemented; process docs describe the end-to-end flow across components.
-- **project-feature-planning**: Process docs help agents understand the full impact of changes — modifying one step of a process affects the entire flow.
+- **planning-project-features**: Process docs help agents understand the full impact of changes — modifying one step of a process affects the entire flow.
 
 ## Rules
 

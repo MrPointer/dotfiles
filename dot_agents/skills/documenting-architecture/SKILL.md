@@ -124,7 +124,7 @@ See `docs/architecture/<area>.md` for <brief description>.
 - **documenting-domain**: Architecture docs reference domain entities (e.g., "the auth layer manages User sessions — see domain/users.md"). Never redefine domain terms here.
 - **documenting-business-processes**: Process docs explain how business workflows traverse the architecture
 - **documenting-components**: Component docs explain internals; architecture docs explain how components relate to each other
-- **project-feature-planning**: The planning skill's Phase 2 benefits enormously from architecture docs — agents understand system structure without reverse-engineering it from code
+- **planning-project-features**: The planning workflow's exploration step benefits enormously from architecture docs — agents understand system structure without reverse-engineering it from code
 - **anchoring-context**: Feature anchors can identify candidate decisions and motivation, but only durable architecture decisions verified against the completed implementation belong here
 
 ## Rules

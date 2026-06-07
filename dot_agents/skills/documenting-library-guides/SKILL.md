@@ -1,6 +1,6 @@
 ---
 name: documenting-library-guides
-description: Create user-facing documentation for libraries — the kind of docs you'd find on a static documentation site. Guides readers through the library with an engaging, conversational tone, real code examples drawn from the actual codebase, and a navigable site-like structure. Use when (1) a library has no user-facing docs beyond inline code comments, (2) existing docs are API references with no narrative guidance, (3) users need task-oriented guides to accomplish common goals, or (4) a library's docs need restructuring into a browsable, site-ready format.
+description: Create user-facing documentation for libraries — the kind of docs you'd find on a static documentation site. Guides readers through the library with an engaging, conversational tone, real code examples drawn from the actual codebase, and a navigable site-like structure. Use when (1) a library has no user-facing docs beyond inline code comments, (2) existing docs are API references with no narrative guidance, (3) users need task-oriented guides to accomplish common goals, or (4) a library's docs need restructuring into a browsable, site-ready format. Do not use for internal architecture, process, component, or domain docs; use the corresponding documenting-* skill instead.
 ---
 
 # Documenting Library Guides
@@ -97,6 +97,7 @@ After writing:
 ## Rules
 
 - **Never write pseudocode** — every code example must use real types from the actual codebase
+- **Not for internal docs** — architecture, process, component, and domain documentation belong to the corresponding documenting-* skills. This skill is for user-facing library guides.
 - **Never duplicate API reference docs** — link to auto-generated references instead of reproducing signatures
 - **Never create concept pages preemptively** — only when there's a genuine source of confusion that guides alone can't address
 - **Never document internals** — users don't need to know how the library works inside, only how to use it

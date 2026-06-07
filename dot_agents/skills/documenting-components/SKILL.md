@@ -96,7 +96,7 @@ See `docs/<new-file>.md` for <brief description>.
 This skill can be invoked:
 
 - **Manually**: When you want to document a specific component
-- **By the planning skill**: When Phase 2 (Codebase Exploration) discovers undocumented areas critical to the plan
+- **By the planning skill**: When planning exploration discovers undocumented areas critical to the plan
 - **By executing agents**: When an agent working on a sub-plan encounters an undocumented subsystem it needs to understand
 
 After documentation is created, future planning sessions and executing agents benefit from it automatically — they read the docs instead of re-exploring code.
