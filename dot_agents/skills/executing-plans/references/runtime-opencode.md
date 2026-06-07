@@ -4,10 +4,22 @@ Use this adapter only when the active runtime is OpenCode.
 
 This adapter maps the canonical execution workflow in `../SKILL.md` to OpenCode-native mechanics. It must not redefine task ordering, dispute policy, progress rules, or the test-author/implementer separation.
 
+## Contents
+
+- [Exploration and Dispatch](#exploration-and-dispatch)
+- [Execution Bindings](#execution-bindings)
+- [Workspace Isolation Strategy](#workspace-isolation-strategy)
+- [Integration Branch And Checkpoints](#integration-branch-and-checkpoints)
+- [Test Author Isolation](#test-author-isolation)
+- [Implementer Worktree Isolation](#implementer-worktree-isolation)
+- [Implementer Dispatch](#implementer-dispatch)
+- [Progress and Artifacts](#progress-and-artifacts)
+- [Model Assignment](#model-assignment)
+
 ## Exploration and Dispatch
 
 - Use OpenCode subagents for exploration, test authoring, and implementation work when subagents materially help. OpenCode subagents can be invoked through native subagent dispatch, including `@<subagent-name>` mentions in an interactive session, and by primary agents through the Task tool when permitted.
-- Prefer the built-in `explore` subagent for cheap, read-only codebase exploration such as the testability gate.
+- Prefer the project-provided `semble-search` subagent for cheap, read-only codebase exploration such as the testability gate when available; otherwise use the built-in `explore` subagent.
 - Prefer a custom implementer or test-author subagent when the plan assigns a specific model tier or required skills; the built-in `general` subagent is acceptable only when no explicit binding is required.
 - Keep prompts narrow for test authors and complete for implementers, matching the canonical workflow.
 

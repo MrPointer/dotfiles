@@ -2,6 +2,16 @@
 
 Use this reference when implementation tasks run concurrently, structural TDD needs an isolated workspace, or build/cache reuse must be configured for worktrees.
 
+## Contents
+
+- [Purpose](#purpose)
+- [Workspace Selection](#workspace-selection)
+- [Dirty State Preflight](#dirty-state-preflight)
+- [Isolation Priority](#isolation-priority)
+- [Worker Worktree Rules](#worker-worktree-rules)
+- [Build And Cache Reuse](#build-and-cache-reuse)
+- [Integration And Cleanup](#integration-and-cleanup)
+
 ## Purpose
 
 DAG independence does not make a shared dirty workspace safe. Concurrent implementers need separate worktrees, and dependent worktrees need a Git base that contains their prerequisites.

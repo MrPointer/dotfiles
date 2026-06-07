@@ -4,6 +4,18 @@ Use this adapter only when the active runtime is Codex.
 
 This adapter maps the canonical execution workflow in `../SKILL.md` to Codex-native mechanics. It must not redefine task ordering, dispute policy, progress rules, or the test-author/implementer separation.
 
+## Contents
+
+- [Exploration and Dispatch](#exploration-and-dispatch)
+- [Execution Bindings](#execution-bindings)
+- [Workspace Isolation Strategy](#workspace-isolation-strategy)
+- [Integration Branch And Checkpoints](#integration-branch-and-checkpoints)
+- [Test Author Isolation](#test-author-isolation)
+- [Implementer Worktree Isolation](#implementer-worktree-isolation)
+- [Implementer Dispatch](#implementer-dispatch)
+- [Progress and Artifacts](#progress-and-artifacts)
+- [Model Assignment](#model-assignment)
+
 ## Exploration and Dispatch
 
 - Use Codex sub-agent dispatch for exploration, test authoring, and implementation work when sub-agents materially help.

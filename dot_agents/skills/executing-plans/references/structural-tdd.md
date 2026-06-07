@@ -2,11 +2,29 @@
 
 Use this reference when a task has testable acceptance criteria and the executor may separate test authoring from implementation.
 
+## Contents
+
+- [Purpose](#purpose)
+- [Required Skill Dependency](#required-skill-dependency)
+- [Skip Gates](#skip-gates)
+- [Isolation Gate](#isolation-gate)
+- [Build And Compilation Readiness](#build-and-compilation-readiness)
+- [Test Author Context](#test-author-context)
+- [TDD Quality Gate](#tdd-quality-gate)
+- [Returning Test Files](#returning-test-files)
+- [Implementer Contract With Structural TDD](#implementer-contract-with-structural-tdd)
+
 ## Purpose
 
-Structural TDD prevents implementers from writing tests that rationalize their own implementation. The test author receives acceptance criteria only. The implementer receives the full task plus the tests.
+Structural TDD prevents implementers from writing tests that rationalize their own implementation. The test author receives acceptance criteria only. The implementer receives the full task plus the tests. The `test-driven-development` skill defines valid RED behavior and test-quality mechanics; this reference defines isolation, handoff, and execution coordination.
 
 Use this structure only when the code surface and runtime can support it. If not, skip structural TDD and implement against the acceptance criteria directly.
+
+## Required Skill Dependency
+
+Structural TDD depends on the `test-driven-development` skill for valid RED behavior and test-quality mechanics. Load it whenever this reference is used for test authoring, RED validation, or test-quality review.
+
+If the active runtime cannot load or pass the `test-driven-development` skill to the test author or executor, do not weaken this workflow silently. Record the failure in progress and ask whether to fix skill loading or explicitly skip structural TDD for the affected task.
 
 ## Skip Gates
 
@@ -55,7 +73,7 @@ The executor passes the test author only:
 
 - acceptance criteria, extracted and relayed as inline text
 - the relevant code surface available in the isolated workspace
-- required testing skills through the active runtime binding when available
+- the `test-driven-development` skill plus required project testing skills through the active runtime binding when available
 
 The test author must not receive:
 
@@ -64,7 +82,17 @@ The test author must not receive:
 - the complete task file
 - prerequisite task rationale beyond code already present in the workspace
 
-The test author writes tests grounded in the acceptance criteria, confirms they fail for the expected reason, and returns test file paths plus a summary of what each test verifies.
+The test author writes tests grounded in the acceptance criteria, follows the `test-driven-development` skill, confirms RED according to that skill, and returns test file paths plus a summary of what each test verifies.
+
+## TDD Quality Gate
+
+Use the `test-driven-development` skill as the source of truth for RED validation and test-quality review.
+
+Before handing tests to the implementer, verify the test author's reported RED result against that skill. If the tests fail the review, add only acceptable scaffolding from this reference, rerun RED, or send the tests back to the test author.
+
+After the implementer reports green and before marking a task ready for integration or done, apply the same test-quality review to the test-author tests. If the tests fail the review, block the task as `blocked: weak test` and rerun test authoring.
+
+Record the review result in progress, including the sampled files and decision.
 
 ## Returning Test Files
 

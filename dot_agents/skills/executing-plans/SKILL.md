@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-description: Use when executing implementation plans. Orchestrates task execution with testability-gated TDD, progress checkpointing, and dispute batching. Works with any plan structure that has identifiable tasks and acceptance criteria. Handles resumption after interruptions.
+description: Use whenever executing, continuing, resuming, or finishing an implementation plan or plan directory. Orchestrates assigned worker dispatch, optional structural TDD, progress checkpointing, isolated workspaces, checkpoint integration, and dispute batching.
 ---
 
 # Executing Plans
@@ -8,6 +8,14 @@ description: Use when executing implementation plans. Orchestrates task executio
 Execute implementation plans with persisted progress, assigned workers, optional structural TDD, and checkpointed integration when needed.
 
 This file is the execution spine. Load referenced files only when their trigger applies.
+
+## Contents
+
+- [Runtime Binding](#runtime-binding)
+- [Core Invariants](#core-invariants)
+- [Conditional References](#conditional-references)
+- [Workflow](#workflow)
+- [Final Rules](#final-rules)
 
 ## Runtime Binding
 
@@ -25,7 +33,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 
 - **Progress is always persisted**: update `progress.md` after every meaningful step so execution can resume.
 - **Assigned bindings are mandatory**: if a plan assigns a worker or model tier, dispatch through that binding. Do not self-execute assigned implementation work.
-- **Structural TDD is strict when used**: the test author sees only acceptance criteria and code surface; the implementer sees the full task plus tests. If isolation or testability cannot be verified, skip structural TDD only according to [structural-tdd.md](references/structural-tdd.md).
+- **Structural TDD is strict when used**: the test author sees only acceptance criteria and code surface; the implementer sees the full task plus tests. Feasibility, isolation, and quality gates come from [structural-tdd.md](references/structural-tdd.md).
 - **Tests are immutable to implementers**: implementers report disputes instead of editing test-author tests.
 - **Independent work continues**: blocked tasks do not stop unrelated tasks.
 - **Parallel implementation requires isolated workspaces**: never run concurrent implementers in the same dirty workspace.
@@ -83,7 +91,7 @@ Check these items:
 - whether checkpoint integration is required; if yes, load [checkpoint-integration.md](references/checkpoint-integration.md) and establish or resume the integration branch before implementation
 - whether structural TDD is applicable; if yes, load [structural-tdd.md](references/structural-tdd.md)
 - whether isolated workspaces or cache reuse is required; if yes, load [workspace-isolation.md](references/workspace-isolation.md) and run its dirty-state preflight before creating worktrees
-- planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, dirty-state preflight, cache reuse, checkpoint commit, integration status, and TDD gate for each task
+- planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, dirty-state preflight, cache reuse, checkpoint commit, integration status, TDD gate, and test quality check for each task
 
 Proceed only after the audit is complete or the user explicitly authorizes a deviation.
 
@@ -107,7 +115,7 @@ For tasks with testable acceptance criteria, use [structural-tdd.md](references/
 - `skipped: <reason>` when no testable surface or no enforceable isolation exists
 - `blocked: <reason>` when an available isolation path or required scaffold fails and user input is needed
 
-When structural TDD is used, the test author writes failing tests from acceptance criteria only and returns test file paths plus a summary of what each test verifies.
+When structural TDD is used, follow [structural-tdd.md](references/structural-tdd.md) for test authoring, RED validation, and test-quality review before handing tests to the implementer.
 
 #### 4.3 Dispatch Implementation
 
@@ -119,6 +127,8 @@ With structural TDD, pass the full task packet inline, test file paths, prerequi
 
 The implementer returns status, files created or modified, test results, and any disputes.
 
+Before accepting a green implementer result, apply the structural TDD quality gate to the test-author tests, record the result in progress, and block the task if the tests do not actually verify the acceptance criteria.
+
 #### 4.4 Handle Results
 
 Record every result in progress.
@@ -128,6 +138,7 @@ Use these task states:
 - `ready for integration/checkpoint`: implementation is complete and required tests pass
 - `blocked: implementation failure`: tests fail and the implementer does not claim the tests are wrong
 - `blocked: test dispute`: implementer disputes one or more test-author tests
+- `blocked: weak test`: structural TDD tests passed mechanically but do not verify the promised behavior
 - `blocked: regression`: existing tests regressed; this takes priority over other states
 - `blocked: integration`: task worktree integration, checkpoint commit creation, or post-integration verification failed
 - `done`: result is integrated, verified, and checkpointed when checkpointing applies
@@ -164,6 +175,7 @@ When all tasks are `done`:
 
 - Do not let the test author see design decisions, plan paths, task paths, feature names, or other breadcrumbs to the plan.
 - Do not claim structural TDD without verified physical isolation and prompt isolation.
+- Do not accept structural TDD tests that fail the structural TDD quality gate.
 - Do not let implementers modify test-author tests.
 - Do not run concurrent implementers in one workspace.
 - Do not launch dependent work from uncheckpointed dirty state.

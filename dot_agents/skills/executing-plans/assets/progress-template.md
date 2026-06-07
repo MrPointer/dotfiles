@@ -2,6 +2,18 @@
 
 The progress file is the checkpoint mechanism. It must be updated after every meaningful step so execution can resume from any point.
 
+## Template Contents
+
+- Plan
+- Tasks
+- Current State
+- Execution Audit
+- Test Artifacts
+- Completed Artifacts
+- Disputes
+- Failures
+- Regressions
+
 ```markdown
 # Execution Progress: <Feature/Task Name>
 
@@ -31,9 +43,9 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 
 ## Execution Audit
 
-| Task | Planned Worker | Actual Worker | Model / Effort | Dispatch Evidence | Implementation Workspace | Dirty-State Preflight | Build/Cache Reuse | Checkpoint Commit | Integration Status | TDD Gate |
-|------|----------------|---------------|----------------|-------------------|--------------------------|-----------------------|-------------------|-------------------|--------------------|----------|
-| <task 01> | <worker from plan> | <worker actually used> | <model and effort> | <runtime command, subagent id, or reason not applicable> | <main workspace / worktree path / serialized: reason> | <clean / user-authorized dirty: paths / not applicable> | <shared cache configured / seeded: path / skipped: no safe strategy / none required / blocked: reason> | <commit SHA / pending / not applicable> | <pending / merged / blocked: reason / not applicable> | <used isolated workspace / skipped: reason / not testable> |
+| Task | Planned Worker | Actual Worker | Model / Effort | Dispatch Evidence | Implementation Workspace | Dirty-State Preflight | Build/Cache Reuse | Checkpoint Commit | Integration Status | TDD Gate | Test Quality Check |
+|------|----------------|---------------|----------------|-------------------|--------------------------|-----------------------|-------------------|-------------------|--------------------|----------|--------------------|
+| <task 01> | <worker from plan> | <worker actually used> | <model and effort> | <runtime command, subagent id, or reason not applicable> | <main workspace / worktree path / serialized: reason> | <clean / user-authorized dirty: paths / not applicable> | <shared cache configured / seeded: path / skipped: no safe strategy / none required / blocked: reason> | <commit SHA / pending / not applicable> | <pending / merged / blocked: reason / not applicable> | <used isolated workspace / skipped: reason / not testable> | <TDD quality gate passed: files / blocked: weak test / not applicable> |
 
 ## Test Artifacts
 <Map of tasks to their test file paths — the implementer needs these>

@@ -4,6 +4,17 @@ Use this adapter only when the active runtime is Claude.
 
 This adapter maps the canonical execution workflow in `../SKILL.md` to Claude-native mechanics. It must not redefine task ordering, dispute policy, progress rules, or the test-author/implementer separation.
 
+## Contents
+
+- [Exploration and Dispatch](#exploration-and-dispatch)
+- [Execution Bindings](#execution-bindings)
+- [Workspace Isolation Strategy](#workspace-isolation-strategy)
+- [Integration Branch And Checkpoints](#integration-branch-and-checkpoints)
+- [Test Author Isolation](#test-author-isolation)
+- [Implementer Dispatch](#implementer-dispatch)
+- [Progress and Artifacts](#progress-and-artifacts)
+- [Model Assignment](#model-assignment)
+
 ## Exploration and Dispatch
 
 - Use Claude sub-agents (launched via the `Agent` tool) for exploration, test authoring, and implementation work.

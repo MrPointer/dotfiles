@@ -2,6 +2,15 @@
 
 Use this reference when a plan has multiple sub-plans, task dependencies, task-scoped worktrees, or checkpoint commits.
 
+## Contents
+
+- [Purpose](#purpose)
+- [Establish The Integration Branch](#establish-the-integration-branch)
+- [Checkpoint Task Results](#checkpoint-task-results)
+- [Integrate Task Worktrees](#integrate-task-worktrees)
+- [Checkpoint Sequential Tasks](#checkpoint-sequential-tasks)
+- [Prepare Final Review State](#prepare-final-review-state)
+
 ## Purpose
 
 Checkpoint integration materializes prerequisite outputs as local commits so dependent worktrees can start from real Git state. These commits are execution plumbing, not review units. The user's review surface is the final aggregate dirty diff.
