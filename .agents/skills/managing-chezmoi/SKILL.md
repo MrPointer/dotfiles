@@ -1,6 +1,6 @@
 ---
 name: managing-chezmoi
-description: Manage dotfiles with chezmoi. Use when adding files to chezmoi, validating source changes with chezmoi status/diff/dry-run, debugging why changes aren't appearing, working with chezmoi templates or .chezmoiignore, mapping source vs target files, resolving conflicts, or asking "how do I manage this file with chezmoi". For command uncertainties, use Context7 to fetch latest docs.
+description: Manage dotfiles with chezmoi. Use whenever editing or reviewing chezmoi source files in this repo, including `dot_*`, `private_dot_*`, `dot_config/`, `private_dot_config/`, `.chezmoitemplates/`, `.chezmoiignore`, and `*.tmpl`; adding files to chezmoi; validating source changes with status/diff/dry-run; debugging source/target mapping or missing changes; or asking how a dotfile is managed. In sandboxed agent work, validate with diff/dry-run and do not run write-capable `chezmoi apply` or `--force`. For command uncertainties, use Context7.
 ---
 
 # Chezmoi Management

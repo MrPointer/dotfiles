@@ -21,6 +21,11 @@
 - If a commit command fails or accidentally creates an unsigned commit, stop and ask before retrying, amending, or
   rewriting history.
 
+## Git Commands
+
+- Run `git diff` commands through the resolved Git binary, e.g. `$(which git) diff ...`, so wrappers do not collapse or
+  reformat diff hunks. Other Git commands can use the normal wrapped `git` command unless raw Git output is required.
+
 ## Plan Execution
 
 - If a sub-agent fails, diagnose the failure and retry with a fix - do NOT silently take over the work yourself.
