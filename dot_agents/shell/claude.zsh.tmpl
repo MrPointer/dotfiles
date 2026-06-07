@@ -15,6 +15,7 @@ function _claude_nono() {
     claude \
     "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}.pub}" \
     "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}}" \
+    --dangerously-skip-permissions \
     "$@"
 }
 
