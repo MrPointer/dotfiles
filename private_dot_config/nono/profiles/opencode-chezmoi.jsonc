@@ -41,5 +41,10 @@
       "suppress_save_prompt": [
          "$HOME/.work"
       ]
+   },
+   "network": {
+      "allow_domain": [
+         "nono.sh"
+      ]
    }
 }

@@ -21,11 +21,12 @@
       "write": [],
       "allow_file": [],
       "read_file": [
-         "$HOME/.ssh/id_ed25519.pub",
-         "$HOME/.ssh/known_hosts",
-         "$HOME/.ssh/config",
-         "$XDG_CONFIG_HOME/git/common.gitconfig",
-         "$XDG_CONFIG_HOME/git/allowed_signers",
+          "$HOME/.ssh/id_ed25519.pub",
+          "$HOME/.ssh/known_hosts",
+          "$HOME/.ssh/config",
+          "$HOME/.local/bin/nono-git-ssh",
+          "$XDG_CONFIG_HOME/git/common.gitconfig",
+          "$XDG_CONFIG_HOME/git/allowed_signers",
          "$XDG_CONFIG_HOME/worktrunk/config.toml",
          "$XDG_CONFIG_HOME/gh/config.yml",
          "$XDG_CONFIG_HOME/gh/hosts.yml"

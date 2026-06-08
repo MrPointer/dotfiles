@@ -1,5 +1,7 @@
 [include]
    path = {{ .chezmoi.homeDir }}/.config/git/common.gitconfig
+[core]
+   sshCommand = {{ .chezmoi.homeDir }}/.local/bin/nono-git-ssh
 [user]
 {{- if and .personal.work_env (eq .personal.work_name "sedg") }}
    signingkey = {{ .chezmoi.homeDir }}/.ssh/id_rsa_{{ .personal.work_name }}.pub

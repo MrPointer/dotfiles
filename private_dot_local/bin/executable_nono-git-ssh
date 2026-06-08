@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+proxy_connect() {
+   if (( $# != 2 )); then
+      echo "nono-git-ssh: expected host and port" >&2
+      exit 2
+   fi
+
+   local host="$1"
+   local port="$2"
+
+   if ! command -v ncat >/dev/null 2>&1; then
+      echo "nono-git-ssh: ncat is required for SSH proxy tunneling" >&2
+      exit 127
+   fi
+
+   local proxy="${HTTPS_PROXY:-${https_proxy:-${HTTP_PROXY:-${http_proxy:-}}}}"
+   if [[ -n "${NONO_PROXY_TOKEN:-}" && "$proxy" == http://* ]]; then
+      proxy="${proxy#http://}"
+      proxy="${proxy%/}"
+
+      if [[ "$proxy" == *@* ]]; then
+         local auth="${proxy%@*}"
+         local addr="${proxy#*@}"
+         exec ncat --proxy "$addr" --proxy-type http --proxy-auth "$auth" "$host" "$port"
+      fi
+
+      exec ncat --proxy "$proxy" --proxy-type http "$host" "$port"
+   fi
+
+   exec ncat "$host" "$port"
+}
+
+if [[ "${1:-}" == "--proxy-connect" ]]; then
+   shift
+   proxy_connect "$@"
+fi
+
+exec ssh -o "ProxyCommand=$0 --proxy-connect %h %p" "$@"
