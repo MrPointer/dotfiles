@@ -1,6 +1,6 @@
 ---
 name: anchoring-context
-description: Maintain concise feature-level working memory across sessions, teammates, and agents. Use when work spans multiple conversations; involves meaningful decisions, rejected alternatives, unresolved questions, or teammate/subagent handoffs; requires durable context before, during, or after brainstorming, planning, debugging, or implementation; or when the user asks to resume, continue, hand off, or preserve context for a feature. Skip for quick one-off questions, trivial edits, and work whose full context fits safely in a single short interaction.
+description: Maintain concise feature-level working memory across sessions, teammates, and agents. Use when work spans multiple conversations; involves meaningful decisions, rejected alternatives, unresolved questions, or teammate/subagent handoffs; requires durable context before, during, or after brainstorming, planning, debugging, or implementation; or when the user asks to resume, continue, hand off, preserve context, or keep an anchor updated. When active, update the anchor as decisions are made instead of waiting for an end-of-session summary. Skip for quick one-off questions, trivial edits, and work whose full context fits safely in a single short interaction.
 ---
 
 # Context Anchoring
@@ -33,7 +33,7 @@ Context anchoring is a support protocol, not a replacement for task-specific ski
 | `executing-plans` | Task execution, acceptance criteria, test status, blockers, and mechanical progress checkpoints | Track only feature-level context that future sessions need: intent, decision rationale, constraints, deviations from the design, and handoff context |
 | Documentation or ADR skills | Permanent project knowledge | Graduate stable decisions after the work settles |
 
-When combined with `brainstorming`, brainstorming drives the conversation and decision process. This skill drives only anchor management. Do not let the anchor choose the design, and do not let brainstorming silently discard durable context.
+When combined with `brainstorming`, brainstorming drives the conversation and decision process. This skill drives only anchor management. Do not let the anchor choose the design, and do not let brainstorming silently discard durable context. When the user chooses an option, rejects an option, states a constraint, answers an open question, or changes direction, update the anchor before moving to the next unrelated topic or phase. Do not keep a private decision list for a broad end-of-session summary; the anchor is the shared decision memory while brainstorming is still happening.
 
 When combined with `executing-plans`, the progress file remains the source of truth for task-by-task execution state. Do not duplicate task tables, test status, per-task blockers, or completion checklists in the anchor. Use the anchor only for feature-level context that explains why the work is shaped the way it is or what future sessions must not forget.
 
@@ -67,8 +67,9 @@ For long-running anchors, include a **Quick Summary** near the top. The quick su
 - Do not update inactive feature anchors just because later unrelated work changes code that the feature once touched. Anchors are for active work continuity, not historical maintenance.
 - Prefer ADRs or permanent documentation for durable architectural decisions that must remain true after the feature is complete.
 - Use markdown checkboxes in **Current State**: `[x]` for settled or completed context, and `[ ]` for active resumption items.
-- Store decisions by theme, not one entry per conversational turn.
-- Compact overlapping decisions while preserving the **Decision**, **Reason**, **Rejected**, **Reason rejected**, and **Reconsider if** details.
+- Store decisions by theme, not one entry per conversational turn, but preserve each distinct decision, rejection, and rationale within the relevant theme.
+- Compact overlapping decisions only after they have been captured. Compaction may merge wording and group related decisions, but must not collapse several distinct choices into a vague summary.
+- Treat unresolved or newly answered questions as anchor-worthy when they affect later design, planning, implementation, or handoff work.
 
 ## Workflow
 
@@ -81,6 +82,8 @@ For long-running anchors, include a **Quick Summary** near the top. The quick su
 
 ### During Work
 
+Use write-through capture for active anchors: when durable context settles in the conversation, write it to the anchor before relying on it for the next phase. The anchor should not lag behind the actual state of the discussion by more than one response unless the user explicitly asks not to interrupt the flow.
+
 Update the anchor at natural boundaries:
 
 - A meaningful decision is made.
@@ -89,6 +92,8 @@ Update the anchor at natural boundaries:
 - An open question is created, answered, or made irrelevant.
 - Implementation or investigation state changes enough to affect resumption.
 - A teammate or subagent contributes context future sessions must respect.
+
+For design conversations, a natural boundary usually occurs when the user confirms or rejects an approach, clarifies a constraint, resolves a tradeoff, or approves a design section. Update the anchor before asking the next design question or presenting the next major section. If several small decisions happen in one response, capture them together immediately afterward.
 
 Capture outcomes and rationale. Do not copy hidden interactions, transcripts, or exhaustive tool findings.
 

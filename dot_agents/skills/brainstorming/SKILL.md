@@ -9,7 +9,7 @@ Explore a problem space collaboratively. Turn rough ideas into validated RFCs th
 
 The output is an **RFC document**: a committed artifact that captures the problem understanding, chosen approach, key decisions, and verified architectural shape. It stands on its own — useful whether the next step is formal planning, direct implementation, or team review.
 
-For brainstorming that spans sessions or substantial decision context, pair this skill with `anchoring-context`. Brainstorming drives exploration and convergence; the anchor preserves concise working memory until the final RFC is produced.
+For brainstorming that spans sessions or substantial decision context, pair this skill with `anchoring-context`. Brainstorming drives exploration and convergence; the anchor preserves concise working memory until the final RFC is produced. When an anchor is active, update it as decisions, rejected alternatives, constraints, and resolved questions settle. Do not wait until RFC creation or handoff to reconstruct the session from memory.
 
 For final RFC authoring, pair this skill with `authoring-rfcs`. Brainstorming owns the conversation and settled direction; `authoring-rfcs` owns RFC document production and reviewer coordination.
 
@@ -28,7 +28,7 @@ For final RFC authoring, pair this skill with `authoring-rfcs`. Brainstorming ow
 Before asking anything, understand where you are:
 
 1. **Read project context**: Check the project's documentation pointers (AGENTS.md, CLAUDE.md, etc.) and read relevant docs (domain, architecture, business processes). Skim recent commits if the request relates to ongoing work.
-2. **Read active anchors**: If the request resumes or continues existing work, look for a feature anchor using project conventions, then `docs/context/<topic>-anchor.md`. Read it before asking the user to restate context. If the brainstorming is likely to span sessions and no anchor exists, create one with `anchoring-context` before context accumulates only in chat.
+2. **Read active anchors**: If the request resumes or continues existing work, look for a feature anchor using project conventions, then `docs/context/<topic>-anchor.md`. Read it before asking the user to restate context. If the brainstorming is likely to span sessions and no anchor exists, create one with `anchoring-context` before context accumulates only in chat. Once an anchor is active, treat it as write-through memory for the session, not as an end-of-session summary destination.
 3. **Assess scope**: If the request describes multiple independent subsystems, flag this immediately. Don't spend questions refining details of something that needs decomposition first.
 4. **Identify what you already know vs. what you need to learn**: Don't ask questions the codebase already answers.
 
@@ -66,6 +66,8 @@ Propose 2-3 different approaches with genuine tradeoffs:
 
 Let the user choose or refine. If they push back, understand why before adjusting — their objection may reveal a constraint or preference you missed.
 
+If an anchor is active, record the chosen approach, the reason it was chosen, alternatives the user rejected, and any constraint or preference revealed by the choice before moving into detailed design.
+
 ### Phase 4: Design
 
 Once the approach is agreed, present the design in sections scaled to complexity:
@@ -78,6 +80,8 @@ Once the approach is agreed, present the design in sections scaled to complexity
 
 Present each section and confirm before moving on. A section that's straightforward gets a few sentences. A section that's nuanced gets as much space as it needs.
 
+If an anchor is active, update it after each confirmed design section or meaningful correction. Capture what changed and why before presenting the next major section.
+
 **In existing codebases**: Explore current structure before proposing changes. Follow established patterns. Where existing code has problems that affect the work, include targeted improvements as part of the design — don't propose unrelated refactoring.
 
 ### Phase 5: RFC Creation
@@ -88,7 +92,7 @@ Write the validated design to an RFC document with `authoring-rfcs`:
 2. **Pass the settled design inputs**: Include the agreed approach, constraints, rejected alternatives, unresolved non-blocking questions, and any anchor context.
 3. **Verify codebase reality**: Before writing the RFC, read the relevant docs and source files needed to describe the current architecture accurately. Do not let the anchor substitute for current-state verification.
 4. **Save the RFC**: follow project conventions, or use `docs/rfcs/<topic>.md` when no convention exists. Use numbered RFC IDs only when the project already uses them or the user explicitly requests them.
-5. **Reconcile any anchor**: If an anchor was used, ensure the RFC reflects the settled decisions and that the anchor keeps only active open questions, handoff state, or implementation-continuity context. For long design sessions, reconcile the anchor into a self-contained design snapshot: checkbox current state, thematic decisions, active open questions only, and a quick summary that can be understood without reading the full decision log.
+5. **Reconcile any anchor**: If an anchor was used, ensure the RFC reflects the settled decisions and that the anchor keeps only active open questions, handoff state, or implementation-continuity context. This is a hygiene pass, not the first time decisions should be captured. For long design sessions, reconcile the anchor into a self-contained design snapshot: checkbox current state, thematic decisions, active open questions only, and a quick summary that can be understood without reading the full decision log.
 6. **Run RFC reviewer review**: Use the reviewer workflow defined by `authoring-rfcs`. Incorporate reviewer findings before presenting.
 7. **Present the RFC path** and ask the user to review. Wait for approval.
 
@@ -114,3 +118,4 @@ Present the completed RFC with a brief summary:
 - **Never invent architecture** — verify current-state claims against code/docs or mark them as assumptions/open questions.
 - **Respect the user's domain knowledge** — they may know things you can't derive from the codebase. When they state something confidently, don't second-guess it with "are you sure?"
 - **If scope is too large, decompose first** — help the user break the problem into independent pieces before brainstorming any single piece in depth
+- **Keep active anchors current** — when paired with `anchoring-context`, write settled decisions, rejected alternatives, constraints, and answered questions to the anchor during the conversation. End-of-session reconciliation may clean up the anchor, but it must not be the only capture point.
