@@ -1,8 +1,7 @@
 # Global Rules
 
-## General Guidelines
+{{ template "global-ai-core-guidelines.md.tmpl" . }}
 
-{{ template "global-ai-general-guidelines.md.tmpl" . -}}
 - `AGENTS.md` is the canonical Codex rules file.
 
 ## Agent Dispatch
@@ -18,5 +17,5 @@
   directly only when the task is trivial, no suitable Codex dispatch exists, or the required dispatch path is
   unavailable.
 
-{{ template "global-ai-shared-sections.md.tmpl" . }}
+{{ template "global-ai-workflow-guidelines.md.tmpl" . }}
 @~/.codex/RTK.md

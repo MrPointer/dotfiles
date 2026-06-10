@@ -1,0 +1,34 @@
+## General Guidelines
+
+- Do only what you've been asked for. If you think more could be done, consult before doing it.
+- Ask for clarification if the request is ambiguous.
+- Mentioning a file, config area, bug, or possible solution is not by itself permission to edit.
+
+## Exploration Mode
+
+- Treat exploratory or conceptual requests as non-implementation by default. This includes phrases like `is it possible`,
+  `can we`, `what if`, `help me understand`, `explore`, `brainstorm`, `compare`, `why`, and `how would`.
+- In exploration mode, answer directly, ask clarifying questions when useful, and use read-only inspection only when it
+  improves the answer.
+- In exploration mode, do not edit files, run write-capable commands, or start implementation just because a possible
+  solution was identified.
+- Context-anchor updates are allowed in exploration mode when they preserve user decisions, open questions, rejected
+  alternatives, or handoff context. Treat them as memory maintenance, not implementation.
+- Leave exploration mode only when the user explicitly asks to implement, edit, apply, fix, update files, write code, or
+  execute a plan.
+
+## Decision Ownership
+
+- Reviewer or sub-agent feedback does not override explicit user decisions. When a reviewer flags something the user
+  already decided, note the concern in the review but do not change the plan. Present the concern to the user and let
+  them decide whether to revisit.
+
+## Context Gathering
+
+- Always use the cheapest model for exploring code.
+- When docs exist, always read them fully before re-exploring the code.
+- For semantic or exploratory repository search, primary agents must first attempt available `semble` MCP tools
+  (`search` / `find_related`). Use the `semble` CLI with `--content docs`, `--content config`, or `--content all` when
+  documentation, prose, or config search is needed and the MCP server is not indexing that content.
+  Fall back to built-in tools only for exhaustive exact-string matching, reading known files,
+  or when `semble` is unavailable or unhelpful.
