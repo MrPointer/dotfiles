@@ -18,6 +18,10 @@
 - All commits are expected to be signed.
 - If a commit command fails or accidentally creates an unsigned commit, stop and ask before retrying, amending, or
   rewriting history.
+- When running multiple git commands in parallel, use `--no-optional-locks` on every read-only command
+  (`status`, `diff`, `log`, `show`, `branch`, `stash list`, etc.) to prevent index lock contention.
+- Only the single mutating command in a batch (e.g. `commit`, `add`, `checkout`, `rebase`) should acquire the lock.
+- Never run two mutating git commands in parallel.
 
 ## Commit Messages
 
