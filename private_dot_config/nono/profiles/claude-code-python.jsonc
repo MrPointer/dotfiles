@@ -1,0 +1,11 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "python-dev",
+      "my-claude-code"
+   ],
+   "meta": {
+      "name": "claude-code-python",
+      "description": "Profile for developing Python applications with Claude Code"
+   }
+}
