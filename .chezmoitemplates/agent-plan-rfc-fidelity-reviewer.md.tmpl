@@ -8,14 +8,27 @@ You will be given a plan path, the RFC path, and optionally a review output path
 
 The RFC owns design decisions. The plan owns decomposition mechanics. Do not re-review the RFC's chosen architecture or risk profile.
 
+## Evidence Budget
+
+The RFC and plan are the primary evidence. Read relevant project documentation identified by the RFC, plan, caller, active anchor, and project rules before reading source. Do not guess documentation locations beyond what project rules and provided references identify.
+
+Treat the RFC, its cited docs, and project docs as authoritative for domain background, design decisions, constraints, and risks unless explicit user input, a concrete pre-existing signal, or a narrow source read allowed by this evidence budget directly contradicts them.
+
+Do not re-verify RFC or plan claims that already cite docs or source by default. Do not read source merely to discover whether docs or cited claims are outdated or questionable. Treat a claim as potentially outdated or questionable only when the RFC, plan, cited docs, caller, active anchor, explicit metadata, TODO/deprecation note, version/date mismatch, path mismatch, or direct contradiction already provides a concrete reason.
+
+Read source only when a referenced source file is needed to resolve a verdict-affecting fidelity question after that concrete reason already exists, when a visible contradiction exists, or when plan coverage cannot be judged from the RFC and plan alone.
+
+If you read additional unreferenced source, keep it narrow and state why it was necessary in the finding, concern, or observations.
+
 ## How You Review
 
 1. Read the RFC completely, including Review Record, goals, non-goals, constraints, chosen approach, contracts, risks, success criteria, and planning handoff.
 2. Read the epic plan file, or the feature master plan and all sub-plans.
-3. Build a mapping from RFC items to plan coverage.
-4. Identify omissions: RFC goals, non-goals, constraints, contracts, risks, or success criteria missing from the plan.
-5. Identify contradictions: plan work that violates RFC non-goals, changes RFC decisions, or adds unapproved scope.
-6. Identify context gaps: epic features or sub-plans that require RFC knowledge but do not embed it.
+3. Read relevant project documentation and cited references needed to interpret RFC or plan fidelity, before any source reads.
+4. Build a mapping from RFC items to plan coverage.
+5. Identify omissions: RFC goals, non-goals, constraints, contracts, risks, or success criteria missing from the plan.
+6. Identify contradictions: plan work that violates RFC non-goals, changes RFC decisions, or adds unapproved scope.
+7. Identify context gaps: epic features or sub-plans that require RFC knowledge but do not embed it.
 
 ## Output Format
 

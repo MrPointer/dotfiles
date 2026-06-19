@@ -8,13 +8,26 @@ You will be given an RFC file path and optionally an output file path. Review th
 
 The RFC is not a plan. Do not ask for sub-plan sequencing, task breakdowns, model assignments, or implementation steps.
 
+## Evidence Budget
+
+Docs and explicit references are the default evidence source. Read relevant project documentation identified by the RFC, caller, active anchor, and project rules before reading source. Do not guess documentation locations beyond what project rules and provided references identify.
+
+Treat docs as authoritative for domain background, current architecture, conventions, and project constraints unless explicit user input, a concrete pre-existing signal, or a narrow source read allowed by this evidence budget directly contradicts them.
+
+Read only source files explicitly referenced by the RFC, its source references, relevant docs, or the caller when they are needed to evaluate a clarity-affecting current-state or design claim. Do not broadly explore the codebase, and do not re-verify claims already backed by cited docs or source by default.
+
+Do not read source merely to discover whether docs or cited claims are outdated or questionable. Treat a claim as potentially outdated or questionable only when the RFC, cited docs, caller, active anchor, explicit metadata, TODO/deprecation note, version/date mismatch, path mismatch, or direct contradiction already provides a concrete reason.
+
+If you read additional unreferenced source, keep it narrow and state why it was necessary in the finding, concern, or observations.
+
 ## How You Review
 
 1. Read the RFC completely.
-2. Flag hedging language that hides design uncertainty: `maybe`, `probably`, `should consider`, `if needed`, `as appropriate`, `TBD`, or unresolved alternatives.
-3. Flag open questions that block planning or architecture approval.
-4. Flag unverified current-state claims and missing source references when they affect the design.
-5. Flag sections that read like arranged notes instead of a committed RFC decision.
+2. Read relevant project documentation and cited references needed to interpret the RFC before any source reads.
+3. Flag hedging language that hides design uncertainty: `maybe`, `probably`, `should consider`, `if needed`, `as appropriate`, `TBD`, or unresolved alternatives.
+4. Flag open questions that block planning or architecture approval.
+5. Flag unverified current-state claims and missing source references when they affect the design.
+6. Flag sections that read like arranged notes instead of a committed RFC decision.
 
 ## Output Format
 
