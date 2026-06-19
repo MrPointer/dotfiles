@@ -12,17 +12,16 @@ Discover reviewer agents from project-local `.claude/agents/` first, then global
 
 Direct epic planning uses exactly these reviewers before user approval:
 
-- `plan-architect-reviewer`
-- `plan-risk-reviewer`
+- `design-reviewer`
 
 ## Reviewer Bindings
 
-Launch each reviewer agent through its own `subagent_type` (for example, `subagent_type: "plan-architect-reviewer"`). The named agent's frontmatter declares both its persona and its `tools` list — including `Write`/`Edit` for write-capable reviewers — so direct dispatch loads both the right system prompt and the right tools. Do not launch reviewers as `general-purpose`: that bypasses the reviewer's specialized system prompt and replaces its declared tool list with general-purpose's broader set.
+Launch each reviewer agent through its own `subagent_type` (for example, `subagent_type: "design-reviewer"`). The named agent's frontmatter declares both its persona and its `tools` list — including `Write`/`Edit` for write-capable reviewers — so direct dispatch loads both the right system prompt and the right tools. Do not launch reviewers as `general-purpose`: that bypasses the reviewer's specialized system prompt and replaces its declared tool list with general-purpose's broader set.
 
 Pass only:
 
 - Epic plan file path.
-- Requested review output path, such as `plans/epics/reviews/<epic-name>.architect.md`.
+- Requested review output path, such as `plans/epics/reviews/<epic-name>.design.md`.
 - The review task.
 
 If a reviewer writes the review file directly, use it. If it returns findings, write the review file from the response. Check whether the expected file exists after the reviewer finishes.

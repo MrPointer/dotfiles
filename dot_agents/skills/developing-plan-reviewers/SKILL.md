@@ -5,13 +5,13 @@ description: Create project-specific plan reviewer agents that integrate with th
 
 # Developing Plan Reviewers
 
-Create project-specific reviewer agents for the `planning-project-features` workflow. These agents review individual sub-plans for domain-specific correctness — catching issues that the generic global reviewers (architecture, risk) cannot.
+Create project-specific reviewer agents for the `planning-project-features` workflow. These agents review individual sub-plans for domain-specific correctness — catching issues that the generic global design reviewer cannot.
 
 ## How Plan Reviewers Fit In
 
 The planning workflow (Phase 5) uses two types of reviewers:
 
-1. **Global reviewers** (`~/.claude/agents/`) — `plan-architect-reviewer` and `plan-risk-reviewer`. Project-agnostic, already exist.
+1. **Global reviewers** (`~/.claude/agents/`) — `design-reviewer`. Project-agnostic, already exists.
 2. **Local reviewers** (`.claude/agents/`) — project-specific, domain-specialized. **This is what you build.**
 
 The planner discovers local reviewers in Phase 4 by reading their descriptions, matches each sub-plan to the most appropriate reviewer, and launches them in Phase 5. No naming convention is assumed — the description is what matters.

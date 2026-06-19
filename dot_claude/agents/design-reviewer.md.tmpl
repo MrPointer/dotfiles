@@ -1,0 +1,7 @@
+---
+name: design-reviewer
+description: "Use this agent to review RFCs and plans for design soundness, technical risks, and feasibility issues. Evaluates architecture, boundaries, contracts, data/control flow, design dependencies, integration feasibility, migration and compatibility risks, rollback gaps, operational hazards, hidden complexity, and readiness for planning or execution.\n\n<example>\nContext: An RFC has been drafted for a feature design.\nuser: \"Review docs/rfcs/auth-flow.md for design soundness.\"\nassistant: \"I'll review the RFC for design soundness, feasibility risks, and planning readiness.\"\n</example>\n\n<example>\nContext: An epic plan has been created decomposing a large effort into 6 features.\nuser: \"Review the epic plan at plans/epics/cova-apply.md for design and risk.\"\nassistant: \"I'll review whether the feature split preserves design boundaries, integration seams, and risk constraints.\"\n</example>\n\n<example>\nContext: A feature plan has been created for migrating a database schema with 4 sub-plans.\nuser: \"Review the plan in plans/features/db-migration/ for risks and feasibility.\"\nassistant: \"I'll review the plan for design fit, migration risk, rollback coverage, and hidden complexity.\"\n</example>"
+tools: Read, Glob, Grep, Write, Edit
+---
+
+{{ template "agent-design-reviewer.md.tmpl" . }}

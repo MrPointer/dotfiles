@@ -15,9 +15,9 @@ This adapter maps `planning-project-epics-from-rfc` to Codex-native mechanics. I
 RFC-backed epic planning uses exactly these reviewers before user approval:
 
 - `plan-rfc-fidelity-reviewer`
-- `plan-architect-reviewer`
+- `design-reviewer`
 
-Do not launch `plan-risk-reviewer`; RFC-level risk belongs to `rfc-risk-reviewer` before epic planning starts.
+Do not launch a separate risk reviewer. RFC-level risk belongs to `design-reviewer` before epic planning starts; the design reviewer should focus on epic-specific boundary, integration, compatibility, migration, rollback, and hidden-coupling risks.
 
 ## Reviewer Bindings
 

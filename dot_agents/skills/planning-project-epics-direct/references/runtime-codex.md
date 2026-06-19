@@ -14,8 +14,7 @@ This adapter maps `planning-project-epics-direct` to Codex-native mechanics. It 
 
 Direct epic planning uses exactly these reviewers before user approval:
 
-- `plan-architect-reviewer`
-- `plan-risk-reviewer`
+- `design-reviewer`
 
 ## Reviewer Bindings
 
@@ -24,7 +23,7 @@ Use Codex's custom-agent or reviewer dispatch mechanism. Do not synthesize revie
 Pass only:
 
 - Epic plan file path.
-- Requested review output path, such as `plans/epics/reviews/<epic-name>.architect.md`.
+- Requested review output path, such as `plans/epics/reviews/<epic-name>.design.md`.
 - The review task.
 
 If direct file writing is supported, ask the reviewer to write to the requested path. Otherwise have it return structured findings and write the review file from the parent agent.

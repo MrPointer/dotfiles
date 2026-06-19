@@ -12,8 +12,7 @@ Discover reviewer agents from project-local `.opencode/agents/` first, then glob
 
 Direct epic planning uses exactly these reviewers before user approval:
 
-- `plan-architect-reviewer`
-- `plan-risk-reviewer`
+- `design-reviewer`
 
 ## Reviewer Bindings
 
@@ -22,7 +21,7 @@ Invoke reviewers by custom subagent name through OpenCode's normal subagent mech
 Pass only:
 
 - Epic plan file path.
-- Requested review output path, such as `plans/epics/reviews/<epic-name>.architect.md`.
+- Requested review output path, such as `plans/epics/reviews/<epic-name>.design.md`.
 - The review task.
 
 If a reviewer writes the review file directly, use it. If it returns findings, write the review file from the response. Verify the review artifact exists before continuing.

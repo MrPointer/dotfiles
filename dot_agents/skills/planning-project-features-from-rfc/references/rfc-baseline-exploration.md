@@ -6,8 +6,7 @@ Use this reference when validating an RFC baseline, reading feature anchors, or 
 
 Confirm the RFC is reviewed enough for RFC-backed planning:
 
-- `rfc-architect-reviewer` is `Passed` or `Passed with concerns`.
-- `rfc-risk-reviewer` is `Passed` or `Passed with concerns`.
+- `design-reviewer` is `Passed` or `Passed with concerns`.
 - `rfc-clarity-reviewer` is `Passed`, `Passed with concerns`, or explicitly not required by the project.
 - No `Blocking` review status remains.
 - Any `Passed with concerns` item is compatible with planning and does not require a design decision before decomposition.

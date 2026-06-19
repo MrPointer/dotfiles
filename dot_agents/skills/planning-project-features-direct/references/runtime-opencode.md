@@ -29,7 +29,7 @@ OpenCode reviewer bindings should be **markdown-defined custom subagents**. Stor
 
 **Launch mechanism**: Use OpenCode's subagent dispatch path for reviewers. In practice, that means invoking the reviewer by its subagent name rather than recreating its persona ad hoc in prompt text. The built-in `general` and `explore` subagents are not substitutes for required project-local reviewers.
 
-**Dispatch parameters**: Pass the plan path, the requested review output path (for example `reviews/00-master.architect.md`), and the review task. Keep the prompt focused on the requested review and avoid mixing in unrelated planner rationale.
+**Dispatch parameters**: Pass the plan path, the requested review output path (for example `reviews/00-master.design.md`), and the review task. Keep the prompt focused on the requested review and avoid mixing in unrelated planner rationale.
 
 **Output ownership**: If the reviewer has `edit` permission and is designed to write files directly, let it write its own review artifact. If it returns findings instead, the planner writes the review artifact from the response. In both cases, the planner must verify that the expected file exists after the reviewer finishes.
 

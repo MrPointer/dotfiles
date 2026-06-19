@@ -8,8 +8,7 @@ Before presenting the first complete RFC draft, run reviewer subagents once.
 
 Required reviewers:
 
-- `rfc-architect-reviewer`: architectural soundness, boundary placement, contracts, data/control flow, current-architecture fit, and planning readiness
-- `rfc-risk-reviewer`: technical risks, migration, compatibility, rollback gaps, operational hazards, hidden complexity, and risk mitigations
+- `design-reviewer`: architectural soundness, boundary placement, contracts, data/control flow, current-architecture fit, planning readiness, technical risks, migration, compatibility, rollback gaps, operational hazards, hidden complexity, and risk mitigations
 
 Optional reviewer:
 
@@ -49,7 +48,7 @@ After incorporating initial reviewer findings, classify RFC changes before decid
 | Editorial / wording | Improve phrasing, remove transcript-like language, fix typos, reorganize prose without meaning changes | None |
 | Evidence / citation repair | Add source references, quote current-state details, clarify where a constraint came from | None unless evidence contradicts reviewed design |
 | Finding-specific repair | Address one reviewer's finding without changing design, boundaries, contracts, flow, compatibility, or risk posture | None by default; recommend targeted re-review only when confirmation is genuinely needed |
-| Cross-scope design change | Change chosen approach, component boundaries, public contracts, data/control flow, state ownership, compatibility, migration, failure behavior, or major risk mitigation | Run targeted re-review of affected scopes, commonly architecture and/or risk |
+| Cross-scope design change | Change chosen approach, component boundaries, public contracts, data/control flow, state ownership, compatibility, migration, failure behavior, or major risk mitigation | Run targeted re-review with the design reviewer |
 | Large accumulated revision | Many smaller edits make the reviewed artifact materially different | Ask the user whether to spend tokens on targeted re-review |
 
 Required reviewers do not need to re-approve every minor edit. Automatically re-run reviewers only for clear cross-scope design changes, and only affected scopes. If it is ambiguous whether a change is cross-scope, state the ambiguity and ask before launching a reviewer.
@@ -58,6 +57,6 @@ If the user requests changes after the reviewed RFC is presented, incorporate th
 
 ## Review Record
 
-Update the RFC's `Review Record` before presenting so planning can see which reviews ran, what remains open, and whether architecture and risk review passed.
+Update the RFC's `Review Record` before presenting so planning can see which reviews ran, what remains open, and whether design review passed.
 
 Use statuses such as `Passed`, `Passed with concerns`, `Blocking`, or `Not requested`. In notes, record whether a verdict came from original review, targeted re-review, or author classification that no re-review was needed after a limited edit.

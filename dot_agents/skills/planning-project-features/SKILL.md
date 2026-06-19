@@ -23,8 +23,7 @@ If the user provides or references an RFC, read it and inspect its **Review Reco
 
 A reviewed RFC has:
 
-- `rfc-architect-reviewer` with status `Passed` or `Passed with concerns`.
-- `rfc-risk-reviewer` with status `Passed` or `Passed with concerns`.
+- `design-reviewer` with status `Passed` or `Passed with concerns`.
 - No `Blocking` review status that affects decomposition, scope, contracts, migration, rollout, acceptance criteria, or implementation constraints.
 
 If these conditions hold, use `planning-project-features-from-rfc`. Do not re-gather requirements or re-litigate the RFC design.
@@ -39,7 +38,7 @@ If an RFC exists but does not meet these conditions, stop and present exactly tw
 If no RFC exists, recommend creating one before planning. Explain the concrete benefits briefly:
 
 - It separates design decisions from execution decomposition.
-- It gives architecture and risk reviewers the right artifact to review.
+- It gives the design reviewer the right artifact to review.
 - It gives planning a stable, reviewed baseline instead of forcing it to rediscover the design.
 - It reduces token waste in planning by narrowing plan review to fidelity and executability.
 - It creates a stable RFC document reference for future plans, implementation sessions, and follow-up discussion.

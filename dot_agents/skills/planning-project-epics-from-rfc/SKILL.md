@@ -35,8 +35,7 @@ Do not load or mix instructions from another runtime adapter in the same turn. I
 
 Read the RFC and confirm:
 
-- `rfc-architect-reviewer` is `Passed` or `Passed with concerns`.
-- `rfc-risk-reviewer` is `Passed` or `Passed with concerns`.
+- `design-reviewer` is `Passed` or `Passed with concerns`.
 - No `Blocking` review status remains.
 - Any `Passed with concerns` item is compatible with epic decomposition and does not require a design decision before feature boundaries can be chosen.
 
@@ -95,13 +94,13 @@ Set all features to `not-started`.
 Run only these reviewers before presenting to the user:
 
 - **`plan-rfc-fidelity-reviewer`**: Checks that the epic faithfully decomposes the RFC without omitting goals, violating non-goals, or adding unapproved scope.
-- **`plan-architect-reviewer`**: Checks feature boundaries, sequencing, dependency graph, and whether features can be planned separately without constant cross-referencing.
+- **`design-reviewer`**: Checks whether feature boundaries preserve RFC design decisions, integration seams, compatibility constraints, migration/rollback strategy, and epic-specific risks introduced by the decomposition.
 
 Pass the epic plan path, RFC path, and review output path to each reviewer. Review output lives under `plans/epics/reviews/`.
 
 Incorporate findings and re-run only affected reviewers until no blocking findings remain. If a finding requires changing the RFC design, stop and ask whether to revise the RFC or approve an explicit deviation.
 
-Do not run `plan-risk-reviewer` in this workflow. RFC-level risk was already reviewed by `rfc-risk-reviewer`; epic planning should preserve those risks as feature context and sequencing constraints.
+Do not re-review RFC-level risk in this workflow. RFC-level risk was already reviewed by `design-reviewer`; epic planning should preserve those risks as feature context and sequencing constraints. The design reviewer should focus risk findings on epic-specific boundary, integration, compatibility, migration, rollback, and hidden-coupling risks.
 
 ### Phase 6: User Approval And Feedback
 
@@ -123,9 +122,9 @@ The epic plan is a living document. Feature planning or execution may reveal bet
 - Never use this workflow with an unreviewed RFC.
 - Never change the RFC design silently.
 - Never define cross-feature contracts.
-- Never run full direct-epic risk review in this workflow.
+- Never re-review RFC-level risk in this workflow.
 - Never ask the user to restate information that is already in the RFC.
 - Always preserve RFC goals, non-goals, constraints, and risks in the epic plan.
-- Always run `plan-rfc-fidelity-reviewer` and `plan-architect-reviewer` before presenting the epic plan.
+- Always run `plan-rfc-fidelity-reviewer` and `design-reviewer` before presenting the epic plan.
 
 [epic-plan-template]: assets/epic-plan-template.md

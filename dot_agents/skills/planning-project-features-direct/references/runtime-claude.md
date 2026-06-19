@@ -24,7 +24,7 @@ Also consult `AGENTS.md` (or `CLAUDE.md`) for documented skill mappings and doma
 
 **Launch mechanism**: Launch each reviewer agent through its own `subagent_type` (for example, `subagent_type: "plan-rfc-fidelity-reviewer"`). The named agent's frontmatter declares both its persona and its `tools` list — including `Write`/`Edit` for write-capable reviewers — so direct dispatch loads both the right system prompt and the right tools. Do not launch reviewers as `general-purpose`: that bypasses the reviewer's specialized system prompt and replaces its declared tool list with general-purpose's broader set, defeating the reviewer definition. Read-only agent types like `Explore` are not a substitute either; pick the actual reviewer's `subagent_type`.
 
-**Dispatch parameters**: Pass the plan directory path and the requested review output path (e.g., `reviews/00-master.architect.md`).
+**Dispatch parameters**: Pass the plan directory path and the requested review output path (e.g., `reviews/00-master.design.md`).
 
 **Output ownership**: If a reviewer definition can write files directly, let it write its own review artifact. If it returns findings instead, the planner writes the review artifact from the returned response. The planner checks whether the expected file exists after the reviewer finishes.
 

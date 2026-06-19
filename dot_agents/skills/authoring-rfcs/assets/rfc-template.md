@@ -16,8 +16,7 @@ Last Updated: <YYYY-MM-DD>
 ## Review Record
 | Reviewer | Scope | Status | Notes |
 |----------|-------|--------|-------|
-| `rfc-architect-reviewer` | Architecture, boundaries, contracts, current-state fit, planning readiness | Pending | <Review output path, targeted re-review note, or reason no re-review was needed after later edits> |
-| `rfc-risk-reviewer` | Technical risks, migration, compatibility, rollback, hidden complexity | Pending | <Review output path, targeted re-review note, or reason no re-review was needed after later edits> |
+| `design-reviewer` | Architecture, boundaries, contracts, current-state fit, technical risks, migration, compatibility, rollback, hidden complexity, planning readiness | Pending | <Review output path, targeted re-review note, or reason no re-review was needed after later edits> |
 | `rfc-clarity-reviewer` | Clarity and actionability | Not requested | <Reason if omitted, review output path if used, or reason no re-review was needed after later edits> |
 
 Valid review statuses: `Pending`, `Passed`, `Passed with concerns`, `Blocking`, `Not requested`.

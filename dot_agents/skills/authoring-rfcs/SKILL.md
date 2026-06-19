@@ -77,8 +77,7 @@ Before presenting the first complete RFC draft, run reviewer subagents once. Do 
 
 Required reviewers:
 
-- `rfc-architect-reviewer`
-- `rfc-risk-reviewer`
+- `design-reviewer`
 
 Use `rfc-clarity-reviewer` when the RFC is long, nuanced, assumption-heavy, produced from a long brainstorming session, or requested by the user.
 

@@ -19,7 +19,7 @@ RFC-backed feature planning uses exactly these reviewers:
 - `plan-rfc-fidelity-reviewer`
 - `plan-executability-reviewer`
 
-Do not launch `plan-architect-reviewer`, `plan-risk-reviewer`, `plan-clarity-reviewer`, or project-local domain reviewers in this workflow unless the user explicitly exits RFC-backed planning and returns to direct planning.
+Do not launch `design-reviewer`, `plan-clarity-reviewer`, or project-local domain reviewers in this workflow unless the user explicitly exits RFC-backed planning and returns to direct planning.
 
 ## Reviewer Bindings
 

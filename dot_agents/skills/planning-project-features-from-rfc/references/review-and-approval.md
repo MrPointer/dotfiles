@@ -9,7 +9,7 @@ Run exactly these reviewers by default:
 - `plan-rfc-fidelity-reviewer`
 - `plan-executability-reviewer`
 
-Do not run `plan-architect-reviewer`, `plan-risk-reviewer`, `plan-clarity-reviewer`, or project-local domain reviewers unless the user explicitly exits RFC-backed planning and returns to direct planning. RFC architecture, risk, and clarity were already reviewed at RFC time.
+Do not run `design-reviewer`, `plan-clarity-reviewer`, or project-local domain reviewers unless the user explicitly exits RFC-backed planning and returns to direct planning. RFC design and clarity were already reviewed at RFC time.
 
 Pass each reviewer:
 

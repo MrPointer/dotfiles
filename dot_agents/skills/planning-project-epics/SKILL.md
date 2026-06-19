@@ -11,7 +11,7 @@ Route epic planning deterministically. This skill does not create epic plans its
 
 | Input State | Action | Epic Planning Workflow | Reviewers |
 |-------------|--------|------------------------|-----------|
-| Reviewed RFC provided | Validate the RFC review record, then use the RFC as the design baseline | `planning-project-epics-from-rfc` | `plan-rfc-fidelity-reviewer`, `plan-architect-reviewer` |
+| Reviewed RFC provided | Validate the RFC review record, then use the RFC as the design baseline | `planning-project-epics-from-rfc` | `plan-rfc-fidelity-reviewer`, `design-reviewer` |
 | RFC provided but not reviewed | Stop and offer two choices: review the RFC first, or proceed as direct epic planning | `authoring-rfcs` review or `planning-project-epics-direct` | Depends on chosen path |
 | No RFC provided | Recommend creating an RFC first, then ask whether to create one or continue directly | `brainstorming` + `authoring-rfcs`, or `planning-project-epics-direct` | Depends on chosen path |
 
@@ -23,8 +23,7 @@ If the user provides or references an RFC, read it and inspect its **Review Reco
 
 A reviewed RFC has:
 
-- `rfc-architect-reviewer` with status `Passed` or `Passed with concerns`.
-- `rfc-risk-reviewer` with status `Passed` or `Passed with concerns`.
+- `design-reviewer` with status `Passed` or `Passed with concerns`.
 - No `Blocking` review status that affects epic scope, feature boundaries, sequencing, migration, rollout, or cross-feature constraints.
 
 If these conditions hold, use `planning-project-epics-from-rfc`. Do not re-gather requirements or re-litigate the RFC design.
@@ -39,7 +38,7 @@ If an RFC exists but does not meet these conditions, stop and present exactly tw
 If no RFC exists, recommend creating one before epic planning. Explain the concrete benefits briefly:
 
 - It separates design decisions from feature decomposition.
-- It gives architecture and risk reviewers the right artifact to review.
+- It gives the design reviewer the right artifact to review.
 - It gives epic planning a stable, reviewed baseline for feature boundaries and sequencing.
 - It reduces token waste by narrowing epic review to RFC fidelity and feature-decomposition quality.
 - It creates a stable RFC document reference for the epic plan and future feature plans.

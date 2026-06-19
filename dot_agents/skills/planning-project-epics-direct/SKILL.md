@@ -123,8 +123,7 @@ Only after Phases 1-5 are complete:
 After plan creation, run a review using the global reviewers before presenting to the user.
 
 **Launch in parallel:**
-- **`plan-architect-reviewer`** — Evaluates feature boundaries, dependency graph, whether the decomposition will hold together when features are planned and built separately.
-- **`plan-risk-reviewer`** — Identifies risks: features that may be harder than they appear, dependency chains that could cause rework, missing considerations.
+- **`design-reviewer`** — Evaluates whether feature boundaries preserve the design, integration seams, compatibility constraints, migration/rollback strategy, and risks such as hidden coupling or missing considerations.
 
 Pass the epic plan file path so reviewers can read it and cross-reference against the codebase. Launch reviewers through the active runtime adapter's reviewer-launch mechanism so they receive the intended persona, tools, and model assignment.
 

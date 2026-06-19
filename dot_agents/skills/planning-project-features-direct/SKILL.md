@@ -104,8 +104,7 @@ Run the full direct-planning review loop once before showing the plan to the use
 
 Default global master-plan reviewers:
 
-- `plan-architect-reviewer`
-- `plan-risk-reviewer`
+- `design-reviewer`
 - `plan-clarity-reviewer`
 - `plan-executability-reviewer`
 

@@ -8,8 +8,7 @@ The review loop uses global and project-local reviewers.
 
 Global reviewers are project-agnostic roles:
 
-- `plan-architect-reviewer`: evaluates decomposition, boundaries, dependency graph, and whether pieces fit together.
-- `plan-risk-reviewer`: identifies technical risks such as migration pitfalls, compatibility landmines, rollback gaps, and hidden complexity.
+- `design-reviewer`: evaluates whether the plan preserves design boundaries, ownership, integration seams, compatibility constraints, migration/rollback strategy, technical risks, and hidden complexity.
 - `plan-clarity-reviewer`: catches vague, ambiguous, or speculative language that would force executing agents to make planner-owned decisions.
 - `plan-executability-reviewer`: checks file ownership, acceptance criteria, dependency order, verification scope, worker dispatch, and isolated execution mechanics.
 
@@ -23,8 +22,7 @@ Review output is saved in `reviews/` within the plan directory, named `<plan-fil
 
 ```text
 <plan-directory>/reviews/
-├── 00-master.architect.md
-├── 00-master.risk.md
+├── 00-master.design.md
 ├── 00-master.clarity.md
 ├── 00-master.executability.md
 ├── 01-data-model.<local-reviewer>.md
@@ -39,7 +37,7 @@ The `reviews/` directory is ephemeral and normally covered by the `plans/` ignor
 
 Run this loop once before the user sees the plan.
 
-1. Launch `plan-architect-reviewer`, `plan-risk-reviewer`, `plan-clarity-reviewer`, and `plan-executability-reviewer` against the master plan. Run them in parallel when the runtime supports it.
+1. Launch `design-reviewer`, `plan-clarity-reviewer`, and `plan-executability-reviewer` against the master plan. Run them in parallel when the runtime supports it.
 2. Incorporate findings into the master plan and affected sub-plans.
 3. After master-plan review is resolved, launch each sub-plan's assigned project-local reviewer. Sub-plan reviews can run in parallel.
 4. Normalize local reviewer output to the standard format when needed: Verdict, Critical Findings, Concerns, Observations.
@@ -97,7 +95,7 @@ When the user requests changes, incorporate them and classify the change:
 | Cosmetic / wording | Clarify a step, rename a sub-plan, fix typos | None |
 | Scoped implementation detail | Add an edge case to one sub-plan, change a file path, adjust a step | None; planner judgment is sufficient |
 | Scope adjustment within a sub-plan | Add/remove acceptance criteria, change approach for one sub-plan | Re-review only that sub-plan with its assigned reviewer |
-| Structural change | New sub-plan, dependency graph change, boundary shift, merge/split, ownership or verification scope change | Re-review affected sub-plans plus `plan-architect-reviewer` and `plan-executability-reviewer` on the master plan |
+| Structural change | New sub-plan, dependency graph change, boundary shift, merge/split, ownership or verification scope change | Re-review affected sub-plans plus `design-reviewer` and `plan-executability-reviewer` on the master plan |
 
 Default behavior: after incorporating feedback, state what changed and recommend whether re-review is warranted. Do not automatically re-run reviewers unless the workflow requires it or the user asks.
 

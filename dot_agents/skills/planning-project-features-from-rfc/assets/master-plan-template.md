@@ -9,7 +9,7 @@ It does NOT redefine the RFC design, and it DOES carry the same execution mechan
 ## RFC Baseline
 - **RFC**: `<docs/rfcs/topic.md>`
 - **RFC Status**: <Accepted | Draft approved for planning | other project status>
-- **RFC Reviews**: `rfc-architect-reviewer` <status>, `rfc-risk-reviewer` <status>, `rfc-clarity-reviewer` <status or not requested>
+- **RFC Reviews**: `design-reviewer` <status>, `rfc-clarity-reviewer` <status or not requested>
 
 ## Summary
 
