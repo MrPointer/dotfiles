@@ -1,0 +1,7 @@
+---
+name: rfc-clarity-reviewer
+description: "Use this agent to review RFC documents for clarity, decisiveness, and actionability. Catches vague language, unresolved design alternatives, unverified current-state claims, missing source references, and open questions that would force planning to re-decide the design.\n\n<example>\nContext: A long RFC was produced after brainstorming.\nuser: \"Review docs/rfcs/plugin-system.md for clarity.\"\nassistant: \"I'll review the RFC for vague language, unresolved decisions, and planning-blocking ambiguity.\"\n</example>"
+tools: Read, Glob, Grep, Write, Edit
+---
+
+{{ template "agent-rfc-clarity-reviewer.md.tmpl" . -}}

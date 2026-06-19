@@ -1,0 +1,8 @@
+---
+name: plan-executability-reviewer
+description: "Use this agent to review plans for execution consistency. Works on feature plans and other plan structures that decompose work into independently executed sub-plans. Evaluates whether each sub-plan's file ownership, acceptance criteria, verification scope, and execution order are mechanically consistent, so a literal-minded agent can complete it without overreaching into other sub-plans' files or making unauthorized decisions.\n\n<example>\nContext: A feature plan has been created with 5 sub-plans and explicit file ownership.\nuser: \"Review the plan in plans/features/auth-system/ for executability.\"\nassistant: \"I'll review the sub-plans for ownership and acceptance-criteria contradictions, intermediate-state breakage, and forced out-of-scope decisions.\"\n</example>\n\n<example>\nContext: A master plan says sub-plan 01 removes public constructors while sub-plan 03 owns their callers.\nuser: \"Check whether this plan can be executed safely by isolated agents.\"\nassistant: \"I'll review the plan for cross-sub-plan breakage, scope mismatches, and execution-order assumptions that would force agent overreach.\"\n</example>\n\n<example>\nContext: A plan was revised after review feedback and needs re-review.\nuser: \"The plan changed. Re-check executability for the affected parts.\"\nassistant: \"I'll re-evaluate ownership, verification scope, and intermediate-state assumptions for the revised plan.\"\n</example>"
+tools: Read, Glob, Grep, Write, Edit
+model: sonnet
+---
+
+{{ template "agent-plan-executability-reviewer.md.tmpl" . -}}

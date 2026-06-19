@@ -1,0 +1,14 @@
+---
+description: "Use this agent to review plans for execution consistency. Works on feature plans and other plan structures that decompose work into independently executed sub-plans. Evaluates whether each sub-plan's file ownership, acceptance criteria, verification scope, and execution order are mechanically consistent, so a literal-minded agent can complete it without overreaching into other sub-plans' files or making unauthorized decisions."
+mode: subagent
+permission:
+  edit: allow
+  bash: deny
+  webfetch: deny
+  task:
+    "*": deny
+  skill:
+    "*": deny
+---
+
+{{ template "agent-plan-executability-reviewer.md.tmpl" . -}}

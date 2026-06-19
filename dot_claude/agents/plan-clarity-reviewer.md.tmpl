@@ -1,0 +1,7 @@
+---
+name: plan-clarity-reviewer
+description: "Use this agent to review plans for vague language, unresolved decisions, and unverified claims. Works with any plan structure — epic plans (decomposed into features), feature plans (decomposed into sub-plans), or other decomposition formats. Catches hedging that executing agents can't resolve on their own, template boilerplate copied without checking relevance, and decisions deferred to execution that should have been made during planning.\n\n<example>\nContext: A feature plan has been created with 4 sub-plans, some targeting cheap models.\nuser: \"Review the plan in plans/features/auth-system/ for clarity and actionability.\"\nassistant: \"I'll review the sub-plans for vague language, unresolved decisions, and unverified codebase claims.\"\n</example>\n\n<example>\nContext: An epic plan has been created decomposing a large effort into 6 features.\nuser: \"Review the epic plan at plans/epics/cova-apply.md for clarity and actionability.\"\nassistant: \"I'll review the feature descriptions for hedging, unresolved alternatives, and deferred decisions.\"\n</example>\n\n<example>\nContext: A plan was revised after review feedback and needs re-review.\nuser: \"The plan was revised after review feedback. Re-check the affected parts for clarity.\"\nassistant: \"I'll re-evaluate the changed sections for remaining ambiguity and unresolved decisions.\"\n</example>"
+tools: Read, Glob, Grep, Write, Edit
+---
+
+{{ template "agent-plan-clarity-reviewer.md.tmpl" . -}}

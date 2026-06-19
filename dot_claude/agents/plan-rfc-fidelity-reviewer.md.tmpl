@@ -1,0 +1,7 @@
+---
+name: plan-rfc-fidelity-reviewer
+description: "Use this agent to review RFC-backed plans for fidelity to the RFC. Works with epic plans and feature implementation plans. Checks that the plan preserves RFC goals, non-goals, constraints, contracts, risks, and success criteria without reopening or contradicting settled design decisions.\n\n<example>\nContext: A feature plan was generated from docs/rfcs/auth-flow.md.\nuser: \"Review plans/features/auth-flow/ against docs/rfcs/auth-flow.md for fidelity.\"\nassistant: \"I'll review whether the plan faithfully decomposes the RFC without unapproved deviations.\"\n</example>\n\n<example>\nContext: An epic plan was generated from docs/rfcs/platform-modernization.md.\nuser: \"Review plans/epics/platform-modernization.md against docs/rfcs/platform-modernization.md for fidelity.\"\nassistant: \"I'll review whether the epic preserves RFC scope, non-goals, risks, and feature coverage.\"\n</example>"
+tools: Read, Glob, Grep, Write, Edit
+---
+
+{{ template "agent-plan-rfc-fidelity-reviewer.md.tmpl" . -}}
