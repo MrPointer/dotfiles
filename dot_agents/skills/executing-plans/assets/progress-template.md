@@ -25,6 +25,8 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 - **Review branch**: <branch or detached HEAD where execution started>
 - **Execution base**: <commit SHA before execution started>
 - **Integration branch**: <local agent/<plan-id> branch used for checkpoint commits>
+- **Concurrency policy**: <Linear DAG | Parallel allowed; reason from master plan>
+- **Execution schedule**: <serialized order or policy-allowed parallel groups>
 - **Final review mode**: mixed reset to execution base, leaving aggregate changes dirty
 - **Checkpoint range**: <execution-base>..<final checkpoint commit, once complete>
 

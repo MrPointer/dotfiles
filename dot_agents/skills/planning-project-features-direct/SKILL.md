@@ -28,7 +28,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 - **No assumptions**: if something is unclear, ambiguous, or missing, ask. Do not fill gaps with reasonable defaults or best guesses.
 - **Clarification continues throughout planning**: if later phases surface new ambiguity or an unresolved decision, stop and present it to the user.
 - **Sub-plans are self-contained**: executing agents should not need to read the master plan, other sub-plans, or external documents to understand assigned work.
-- **DAG independence is not workspace safety**: same-group sub-plans are logically independent only. Concurrent execution still requires isolated implementer worktrees and any required build/cache seeding.
+- **DAG independence is not workspace safety**: same-group sub-plans are logically independent only. Concurrent execution still requires an explicit concurrency policy, isolated implementer worktrees, and verified output/cache safety.
 - **Plans omit implementation details**: plans define what to build and why; required skills define how to code, test, lint, build, and document.
 - **Convergent review is required**: direct plans go through global and project-local review until no blocking findings remain before user presentation.
 - **Reviewer bindings are real artifacts**: do not replace required local reviewers with generic/global reviewers or ad hoc prompts.
@@ -39,6 +39,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 |---------|------|
 | Gathering requirements, reading anchors, or exploring planning mechanics | [references/requirements-exploration.md](references/requirements-exploration.md) |
 | Decomposing work into sub-plans or defining cross-boundary contracts | [references/decomposition.md](references/decomposition.md) |
+| Determining whether independent sub-plans may execute in parallel | [references/concurrency-policy.md](references/concurrency-policy.md) |
 | Creating plan files, assigning reviewers/models, or establishing execution bindings | [references/plan-creation-reviewers-and-bindings.md](references/plan-creation-reviewers-and-bindings.md) |
 | Running initial review, presenting for approval, or handling feedback | [references/review-and-approval.md](references/review-and-approval.md) |
 | Planning documentation updates | [references/documentation-sub-plan.md](references/documentation-sub-plan.md) |
@@ -66,7 +67,7 @@ Confirm:
 - architectural constraints and patterns to follow
 - potential conflicts and risks
 - required skills for execution
-- ignored build/cache directories needed by isolated TDD or parallel implementation worktrees, or that no seeding is required
+- language, build-system, output-path, and cache constraints that determine whether execution must be linear or may use parallel groups
 - documentation gaps and specification gaps
 
 Share findings with the user and confirm understanding before proceeding when findings affect scope, sequencing, boundaries, or risk.
@@ -76,6 +77,8 @@ Use [requirements-exploration.md](references/requirements-exploration.md) for ex
 ### 3. Decompose The Work
 
 Break the feature into the smallest self-contained sub-plans that form a valid dependency DAG.
+
+Apply [concurrency-policy.md](references/concurrency-policy.md) before assigning sub-plans to the same execution group. A restricted build ecosystem still gets multiple focused sub-plans, but the DAG must be linear.
 
 Each sub-plan must include the domain context, constraints, contracts, prerequisites, acceptance criteria, primary files, required skills, reviewer assignment, and execution model needed for independent execution.
 
@@ -88,7 +91,7 @@ Present the proposed decomposition to the user before writing plan files when fi
 Only after requirements, exploration, and decomposition are complete:
 
 1. Create the plan directory in the correct standalone or epic location.
-2. Write `00-master.md` and numbered sub-plan files from the templates.
+2. Write `00-master.md` and numbered sub-plan files from the templates, including the master plan's concurrency policy.
 3. Discover project-local reviewer bindings.
 4. Assign the best local reviewer to each sub-plan, or warn the user when coverage is missing.
 5. Assign execution models to every sub-plan.
@@ -149,6 +152,8 @@ Read these templates when writing plan files:
 - Always list required skills in every sub-plan.
 - Always run the initial review loop before presenting to the user.
 - Always respect model assignments through the active runtime's real model-selection mechanism.
+- Always apply and record the concurrency policy before writing execution groups.
+- Never parallelize implementation plans in the concurrency policy's Linear DAG exception list unless project documentation or the user explicitly approves a documented project-specific exception.
 - Use runtime-specific execution bindings for multi-sub-plan execution.
 - Write lead-agent execution instructions into every multi-sub-plan master plan.
 - Save plans to the correct standalone or epic feature location; never use runtime metadata directories or random/generated filenames.

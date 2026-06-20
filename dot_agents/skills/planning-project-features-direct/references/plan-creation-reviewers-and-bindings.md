@@ -99,6 +99,14 @@ Preload the project's testing and code-writing skills, plus `test-driven-develop
 
 If newly established persistent bindings require discovery, reload, or session restart before availability, warn the user when presenting the plan.
 
+## Concurrency Policy
+
+Before writing `## Execution Order`, apply [concurrency-policy.md](concurrency-policy.md) and record its decision in the master plan.
+
+If the policy selects `Linear DAG`, write one executable sub-plan per sequential group. Preserve the distinction between real data dependencies and policy-only sequencing; do not invent integration contracts just to justify serialization.
+
+If the policy allows parallel execution, the master plan must still prove same-group safety through file ownership, dependency direction, worktree isolation, and build/cache or output-path safety.
+
 ## Master Plan Execution Instructions
 
 Multi-sub-plan plans must include explicit lead-agent execution mechanics. The executor should not infer them from this planning skill.
@@ -106,6 +114,7 @@ Multi-sub-plan plans must include explicit lead-agent execution mechanics. The e
 The master plan must include:
 
 - worker-dispatch instructions and worker table
+- concurrency policy and execution order
 - coordination points and dependency graph
 - file ownership table
 - implementer worktree isolation requirements
@@ -115,4 +124,4 @@ The master plan must include:
 - instruction that plan files, review files, and `progress.md` stay in the coordinator workspace
 - instruction that workers receive inline task packets, not copied plan files
 
-For concurrent work, require task-scoped implementer worktrees. If isolation or required cache seeding cannot be verified, instruct execution to serialize or ask the user.
+For concurrent work, require task-scoped implementer worktrees. If the concurrency policy, isolation, required cache seeding, or output-path safety cannot be verified, instruct execution to serialize or ask the user.

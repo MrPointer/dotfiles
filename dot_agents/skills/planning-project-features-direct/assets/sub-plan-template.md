@@ -33,7 +33,7 @@ Examples:
 <Essential context embedded directly — relevant interfaces, data shapes, conventions, architectural decisions the agent needs to know>
 
 ## Primary Files
-<Files this sub-plan primarily creates or modifies — helps prevent conflicts during parallel worktree integration>
+<Files this sub-plan primarily creates or modifies — helps prevent conflicts during worker integration and any policy-allowed parallel execution>
 - `path/to/file.ext` (create | modify)
 - `path/to/other.ext` (modify)
 

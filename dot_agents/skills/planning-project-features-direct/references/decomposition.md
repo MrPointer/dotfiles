@@ -12,11 +12,14 @@ Each sub-plan should be small enough for one focused execution session. If it fe
 
 Minimize dependencies and make each edge explicit and one-directional. The dependency graph must form a valid DAG.
 
+Before placing independent sub-plans in the same execution group, apply [concurrency-policy.md](concurrency-policy.md). For restricted build ecosystems, keep the DAG linear even when sub-plans are logically independent.
+
 - No sub-plan may depend on information produced by a later sub-plan.
 - No sub-plan may depend on information produced by a sub-plan in the same parallel group.
 - Sub-plans cannot communicate at runtime; the lead agent relays results strictly along dependency edges.
 - If decomposition requires bidirectional information flow, merge or restructure the boundaries.
-- Same-group placement means logical independence only; the master plan must still require isolated implementer worktrees for concurrent execution or explicitly serialize the group.
+- Same-group placement means logical independence only; the master plan must still record that parallel execution is allowed by policy, require isolated implementer worktrees for concurrent execution, or explicitly serialize the group.
+- Linear policy sequencing is allowed for operational safety. Label policy-only sequencing separately from real data-flow dependencies in the master plan.
 
 ## Embedded Context
 

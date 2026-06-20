@@ -16,10 +16,13 @@ Use this reference when implementation tasks run concurrently, structural TDD ne
 
 DAG independence does not make a shared dirty workspace safe. Concurrent implementers need separate worktrees, and dependent worktrees need a Git base that contains their prerequisites.
 
+Workspace isolation prevents dirty-workspace and file-integration conflicts. It does not prove that a build system's output directories, binaries, or caches are safe under concurrent compilation. If the plan's Concurrency Policy says `Linear DAG`, follow it instead of trying to recover parallelism with isolated worktrees or cache seeding.
+
 ## Workspace Selection
 
 - Sequential tasks may run in the main execution workspace unless the plan or user requires isolation.
 - Concurrent implementation tasks must use task-scoped implementer worktrees.
+- A `Linear DAG` policy means no concurrent implementation worktrees; use worktrees only for structural TDD, plan-required isolation, or explicitly approved sequential execution mechanics.
 - Structural TDD test authors must run in an isolated workspace when structural TDD is used.
 - Dependent task worktrees must be created from an integration branch checkpoint that already contains all prerequisite outputs.
 
@@ -58,7 +61,7 @@ If no isolated implementation path can be verified for a concurrent task, serial
 
 ## Build And Cache Reuse
 
-Fresh worktrees do not contain ignored build artifacts. Treat build/cache reuse as a best-effort performance optimization, not as a property of workspace isolation.
+Fresh worktrees do not contain ignored build artifacts. Treat build/cache reuse as a best-effort performance optimization, not as a property of workspace isolation. Cache seeding never overrides a plan's `Linear DAG` policy.
 
 Before configuring shared caches or seeding ignored artifacts, read project-local instructions such as `AGENTS.md`, runtime adapter notes, plan instructions, repository docs, or build configuration. Use the project-documented strategy when one exists.
 

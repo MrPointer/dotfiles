@@ -17,17 +17,26 @@ The master plan is the orchestration document. It does NOT contain implementatio
 
 ## Sub-Plans
 
-| #  | Sub-Plan                | Depends On | Model  | Description                          |
-|----|-------------------------|------------|--------|--------------------------------------|
-| 01 | `01-<name>.md`          | —          | Mid-tier      | <What this sub-plan accomplishes>    |
-| 02 | `02-<name>.md`          | 01         | Mid-tier      | <What this sub-plan accomplishes>    |
-| 03 | `03-<name>.md`          | —          | Mid-tier      | <What this sub-plan accomplishes>    |
+| #  | Sub-Plan                | Depends On / Sequenced After | Model  | Description                          |
+|----|-------------------------|------------------------------|--------|--------------------------------------|
+| 01 | `01-<name>.md`          | —                            | Mid-tier      | <What this sub-plan accomplishes>    |
+| 02 | `02-<name>.md`          | 01 (logical dependency)      | Mid-tier      | <What this sub-plan accomplishes>    |
+| 03 | `03-<name>.md`          | 02 (policy-only sequencing)  | Mid-tier      | <What this sub-plan accomplishes>    |
 ...
 
+## Concurrency Policy
+
+- **Decision**: Linear DAG | Parallel allowed
+- **Reason**: <language/build-system/workspace rationale>
+- **Linearization basis**: Rust/Cargo | C/C++ build system | Swift/Xcode/SwiftPM | JVM build system | .NET/MSBuild | project-specific constraint | None
+- **Execution impact**: <one sub-plan per group, or which groups may run in parallel>
+- **Override**: <explicit user-approved/project-documented exception, or None>
+
 ## Execution Order
-<The execution order must form a valid DAG. Sub-plans in the same parallel group cannot depend on each other. Every dependency edge points from an earlier group to a later one. Sub-plans cannot communicate at runtime — the lead relays results strictly along dependency edges.>
-- **Parallel group 1**: 01, 03 (no dependencies)
-- **Sequential**: 02 (after 01)
+<The execution order must follow the Concurrency Policy and form a valid DAG. If the decision is Linear DAG, use one sub-plan per sequential group even when later work is only policy-sequenced. If the decision is Parallel allowed, sub-plans in the same parallel group cannot depend on each other. Every dependency edge points from an earlier group to a later one. Sub-plans cannot communicate at runtime — the lead relays results strictly along dependency edges.>
+- **Sequential group 1**: 01
+- **Sequential group 2**: 02 (after 01; logical dependency)
+- **Sequential group 3**: 03 (after 02; policy-only sequencing)
 ...
 
 ## Execution via Worker Agents
@@ -54,11 +63,11 @@ The master plan is the orchestration document. It does NOT contain implementatio
 ...
 
 **Build/Cache Seeding** (for isolated worktrees):
-<Use "None" when no ignored in-repository build/cache artifacts need seeding. For build-heavy projects, list the relative directories that isolated TDD and implementer worktrees need available before dispatch. The execution skill owns the seeding mechanics.>
+<Use "None" when no ignored in-repository build/cache artifacts need seeding. For a Linear DAG, list only caches required for isolated TDD or explicitly approved isolated execution. For Parallel allowed plans, list relative directories that isolated TDD and implementer worktrees need available before dispatch. Cache seeding does not override the Concurrency Policy. The execution skill owns the seeding mechanics.>
 
 | Relative Path | Applies To | Purpose | Notes |
 |---------------|------------|---------|-------|
-| `target/`     | all code sub-plans | Rust build cache for isolated execution | Seed before dispatch |
+| `<cache-dir>/` | <sub-plans> | <build/test cache purpose> | <seed before dispatch, or not required> |
 ...
 
 ## Cross-Sub-Plan Data Flow
@@ -75,8 +84,9 @@ The master plan is the orchestration document. It does NOT contain implementatio
 - Use this master plan as the roadmap
 - Before editing implementation files, initialize or resume `progress.md` and fill the execution audit with planned workers, model tiers, dispatch mechanisms, implementation workspace, build/cache seeding status, integration status, and TDD gate status
 - Spawn each sub-plan's assigned worker agent from the table above using the active runtime adapter's dispatch mechanism. Do not self-execute assigned worker tasks in the coordinator context
-- Run sub-plans in the same parallel group concurrently only through task-scoped implementer worktrees where the runtime supports isolated dispatch and file ownership does not conflict. If isolation cannot be verified, serialize the group or ask the user
-- Use the Build/Cache Seeding table as the source of cache directories for isolated TDD or implementer worktrees. Follow `executing-plans` for seeding mechanics, verification, and progress recording
+- Follow the Concurrency Policy. If the decision is Linear DAG, run one sub-plan at a time even when no logical dependency exists
+- Run sub-plans in the same parallel group concurrently only when the Concurrency Policy allows it and only through task-scoped implementer worktrees where the runtime supports isolated dispatch and file ownership does not conflict. If isolation or output/cache safety cannot be verified, serialize the group or ask the user
+- Use the Build/Cache Seeding table as the source of cache directories for isolated TDD or implementer worktrees. Follow `executing-plans` for seeding mechanics, verification, and progress recording. Cache seeding does not permit parallel execution when the Concurrency Policy says Linear DAG
 - For sequential dependencies, wait for the prior worker to complete before spawning the next
 - The lead relays information between workers when needed (workers cannot communicate directly)
 - Keep plan files, review files, and `progress.md` in the coordinator workspace. Do not copy them into worker worktrees

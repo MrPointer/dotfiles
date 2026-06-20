@@ -48,7 +48,7 @@ Examples:
 
 ## Primary Files
 
-<Files this sub-plan primarily creates or modifies — helps prevent conflicts during parallel worktree integration>
+<Files this sub-plan primarily creates or modifies — helps prevent conflicts during worker integration and any policy-allowed parallel execution>
 
 - `path/to/file.ext` (create | modify | delete)
 

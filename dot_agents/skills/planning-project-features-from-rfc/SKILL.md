@@ -28,7 +28,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 - **No silent deviations**: if planning requires changing the RFC design, stop and ask whether to revise the RFC or approve an explicit plan deviation.
 - **Direct-planning execution discipline still applies**: RFC-backed planning uses the same decomposition, model selection, execution binding, worker dispatch, documentation sub-plan, and approval mechanics unless this skill explicitly replaces them.
 - **Sub-plans are self-contained**: executing agents should not need to read the RFC, master plan, or other sub-plans to understand assigned work.
-- **DAG independence is not workspace safety**: same-group sub-plans are logically independent only. Concurrent execution still requires isolated implementer worktrees and any required build/cache seeding.
+- **DAG independence is not workspace safety**: same-group sub-plans are logically independent only. Concurrent execution still requires an explicit concurrency policy, isolated implementer worktrees, and verified output/cache safety.
 - **RFC-backed review is narrow**: use `plan-rfc-fidelity-reviewer` and `plan-executability-reviewer`. Do not run direct-planning design reviewers unless the user explicitly exits RFC-backed planning.
 
 ## Conditional References
@@ -37,6 +37,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 |---------|------|
 | Validating the RFC, reading anchors, or exploring planning mechanics | [references/rfc-baseline-exploration.md](references/rfc-baseline-exploration.md) |
 | Decomposing RFC scope into sub-plans or defining cross-boundary contracts | [references/decomposition.md](references/decomposition.md) |
+| Determining whether independent sub-plans may execute in parallel | [references/concurrency-policy.md](references/concurrency-policy.md) |
 | Creating plan files, assigning models, or establishing execution bindings | [references/plan-creation-and-bindings.md](references/plan-creation-and-bindings.md) |
 | Running plan review, presenting for approval, or handling feedback | [references/review-and-approval.md](references/review-and-approval.md) |
 | Planning documentation updates | [references/documentation-sub-plan.md](references/documentation-sub-plan.md) |
@@ -62,7 +63,7 @@ Confirm:
 - existing interfaces, commands, schemas, config files, or runtime bindings named by the RFC
 - test, package, and verification scopes that acceptance criteria can reference
 - required skills for execution
-- ignored build/cache directories needed by isolated TDD or parallel implementation worktrees, or that no seeding is required
+- language, build-system, output-path, and cache constraints that determine whether execution must be linear or may use parallel groups
 - documentation gaps and RFC/specification gaps
 
 Do not use exploration to redesign the RFC. If exploration contradicts the RFC or implementation planning depends on behavior the RFC does not define, stop and ask whether to revise the RFC or approve a plan deviation.
@@ -72,6 +73,8 @@ Use [rfc-baseline-exploration.md](references/rfc-baseline-exploration.md) for ex
 ### 3. Decompose The Work
 
 Break the RFC into the smallest self-contained sub-plans that form a valid dependency DAG.
+
+Apply [concurrency-policy.md](references/concurrency-policy.md) before assigning sub-plans to the same execution group. A restricted build ecosystem still gets multiple focused sub-plans, but the DAG must be linear.
 
 Each sub-plan must include the RFC context, constraints, contracts, prerequisites, acceptance criteria, primary files, required skills, and execution model needed for independent execution. Preserve RFC non-goals and translate RFC risks into plan mechanics.
 
@@ -84,7 +87,7 @@ Present the proposed decomposition to the user before writing plan files when fi
 Only after baseline validation, exploration, and decomposition are complete:
 
 1. Create the plan directory in the correct standalone or epic location.
-2. Write `00-master.md` and numbered sub-plan files from the templates.
+2. Write `00-master.md` and numbered sub-plan files from the templates, including the master plan's concurrency policy.
 3. Assign execution models to every sub-plan.
 4. Establish or select runtime-specific execution bindings for every model + skill combination.
 5. Create or reuse one shared test-author binding when any sub-plan has testable acceptance criteria.
@@ -141,6 +144,8 @@ Read these templates when writing plan files:
 - Always decompose into sub-plans; a monolithic plan is a failure mode.
 - Always list required skills in every sub-plan.
 - Always respect model assignments through the active runtime's real model-selection mechanism.
+- Always apply and record the concurrency policy before writing execution groups.
+- Never parallelize implementation plans in the concurrency policy's Linear DAG exception list unless project documentation or the user explicitly approves a documented project-specific exception.
 - Use runtime-specific execution bindings for multi-sub-plan execution.
 - Write lead-agent execution instructions into every multi-sub-plan master plan.
 - Always run `plan-rfc-fidelity-reviewer` and `plan-executability-reviewer` before presenting the plan.

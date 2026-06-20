@@ -64,11 +64,12 @@ Before presenting the plan, verify:
 1. Model assignments: every sub-plan model matches the decision tree and project rules.
 2. Skill conformance: reviewer-driven changes do not contradict required skills listed in sub-plans.
 3. Execution bindings: every multi-sub-plan worker assignment has a runtime-specific binding and lead-agent dispatch instructions.
-4. Cross-sub-plan prerequisites: every referenced prerequisite is created by an earlier sub-plan.
-5. Integration contract integrity: every cross-sub-plan `Produces` entry has matching `Consumes` coverage, and the master data-flow table covers every cross-boundary path.
-6. DAG validity: no cycles, no dependency on later or same-group output, and every consumed prerequisite points to an earlier group.
-7. Parallel execution safety: same-group sub-plans have non-overlapping primary file ownership and execution instructions require task-scoped worktrees, required build/cache seeding, result integration, and serialization when isolation cannot be verified.
-8. Anchor boundaries: active feature anchors are not duplicated, and any sub-plan using `anchoring-context` has a feature-level reason to update it.
+4. Concurrency policy: the master plan records `Linear DAG` or `Parallel allowed`, exception-list ecosystems are linearized unless an explicit project-documented or user-approved override is recorded, everything else remains parallel-eligible unless a concrete shared build/output/cache constraint is documented, and policy-only sequencing is labeled rather than represented as fake data flow.
+5. Cross-sub-plan prerequisites: every referenced prerequisite is created by an earlier sub-plan.
+6. Integration contract integrity: every cross-sub-plan `Produces` entry has matching `Consumes` coverage, and the master data-flow table covers every cross-boundary path.
+7. DAG validity: no cycles, no dependency on later or same-group output, and every consumed prerequisite points to an earlier group.
+8. Parallel execution safety: when policy allows same-group execution, sub-plans have non-overlapping primary file ownership and execution instructions require task-scoped worktrees, required build/cache seeding, result integration, and serialization when isolation or output/cache safety cannot be verified.
+9. Anchor boundaries: active feature anchors are not duplicated, and any sub-plan using `anchoring-context` has a feature-level reason to update it.
 
 Fix inconsistencies before presenting the plan.
 

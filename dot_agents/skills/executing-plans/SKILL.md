@@ -36,6 +36,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 - **Structural TDD is strict when used**: the test author sees only acceptance criteria and code surface; the implementer sees the full task plus tests. Feasibility, isolation, and quality gates come from [structural-tdd.md](references/structural-tdd.md).
 - **Tests are immutable to implementers**: implementers report disputes instead of editing test-author tests.
 - **Independent work continues**: blocked tasks do not stop unrelated tasks.
+- **Plan concurrency policy is binding**: if the master plan says `Linear DAG`, run at most one implementation sub-plan at a time even when tasks appear logically independent.
 - **Parallel implementation requires isolated workspaces**: never run concurrent implementers in the same dirty workspace.
 - **Dependent work starts from checkpointed prerequisites**: a prerequisite is not complete until its output is in an integration-branch checkpoint commit.
 - **Checkpoint commits are local plumbing**: never push them. Final review is the aggregate dirty diff after mixed reset, not checkpoint history.
@@ -49,7 +50,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 |---------|------|
 | Creating or repairing progress | [assets/progress-template.md](assets/progress-template.md) |
 | Any task has testable acceptance criteria and structural TDD may apply | [references/structural-tdd.md](references/structural-tdd.md) |
-| Any task uses an isolated worktree, parallel implementation, or build/cache reuse | [references/workspace-isolation.md](references/workspace-isolation.md) |
+| Any task uses an isolated worktree, policy-allowed parallel implementation, or build/cache reuse | [references/workspace-isolation.md](references/workspace-isolation.md) |
 | Plan has multiple sub-plans, dependencies, checkpoint commits, or task worktree integration | [references/checkpoint-integration.md](references/checkpoint-integration.md) |
 
 ## Workflow
@@ -60,7 +61,8 @@ Read the plan file or directory at the given path. Plans vary in shape, so extra
 
 - tasks and execution order
 - dependencies, or sequential order when dependencies are not specified
-- tasks that can run independently or in parallel
+- the master plan's concurrency policy, including whether `Linear DAG` forbids parallel dispatch
+- tasks that can run independently, and tasks that may run in parallel only when the concurrency policy allows it
 - execution binding and model assignments
 - file ownership and conflict boundaries
 - required verification per task
@@ -90,6 +92,7 @@ Check these items:
 - whether coordinator self-execution is allowed; it is allowed only for progress/coordination artifacts or a single trivial sub-plan with no explicit binding requirement
 - whether checkpoint integration is required; if yes, load [checkpoint-integration.md](references/checkpoint-integration.md) and establish or resume the integration branch before implementation
 - whether structural TDD is applicable; if yes, load [structural-tdd.md](references/structural-tdd.md)
+- whether the plan's concurrency policy allows parallel implementation; if it says `Linear DAG`, record the serialized schedule and do not dispatch independent tasks concurrently
 - whether isolated workspaces or cache reuse is required; if yes, load [workspace-isolation.md](references/workspace-isolation.md) and run its dirty-state preflight before creating worktrees
 - planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, dirty-state preflight, cache reuse, checkpoint commit, integration status, TDD gate, and test quality check for each task
 
@@ -97,12 +100,13 @@ Proceed only after the audit is complete or the user explicitly authorizes a dev
 
 ### 4. Execute Tasks
 
-Execute tasks in dependency order. If a task blocks, continue with independent tasks and pause only when remaining tasks depend on blocked work.
+Execute tasks in dependency order and honor the plan's concurrency policy. If the policy says `Linear DAG`, dispatch at most one implementation task at a time. If a task blocks, continue with independent tasks and pause only when remaining tasks depend on blocked work.
 
 #### 4.1 Choose The Workspace
 
 - Sequential tasks may run in the main execution workspace unless the plan or user requires isolation.
 - Concurrent implementation tasks require task-scoped worktrees. Use [workspace-isolation.md](references/workspace-isolation.md).
+- A `Linear DAG` policy forbids concurrent implementation dispatch; do not create parallel task worktrees solely because tasks are logically independent.
 - Dependent task worktrees must start from an integration-branch checkpoint that contains all prerequisite outputs. If prerequisite outputs are only dirty files, checkpoint them first or serialize the work.
 
 #### 4.2 Gate Structural TDD
@@ -178,6 +182,7 @@ When all tasks are `done`:
 - Do not accept structural TDD tests that fail the structural TDD quality gate.
 - Do not let implementers modify test-author tests.
 - Do not run concurrent implementers in one workspace.
+- Do not override a master plan's `Linear DAG` policy with inferred independence, cache seeding, or isolated worktrees.
 - Do not launch dependent work from uncheckpointed dirty state.
 - Do not create isolated worktrees from a dirty workspace unless the user explicitly authorizes it after being warned.
 - Do not push checkpoint commits.
