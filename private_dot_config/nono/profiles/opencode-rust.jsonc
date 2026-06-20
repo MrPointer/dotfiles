@@ -1,33 +1,11 @@
 {
    "$schema": "../schemas/nono-profile.schema.json",
    "extends": [
+      "python-dev",
       "my-opencode"
    ],
    "meta": {
       "name": "opencode-rust",
       "description": "Profile for developing Rust applications with OpenCode"
-   },
-   "groups": {
-      "include": [
-         "rust_runtime"
-      ],
-      "exclude": []
-   },
-   "filesystem": {
-      "allow": [],
-      "read": [],
-      "write": [],
-      "allow_file": [],
-      "read_file": [],
-      "write_file": [],
-      "deny": [],
-      "bypass_protection": [],
-      "suppress_save_prompt": []
-   },
-   "network": {
-      "block": false,
-      "allow_domain": [],
-      "open_port": [],
-      "listen_port": []
    }
 }
