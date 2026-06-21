@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Re-run only when the package files that affect the installed console script change.
+# pyproject.toml: {{ include "private_dot_local/share/plan-html/pyproject.toml" | sha256sum }}
+# src/plan_html/__init__.py: {{ include "private_dot_local/share/plan-html/src/plan_html/__init__.py" | sha256sum }}
+# src/plan_html/__main__.py: {{ include "private_dot_local/share/plan-html/src/plan_html/__main__.py" | sha256sum }}
+# src/plan_html/render.py: {{ include "private_dot_local/share/plan-html/src/plan_html/render.py" | sha256sum }}
+
+if ! command -v uv >/dev/null 2>&1; then
+  exit 0
+fi
+
+tool_dir="$HOME/.local/share/plan-html"
+
+if [[ ! -f "$tool_dir/pyproject.toml" ]]; then
+  exit 0
+fi
+
+uv tool install --force "$tool_dir"

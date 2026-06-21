@@ -1,0 +1,14 @@
+*
+
+!/.gitignore
+!/README.md
+!/pyproject.toml
+
+!/src/
+!/src/plan_html/
+!/src/plan_html/__init__.py
+!/src/plan_html/__main__.py
+!/src/plan_html/render.py
+
+!/tests/
+!/tests/test_render.py

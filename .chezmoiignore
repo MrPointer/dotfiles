@@ -19,6 +19,13 @@ Taskfile.yml
 .config/opencode/package-lock.json
 .config/opencode/package.json
 
+# plan-html packaging/build artifacts are generated locally by Python tooling.
+.local/share/plan-html/build/
+.local/share/plan-html/dist/
+.local/share/plan-html/src/*.egg-info/
+.local/share/plan-html/**/__pycache__/
+.local/share/plan-html/**/*.pyc
+
 {{- if not .personal.work_env }}
 .work/ # only manage work state on work machines
 {{- end }}
