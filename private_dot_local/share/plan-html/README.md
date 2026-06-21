@@ -1,7 +1,7 @@
 # plan-html — interactive HTML review views for markdown plan directories
 
 Renders a plan directory (a `00-master.md` + numbered sub-plans + optional `reviews/`)
-into a single self-contained, dark-themed **dashboard + cards** HTML file you can open
+into a single self-contained, theme-aware **dashboard + cards** HTML file you can open
 in a browser to review a plan without scrolling a wall of markdown.
 
 The markdown is always the source of truth. The generated `plan.html` is **disposable
@@ -27,12 +27,28 @@ plan-html <plan-dir> [-o <output.html>]
 - Implementation lives under `~/.local/share/plan-html`, not in `~/.local/bin`.
 - Installs as a `uv tool` from this local package; `uv` generates the executable in
   `~/.local/bin` from the package's `[project.scripts]` entry.
-- Output is one self-contained `.html` (inline CSS + JS) — open it directly, works offline.
+- Output is one self-contained `.html` (CSS + JS are inlined at render time) — open it directly, works offline.
 
 Example:
 
 ```sh
 plan-html edge/plans/epics/lcpt-2751-hec-firewall/hotspot-integration
+```
+
+Manual smoke test with the stable fixture:
+
+```sh
+uv run plan-html tests/fixtures/demo-plan -o /tmp/plan-html-demo.html
+open /tmp/plan-html-demo.html
+```
+
+Use the fixture to check theme controls, expand/collapse, DAG navigation, tabs,
+tables, task checklists, and review cards without finding a real plan directory.
+
+Run automated tests with:
+
+```sh
+uv run pytest
 ```
 
 ## Input contract (what it expects in a plan dir)
@@ -66,30 +82,38 @@ Layout:
    `uv tool` generates the executable in `~/.local/bin`.
 3. **Project metadata** — `pyproject.toml` declares pinned parser dependencies for
    IDE/LSP support, packaging, and runtime dependency resolution.
-4. **Renderer package** — `src/plan_html/render.py` contains the Markdown renderer,
-   plan-specific extraction, CSS, JS, and HTML assembly.
-5. **Tests** — `tests/test_render.py` covers parser and RFC-backed plan-template regressions.
+4. **Renderer package** — `src/plan_html/render.py` contains plan-specific extraction,
+   package-asset loading, and HTML assembly; `src/plan_html/markdown.py` contains
+   markdown rendering, table extraction, tab building, and heading-id state.
+5. **Source assets** — `src/plan_html/assets/themes.css`, `base.css`, and `app.js`
+   contain the maintained CSS/JS that `render.py` embeds into each generated file.
+6. **Tests** — `tests/test_render.py` is a pytest suite covering parser,
+   RFC-backed plan-template, fixture rendering, and generated asset/theme regressions.
 
-Inside `src/plan_html/render.py`, top to bottom:
+Inside the renderer package:
 
-1. **Markdown engine** — `markdown-it-py` plus `mdit-py-plugins` task lists,
-   customized for heading ids and responsive table wrappers.
-2. **Structure helpers** — `split_title`, `split_h2_sections`, `section_body`,
-   `parse_table_after` (pulls a specific table out of the master using the same
-   Markdown parser).
-3. **Tabs/cards** — `build_tabs` groups each sub-plan's `##` sections into tabs via
+1. **Markdown engine** — `MarkdownRenderer` in `markdown.py` owns one markdown parser
+   and heading-id slug registry per generated document. It uses `markdown-it-py` plus
+   `mdit-py-plugins` task lists, customized for heading ids and responsive table wrappers.
+2. **Structure helpers** — `split_title` remains in `render.py`; section/table helpers
+   in `markdown.py` pull specific plan sections and tables using the same Markdown parser.
+3. **Tabs/cards** — `MarkdownRenderer.build_tabs` groups each sub-plan's `##` sections via
    `TAB_BUCKET` (H2-title → bucket) and `TAB_ORDER`. Unknown sections fall into "Context".
-4. **Theme** — `CSS` (CSS custom properties at `:root`), `HUES` (per-card accent colors),
-   `JS` (tab switching, DAG-node click-to-open, expand/collapse-all).
+4. **Assets/theme** — `render_styles()` / `render_scripts()` load package assets;
+   `HUES` provides per-card accent colors; generated JS handles tab switching,
+   DAG-node click-to-open, expand/collapse-all, and System / Light / Dark theme choice.
 5. **Assembly** — `main()` reads the dir, builds the hero + cards, writes the file.
 
 Common tweaks:
 
-- **Palette / colors** — edit the `:root` variables and `HUES` list in `CSS`. (Code blocks
-  are intentionally warm orange — `#ffb574` inline, `#ffc88a` in `pre` — to stand out.)
+- **Palette / colors** — edit token values in `src/plan_html/assets/themes.css` and
+  per-card accents in the `HUES` list. Light tokens are the base fallback; dark tokens
+  apply via `prefers-color-scheme: dark`; explicit Light/Dark choices are page-local.
 - **Tab grouping** — edit `TAB_BUCKET` / `TAB_ORDER` to add or re-route tabs.
 - **New dashboard tiles/chips** — add parsing in `main()` and a tile in the `tiles` string.
 - **More markdown** — enable another `markdown-it-py` rule/plugin in `_make_markdown`.
+- **Browser behavior** — edit `src/plan_html/assets/app.js`; keep generated output
+  self-contained by letting `render.py` inline the asset at render time.
 
 ## Limitations (by design or known)
 

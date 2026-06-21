@@ -1,0 +1,67 @@
+:root{
+  color-scheme:light dark;
+  --bg:#f7f8fb;--panel:#ffffff;--card:#ffffff;--fg:#1f2430;--muted:#647084;
+  --line:#d9deea;--accent:#4f46e5;--ok:#047857;--warn:#b45309;--danger:#be123c;
+  --code-bg:#fff4e6;--code-fg:#9a4d00;--code-line:#ffd7a3;--pre-bg:#fff8ed;--pre-fg:#8a4300;
+  --heading:#394054;--table-head-bg:#eef1fa;--table-head-fg:#30384e;--table-row-alt:#f1f4fa;
+  --quote-bg:#eef2ff;--hero-bg:linear-gradient(135deg,#e0e7ff,#f5f3ff 55%,#e0f2fe);
+  --hero-line:#c7d2fe;--hero-sub:#4b587c;--hero-shadow:#4f46e526;
+  --chip-bg:#ffffffa8;--chip-fg:#30384e;--chip-line:#c7d2fe;
+  --chip-ok-bg:#d1fae5;--chip-ok-fg:#047857;--chip-ok-line:#10b98155;
+  --chip-warn-bg:#fef3c7;--chip-warn-fg:#92400e;--chip-warn-line:#f59e0b55;
+  --chip-dev-bg:#fce7f3;--chip-dev-fg:#be185d;--chip-dev-line:#ec489955;
+  --tile-bg:#ffffffb8;--tile-line:#c7d2fe;--tile-label:#52607e;
+  --node-bg:#ffffffb8;--node-bg-hover:#eef2ff;--node-line:#c7d2fe;--node-desc:#596783;
+  --badge-model-bg:#ccfbf1;--badge-model-fg:#0f766e;--badge-model-line:#14b8a655;
+  --badge-dep-bg:#eef2ff;--badge-dep-fg:#4f46e5;--badge-dep-line:#c7d2fe;
+  --badge-none-bg:#fef3c7;--badge-none-fg:#92400e;--badge-none-line:#f59e0b44;
+  --button-bg:#ffffff;--button-fg:#647084;--active-fg:#ffffff;--active-count-bg:#ffffff33;
+  --shadow:#64748b2e;--control-bg:#ffffff;--control-line:#d9deea;
+}
+
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme]){
+    --bg:#0f1117;--panel:#171a23;--card:#1c2030;--fg:#e7e9f0;--muted:#9aa0b4;
+    --line:#2a2f40;--accent:#818cf8;--ok:#34d399;--warn:#fbbf24;--danger:#fb7185;
+    --code-bg:#2a1c0f;--code-fg:#ffb574;--code-line:#4a3a1f;--pre-bg:#1c150d;--pre-fg:#ffc88a;
+    --heading:#c3c8e0;--table-head-bg:#222740;--table-head-fg:#cfd4ee;--table-row-alt:#1a1e2b;
+    --quote-bg:#191d2a;--hero-bg:linear-gradient(135deg,#1e1b4b,#312e81 55%,#1e3a5f);
+    --hero-line:#3a3a6a;--hero-sub:#c7cbf0;--hero-shadow:#000;
+    --chip-bg:#ffffff14;--chip-fg:#eef;--chip-line:#ffffff22;
+    --chip-ok-bg:#064e3b;--chip-ok-fg:#6ee7b7;--chip-ok-line:#10b98155;
+    --chip-warn-bg:#4a3408;--chip-warn-fg:#fcd34d;--chip-warn-line:#f59e0b55;
+    --chip-dev-bg:#3f1d2e;--chip-dev-fg:#f9a8d4;--chip-dev-line:#ec489955;
+    --tile-bg:#ffffff10;--tile-line:#ffffff1f;--tile-label:#c7cbf0;
+    --node-bg:#ffffff10;--node-bg-hover:#ffffff1c;--node-line:#ffffff24;--node-desc:#c2c7e6;
+    --badge-model-bg:#0c3b34;--badge-model-fg:#5eead4;--badge-model-line:#14b8a655;
+    --badge-dep-bg:#2a2f48;--badge-dep-fg:#aab2e6;--badge-dep-line:#ffffff1f;
+    --badge-none-bg:#3a2f10;--badge-none-fg:#fcd34d;--badge-none-line:#f59e0b44;
+    --button-bg:#11141d;--button-fg:#9aa0b4;--active-fg:#0f1117;--active-count-bg:#0f1117;
+    --shadow:#000;--control-bg:#171a23;--control-line:#2a2f40;
+  }
+}
+
+:root[data-theme="light"]{
+  color-scheme:light;
+}
+
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1117;--panel:#171a23;--card:#1c2030;--fg:#e7e9f0;--muted:#9aa0b4;
+  --line:#2a2f40;--accent:#818cf8;--ok:#34d399;--warn:#fbbf24;--danger:#fb7185;
+  --code-bg:#2a1c0f;--code-fg:#ffb574;--code-line:#4a3a1f;--pre-bg:#1c150d;--pre-fg:#ffc88a;
+  --heading:#c3c8e0;--table-head-bg:#222740;--table-head-fg:#cfd4ee;--table-row-alt:#1a1e2b;
+  --quote-bg:#191d2a;--hero-bg:linear-gradient(135deg,#1e1b4b,#312e81 55%,#1e3a5f);
+  --hero-line:#3a3a6a;--hero-sub:#c7cbf0;--hero-shadow:#000;
+  --chip-bg:#ffffff14;--chip-fg:#eef;--chip-line:#ffffff22;
+  --chip-ok-bg:#064e3b;--chip-ok-fg:#6ee7b7;--chip-ok-line:#10b98155;
+  --chip-warn-bg:#4a3408;--chip-warn-fg:#fcd34d;--chip-warn-line:#f59e0b55;
+  --chip-dev-bg:#3f1d2e;--chip-dev-fg:#f9a8d4;--chip-dev-line:#ec489955;
+  --tile-bg:#ffffff10;--tile-line:#ffffff1f;--tile-label:#c7cbf0;
+  --node-bg:#ffffff10;--node-bg-hover:#ffffff1c;--node-line:#ffffff24;--node-desc:#c2c7e6;
+  --badge-model-bg:#0c3b34;--badge-model-fg:#5eead4;--badge-model-line:#14b8a655;
+  --badge-dep-bg:#2a2f48;--badge-dep-fg:#aab2e6;--badge-dep-line:#ffffff1f;
+  --badge-none-bg:#3a2f10;--badge-none-fg:#fcd34d;--badge-none-line:#f59e0b44;
+  --button-bg:#11141d;--button-fg:#9aa0b4;--active-fg:#0f1117;--active-count-bg:#0f1117;
+  --shadow:#000;--control-bg:#171a23;--control-line:#2a2f40;
+}
