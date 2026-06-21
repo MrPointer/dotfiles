@@ -107,6 +107,8 @@ If the policy selects `Linear DAG`, write one executable sub-plan per sequential
 
 If the policy allows parallel execution, the master plan must still prove same-group safety through file ownership, dependency direction, worktree isolation, and build/cache or output-path safety.
 
+Before writing execution instructions, add `## Dependency Graph` after `## Sub-Plans`. The graph must use the portable strict Mermaid-style subset and mirror the table's dependency/sequencing edges exactly: `SPxx` node IDs, quoted labels, and one `SPxx --> SPyy` edge per predecessor relation. Do not use full Mermaid features such as subgraphs, styles, dotted arrows, or comments.
+
 ## Master Plan Execution Instructions
 
 Multi-sub-plan plans must include explicit lead-agent execution mechanics. The executor should not infer them from this planning skill.

@@ -9,10 +9,12 @@
 !/src/plan_html/__init__.py
 !/src/plan_html/__main__.py
 !/src/plan_html/markdown.py
+!/src/plan_html/graph.py
 !/src/plan_html/render.py
 !/src/plan_html/assets/
 !/src/plan_html/assets/app.js
 !/src/plan_html/assets/base.css
+!/src/plan_html/assets/dagre.min.js
 !/src/plan_html/assets/themes.css
 
 !/tests/

@@ -15,10 +15,12 @@ Usage:
 import argparse
 import glob
 import html
+import json
 import os
 import re
 from importlib.resources import files
 
+from plan_html.graph import graph_to_dict, parse_dependency_graph
 from plan_html.markdown import (
     MarkdownRenderer,
     section_body,
@@ -52,6 +54,7 @@ def _table_index(header):
 HUES = ["#6366f1", "#0d9488", "#7c3aed", "#db2777", "#ea580c"]
 CSS_ASSETS = ["assets/themes.css", "assets/base.css"]
 JS_ASSETS = ["assets/app.js"]
+GRAPH_JS_ASSETS = ["assets/dagre.min.js"]
 
 
 def _asset_text(path):
@@ -62,8 +65,13 @@ def render_styles():
     return "\n".join(_asset_text(path) for path in CSS_ASSETS)
 
 
-def render_scripts():
-    return "\n".join(_asset_text(path) for path in JS_ASSETS)
+def render_scripts(include_graph=False):
+    assets = [*GRAPH_JS_ASSETS, *JS_ASSETS] if include_graph else JS_ASSETS
+    return "\n".join(_asset_text(path) for path in assets)
+
+
+def _json_script(data):
+    return json.dumps(data).replace("</", "<\\/")
 
 
 THEME_CONTROL = """
@@ -133,8 +141,11 @@ def render_plan(plan_dir, output=None):
             stat = strip_code(r[idx.get("status", 1)]) if len(r) > 1 else ""
             reviews_meta.append((rev, stat))
 
+    known_subplans = {os.path.basename(p)[:2] for p in sub_paths}
+
     # --- sub-plan cards + dag nodes ---
     total_files = 0
+    subplan_hues = {}
     dag_nodes, cards = [], []
     for k, p in enumerate(sub_paths):
         with open(p, encoding="utf-8") as f:
@@ -146,6 +157,7 @@ def render_plan(plan_dir, output=None):
         short = re.sub(r"^Sub-Plan:\s*", "", title)
         meta = subplan_meta.get(num, {})
         hue = HUES[k % len(HUES)]
+        subplan_hues[num] = hue
         card_id = f"sp-{num}"
 
         pf = section_body(md, "Primary Files")
@@ -175,13 +187,34 @@ def render_plan(plan_dir, output=None):
             f'<div class="inner">{markdown.build_tabs(card_id, rest)}</div></details>'
         )
 
-    # dag with arrows
-    dag = []
-    for j, node in enumerate(dag_nodes):
-        if j:
-            dag.append('<div class="arrow">→</div>')
-        dag.append(node)
-    dag_html = f'<div class="dag">{"".join(dag)}</div>' if dag else ""
+    plan_graph = parse_dependency_graph(master_md, known_subplans)
+    if plan_graph and plan_graph.nodes:
+        has_graph = True
+        graph_data = graph_to_dict(plan_graph)
+        for node in graph_data["nodes"]:
+            node["hue"] = subplan_hues.get(node["subplan"], HUES[0])
+        graph_warnings = "".join(
+            f'<div class="graph-warning">{html.escape(warning)}</div>'
+            for warning in plan_graph.warnings
+        )
+        dag_html = (
+            '<div class="graph-surface" data-graph-surface>'
+            '<div class="graph-toolbar" data-graph-controls>'
+            '<div class="graph-title">Execution Order</div>'
+            '<div class="graph-actions">'
+            '<button type="button" data-graph-action="fit">Fit</button>'
+            '<button type="button" data-graph-action="zoom-in">+</button>'
+            '<button type="button" data-graph-action="zoom-out">-</button>'
+            '</div>'
+            '</div>'
+            '<div class="graph-canvas" data-graph-canvas></div>'
+            f'{graph_warnings}'
+            f'<script type="application/json" data-plan-graph>{_json_script(graph_data)}</script>'
+            '</div>'
+        )
+    else:
+        has_graph = False
+        dag_html = f'<div class="dag">{"".join(dag_nodes)}</div>' if dag_nodes else ""
 
     # tiles
     rev_tiles = ""
@@ -248,7 +281,7 @@ def render_plan(plan_dir, output=None):
 <div class="section-h">Reference</div>
 {master_card}
 {review_cards}
-</div><script>{render_scripts()}</script></body></html>"""
+</div><script>{render_scripts(has_graph)}</script></body></html>"""
 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(doc)

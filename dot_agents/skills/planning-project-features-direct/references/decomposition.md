@@ -21,6 +21,28 @@ Before placing independent sub-plans in the same execution group, apply [concurr
 - Same-group placement means logical independence only; the master plan must still record that parallel execution is allowed by policy, require isolated implementer worktrees for concurrent execution, or explicitly serialize the group.
 - Linear policy sequencing is allowed for operational safety. Label policy-only sequencing separately from real data-flow dependencies in the master plan.
 
+The master plan must include both representations of this same DAG:
+
+- `## Sub-Plans` table: canonical metadata plus dependency/sequencing text in `Depends On / Sequenced After`.
+- `## Dependency Graph`: portable strict Mermaid-style graph block that makes the same DAG visible in markdown and compatible with downstream tooling.
+
+Keep them consistent. If `03` depends on `01`, the table says `01` and the graph contains `SP01 --> SP03`. If `04` joins two branches, the table says `02, 03` and the graph contains both `SP02 --> SP04` and `SP03 --> SP04`.
+
+Use only this graph subset:
+
+```mermaid
+flowchart LR
+  SP01["01 Foundation"]
+  SP02["02 First Branch"]
+  SP03["03 Second Branch"]
+  SP04["04 Join"]
+
+  SP01 --> SP02
+  SP01 --> SP03
+  SP02 --> SP04
+  SP03 --> SP04
+```
+
 ## Embedded Context
 
 Each sub-plan must be self-contained. Include only execution-critical context:

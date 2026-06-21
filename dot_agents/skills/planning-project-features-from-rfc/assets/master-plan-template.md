@@ -33,6 +33,20 @@ It does NOT redefine the RFC design, and it DOES carry the same execution mechan
 | 02 | `02-<name>.md` | 01 (logical dependency) | Mid-tier | <What this sub-plan accomplishes> |
 | 03 | `03-<name>.md` | 02 (policy-only sequencing) | Most capable | <What this sub-plan accomplishes> |
 
+## Dependency Graph
+
+<Use the same dependency/sequencing edges as the Sub-Plans table. Keep to a portable strict Mermaid-style subset: `flowchart LR` or `flowchart TD`, node IDs as `SP` plus the two-digit sub-plan number, quoted node labels, and one `SPxx --> SPyy` edge per line. Use fork/join edges for parallelizable work; use policy-only edges only when the Concurrency Policy requires serialization.>
+
+```mermaid
+flowchart LR
+  SP01["01 <short name>"]
+  SP02["02 <short name>"]
+  SP03["03 <short name>"]
+
+  SP01 --> SP02
+  SP02 --> SP03
+```
+
 ## Concurrency Policy
 
 - **Decision**: Linear DAG | Parallel allowed

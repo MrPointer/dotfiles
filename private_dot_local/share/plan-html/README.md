@@ -42,8 +42,8 @@ uv run plan-html tests/fixtures/demo-plan -o /tmp/plan-html-demo.html
 open /tmp/plan-html-demo.html
 ```
 
-Use the fixture to check theme controls, expand/collapse, DAG navigation, tabs,
-tables, task checklists, and review cards without finding a real plan directory.
+Use the fixture to check theme controls, expand/collapse, dependency graph navigation,
+long-line wrapping, tables, task checklists, and review cards without finding a real plan directory.
 
 Run automated tests with:
 
@@ -64,9 +64,13 @@ pieces just render as blanks):
 
 - `- **RFC Status**: ...` line → RFC chip.
 - `## Explicit Deviations` → "deviations: none" chip if the section starts with "None".
-- `## Sub-Plans` table → per-card model + dependency badges and the DAG node descriptions.
+- `## Sub-Plans` table → per-card model + dependency badges and fallback DAG node descriptions.
   Recognized columns (case-insensitive): `#`, `Depends On` or
   `Depends On / Sequenced After`, `Model`, `Description`.
+- Optional `## Dependency Graph` section with a strict Mermaid-style `flowchart` block →
+  rendered as an offline SVG graph in the dashboard. Supported graph syntax is intentionally
+  small: `flowchart LR` or `flowchart TD`, node declarations like `SP01["01 Foundation"]`,
+  and one edge per line like `SP01 --> SP02`. `SP` node IDs map to numbered sub-plan cards.
 - `## Review Summary` table → review verdict tiles (✓ if status contains "passed").
   Recognized columns: `Reviewer`, `Status`.
 - Each sub-plan's `## Primary Files` list → "files touched" tile count.
@@ -85,8 +89,8 @@ Layout:
 4. **Renderer package** — `src/plan_html/render.py` contains plan-specific extraction,
    package-asset loading, and HTML assembly; `src/plan_html/markdown.py` contains
    markdown rendering, table extraction, tab building, and heading-id state.
-5. **Source assets** — `src/plan_html/assets/themes.css`, `base.css`, and `app.js`
-   contain the maintained CSS/JS that `render.py` embeds into each generated file.
+5. **Source assets** — `src/plan_html/assets/themes.css`, `base.css`, `app.js`, and
+   vendored `dagre.min.js` contain the maintained CSS/JS that `render.py` embeds into each generated file.
 6. **Tests** — `tests/test_render.py` is a pytest suite covering parser,
    RFC-backed plan-template, fixture rendering, and generated asset/theme regressions.
 
@@ -98,11 +102,15 @@ Inside the renderer package:
 2. **Structure helpers** — `split_title` remains in `render.py`; section/table helpers
    in `markdown.py` pull specific plan sections and tables using the same Markdown parser.
 3. **Tabs/cards** — `MarkdownRenderer.build_tabs` groups each sub-plan's `##` sections via
-   `TAB_BUCKET` (H2-title → bucket) and `TAB_ORDER`. Unknown sections fall into "Context".
-4. **Assets/theme** — `render_styles()` / `render_scripts()` load package assets;
+    `TAB_BUCKET` (H2-title → bucket) and `TAB_ORDER`. Unknown sections fall into "Context".
+4. **Dependency graph** — `graph.py` parses the supported Mermaid-style subset from
+   `## Dependency Graph`; generated JS uses the vendored Dagre layout engine to draw a
+   themed SVG graph with Fit / + / - controls and click-to-card navigation. Without a graph
+   block, the dashboard falls back to the responsive node grid from the Sub-Plans table.
+5. **Assets/theme** — `render_styles()` / `render_scripts()` load package assets;
    `HUES` provides per-card accent colors; generated JS handles tab switching,
-   DAG-node click-to-open, expand/collapse-all, and System / Light / Dark theme choice.
-5. **Assembly** — `main()` reads the dir, builds the hero + cards, writes the file.
+   graph or fallback-node click-to-open, expand/collapse-all, and System / Light / Dark theme choice.
+6. **Assembly** — `main()` reads the dir, builds the hero + cards, writes the file.
 
 Common tweaks:
 
@@ -114,12 +122,15 @@ Common tweaks:
 - **More markdown** — enable another `markdown-it-py` rule/plugin in `_make_markdown`.
 - **Browser behavior** — edit `src/plan_html/assets/app.js`; keep generated output
   self-contained by letting `render.py` inline the asset at render time.
+- **Dependency graph rendering** — keep the markdown graph source in the strict subset
+  documented above. Dagre is vendored only for layout; SVG rendering and controls live in `app.js`.
 
 ## Limitations (by design or known)
 
 - Requires `uv` at apply/install time so the local package can be installed as a tool.
 - Uses CommonMark plus table and task-list plugins, not the full GitHub Markdown feature set.
 - Table cells that need a literal pipe should use the standard escaped form, e.g. `` `a\|b` ``.
+- Dependency graph blocks support only the documented strict Mermaid-style subset, not full Mermaid.
 - No images/footnotes are intentionally styled in the dashboard theme yet.
 - Tab grouping keys on known H2 titles; bespoke section names land in "Context".
 

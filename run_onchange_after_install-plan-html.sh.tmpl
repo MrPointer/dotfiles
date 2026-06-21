@@ -5,7 +5,13 @@ set -euo pipefail
 # pyproject.toml: {{ include "private_dot_local/share/plan-html/pyproject.toml" | sha256sum }}
 # src/plan_html/__init__.py: {{ include "private_dot_local/share/plan-html/src/plan_html/__init__.py" | sha256sum }}
 # src/plan_html/__main__.py: {{ include "private_dot_local/share/plan-html/src/plan_html/__main__.py" | sha256sum }}
+# src/plan_html/graph.py: {{ include "private_dot_local/share/plan-html/src/plan_html/graph.py" | sha256sum }}
+# src/plan_html/markdown.py: {{ include "private_dot_local/share/plan-html/src/plan_html/markdown.py" | sha256sum }}
 # src/plan_html/render.py: {{ include "private_dot_local/share/plan-html/src/plan_html/render.py" | sha256sum }}
+# src/plan_html/assets/app.js: {{ include "private_dot_local/share/plan-html/src/plan_html/assets/app.js" | sha256sum }}
+# src/plan_html/assets/base.css: {{ include "private_dot_local/share/plan-html/src/plan_html/assets/base.css" | sha256sum }}
+# src/plan_html/assets/dagre.min.js: {{ include "private_dot_local/share/plan-html/src/plan_html/assets/dagre.min.js" | sha256sum }}
+# src/plan_html/assets/themes.css: {{ include "private_dot_local/share/plan-html/src/plan_html/assets/themes.css" | sha256sum }}
 
 if ! command -v uv >/dev/null 2>&1; then
   exit 0
