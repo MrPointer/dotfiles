@@ -11,10 +11,10 @@ re-render.
 ## Why it exists
 
 Reviewing long markdown plans is tiring. This produces an at-a-glance view: a hero
-dashboard (status, RFC revision, deviations, stat tiles, a clickable sub-plan DAG) and
-one collapsible, color-coded card per sub-plan with inner tabs (Objective / Context /
-Contracts / Acceptance-as-checklist). The full master plan and reviews are kept below,
-collapsed, so nothing is lost.
+dashboard (plan summary, status, RFC revision, deviations, stat tiles, a clickable
+sub-plan DAG) and one collapsible, color-coded card per sub-plan with inner tabs
+(Objective / Context / Contracts / Acceptance-as-checklist). The full master plan and
+reviews are kept below, collapsed, so nothing is lost.
 
 ## Usage
 
@@ -63,6 +63,7 @@ The dashboard is **data-driven** from the master plan, parsed best-effort (missi
 pieces just render as blanks):
 
 - `- **RFC Status**: ...` line → RFC chip.
+- `## Summary` → hero description for the plan's overall objective.
 - `## Explicit Deviations` → "deviations: none" chip if the section starts with "None".
 - `## Sub-Plans` table → per-card model + dependency badges and fallback DAG node descriptions.
   Recognized columns (case-insensitive): `#`, `Depends On` or

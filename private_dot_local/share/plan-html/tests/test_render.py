@@ -121,6 +121,28 @@ def test_render_plan_uses_rfc_plan_template_dependency_column(tmp_path):
     assert "after 01 (logical dependency)" in rendered
 
 
+def test_render_plan_includes_master_summary_in_hero(tmp_path):
+    plan_dir = tmp_path
+    (plan_dir / "00-master.md").write_text(
+        "# Master Plan: Overall Objective\n\n"
+        "## Summary\n\n"
+        "Coordinate the full migration so every sub-plan ladders up to the same outcome.\n\n"
+        "## Explicit Deviations\n\n"
+        "None\n",
+        encoding="utf-8",
+    )
+
+    out_path = plan_dir / "plan.html"
+    tool.render_plan(plan_dir, out_path)
+    rendered = out_path.read_text(encoding="utf-8")
+
+    description_start = rendered.index('<div class="plan-description">')
+    chips_start = rendered.index('<div class="chips">')
+    description_html = rendered[description_start:chips_start]
+
+    assert "Coordinate the full migration" in description_html
+
+
 def test_render_plan_includes_system_light_dark_theme_control(tmp_path):
     plan_dir = tmp_path
     (plan_dir / "00-master.md").write_text(
@@ -184,6 +206,10 @@ def test_fixture_demo_plan_renders_representative_review_view(tmp_path):
     rendered = out_path.read_text(encoding="utf-8")
 
     assert "Master Plan: Plan HTML Demo" in rendered
+    description_start = rendered.index('<div class="plan-description">')
+    chips_start = rendered.index('<div class="chips">')
+    description_html = rendered[description_start:chips_start]
+    assert "Demonstrate the full plan-html review dashboard" in description_html
     assert 'data-theme-choice="system"' in rendered
     assert 'data-theme-choice="light"' in rendered
     assert 'data-theme-choice="dark"' in rendered

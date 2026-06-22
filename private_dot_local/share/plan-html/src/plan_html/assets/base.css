@@ -25,6 +25,8 @@ ul,ol{padding-left:22px}li{margin:4px 0}
 border:1px solid var(--hero-line);border-radius:16px;padding:24px 26px;margin-bottom:22px;box-shadow:0 10px 40px -18px var(--hero-shadow)}
 .hero h1{margin:0 0 6px;font-size:26px}
 .hero .sub{color:var(--hero-sub);font-size:13px;margin-bottom:18px}
+.hero .plan-description{max-width:78ch;margin:-4px 0 18px;color:var(--fg)}
+.hero .plan-description p{margin:0 0 8px}.hero .plan-description p:last-child{margin-bottom:0}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
 .chip{font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--chip-line);
 background:var(--chip-bg);color:var(--chip-fg)}

@@ -50,6 +50,10 @@ def _table_index(header):
     return idx
 
 
+def extract_plan_description(master_md):
+    return section_body(master_md, "Summary").strip()
+
+
 # ----------------------------- assets / theme -----------------------------
 HUES = ["#6366f1", "#0d9488", "#7c3aed", "#db2777", "#ea580c"]
 CSS_ASSETS = ["assets/themes.css", "assets/base.css"]
@@ -104,6 +108,7 @@ def render_plan(plan_dir, output=None):
         master_md = f.read()
     page_title, master_rest = split_title(master_md)
     page_title = page_title or os.path.basename(plan_dir)
+    plan_description = extract_plan_description(master_md)
 
     # --- metadata for the hero ---
     rfc_status = ""
@@ -241,6 +246,11 @@ def render_plan(plan_dir, output=None):
         if deviations_none
         else '<span class="chip warn">has deviations</span>'
     )
+    plan_description_html = (
+        f'<div class="plan-description">{markdown.render_markdown(plan_description)}</div>'
+        if plan_description
+        else ""
+    )
 
     master_card = (
         '<details class="card master" id="master" style="--hue:#f59e0b">'
@@ -271,6 +281,7 @@ def render_plan(plan_dir, output=None):
 <div class="hero">
 <h1>{html.escape(page_title)}</h1>
 <div class="sub">interactive review view · source of truth is the markdown in <code>{html.escape(os.path.basename(plan_dir))}/</code></div>
+{plan_description_html}
 <div class="chips">{chips}</div>
 <div class="tiles">{tiles}</div>
 {dag_html}

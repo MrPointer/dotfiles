@@ -1,5 +1,10 @@
 # Master Plan: Plan HTML Demo
 
+## Summary
+
+Demonstrate the full plan-html review dashboard, including the plan-level objective,
+execution graph, sub-plan cards, theme controls, and reference material.
+
 ## RFC Baseline
 
 - **RFC Status**: Accepted
