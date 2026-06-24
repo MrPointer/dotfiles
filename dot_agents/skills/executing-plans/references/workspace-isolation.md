@@ -1,6 +1,6 @@
 # Workspace Isolation
 
-Use this reference when implementation tasks run concurrently, structural TDD needs an isolated workspace, or build/cache reuse must be configured for worktrees.
+Use this reference when implementation tasks run concurrently, plan-required implementation isolation is needed, or build/cache reuse must be configured for worktrees.
 
 ## Contents
 
@@ -22,8 +22,7 @@ Workspace isolation prevents dirty-workspace and file-integration conflicts. It 
 
 - Sequential tasks may run in the main execution workspace unless the plan or user requires isolation.
 - Concurrent implementation tasks must use task-scoped implementer worktrees.
-- A `Linear DAG` policy means no concurrent implementation worktrees; use worktrees only for structural TDD, plan-required isolation, or explicitly approved sequential execution mechanics.
-- Structural TDD test authors must run in an isolated workspace when structural TDD is used.
+- A `Linear DAG` policy means no concurrent implementation worktrees; use worktrees only for plan-required isolation or explicitly approved sequential execution mechanics.
 - Dependent task worktrees must be created from an integration branch checkpoint that already contains all prerequisite outputs.
 
 If prerequisite outputs exist only as local dirty files, do not create a stale worktree. Integrate and checkpoint the prerequisites first, or serialize/block the dependent task.

@@ -18,7 +18,7 @@ sub-plans.
 
 ## Required Skills
 
-<Skills the executing agent MUST load before starting — both design skills and operational skills>
+<Skills the executing agent MUST load before starting — both design skills and operational skills. Include relevant testing/TDD skills for testable implementation work; they may be project-local or global.>
 
 - `skill-name` — reason it's needed
 

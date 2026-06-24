@@ -8,9 +8,9 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 - Tasks
 - Current State
 - Execution Audit
-- Test Artifacts
+- Test Evidence
 - Completed Artifacts
-- Disputes
+- Exceptions / Blockers
 - Failures
 - Regressions
 
@@ -35,9 +35,9 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 | # | Task | Tests | Implementation | Status | Notes |
 |---|------|-------|----------------|--------|-------|
 | 01 | <task name or file> | done | done | done | |
-| 02 | <task name or file> | done | blocked | blocked: test dispute | See disputes below |
+| 02 | <task name or file> | missing | blocked | blocked: missing test evidence | See exceptions below |
 | 03 | <task name or file> | skipped | done | done | No testable AC |
-| 04 | <task name or file> | skipped | done | done | TDD skipped: no interfaces, tightly coupled to DB |
+| 04 | <task name or file> | explained | done | done | Existing tests cover behavior and were run |
 | 05 | <task name or file> | — | — | pending | Depends on 02 |
 
 ## Current State
@@ -45,17 +45,17 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 
 ## Execution Audit
 
-| Task | Planned Worker | Actual Worker | Model / Effort | Dispatch Evidence | Implementation Workspace | Dirty-State Preflight | Build/Cache Reuse | Checkpoint Commit | Integration Status | TDD Gate | Test Quality Check |
-|------|----------------|---------------|----------------|-------------------|--------------------------|-----------------------|-------------------|-------------------|--------------------|----------|--------------------|
-| <task 01> | <worker from plan> | <worker actually used> | <model and effort> | <runtime command, subagent id, or reason not applicable> | <main workspace / worktree path / serialized: reason> | <clean / user-authorized dirty: paths / not applicable> | <shared cache configured / seeded: path / skipped: no safe strategy / none required / blocked: reason> | <commit SHA / pending / not applicable> | <pending / merged / blocked: reason / not applicable> | <used isolated workspace / skipped: reason / not testable> | <TDD quality gate passed: files / blocked: weak test / not applicable> |
+| Task | Planned Worker | Actual Worker | Model / Effort | Dispatch Evidence | Implementation Workspace | Dirty-State Preflight | Build/Cache Reuse | Checkpoint Commit | Integration Status | Test Evidence | Verification |
+|------|----------------|---------------|----------------|-------------------|--------------------------|-----------------------|-------------------|-------------------|--------------------|---------------|--------------|
+| <task 01> | <worker from plan> | <worker actually used> | <model and effort> | <runtime command, subagent id, or reason not applicable> | <main workspace / worktree path / serialized: reason> | <clean / user-authorized dirty: paths / not applicable> | <shared cache configured / seeded: path / skipped: no safe strategy / none required / blocked: reason> | <commit SHA / pending / not applicable> | <pending / merged / blocked: reason / not applicable> | <tests added/updated / existing tests cover / skipped: reason / missing> | <focused + full command results / blocked: reason> |
 
-## Test Artifacts
-<Map of tasks to their test file paths — the implementer needs these>
+## Test Evidence
+<Map tasks to tests, verification results, or concrete no-test explanations>
 
-| Task | Test Files |
-|------|-----------|
-| <task 01> | tests/models/inverter_test.go |
-| <task 02> | tests/api/handler_test.go, tests/api/middleware_test.go |
+| Task | Tests / Explanation | Verification |
+|------|---------------------|--------------|
+| <task 01> | tests/models/inverter_test.go | `go test ./pkg/models` passed |
+| <task 02> | Existing handler tests cover the changed branch | `go test ./tests/api` passed |
 
 ## Completed Artifacts
 <Files created or modified by completed tasks — needed for relaying to dependent tasks>
@@ -64,16 +64,16 @@ The progress file is the checkpoint mechanism. It must be updated after every me
 |------|-------|
 | <task 01> | pkg/models/inverter.go, pkg/models/types.go |
 
-## Disputes
-<Test disputes reported by implementers — batched for human resolution>
+## Exceptions / Blockers
+<Missing test evidence, acceptance-criteria ambiguity, or implementation blockers batched for human resolution>
 
 ### Task 02: <task name>
-- **Test**: test_returns_404_on_missing_resource (tests/api/handler_test.go)
-- **Implementer's claim**: "Acceptance criterion says 'return error on missing resource' but doesn't specify HTTP status code. Test asserts 404 but 422 may be more appropriate for this API's conventions."
+- **Issue**: Acceptance criterion says "return error on missing resource" but does not specify status-code behavior.
+- **Implementer's claim**: "Cannot choose a test expectation without deciding between 404 and 422."
 - **Resolution**: <pending | resolved: description>
 
 ## Failures
-<Implementation failures that aren't disputes — the implementer couldn't make tests pass but doesn't claim the tests are wrong>
+<Implementation failures that are not acceptance-criteria ambiguities>
 
 ## Regressions
 <Existing tests that broke during implementation>

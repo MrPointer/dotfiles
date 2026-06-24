@@ -90,7 +90,7 @@ Only after baseline validation, exploration, and decomposition are complete:
 2. Write `00-master.md` and numbered sub-plan files from the templates, including the master plan's concurrency policy.
 3. Assign execution models to every sub-plan.
 4. Establish or select runtime-specific execution bindings for every model + skill combination.
-5. Create or reuse one shared test-author binding when any sub-plan has testable acceptance criteria.
+5. Verify testable sub-plans include the relevant testing skills available to the runtime, including `test-driven-development` when available and appropriate.
 6. Write lead-agent execution instructions into the master plan.
 
 Use [plan-creation-and-bindings.md](references/plan-creation-and-bindings.md) for plan paths, model selection, binding rules, and master-plan execution mechanics.

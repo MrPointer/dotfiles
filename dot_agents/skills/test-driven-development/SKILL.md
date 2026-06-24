@@ -70,9 +70,9 @@ Before treating tests as a valid safety net, review them against these checks:
 
 If any check fails, fix the test or add minimal scaffold and rerun RED before implementation continues.
 
-## Standalone Workflow
+## Workflow
 
-When using this skill directly (not as a test author within an executor), follow the full RED-GREEN cycle:
+When using this skill for testable implementation work, follow the full RED-GREEN cycle:
 
 1. **Extract testable claims** from requirements (see above)
 2. **Write tests** following the grounding rules (RED)

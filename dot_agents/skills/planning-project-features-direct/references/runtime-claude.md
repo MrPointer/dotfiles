@@ -45,7 +45,7 @@ Claude execution bindings are **file-defined worker agents** under the agent dir
   - Do **not** set `tools` unless you need to restrict access; omit for full tool access.
 - **System prompt**: Brief role description. The sub-plan provides all task context; the agent definition provides model, skills, and identity.
 
-**Test author worker**: If any sub-plan has testable acceptance criteria, create a single project-local test author worker. It always uses the **most capable model** available in the environment. Preload the project's testing and code-writing skills, plus `test-driven-development` if available. Use the naming convention `{model-tier}-test-author-worker.md`. All sub-plans with testable AC share this single worker.
+**Testing skills**: For testable implementation work, ensure the implementer worker preloads the testing skills named by the sub-plan, whether they are project-local or global. Do not create a separate test-writing worker.
 
 **Session restart warning (loud)**: Newly created worker agent files are **not discoverable** to a session that was already running when they were created. After creating or modifying a worker agent, tell the user explicitly that the current session must be restarted before the worker can be dispatched. This is a frequent gotcha — do not bury it.
 
@@ -65,9 +65,9 @@ Apply the master plan's Concurrency Policy before assigning same-group implement
 
 The plan must keep plan files, review files, and `progress.md` coordinator-owned. Implementers receive inline task packets and prerequisite outputs, not plan paths copied into worker worktrees.
 
-## TDD Isolation Mechanics
+## Testable Work Mechanics
 
-If any sub-plan has testable acceptance criteria, the shared test-author worker must be paired with an isolation mechanism from the active execution adapter's Workspace Isolation Strategy. When isolated TDD needs build/cache artifacts, the plan must name ignored build/cache directories the test author workspace needs before compiling or running tests. This supports TDD isolation only; it does not override a `Linear DAG` implementation policy. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a priority-order worktree plus worker dispatch path is available.
+For testable behavior changes, the master plan should tell execution that the implementer owns both tests and code. The implementer should follow the sub-plan's testing skills, make a test-first attempt when practical, and report tests added or updated plus verification results. If test-first work or new tests are not practical, the implementer reports the reason instead of relying on a separate test-writing worker.
 
 ## Model Assignment
 

@@ -1,11 +1,11 @@
 ---
 name: executing-plans
-description: Use whenever executing, continuing, resuming, or finishing an implementation plan or plan directory. Orchestrates assigned worker dispatch, optional structural TDD, progress checkpointing, isolated workspaces, checkpoint integration, and dispute batching.
+description: Use whenever executing, continuing, resuming, or finishing an implementation plan or plan directory. Orchestrates assigned worker dispatch, integrated test-first discipline, progress checkpointing, isolated workspaces, checkpoint integration, and blocker batching.
 ---
 
 # Executing Plans
 
-Execute implementation plans with persisted progress, assigned workers, optional structural TDD, and checkpointed integration when needed.
+Execute implementation plans with persisted progress, assigned workers, integrated test-first discipline, and checkpointed integration when needed.
 
 This file is the execution spine. Load referenced files only when their trigger applies.
 
@@ -33,8 +33,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 
 - **Progress is always persisted**: update `progress.md` after every meaningful step so execution can resume.
 - **Assigned bindings are mandatory**: if a plan assigns a worker or model tier, dispatch through that binding. Do not self-execute assigned implementation work.
-- **Structural TDD is strict when used**: the test author sees only acceptance criteria and code surface; the implementer sees the full task plus tests. Feasibility, isolation, and quality gates come from [structural-tdd.md](references/structural-tdd.md).
-- **Tests are immutable to implementers**: implementers report disputes instead of editing test-author tests.
+- **Testable work stays with the implementer**: the same worker owns tests and code, follows the required testing/TDD skills, makes a test-first attempt when practical, and explains when that is not practical.
 - **Independent work continues**: blocked tasks do not stop unrelated tasks.
 - **Plan concurrency policy is binding**: if the master plan says `Linear DAG`, run at most one implementation sub-plan at a time even when tasks appear logically independent.
 - **Parallel implementation requires isolated workspaces**: never run concurrent implementers in the same dirty workspace.
@@ -49,7 +48,7 @@ Use runtime-native names when reading or writing concrete artifacts: worker agen
 | Trigger | Load |
 |---------|------|
 | Creating or repairing progress | [assets/progress-template.md](assets/progress-template.md) |
-| Any task has testable acceptance criteria and structural TDD may apply | [references/structural-tdd.md](references/structural-tdd.md) |
+| Any task has testable acceptance criteria | [references/testable-work.md](references/testable-work.md) |
 | Any task uses an isolated worktree, policy-allowed parallel implementation, or build/cache reuse | [references/workspace-isolation.md](references/workspace-isolation.md) |
 | Plan has multiple sub-plans, dependencies, checkpoint commits, or task worktree integration | [references/checkpoint-integration.md](references/checkpoint-integration.md) |
 
@@ -77,7 +76,7 @@ The progress file lives alongside the plan: `progress.md` in the plan directory,
 - If progress exists, read it, resume from the last checkpoint, and verify completed tasks' artifacts still exist. If artifacts are missing, mark the task for re-execution.
 - If progress does not exist, create it from [assets/progress-template.md](assets/progress-template.md).
 
-`progress.md` is the source of truth for task status, dispatch audit, test artifacts, completed artifacts, blockers, disputes, regressions, checkpoints, and final review state.
+`progress.md` is the source of truth for task status, dispatch audit, test evidence, completed artifacts, blockers, regressions, checkpoints, and final review state.
 
 If an anchor is active, update it only for durable feature context: new decisions, changed constraints, spec or plan deviations, unresolved questions, or handoff state. Do not duplicate progress tables in the anchor.
 
@@ -87,14 +86,14 @@ Before editing implementation files, verify execution mechanics and record the a
 
 Check these items:
 
-- every planned implementer worker, test author worker, model tier, and runtime dispatch mechanism
+- every planned implementer worker, model tier, runtime dispatch mechanism, and required testing skill
 - whether assigned bindings are discoverable and invokable; diagnose and retry once for mechanical failures, then stop and ask
 - whether coordinator self-execution is allowed; it is allowed only for progress/coordination artifacts or a single trivial sub-plan with no explicit binding requirement
 - whether checkpoint integration is required; if yes, load [checkpoint-integration.md](references/checkpoint-integration.md) and establish or resume the integration branch before implementation
-- whether structural TDD is applicable; if yes, load [structural-tdd.md](references/structural-tdd.md)
+- whether testable-work expectations apply; if yes, load [testable-work.md](references/testable-work.md)
 - whether the plan's concurrency policy allows parallel implementation; if it says `Linear DAG`, record the serialized schedule and do not dispatch independent tasks concurrently
 - whether isolated workspaces or cache reuse is required; if yes, load [workspace-isolation.md](references/workspace-isolation.md) and run its dirty-state preflight before creating worktrees
-- planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, dirty-state preflight, cache reuse, checkpoint commit, integration status, TDD gate, and test quality check for each task
+- planned worker, actual worker, model/effort, dispatch evidence, implementation workspace, dirty-state preflight, cache reuse, checkpoint commit, integration status, test evidence, and verification status for each task
 
 Proceed only after the audit is complete or the user explicitly authorizes a deviation.
 
@@ -109,29 +108,27 @@ Execute tasks in dependency order and honor the plan's concurrency policy. If th
 - A `Linear DAG` policy forbids concurrent implementation dispatch; do not create parallel task worktrees solely because tasks are logically independent.
 - Dependent task worktrees must start from an integration-branch checkpoint that contains all prerequisite outputs. If prerequisite outputs are only dirty files, checkpoint them first or serialize the work.
 
-#### 4.2 Gate Structural TDD
+#### 4.2 Set Testable-Work Expectations
 
-Skip test authoring for tasks with no testable work: documentation, pure file moves, configuration-only changes, or tasks without acceptance criteria.
+Skip test-first expectations for tasks with no testable work: documentation, pure file moves, configuration-only changes, or tasks without acceptance criteria.
 
-For tasks with testable acceptance criteria, use [structural-tdd.md](references/structural-tdd.md) to decide whether structural TDD is feasible. Record the result in progress:
+For tasks with testable acceptance criteria, use [testable-work.md](references/testable-work.md) to set expectations. Record the result in progress:
 
-- `used isolated workspace` when structural TDD was enforced
-- `skipped: <reason>` when no testable surface or no enforceable isolation exists
-- `blocked: <reason>` when an available isolation path or required scaffold fails and user input is needed
+- `applies` when the implementer should make a test-first attempt or explain why not
+- `skipped: <reason>` when the task has no testable behavior or project docs declare the area untestable
+- `blocked: <reason>` when acceptance criteria are too ambiguous to test or verify
 
-When structural TDD is used, follow [structural-tdd.md](references/structural-tdd.md) for test authoring, RED validation, and test-quality review before handing tests to the implementer.
+Do not create a separate test-writing workflow. The implementer owns tests and code.
 
 #### 4.3 Dispatch Implementation
 
 Dispatch the implementer through the assigned runtime binding.
 
-Without structural TDD, pass the full task packet inline and have the implementer work directly from the acceptance criteria. Existing tests still must pass.
+Pass the full task packet inline with prerequisite outputs and required skills. For testable behavior changes, tell the implementer to follow the required testing/TDD skills, make a test-first attempt when practical, and report tests added or updated plus verification results. If test-first work or new tests are not practical, the implementer must explain why.
 
-With structural TDD, pass the full task packet inline, test file paths, prerequisite outputs, and required skills. Tell the implementer that test-author tests are immutable. It may refactor implementation after tests pass, but it must not edit those tests. If it believes a test is wrong, it reports a dispute with the test file, test name, and explanation.
+The implementer returns status, files created or modified, tests added or updated, verification results, and any blockers.
 
-The implementer returns status, files created or modified, test results, and any disputes.
-
-Before accepting a green implementer result, apply the structural TDD quality gate to the test-author tests, record the result in progress, and block the task if the tests do not actually verify the acceptance criteria.
+Before accepting a successful implementer result for testable behavior, check that the result includes test evidence or a concrete explanation for missing tests. If that evidence is absent, push back once through the same implementer binding before blocking the task.
 
 #### 4.4 Handle Results
 
@@ -140,9 +137,9 @@ Record every result in progress.
 Use these task states:
 
 - `ready for integration/checkpoint`: implementation is complete and required tests pass
-- `blocked: implementation failure`: tests fail and the implementer does not claim the tests are wrong
-- `blocked: test dispute`: implementer disputes one or more test-author tests
-- `blocked: weak test`: structural TDD tests passed mechanically but do not verify the promised behavior
+- `blocked: implementation failure`: required verification fails or the implementer cannot complete the task
+- `blocked: missing test evidence`: testable behavior was implemented without tests or a concrete explanation
+- `blocked: acceptance-criteria ambiguity`: the implementer cannot determine what behavior to test or verify
 - `blocked: regression`: existing tests regressed; this takes priority over other states
 - `blocked: integration`: task worktree integration, checkpoint commit creation, or post-integration verification failed
 - `done`: result is integrated, verified, and checkpointed when checkpointing applies
@@ -158,11 +155,11 @@ At a natural breakpoint, present all blocked items together:
 
 | Task | Status | Details |
 |------|--------|---------|
-| 02-api-layer | test dispute | test_returns_404: "AC says 'return error' but status code is unspecified" |
+| 02-api-layer | acceptance-criteria ambiguity | AC says "return error" but does not specify status-code behavior |
 | 04-integration | implementation failure | Cannot satisfy timeout recovery without async support outside task scope |
 ```
 
-The user resolves each item by adjusting the acceptance criteria, fixing a test, changing the task, accepting the implementation, or authorizing a deviation. Re-run affected tasks from the appropriate step: test authoring if acceptance criteria changed, implementation if tests or implementation context changed.
+The user resolves each item by adjusting the acceptance criteria, authorizing a no-test exception, changing the task, accepting the implementation, or authorizing a deviation. Re-run affected tasks from the appropriate implementation step.
 
 ### 6. Complete Execution
 
@@ -177,10 +174,8 @@ When all tasks are `done`:
 
 ## Final Rules
 
-- Do not let the test author see design decisions, plan paths, task paths, feature names, or other breadcrumbs to the plan.
-- Do not claim structural TDD without verified physical isolation and prompt isolation.
-- Do not accept structural TDD tests that fail the structural TDD quality gate.
-- Do not let implementers modify test-author tests.
+- Do not create a separate test-writing workflow unless the approved plan explicitly requires it.
+- Do not accept testable implementation work with no test evidence and no concrete explanation; push back once, then block.
 - Do not run concurrent implementers in one workspace.
 - Do not override a master plan's `Linear DAG` policy with inferred independence, cache seeding, or isolated worktrees.
 - Do not launch dependent work from uncheckpointed dirty state.
@@ -189,4 +184,4 @@ When all tasks are `done`:
 - Do not copy plan/progress artifacts into worker worktrees.
 - Do not assume fresh worktrees contain ignored build artifacts.
 - Do not silently upgrade, downgrade, or replace assigned workers or models.
-- Do not analyze testability improvements when TDD is skipped; record the skip reason briefly and continue.
+- Do not let test-process ceremony overtake execution. Use the required testing skills and acceptance criteria as the source of testing depth.

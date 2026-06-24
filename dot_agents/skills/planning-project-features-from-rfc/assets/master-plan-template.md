@@ -74,11 +74,11 @@ flowchart LR
 
 **Worker Agents**:
 
-| Sub-Plan | Implementer Worker | Test Author Worker | Model Tier |
-|----------|--------------------|--------------------|------------|
-| 01 | `<tier>-<domain>-worker` | `<tier>-test-author-worker` | <tier> |
-| 02 | `<tier>-<domain>-worker` | - (no testable AC) | <tier> |
-| 03 | `<tier>-docs-worker` | - (documentation task) | Most capable |
+| Sub-Plan | Implementer Worker | Model Tier |
+|----------|--------------------|------------|
+| 01 | `<tier>-<domain>-worker` | <tier> |
+| 02 | `<tier>-<domain>-worker` | <tier> |
+| 03 | `<tier>-docs-worker` | Most capable |
 
 **File Ownership** (prevent conflicts during worktree integration):
 
@@ -89,7 +89,7 @@ flowchart LR
 
 **Build/Cache Seeding** (for isolated worktrees):
 
-<Use "None" when no ignored in-repository build/cache artifacts need seeding. For a Linear DAG, list only caches required for isolated TDD or explicitly approved isolated execution. For Parallel allowed plans, list relative directories that isolated TDD and implementer worktrees need available before dispatch. Cache seeding does not override the Concurrency Policy. The execution skill owns the seeding mechanics.>
+<Use "None" when no ignored in-repository build/cache artifacts need seeding. List relative directories that task-scoped implementer worktrees need available before dispatch. Cache seeding does not override the Concurrency Policy. The execution skill owns the seeding mechanics.>
 
 | Relative Path | Applies To | Purpose | Notes |
 |---------------|------------|---------|-------|
@@ -108,18 +108,18 @@ flowchart LR
 **Lead Agent Instructions**:
 
 - Use this master plan as the roadmap.
-- Before editing implementation files, initialize or resume `progress.md` and fill the execution audit with planned workers, model tiers, dispatch mechanisms, implementation workspace, build/cache seeding status, integration status, and TDD gate status.
+- Before editing implementation files, initialize or resume `progress.md` and fill the execution audit with planned workers, model tiers, dispatch mechanisms, implementation workspace, build/cache seeding status, integration status, and test evidence status.
 - Spawn each sub-plan's assigned worker agent from the table above using the active runtime adapter's dispatch mechanism. Do not self-execute assigned worker tasks in the coordinator context.
 - Follow the Concurrency Policy. If the decision is Linear DAG, run one sub-plan at a time even when no logical dependency exists.
 - Run sub-plans in the same parallel group concurrently only when the Concurrency Policy allows it and only through task-scoped implementer worktrees where the runtime supports isolated dispatch and file ownership does not conflict. If isolation or output/cache safety cannot be verified, serialize the group or ask the user.
-- Use the Build/Cache Seeding table as the source of cache directories for isolated TDD or implementer worktrees. Follow `executing-plans` for seeding mechanics, verification, and progress recording. Cache seeding does not permit parallel execution when the Concurrency Policy says Linear DAG.
+- Use the Build/Cache Seeding table as the source of cache directories for implementer worktrees. Follow `executing-plans` for seeding mechanics, verification, and progress recording. Cache seeding does not permit parallel execution when the Concurrency Policy says Linear DAG.
 - For sequential dependencies, wait for the prior worker to complete before spawning the next.
 - Relay prerequisite outputs between workers when needed; workers cannot communicate directly.
 - Keep plan files, review files, and `progress.md` in the coordinator workspace. Do not copy them into worker worktrees.
 - Pass each implementer an inline sub-plan task packet plus prerequisite context. Do not rely on sub-plan file paths inside worker worktrees.
-- For test-author workers, pass only acceptance criteria and code-surface context through an isolated workspace; do not pass RFC paths, plan paths, feature names, or design rationale. When a task has an implementer worktree, use that worktree for test authoring and then implementation. Same-workspace subagent invocation is not enough for structural TDD unless the runtime can prove it routes the worker into the isolated workspace.
+- For testable behavior changes, the implementer owns tests and code. Tell the worker to follow the sub-plan's testing skills, make a test-first attempt when practical, and report tests added or updated plus verification results. If test-first work or new tests are not practical, the worker reports the reason.
 - Follow `executing-plans` for task worktree integration and final review materialization. Record merge conflicts, integration failures, or regressions in `progress.md`.
-- If a worker binding, model assignment, implementer worktree, or TDD isolation mechanism cannot be used, diagnose and retry once. If it still cannot be used, stop and ask the user rather than falling back to coordinator execution, shared-workspace parallelism, or a different model tier.
+- If a worker binding, model assignment, implementer worktree, or required verification path cannot be used, diagnose and retry once. If it still cannot be used, stop and ask the user rather than falling back to coordinator execution, shared-workspace parallelism, or a different model tier.
 - Synthesize results when all sub-plans finish.
 
 **Coordination Points**:

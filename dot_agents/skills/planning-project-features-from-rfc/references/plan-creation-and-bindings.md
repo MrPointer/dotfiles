@@ -81,13 +81,11 @@ If no match exists, establish one using the runtime adapter:
 
 If the runtime uses ephemeral bindings, record parameters in the runtime-specific way so retries and resumed execution use the same model and skills.
 
-## Test Author Binding
+## Testing Skills In Implementer Bindings
 
-If any sub-plan has testable acceptance criteria, create or reuse one shared project-local test-author binding at the most capable model tier.
+For sub-plans with testable acceptance criteria, include the relevant testing skills in `## Required Skills`, whether project-local or global. Include `test-driven-development` when it is available and test-first work is appropriate. The implementer binding carries those skills; do not create a separate test-writing binding or assign a special test-writing model tier.
 
-Preload the project's testing and code-writing skills, plus `test-driven-development` if available. All sub-plans with testable acceptance criteria share this binding.
-
-If newly established persistent bindings require discovery, reload, or session restart before availability, warn the user when presenting the plan.
+If newly established persistent implementer bindings require discovery, reload, or session restart before availability, warn the user when presenting the plan.
 
 ## Concurrency Policy
 

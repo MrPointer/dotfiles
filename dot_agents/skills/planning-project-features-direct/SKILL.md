@@ -96,7 +96,7 @@ Only after requirements, exploration, and decomposition are complete:
 4. Assign the best local reviewer to each sub-plan, or warn the user when coverage is missing.
 5. Assign execution models to every sub-plan.
 6. Establish or select runtime-specific execution bindings for every required model + skill combination.
-7. Create or reuse one shared test-author binding when any sub-plan has testable acceptance criteria.
+7. Verify testable sub-plans include the relevant testing skills available to the runtime, including `test-driven-development` when available and appropriate.
 8. Write lead-agent execution instructions into the master plan.
 
 Use [plan-creation-reviewers-and-bindings.md](references/plan-creation-reviewers-and-bindings.md) for plan paths, reviewer assignment, model selection, binding rules, and master-plan execution mechanics.

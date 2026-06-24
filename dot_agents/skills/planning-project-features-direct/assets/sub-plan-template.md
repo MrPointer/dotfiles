@@ -9,7 +9,7 @@ Each sub-plan is a **self-contained execution unit**. An agent should be able to
 <What this sub-plan accomplishes and why>
 
 ## Required Skills
-<Skills the executing agent MUST load before starting — both design skills (coding conventions, patterns) and operational skills (testing, linting, building)>
+<Skills the executing agent MUST load before starting — both design skills (coding conventions, patterns) and operational skills (testing, linting, building). Include relevant testing/TDD skills for testable implementation work; they may be project-local or global.>
 - `skill-name` — reason it's needed
 
 ## Reviewer

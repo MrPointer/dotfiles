@@ -49,7 +49,7 @@ OpenCode execution bindings should also be **markdown-defined custom subagents**
 **Creating missing bindings**:
 
 - **Placement**: Prefer project-local `.opencode/agents/` when the binding depends on project-local skills or conventions.
-- **Naming convention**: `{model-tier}-{domain}-worker.md` for implementers and `{model-tier}-test-author-worker.md` for the shared test author. Keep reviewer names domain-specific and descriptive.
+- **Naming convention**: `{model-tier}-{domain}-worker.md` for implementers. Keep reviewer names domain-specific and descriptive.
 - **Frontmatter rules**:
   - `description` is required and should make the role discoverable to the runtime.
   - `mode: subagent` so the binding is invokable as a subagent.
@@ -66,7 +66,7 @@ OpenCode execution bindings should also be **markdown-defined custom subagents**
 
 Do not rely on prompt text alone to pick the right model, and do not rely on the subagent to discover required skills implicitly.
 
-**Test author binding**: If any sub-plan has testable acceptance criteria, create one shared project-local test-author subagent at the most capable model tier. Give it the permissions needed to read, edit, and run tests; allow the relevant testing and code-writing skills; and keep its prompt focused on writing tests from acceptance criteria only.
+**Testing skills**: For testable implementation work, ensure the implementer binding can load the testing skills named by the sub-plan, whether they are project-local or global. Do not create a separate test-writing binding.
 
 **Discovery warning**: OpenCode's public docs describe where agent files live, but they do not promise hot-reload semantics for newly created or renamed agent files. After establishing a new persistent binding, verify that the runtime can actually invoke it. If it cannot, tell the user that a session restart or reload is required before the new binding can be used.
 
@@ -94,9 +94,9 @@ Apply the master plan's Concurrency Policy before assigning same-group implement
 
 The plan must keep plan files, review files, and `progress.md` coordinator-owned. Implementers receive inline task packets and prerequisite outputs, not plan paths copied into worker worktrees.
 
-## TDD Isolation Mechanics
+## Testable Work Mechanics
 
-If any sub-plan has testable acceptance criteria, the test-author binding must be paired with an isolation mechanism from the active execution adapter's Workspace Isolation Strategy. Same-workspace `@<test-author-worker>` invocation is not sufficient for structural TDD unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable routing includes a verified native isolated-workspace dispatch mechanism or `opencode run --agent <test-author-worker> --dir <isolated-workspace>`. When isolated TDD needs build/cache artifacts, the plan must name ignored build/cache directories the test author workspace needs before compiling or running tests. This supports TDD isolation only; it does not override a `Linear DAG` implementation policy. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a priority-order worktree plus either native isolated-workspace dispatch or `opencode run --dir` is available.
+For testable behavior changes, the master plan should tell execution that the implementer owns both tests and code. The implementer should follow the sub-plan's testing skills, make a test-first attempt when practical, and report tests added or updated plus verification results. If test-first work or new tests are not practical, the implementer reports the reason instead of relying on a separate test-writing worker.
 
 ## Model Assignment
 

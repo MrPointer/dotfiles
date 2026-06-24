@@ -52,12 +52,13 @@ OpenCode execution bindings are markdown-defined custom subagents under `.openco
 Reuse first. A binding matches when it covers the sub-plan's model tier, permissions, and required skills. If no binding exists, create one using the same worker rules as direct feature planning:
 
 - Name implementers `{model-tier}-{domain}-worker.md`.
-- Name the shared test author `{model-tier}-test-author-worker.md`.
 - Set `mode: subagent`.
 - Set an explicit `model`; omitted models inherit from the caller and are not acceptable for plan-assigned model tiers.
 - Grant minimum permissions.
 - Allow required skills in `permission.skill` and instruct the subagent prompt to load them immediately.
 - Deny or tightly scope nested `permission.task` unless the worker genuinely needs to spawn child agents.
+
+For testable implementation work, ensure the implementer binding can load the testing skills named by the sub-plan, whether they are project-local or global. Do not create a separate test-writing binding.
 
 After establishing a new persistent binding, verify that OpenCode can invoke it. If not, tell the user a reload or session restart is required.
 
@@ -79,9 +80,9 @@ Apply the master plan's Concurrency Policy before assigning same-group implement
 
 The plan must keep plan files, review files, and `progress.md` coordinator-owned. Implementers receive inline task packets and prerequisite outputs, not plan paths copied into worker worktrees.
 
-## TDD Isolation Mechanics
+## Testable Work Mechanics
 
-If any sub-plan has testable acceptance criteria, the test-author binding must be paired with an isolation mechanism from the active execution adapter's Workspace Isolation Strategy. Same-workspace `@<test-author-worker>` invocation is not sufficient for structural TDD unless the runtime can prove it routes that subagent into the isolated worktree. Acceptable routing includes a verified native isolated-workspace dispatch mechanism or `opencode run --agent <test-author-worker> --dir <isolated-workspace>`. When isolated TDD needs build/cache artifacts, the plan must name ignored build/cache directories the test author workspace needs before compiling or running tests. This supports TDD isolation only; it does not override a `Linear DAG` implementation policy. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a priority-order worktree plus either native isolated-workspace dispatch or `opencode run --dir` is available.
+For testable behavior changes, the master plan should tell execution that the implementer owns both tests and code. The implementer should follow the sub-plan's testing skills, make a test-first attempt when practical, and report tests added or updated plus verification results. If test-first work or new tests are not practical, the implementer reports the reason instead of relying on a separate test-writing worker.
 
 ## Model Assignment
 

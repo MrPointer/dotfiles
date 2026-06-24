@@ -37,12 +37,13 @@ This adapter maps the canonical planning workflow in `../SKILL.md` to Codex-nati
 - In Codex, these bindings are usually reusable dispatch recipes rather than checked-in worker files.
 - For each sub-plan, create or select a binding that specifies:
   - the target `model`
-  - which project skills from `.codex/skills/` or `~/.codex/skills/` must be attached explicitly as Codex `skill` items
+  - which required skills from project-local or global skill directories must be attached explicitly as Codex `skill` items
   - which additional reference files must be attached or read
   - any runtime constraints the worker must follow
 - Attach required skills explicitly as Codex `skill` items when dispatching the worker.
 - If the binding is ephemeral rather than file-backed, record its parameters in the plan metadata or execution context so retries and resumed execution reuse the same model and skills.
 - Keep bindings thin. The sub-plan remains the source of task truth.
+- For testable implementation work, ensure the binding attaches the testing skills named by the sub-plan, whether they are project-local or global. Do not create a separate test-writing dispatch recipe.
 
 ## Review Loop
 
@@ -60,9 +61,9 @@ Apply the master plan's Concurrency Policy before assigning same-group implement
 
 The plan must keep plan files, review files, and `progress.md` coordinator-owned. Implementers receive inline task packets and prerequisite outputs, not plan paths copied into worker worktrees.
 
-## TDD Isolation Mechanics
+## Testable Work Mechanics
 
-If any sub-plan has testable acceptance criteria, the test-author dispatch recipe must be paired with an isolation mechanism from the active execution adapter's Workspace Isolation Strategy. When isolated TDD needs build/cache artifacts, the plan must name ignored build/cache directories the test author workspace needs before compiling or running tests. This supports TDD isolation only; it does not override a `Linear DAG` implementation policy. If this cannot be verified, the plan must say that structural TDD is blocked or explicitly skipped with a concrete reason; generic "runtime cannot isolate" language is not sufficient when a priority-order worktree plus worker dispatch path is available.
+For testable behavior changes, the master plan should tell execution that the implementer owns both tests and code. The implementer should follow the sub-plan's testing skills, make a test-first attempt when practical, and report tests added or updated plus verification results. If test-first work or new tests are not practical, the implementer reports the reason instead of relying on a separate test-writing worker.
 
 ## Model Assignment
 
