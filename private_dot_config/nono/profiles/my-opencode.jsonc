@@ -45,7 +45,6 @@
          "$HOME/.claude",
          "$HOME/.claude/ide",
          "$XDG_CONFIG_HOME",
-         "$HOME/.local",
          "$HOME/Library/Application Support/Zed/db/0-stable/db.sqlite"
       ]
    },
