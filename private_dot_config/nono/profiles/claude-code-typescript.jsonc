@@ -1,0 +1,11 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "node-dev",
+      "my-claude-code"
+   ],
+   "meta": {
+      "name": "claude-code-typescript",
+      "description": "Profile for developing TypeScript applications with Claude Code"
+   }
+}
