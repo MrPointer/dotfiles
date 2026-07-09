@@ -11,12 +11,13 @@
       "allow": [
          "$XDG_CACHE_HOME/uv",
          "$XDG_DATA_HOME/uv/tools", // Mostly for semble search
-         "$XDG_CACHE_HOME/huggingface/hub/models--minishlab--potion-code-16M", // Semble model cache
+         "$XDG_CACHE_HOME/huggingface/hub/models--minishlab--potion-code-16M-v2", // Semble model cache
          "$HOME/.npm/_cacache"
       ],
       "read": [
          "$HOME/.agents/skills",
-         "$HOME/lcp-docs"
+         "$HOME/lcp-docs",
+         "$HOME/Library/Caches/semble/" // Semble's internal stats
       ],
       "write": [],
       "allow_file": [],
