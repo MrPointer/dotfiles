@@ -14,7 +14,7 @@ sub-plans.
 ## RFC Context
 - **RFC**: `<docs/rfcs/topic.md>`
 - **Relevant RFC decisions**: <decisions this sub-plan must preserve>
-- **Relevant constraints / non-goals**: <constraints and exclusions this sub-plan must respect>
+- **Execution-relevant constraints**: <only constraints whose competing behavior is plausible in this assigned scope; omit unrelated non-goals and design-history residue>
 
 ## Required Skills
 
@@ -44,7 +44,7 @@ Examples:
 
 ## Context
 
-<Essential context embedded directly: relevant interfaces, data shapes, conventions, architectural decisions, and RFC decisions the agent needs to know>
+<Essential context embedded directly: relevant interfaces, data shapes, conventions, architectural decisions, and RFC decisions the agent needs to know. Every statement must make sense to a cold reader from this sub-plan and its references; omit conversational history and unrelated rejected directions.>
 
 ## Primary Files
 

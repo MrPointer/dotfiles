@@ -23,6 +23,16 @@
   already decided, note the concern in the review but do not change the plan. Present the concern to the user and let
   them decide whether to revisit.
 
+## Cold-Reader Relevance
+
+- Write durable artifacts for readers who know only the artifact and its referenced sources. Include context only when
+  it affects the required outcome, a plausible implementation choice, an interface, verification, or a concrete risk.
+- Do not carry conversational history, rejected ideas, or unrelated non-goals forward merely to emphasize that they
+  were rejected. Preserve such history in an active context anchor or RFC when it remains useful, not in downstream
+  execution artifacts that would not otherwise raise it.
+- When a negative constraint is necessary, name the concrete competing behavior or risk that makes it relevant. Prefer
+  positive ownership and outcome statements when they define the boundary clearly enough.
+
 ## Context Gathering
 
 - Always use the cheapest model for exploring code.

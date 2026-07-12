@@ -52,6 +52,8 @@ Each sub-plan must be self-contained. Include only execution-critical context:
 - exact cross-boundary contracts that other sub-plans depend on
 - prerequisites, primary files, acceptance criteria, reviewer, required skills, and execution model
 
+Apply the cold-reader test to every included statement: a reader who knows only this sub-plan and its referenced sources should understand why the statement affects execution. Include a negative constraint only when the assigned scope or visible codebase makes the competing behavior plausible, and name that concrete behavior or risk. Omit conversational history, rejected alternatives, and unrelated non-goals.
+
 Do not include internal API design, function signatures within a package, private helpers, method bodies, step-by-step coding instructions, exact test/lint/build commands, or decisions already owned by skills.
 
 The test: if changing something would break a different sub-plan's code, it is a contract and belongs in the plan. If it only affects code within one sub-plan, it is an internal execution decision.

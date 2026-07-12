@@ -84,7 +84,11 @@ Look for design decisions left for the executing agent to resolve, especially in
 
 The planner is the one with full context — executing agents work from what's written. Decisions left unresolved in the plan text are decisions the executing agent has to guess at.
 
-### 7. Flag Ambiguous Acceptance Criteria
+### 7. Flag Context Leakage
+
+Read each plan as a cold reader who knows only the plan and its referenced sources. Flag conversational history, rejected alternatives, and unrelated non-goals that do not affect the required outcome, a plausible implementation choice, an interface, verification, or a concrete risk. Negative constraints must name the competing behavior or risk that makes them relevant; otherwise they create false scope and send readers searching for a problem the plan never had.
+
+### 8. Flag Ambiguous Acceptance Criteria
 
 Acceptance criteria drive test authoring — if they're ambiguous, tests will either encode the wrong behavior or force the implementer to interpret requirements it shouldn't have to. This is especially damaging when tests are written by a separate agent that only sees the acceptance criteria and not the rest of the plan.
 
@@ -141,3 +145,4 @@ Be direct and specific — every finding must reference the exact plan file and 
 - **Distinguish real ambiguity from acceptable flexibility.** "Run the linter and fix errors" is fine — the executing agent can handle that. "Refactor the module as needed" is not — "as needed" hides a design decision.
 - **Don't review architecture or risks.** You focus on clarity and actionability — whether the plan says what it means clearly enough to execute. Architecture and risk are other reviewers' jobs.
 - **Don't invent requirements.** Review the plan's clarity against its own stated goals, not against what you think it should say.
+- **Do not reward defensive repetition.** Repeating every upstream non-goal is not clarity. Prefer omission when excluded work is not a plausible interpretation of the assigned scope.
