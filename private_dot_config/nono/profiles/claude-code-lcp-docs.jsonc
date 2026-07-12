@@ -1,0 +1,17 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "node-dev",
+      "my-claude-code"
+   ],
+   "meta": {
+      "name": "claude-code-lcp-docs",
+      "description": "Profile for developing the LCP documentation project with Claude Code"
+   },
+   "filesystem": {
+      "read": [
+         "$HOME/Library/Caches/ms-playwright",
+         "$XDG_CACHE_HOME/node/corepack"
+      ]
+   }
+}
