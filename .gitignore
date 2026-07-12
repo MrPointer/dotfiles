@@ -64,3 +64,6 @@
 # Do ignore local context anchors, however
 **/docs/context/
 **/docs/rfcs/
+
+# Keep feature execution runtime state local; all other Spec Kit artifacts track.
+specs/**/progress.md

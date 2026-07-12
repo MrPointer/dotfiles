@@ -2,8 +2,8 @@
 name: mid-tier-spec-kit-preset-worker
 description: "Implements straightforward packaging and validation work for the chezmoi-managed timors-agentic-workflow Spec Kit preset in this repository."
 mode: subagent
-model: openai/gpt-5.6-luna
-reasoningEffort: high
+model: openai/gpt-5.6-terra
+reasoningEffort: xhigh
 permission:
   edit: allow
   bash: allow
