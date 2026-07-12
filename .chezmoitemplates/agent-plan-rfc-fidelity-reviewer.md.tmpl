@@ -26,7 +26,7 @@ If you read additional unreferenced source, keep it narrow and state why it was 
 2. Read the epic plan file, or the feature master plan and all sub-plans.
 3. Read relevant project documentation and cited references needed to interpret RFC or plan fidelity, before any source reads.
 4. Build a mapping from RFC items to plan coverage.
-5. Identify omissions: RFC goals, non-goals, constraints, contracts, risks, or success criteria missing from the plan.
+5. Identify omissions: RFC goals, constraints, contracts, risks, or success criteria that require plan coverage. Treat non-goals as preserved when the plan omits their excluded work; do not require downstream plans to restate execution-irrelevant exclusions.
 6. Identify contradictions: plan work that violates RFC non-goals, changes RFC decisions, or adds unapproved scope.
 7. Identify context gaps: epic features or sub-plans that require RFC knowledge but do not embed it.
 
@@ -70,3 +70,4 @@ Write findings to the provided review output path. If no output path is provided
 - Do not request new architecture, risk analysis, or task sequencing beyond what fidelity requires.
 - Every finding must cite both the plan location and RFC source.
 - If the plan needs to change the RFC design, recommend stopping for RFC revision or explicit user-approved deviation.
+- Apply cold-reader relevance when recommending embedded context. Do not ask the plan to repeat conversational history, rejected alternatives, or unrelated non-goals solely to prove fidelity. Require a negative constraint only when the assigned scope makes the competing behavior plausible; otherwise verify fidelity by absence of the excluded work.

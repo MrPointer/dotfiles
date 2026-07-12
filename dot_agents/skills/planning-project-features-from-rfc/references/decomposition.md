@@ -8,7 +8,7 @@ Break work along natural seams: layers, domains, files, modules, independently v
 
 Each sub-plan should be small enough for one focused execution session. If it feels too large, split it further.
 
-Preserve RFC non-goals. Do not add work the RFC explicitly excluded. If implementation pressure suggests a non-goal should change, stop and ask whether to revise the RFC or approve an explicit deviation.
+Preserve RFC non-goals by keeping excluded work out of the plan. Do not automatically restate every non-goal in downstream sub-plans. If implementation pressure suggests a non-goal should change, stop and ask whether to revise the RFC or approve an explicit deviation.
 
 Translate RFC risks into plan mechanics: constraints, acceptance criteria, sequencing notes, rollback notes, or handoff constraints.
 
@@ -55,6 +55,8 @@ Each sub-plan must be self-contained. Include only execution-critical context:
 - domain knowledge the agent cannot derive from code, such as business rules, config formats, protocol details, or accepted tradeoffs
 - exact cross-boundary contracts that other sub-plans depend on
 - prerequisites, primary files, acceptance criteria, required skills, and execution model
+
+Apply the cold-reader test to every included statement: a reader who knows only this sub-plan and its referenced sources should understand why the statement affects execution. Include a negative constraint only when the assigned scope or visible codebase makes the competing behavior plausible, and name that concrete behavior or risk. Omit conversational history, rejected alternatives, and unrelated RFC non-goals; fidelity does not require repeating exclusions that the plan already preserves by omission.
 
 Do not include method bodies, private helper design, step-by-step coding instructions, exact test/lint/build commands, or design decisions already owned by skills.
 
