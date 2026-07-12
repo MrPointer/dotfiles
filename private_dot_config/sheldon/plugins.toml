@@ -26,55 +26,55 @@ shell = "zsh"
 # =============================================================================
 # These plugins are essential for core shell functionality and must load first
 
+# MUST be first - provides defer functionality for other plugins
 [plugins.zsh-defer]
 github = "romkatv/zsh-defer"
-# MUST be first - provides defer functionality for other plugins
 
+# MUST load early for instant prompt to work
 [plugins.powerlevel10k]
 github = "romkatv/powerlevel10k"
-# MUST load early for instant prompt to work
 
+# Load immediately - provides essential completions
 [plugins.zsh-completions]
 github = "zsh-users/zsh-completions"
-# Load immediately - provides essential completions
 
+# Load immediately - critical for interactive tab completion
 [plugins.fzf-tab]
 github = "Aloxaf/fzf-tab"
-# Load immediately - critical for interactive tab completion
 
+# Load immediately - inline suggestions should be available ASAP
 [plugins.zsh-autosuggestions]
 github = "zsh-users/zsh-autosuggestions"
-# Load immediately - inline suggestions should be available ASAP
 
 # =============================================================================
 # DEFERRED PLUGINS (Background Loading)
 # =============================================================================
 # These plugins enhance the experience but don't need to block startup
 
+# Visual enhancement - can load in background
 [plugins.zsh-syntax-highlighting]
 github = "zsh-users/zsh-syntax-highlighting"
 apply = ["defer"]
-# Visual enhancement - can load in background
 
+# Utility command - not needed immediately
 [plugins.git-clean-branch]
 github = "gobriansteele/git-clean-branch"
 apply = ["defer"]
-# Utility command - not needed immediately
 
+# Visual enhancement - can wait
 [plugins.zsh-diff-so-fancy]
 github = "so-fancy/diff-so-fancy"
 apply = ["defer"]
-# Visual enhancement - can wait
 
+# Convenience feature - can load later
 [plugins.zsh-sudo]
 github = "none9632/zsh-sudo"
 apply = ["defer"]
-# Convenience feature - can load later
 
-[plugins.zsh-eza-ls]
-github = "birdhackor/zsh-eza-ls-plugin"
-apply = ["defer"]
 # Visual enhancement - not critical for startup
+[plugins.zsh-eza-ls]
+github = "z-shell/zsh-eza"
+apply = ["defer"]
 
 # =============================================================================
 # TEMPLATES
