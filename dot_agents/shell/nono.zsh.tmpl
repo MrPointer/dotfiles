@@ -40,5 +40,11 @@ function _nono_agent_run() {
     ssh_agent_args=(--allow-unix-socket "$SSH_AUTH_SOCK")
   fi
 
-  GIT_CONFIG_GLOBAL="$git_config" nono run --profile "$profile" --allow-cwd "${ssh_agent_args[@]}" -- "$command_name" "$@"
+  local -a git_common_dir_args=()
+  local git_common_dir
+  if git_common_dir="$(command git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
+    git_common_dir_args=(--allow "$git_common_dir")
+  fi
+
+  GIT_CONFIG_GLOBAL="$git_config" nono run --profile "$profile" --allow-cwd "${git_common_dir_args[@]}" "${ssh_agent_args[@]}" -- "$command_name" "$@"
 }
