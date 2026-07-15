@@ -55,6 +55,8 @@
       "allow_domain": [
          "chatgpt.com",
          "openai.com",
+         "auth.openai.com",
+         "models.dev",
          "mcp.context7.com"
       ]
    },
