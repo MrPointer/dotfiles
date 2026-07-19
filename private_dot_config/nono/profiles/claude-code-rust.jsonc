@@ -10,24 +10,19 @@
    "groups": {
       "include": [
          "rust_runtime"
-      ],
-      "exclude": []
-   },
-   "filesystem": {
-      "allow": [],
-      "read": [],
-      "write": [],
-      "allow_file": [],
-      "read_file": [],
-      "write_file": [],
-      "deny": [],
-      "bypass_protection": [],
-      "suppress_save_prompt": []
+      ]
    },
    "network": {
       "block": false,
       "allow_domain": [],
-      "open_port": [],
+      // Undocumented in schema, but proven to work
+      // The range is what MacOS assigns to ephemeral ports
+      "open_port_range": [
+         [
+            49152,
+            65535
+         ]
+      ],
       "listen_port": [
          50002 // HEC serves an HTTP server here
       ]
