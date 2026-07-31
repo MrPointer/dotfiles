@@ -44,6 +44,7 @@ Personal dotfiles managed with [chezmoi]. This repo is the **chezmoi source dire
 - `docs/domain.md` — Project-specific terminology, the work environment model, chezmoi data schema, package resolution system, and other domain concepts
 - `docs/architecture.md` — Top-level project structure: installer, chezmoi templates, shell runtime, and how they connect through the data contract
 - `docs/architecture-installer.md` — Installer's internal layered architecture: cmd, lib, cli, utils, dependency injection, key design decisions
+- `docs/spec-kit-workflow/architecture.md` — Isolated architecture of the project-installed Spec Kit workflow preset
 - `docs/processes/` — End-to-end flows: installation (with sub-processes for compatibility checking, prerequisite installation, shell setup, GPG setup, dotfiles setup), package resolution, shell startup, work environment loading
 
 ## Key Conventions

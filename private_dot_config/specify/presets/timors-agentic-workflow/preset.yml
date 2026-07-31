@@ -1,0 +1,85 @@
+schema_version: "1.0"
+protocol_version: "0.1.0"
+
+preset:
+  id: "timors-agentic-workflow"
+  name: "Timor's Agentic Workflow"
+  version: "0.1.0"
+  description: "Grounded planning and validated execution artifacts for Spec Kit."
+  author: "Timor Gruber"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.12.11,<0.13.0"
+
+provides:
+  templates:
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/speckit.plan.md"
+      description: "Compose grounded planning around the upstream plan workflow."
+      strategy: "wrap"
+
+    - type: "template"
+      name: "plan-template"
+      file: "templates/plan-template.md"
+      description: "Compose grounding sections into the upstream implementation plan."
+      strategy: "wrap"
+
+    - type: "command"
+      name: "speckit.tasks"
+      file: "commands/speckit.tasks.md"
+      description: "Generate protocol-valid tasks and execution decomposition."
+      strategy: "replace"
+      replaces: "speckit.tasks"
+
+    - type: "template"
+      name: "tasks-template"
+      file: "templates/tasks-template.md"
+      description: "Provide the protocol task template."
+      strategy: "replace"
+      replaces: "tasks-template"
+
+    - type: "command"
+      name: "speckit.analyze"
+      file: "commands/speckit.analyze.md"
+      description: "Analyze protocol artifacts without modifying them."
+      strategy: "replace"
+      replaces: "speckit.analyze"
+
+    - type: "command"
+      name: "speckit.implement"
+      file: "commands/speckit.implement.md"
+      description: "Execute only protocol-valid execution plans."
+      strategy: "replace"
+      replaces: "speckit.implement"
+
+    - type: "template"
+      name: "execution-plan-template"
+      file: "templates/execution-plan-template.md"
+      description: "Provide the execution-plan protocol template."
+      strategy: "replace"
+
+    - type: "template"
+      name: "analysis-template"
+      file: "templates/analysis-template.md"
+      description: "Provide the analysis report template."
+      strategy: "replace"
+
+    - type: "template"
+      name: "review-report-template"
+      file: "templates/review-report-template.md"
+      description: "Provide the project review report template."
+      strategy: "replace"
+
+    - type: "template"
+      name: "progress-template"
+      file: "templates/progress-template.md"
+      description: "Provide the execution progress template."
+      strategy: "replace"
+
+tags:
+  - "workflow"
+  - "planning"
+  - "validation"
+  - "spec-kit"
