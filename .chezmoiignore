@@ -31,4 +31,7 @@ Taskfile.yml
 
 {{- if not .personal.work_env }}
 .work/ # only manage work state on work machines
+# Work-specific Claude integration requires work SSH key names.
+.agents/shell/claude.zsh
+.config/nono/profiles/my-claude-code.jsonc
 {{- end }}
