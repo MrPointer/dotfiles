@@ -2,9 +2,6 @@ name: Installer CI
 
 on:
   pull_request:
-    paths:
-      - "installer/**"
-      - ".github/workflows/installer-ci.yml"
   push:
     branches:
       - main
@@ -19,8 +16,33 @@ concurrency:
 permissions: {}
 
 jobs:
+  changes:
+    name: Detect Installer Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      installer: ${{ steps.filter.outputs.installer }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'push'
+        with:
+          fetch-depth: 2
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            installer:
+              - "installer/**"
+              - ".github/workflows/installer-ci.yml"
+
   build:
     name: Build
+    needs: changes
+    if: ${{ needs.changes.outputs.installer == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -355,23 +377,22 @@ jobs:
             zsh -c 'echo "zsh works correctly"'
           fi
 
-  # Gate job for auto-merge: always runs, reports the aggregate result of all CI jobs.
-  # When the workflow is skipped entirely (no installer/** changes), GitHub treats the
-  # check as "pending" which won't block merging in rulesets. When it does run, it
-  # accurately reflects whether build/test/e2e passed.
+  # Gate job for auto-merge: always runs and reports the aggregate CI result.
   ci-status:
     name: Installer CI Status
     if: always()
-    needs: [build, test, e2e-test]
+    needs: [changes, build, test, e2e-test]
     runs-on: ubuntu-latest
     steps:
       - name: Check job results
         run: |
+          echo "changes: ${{ needs.changes.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "test: ${{ needs.test.result }}"
           echo "e2e-test: ${{ needs.e2e-test.result }}"
 
-          if [[ "${{ needs.build.result }}" == "failure" || \
+          if [[ "${{ needs.changes.result }}" == "failure" || \
+                "${{ needs.build.result }}" == "failure" || \
                 "${{ needs.test.result }}" == "failure" || \
                 "${{ needs.e2e-test.result }}" == "failure" ]]; then
             echo "One or more jobs failed"
