@@ -13,7 +13,7 @@ Before writing anything, collect the raw material:
 
 1. **Branch name** — extract any issue number (e.g., `42` from `feature/42-local-accounts`).
 2. **Commits** — `git log <base>..HEAD --oneline` to understand the full scope.
-3. **Diff against base** — `git diff <base>...HEAD` (or `--stat` first for an overview). Read enough of the diff to understand what changed and why.
+3. **Diff against base** — `git diff <base>...HEAD` (or `--stat` first for an overview). For a stacked PR, `<base>` is the parent PR branch, not the default branch. Read enough of the diff to understand what changed and why.
 4. **Related context** — conversation history, plan files, or linked issues that explain motivation.
 
 Do not rely solely on commit messages — they often lack the bigger picture. Read the actual changes.
@@ -34,9 +34,9 @@ Examples:
 
 ## Description Structure
 
-The PR body has three sections, plus an optional issue-closing line at the very end. All sections use plain, direct language — no filler, no marketing.
+Start from [assets/pr-description-template.md](assets/pr-description-template.md). The PR body has three sections, plus an optional issue-closing line at the end. All sections use plain, direct language — no filler, no marketing.
 
-In the **generated PR description**, prefix each section heading with a matching emoji: `📝 Summary`, `🔑 Key Decisions`, `🔄 Before & After`.
+In the **generated PR description**, use the fixed section headings `📝 Summary` and `🔄 Before & After`. Keep `Key Decisions` plain; its subheadings carry decision-specific emoji cues.
 
 ### Summary (required)
 
@@ -48,7 +48,7 @@ Describe only the final reviewer-visible outcome relative to the base branch.
 
 ### Key Decisions (required)
 
-Each significant component or area that was added, changed, or removed gets its own `###` sub-heading under this section. A short paragraph describes what changed and, when the rationale is not obvious from the ticket alone, why.
+Each significant component or area that was added, changed, or removed gets its own `###` sub-heading under this section. Prefix the sub-heading with an emoji that signals that decision, such as `🗄️` for storage or `🧹` for cleanup. Skip the emoji rather than using a vague or misleading one. A short paragraph describes what changed and, when the rationale is not obvious from the issue alone, why.
 
 If a change isn't worth more than a single bullet point, it's not worth calling out here — the diff speaks for itself.
 
@@ -63,10 +63,10 @@ Include rationale when:
 ```
 ## Key Decisions
 
-### Validation Service
+### ✅ Validation Service
 Added `validation.Service` to encapsulate all input validation rules, replacing the inline checks that lived in HTTP handlers. The inline approach had zero test coverage — extracting it makes the rules unit-testable without HTTP scaffolding.
 
-### Webhook Idempotency
+### 🔁 Webhook Idempotency
 Introduced an idempotency key on webhook delivery to prevent duplicates on retry. Chose optimistic locking over pessimistic since contention is rare and the retry cost is low.
 ```
 
@@ -79,7 +79,7 @@ Each row covers one meaningful area of change. Keep cells concise — short phra
 Every row must compare the base branch state to the final branch state. Never use intermediate states from the implementation process as the `Before` or `After` values.
 
 ```
-## Before & After
+## 🔄 Before & After
 
 | Area | Before | After |
 |------|--------|-------|
@@ -90,11 +90,33 @@ Every row must compare the base branch state to the final branch state. Never us
 
 ### Issue Link (conditional)
 
-If the branch name contains a GitHub issue number, add a closing keyword as the last line of the PR body. This auto-closes the issue when the PR merges.
+If the branch name contains a GitHub issue number, add a closing keyword as the last visible line of the PR body. Reference-style link definitions may follow it. This auto-closes the issue when the PR merges.
 
 Always use `Closes`: `Closes #42`
 
 Omit this line entirely if there is no associated issue.
+
+## Links
+
+Keep full `https://...` URLs out of prose. Use reference-style links for external resources, then collect each definition once at the very bottom of the body, after the optional `Closes #<issue-number>` line. This keeps the review narrative concise while preserving clickable references.
+
+```
+See the [migration guide][migration-guide] before reviewing this change.
+
+Closes #42
+
+[migration-guide]: https://example.com/migration-guide
+```
+
+Use GitHub-native `#<number>` references for other issues and PRs in the same repository rather than full URLs or reference-style definitions. Reference another PR only when it adds review context, especially for stack dependencies.
+
+## Stacked PRs
+
+A stacked PR branch is based on another open PR branch rather than the default branch. To describe only this PR's net change, compare it with its parent branch: `git diff <parent-branch>...HEAD`. Do not claim parent PR changes as this PR's own.
+
+Still target the repository's default branch unless instructed to target the parent branch. The parent-branch diff is for accurately describing the change, not necessarily for choosing the PR target.
+
+Declare stack dependencies in prose because GitHub has no stable, general PR-to-PR dependency mechanism. At the start of a dependent PR's Summary, name the parent with a native reference and state the merge order, for example: `Stacked on #123. Review and merge it first.` While the parent remains open, add a line naming its dependent follow-up PRs.
 
 ## Creating the PR
 
@@ -109,12 +131,15 @@ EOF
 
 - Target the repository's default branch unless instructed otherwise.
 - Do not add reviewers, labels, or milestones unless asked.
+- Create a draft PR only when explicitly asked.
 - If the branch has not been pushed yet, push it first with `git push -u origin HEAD`.
 
 ## Anti-Patterns
 
 - **Restating commits** — the commit log is one click away; the description should add context the commits lack.
 - **Describing session history instead of branch diff** — PR text must reflect `base...HEAD`, not the sequence of edits made while implementing the change.
+- **Claiming a stacked PR's parent changes as your own** — diff against the parent branch, not the default branch, so the description covers only this PR's net change.
 - **Listing every file changed** — the diff view exists for this; focus on *what* and *why*, not *where*.
 - **Vague summaries** — "various improvements" or "refactor code" tells the reviewer nothing.
 - **Over-long descriptions** — if the summary exceeds 5 lines, it is doing too much. Push detail into Key Decisions or Before & After.
+- **Spraying PR references** — use `#<number>` only where the related PR helps a reviewer understand the change or its dependencies.
