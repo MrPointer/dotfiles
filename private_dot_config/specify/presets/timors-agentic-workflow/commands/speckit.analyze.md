@@ -6,16 +6,15 @@ scripts:
   py: scripts/python/check_prerequisites.py --json --require-tasks --include-tasks
 ---
 
-## Preset Compatibility Preflight
+## Package Integrity Gate
 
-Before extension hooks, prerequisite scripts, dispatch, or any write, read
-`.specify/presets/timors-agentic-workflow/preset.yml` and obtain the active
-Spec Kit version with `specify --version`. Parse the manifest's
-`requires.speckit_version` range and fail closed unless the active version is
-within `>=0.12.11,<0.13.0`. If the manifest, version, or version range cannot
-be read and parsed, stop and report the compatibility failure. Do not invoke a
-hook, prerequisite script, reviewer, or write an artifact after a failed
-preflight.
+This is the first operational action. Before extension hooks, prerequisite
+scripts, artifact writes, progress or workspace mutation, or dispatch, read and
+complete the shared gate in
+`.specify/presets/timors-agentic-workflow/references/protocol-compatibility.md`.
+Do not duplicate, weaken, or partially apply its minimum-version or complete
+package-integrity checks. On any failure, report the failed required contract
+and stop before continuing.
 
 ## User Input
 

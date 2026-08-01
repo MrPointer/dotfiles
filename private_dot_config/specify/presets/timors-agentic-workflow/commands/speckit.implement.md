@@ -6,6 +6,16 @@ scripts:
   py: scripts/python/check_prerequisites.py --json --require-tasks --include-tasks
 ---
 
+## Package Integrity Gate
+
+This is the first operational action. Before extension hooks, prerequisite
+scripts, artifact writes, progress or workspace mutation, or dispatch, read and
+complete the shared gate in
+`.specify/presets/timors-agentic-workflow/references/protocol-compatibility.md`.
+Do not duplicate, weaken, or partially apply its minimum-version or complete
+package-integrity checks. On any failure, report the failed required contract
+and stop before continuing.
+
 ## User Input
 
 ```text
@@ -16,9 +26,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Mandatory Preset Preflight
 
-This is the first operational action of the command. Before reading or invoking extension hooks, running `{SCRIPT}`, creating or updating progress, mutating a workspace or project file, creating/switching a branch or worktree, or dispatching a worker:
+After the Package Integrity Gate passes, but before reading or invoking
+extension hooks, running `{SCRIPT}`, creating or updating progress, mutating a
+workspace or project file, creating or switching a branch or worktree, or
+dispatching a worker:
 
-1. Read `.specify/presets/timors-agentic-workflow/references/execution-lifecycle.md` and complete its entire Command-Wide Preflight in order, beginning with the compatibility gate in `protocol-compatibility.md`.
+1. Read `.specify/presets/timors-agentic-workflow/references/execution-lifecycle.md` and complete its remaining Command-Wide Preflight in order.
 2. For its structural validation step, consume the unchanged installed `.specify/presets/timors-agentic-workflow/references/artifact-validation.md` as the shared deterministic validator used by analyze. Do not reproduce its invariants in this command.
 
 Fail closed before hooks, scripts, writes, workspace operations, or dispatch. The analysis/report/approval checks establish structural consumption safety; do not perform a new semantic review or revoke an authorized result.

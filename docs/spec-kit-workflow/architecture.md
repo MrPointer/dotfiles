@@ -8,12 +8,13 @@ and delegated implementation through a versioned Markdown protocol. The preset
 is provider-neutral: it defines command and artifact contracts, while the
 active coding integration supplies concrete workers, models, skills, and
 permissions. Its preset and protocol versions are both `0.1.0`, and it supports
-Spec Kit `>=0.12.11,<0.13.0`.
+Spec Kit `>=0.12.11` without an upper support boundary.
 
 The implemented package and installation behavior have been validated with
 Spec Kit 0.12.11 and OpenCode 1.17.18. Runtime review and implementation have
 not yet been exercised, so this document describes the implemented contracts
-without claiming operational runtime support.
+without claiming operational runtime support. This validation is operational
+history, not a support boundary.
 
 ## Source, Installation, And Activation Boundaries
 
@@ -43,11 +44,12 @@ independent of the dotfiles repository after installation.
 For the verified OpenCode integration, those generated files are under
 `.opencode/commands/`.
 
-Spec Kit 0.12.11 has no in-place preset update command. A project receives
-global source changes only after an explicit remove/add refresh. Its
-`preset resolve` operation accepts template names only; command installation is
-instead evidenced by the generated integration commands and their
-project-relative installed-preset references.
+During the non-normative Spec Kit 0.12.11 installation validation, a project
+received global source changes through an explicit remove/add refresh, and
+`preset resolve` accepted template names only. Command installation was instead
+evidenced by generated integration commands and their project-relative
+installed-preset references. These observations are operational history, not
+future compatibility constraints.
 
 ```mermaid
 flowchart TD
@@ -68,16 +70,19 @@ flowchart TD
     commands -->|"runtime evidence and resume state"| progress
 ```
 
-## Versioned Command Boundary
+## Package-Integrity Command Boundary
 
-Every command composed or replaced by the preset begins with a compatibility
-preflight against the installed manifest and active `specify` version. A
-missing, malformed, or out-of-range version fails closed before extension
-hooks, prerequisite scripts, dispatch, or writes. This protects generated
-commands that remain in a project after the CLI changes. The accepted
-execution-plan protocol is likewise `0.1.0`; unsupported or malformed protocol
-artifacts return to their owning generation command rather than being migrated
-or inferred.
+Every command composed or replaced by the preset begins with the same complete
+installed package-integrity gate. It checks the manifest and active `specify`
+version, complete required package inventory, declared mappings and strategies,
+and preset/protocol identity before extension hooks, prerequisite scripts,
+dispatch, or writes. It fails closed only below the minimum, on an explicit
+installed-manifest exclusion, or when a required contract is missing, malformed,
+or incoherent. Newer untested CLI versions neither warn nor block. This protects
+generated commands that remain in a project after the CLI changes without
+changing required public integration behavior. The accepted execution-plan
+protocol is likewise `0.1.0`; unsupported or malformed protocol artifacts return
+to their owning generation command rather than being migrated or inferred.
 
 The preset deliberately uses different integration strategies by phase:
 
@@ -92,10 +97,11 @@ The preset deliberately uses different integration strategies by phase:
 - Auxiliary templates provide the execution plan, cumulative review reports,
   aggregate analysis, and local progress ledger used by those replacements.
 
-The installed package references are the executable policy boundary. Exact
-headings, tables, identifiers, vocabularies, state transitions, and approval
-combinations are normative in the [approved RFC][rfc] and [installed preset
-references][preset-references], not in this architecture overview.
+The installed preset references are the normative source for workflow behavior,
+artifact schemas, and CLI/package compatibility. In particular,
+[protocol compatibility][compatibility] owns the minimum-version and structural
+package-integrity contract. This architecture overview summarizes those
+boundaries without redefining them.
 
 ## Artifact Ownership
 
@@ -222,26 +228,20 @@ skills, consume their plan format, or depend on them at runtime.
 
 ## Verified Scope
 
-Validation established package and static behavior, not runtime operation:
-
-- 42 of 42 static protocol checks passed.
-- 77 of 77 temporary lifecycle checks passed, covering direct development
-  installation, remove/add refresh, all six template resolutions, generated
-  OpenCode plan/tasks/analyze/implement files, project-relative installed-preset
-  references, and trackable assets.
-- 13 of 13 chezmoi and ignore checks passed: the target package is included,
-  `specs/**/progress.md` is ignored, and tracked feature artifacts remain
-  trackable.
-- Runtime status and binding configuration class are both **Not exercised**.
+Deterministic validation covers the manifest, structural package inventory,
+command and template mappings, project installation and remove/add refresh, all
+six template resolutions, generated OpenCode commands, project-relative preset
+references, tracked asset behavior, and targeted chezmoi rendering. These checks
+do not invoke generated commands through a model and do not prove semantic
+runtime operation. Runtime review, binding, and implementation remain **Not
+exercised** until a normal feature completes them with real assigned work.
 
 See the [preset README][preset-readme] for installation and diagnostic commands.
-The [approved RFC][rfc] and focused [protocol compatibility][compatibility],
-[artifact validation][artifact-validation], [analysis and approval][analysis],
-and [execution lifecycle][execution] references define normative behavior.
+[Protocol compatibility][compatibility], [artifact validation][artifact-validation],
+[analysis and approval][analysis], and [execution lifecycle][execution] define
+their respective installed protocol contracts.
 
-[rfc]: ../rfcs/timors-agentic-workflow.md
 [preset-readme]: ../../private_dot_config/specify/presets/timors-agentic-workflow/README.md
-[preset-references]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/
 [compatibility]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/protocol-compatibility.md
 [artifact-validation]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/artifact-validation.md
 [analysis]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/analysis-and-approval.md

@@ -3,9 +3,8 @@
 ## Purpose
 
 This policy composes repository grounding into `/speckit.plan` while preserving
-the upstream 0.12.11 planning workflow. It does not replace the upstream
-research, data-model, contracts, quickstart, technical-context, or constitution
-work.
+the active lower-priority planning workflow. It does not replace its research,
+data-model, contracts, quickstart, technical-context, or constitution work.
 
 ## Plan Section Contract
 

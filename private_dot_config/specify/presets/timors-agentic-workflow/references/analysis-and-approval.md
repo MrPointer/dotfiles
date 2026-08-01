@@ -15,9 +15,9 @@ are `specs/<feature>/reviews/<role-id>.md` and `specs/<feature>/analysis.md`.
 
 ## Preflight Order
 
-Before extension hooks, prerequisite scripts, dispatch, or writes, run the
-mandatory compatibility preflight from `protocol-compatibility.md`. After the
-upstream before-hook and prerequisite script seams, but before dispatch or
+Before extension hooks, prerequisite scripts, dispatch, or writes, complete the
+mandatory shared package-integrity gate from `protocol-compatibility.md`. After
+the upstream before-hook and prerequisite script seams, but before dispatch or
 report writes, read and execute the complete deterministic protocol in
 `.specify/presets/timors-agentic-workflow/references/artifact-validation.md`.
 That file is the sole source of structural task, execution-plan, and selected

@@ -10,7 +10,7 @@ The command owns coordination directly. It MUST NOT invoke `executing-plans`, pr
 
 Before extension hooks, `{SCRIPT}`, progress creation or update, workspace or branch mutation, project-file mutation, or dispatch:
 
-1. Run the compatibility preflight in `protocol-compatibility.md`.
+1. Complete the shared package-integrity gate in `protocol-compatibility.md`.
 2. Resolve the current feature and its installed feature directory read-only, without a setup or prerequisite script. Require readable `spec.md`, `plan.md`, `tasks.md`, and `execution-plan.md`, plus every protocol artifact selected by those files.
 3. Read `.specify/presets/timors-agentic-workflow/references/artifact-validation.md` and rerun that complete deterministic validation against the current `tasks.md`, `execution-plan.md`, and every selected reviewer packet. This is the same installed validation source used by `speckit.analyze`; do not copy, abbreviate, or define a second invariant set here.
 4. Require the latest analysis report for this exact artifact set to have final status `Complete`. Match the exact selected core and project roles, each role's `Role Verdict`, and every applicable report round. Reject missing, extra, stale, duplicated, or mismatched role/report identities.

@@ -5,12 +5,15 @@ grounded planning and validated execution artifacts while preserving upstream
 requirements and clarification commands.
 
 - **Preset version**: `0.1.0`
-- **Spec Kit compatibility**: `>=0.12.11,<0.13.0`
+- **Spec Kit compatibility**: `>=0.12.11`
 - **Protocol version**: `0.1.0`
 
 The installed manifest is the compatibility authority. Every composed or
-replaced command checks the installed manifest and `specify --version` before
-hooks, scripts, dispatch, or writes, and fails closed outside that range.
+replaced command completes the installed shared package-integrity gate before
+hooks, scripts, dispatch, or writes. The gate fails only for a version below the
+minimum, an explicit installed-manifest exclusion, or a missing, malformed, or
+incoherent required package contract. A newer untested CLI version does not
+produce a warning, prompt, or block.
 
 ## Provided Surfaces
 
@@ -28,8 +31,9 @@ hooks, scripts, dispatch, or writes, and fails closed outside that range.
 | `progress-template` | Replaced | `templates/progress-template.md` |
 
 `speckit.specify` and `speckit.clarify` remain upstream. The composed plan
-retains upstream planning behavior and adds grounding; the task, analysis, and
-implementation replacements operate on the preset protocol.
+retains active lower-layer planning behavior and adds grounding; its native
+`wrap` inherits lower-layer `scripts` and `agent_scripts` metadata. The task,
+analysis, and implementation replacements operate on the preset protocol.
 
 ## Install In A Project
 
@@ -47,8 +51,8 @@ project's `.specify/presets/timors-agentic-workflow/` and generates the active
 integration's command files. The copy is independent of the global source;
 global changes take effect in a project only after an explicit refresh.
 
-Spec Kit `0.12.11` has no preset-update command. Refresh a development install
-by removing and adding it again, never by assuming an in-place update:
+Refresh a development install by removing and adding it again when distributing
+a changed preset source:
 
 ```sh
 specify preset remove timors-agentic-workflow
@@ -71,9 +75,10 @@ specify preset resolve progress-template
 ```
 
 All six listed templates should resolve through `timors-agentic-workflow`.
-Spec Kit `0.12.11` `preset resolve` is template-only, so command names report
-as not found rather than identifying their source. Verify the four installed
-command surfaces by checking the generated OpenCode files for project-relative
+During the non-normative Spec Kit `0.12.11` installation validation, `preset
+resolve` accepted templates only, so command names reported as not found rather
+than identifying their source. Verify the four installed command surfaces by
+checking the generated OpenCode files for project-relative
 `.specify/presets/timors-agentic-workflow/` references; those files must never
 contain the global source path. `speckit.specify` and `speckit.clarify` remain
 upstream and outside this preset.
@@ -123,12 +128,11 @@ state retained, or explicitly abandon back to the recorded execution base.
 Never automatically delete branches, worktrees, checkpoint refs, dirty output,
 progress, or feature artifacts.
 
-For a CLI upgrade, use the preset-first sequence: review upstream
-command/template changes, release a preset whose manifest and preflight cover
-the new compatibility range, refresh the project-installed preset while using
-a compatible CLI, verify list/info/resolve results, and only then upgrade or use
-the new CLI. If the CLI is upgraded first, installed enhanced commands fail
-closed until a compatible preset is installed.
+When changing CLI versions, retain the installed preset unless its shared gate
+reports a concrete failure. Refresh a project-installed preset only to
+distribute changed preset source, then verify its package and resolution state.
+The preset does not require a review or release for each new CLI minor version;
+a future manifest may add a constraint only for a known incompatibility.
 
 ## No-Probe Semantics And Limitations
 
@@ -138,11 +142,11 @@ metadata and configuration; no suitability probe, calibration task, canary,
 sacrificial invocation, or model call occurs before real assigned work. The
 first dispatch is the real review or execution assignment.
 
-Installation and resolution validation prove package compatibility, not runtime
-operation. Operational support requires a normal feature to complete the
-required real-work handshake. The preset does not migrate existing artifacts,
-does not automatically refresh project copies, and cannot safely be removed
-during active execution.
+Installation and resolution validation prove packaging and materialization, not
+semantic compatibility or runtime operation. Operational support requires a
+normal feature to complete the required real-work handshake. The preset does
+not migrate existing artifacts, does not automatically refresh project copies,
+and cannot safely be removed during active execution.
 
 ## Operational Status
 
@@ -150,7 +154,8 @@ during active execution.
 > binding guarantee. It contains no provider, model, or sensitive binding data.
 
 - **Installation**: Verified by temporary source-to-target materialization,
-  project installation, resolution, refresh, and tracking checks.
+  project installation, resolution, refresh, and tracking checks. This is
+  operational history, not a compatibility boundary.
 - **Runtime**: Not yet exercised.
 - **Preset version**: `0.1.0`
 - **Spec Kit version**: `0.12.11`
