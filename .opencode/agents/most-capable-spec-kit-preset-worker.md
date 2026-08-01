@@ -2,7 +2,7 @@
 name: most-capable-spec-kit-preset-worker
 description: "Implements the task, analysis, and delegated-execution protocols of the chezmoi-managed timors-agentic-workflow Spec Kit preset in this repository."
 mode: subagent
-model: openai/gpt-5.6-sol
+model: openai/gpt-5.6-terra
 reasoningEffort: high
 permission:
   edit: allow
