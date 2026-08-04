@@ -1,0 +1,34 @@
+schema_version: "1.0"
+
+preset:
+  id: "canonical-agents-adapter"
+  name: "Canonical AGENTS Adapter"
+  version: "0.1.0"
+  description: "A standalone Spec Kit adapter that resolves repository AGENTS.md governance without copying or changing project rules."
+  author: "Timor Gruber"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.12.11"
+
+provides:
+  templates:
+    - type: "template"
+      name: "constitution-template"
+      file: "templates/constitution-template.md"
+      description: "Provide a fixed constitution that delegates to repository and Spec Kit-local governance."
+      strategy: "replace"
+      replaces: "constitution-template"
+
+    - type: "command"
+      name: "speckit.constitution"
+      file: "commands/speckit.constitution.md"
+      description: "Present effective governance and manage only requested Spec Kit-local rules."
+      strategy: "replace"
+      replaces: "speckit.constitution"
+
+tags:
+  - "governance"
+  - "constitution"
+  - "adapter"
+  - "spec-kit"
