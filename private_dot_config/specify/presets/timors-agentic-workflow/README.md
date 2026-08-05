@@ -1,10 +1,10 @@
 # Timor's Agentic Workflow
 
 `timors-agentic-workflow` is a project-installed Spec Kit preset that adds
-grounded planning and validated execution artifacts while preserving upstream
-requirements and clarification commands.
+grounded planning, optional human review, and validated execution artifacts
+while preserving upstream requirements and clarification commands.
 
-- **Preset version**: `0.1.0`
+- **Preset version**: `0.2.0`
 - **Spec Kit compatibility**: `>=0.12.11`
 - **Protocol version**: `0.1.0`
 
@@ -19,6 +19,7 @@ produce a warning, prompt, or block.
 
 | Surface | Strategy | Installed source |
 |---------|----------|------------------|
+| `speckit.specify` | Composed (`wrap`) | `commands/speckit.specify.md` |
 | `speckit.plan` | Composed (`wrap`) | `commands/speckit.plan.md` |
 | `plan-template` | Composed (`wrap`) | `templates/plan-template.md` |
 | `speckit.tasks` | Replaced | `commands/speckit.tasks.md` |
@@ -30,10 +31,19 @@ produce a warning, prompt, or block.
 | `review-report-template` | Replaced | `templates/review-report-template.md` |
 | `progress-template` | Replaced | `templates/progress-template.md` |
 
-`speckit.specify` and `speckit.clarify` remain upstream. The composed plan
-retains active lower-layer planning behavior and adds grounding; its native
-`wrap` inherits lower-layer `scripts` and `agent_scripts` metadata. The task,
-analysis, and implementation replacements operate on the preset protocol.
+The composed specify command retains active lower-layer specification behavior
+and adds optional human review at natural completion. The composed plan retains
+active lower-layer planning behavior, adds grounding, and offers the same
+optional review at natural completion. Both native `wrap` commands inherit
+lower-layer `scripts` and `agent_scripts` metadata. `speckit.clarify` remains
+upstream. The task, analysis, and implementation replacements operate on the
+preset protocol; analyze does not offer this human-review interaction.
+
+The review offer is independent for specification and planning: users may take
+a guided walkthrough, review the key artifacts independently, or continue
+without either. It stores no preference, approval record, or workflow gate.
+The shared `references/human-review.md` owns the interaction mechanics, while
+the commands name phase-specific conceptual concerns.
 
 ## Install In A Project
 
@@ -77,11 +87,11 @@ specify preset resolve progress-template
 All six listed templates should resolve through `timors-agentic-workflow`.
 During the non-normative Spec Kit `0.12.11` installation validation, `preset
 resolve` accepted templates only, so command names reported as not found rather
-than identifying their source. Verify the four installed command surfaces by
+than identifying their source. Verify the five installed command surfaces by
 checking the generated OpenCode files for project-relative
 `.specify/presets/timors-agentic-workflow/` references; those files must never
-contain the global source path. `speckit.specify` and `speckit.clarify` remain
-upstream and outside this preset.
+contain the global source path. `speckit.clarify` remains upstream and outside
+this preset.
 
 ## Artifact And State Ownership
 
@@ -157,7 +167,7 @@ and cannot safely be removed during active execution.
   project installation, resolution, refresh, and tracking checks. This is
   operational history, not a compatibility boundary.
 - **Runtime**: Not yet exercised.
-- **Preset version**: `0.1.0`
+- **Preset version**: `0.2.0`
 - **Spec Kit version**: `0.12.11`
 - **OpenCode version**: `1.17.18`
 - **Binding configuration class**: Not exercised.
