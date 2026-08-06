@@ -9,7 +9,7 @@ and declared command/template mappings. The current package requires Spec Kit
 `>=0.12.11`; it has no upper support boundary.
 
 - Preset ID: `timors-agentic-workflow`
-- Preset version: `0.1.0`
+- Preset version: `0.2.0`
 - Execution-plan protocol version: `0.1.0`
 
 ## Shared Minimum-Version And Package-Integrity Gate
@@ -52,15 +52,16 @@ or exact file contents.
 | Category | Required installed relative paths |
 |----------|----------------------------------|
 | Root files | `LICENSE`; `README.md`; `preset.yml` |
-| Commands | `commands/speckit.plan.md`; `commands/speckit.tasks.md`; `commands/speckit.analyze.md`; `commands/speckit.implement.md` |
+| Commands | `commands/speckit.specify.md`; `commands/speckit.plan.md`; `commands/speckit.tasks.md`; `commands/speckit.analyze.md`; `commands/speckit.implement.md` |
 | Templates | `templates/plan-template.md`; `templates/tasks-template.md`; `templates/execution-plan-template.md`; `templates/analysis-template.md`; `templates/review-report-template.md`; `templates/progress-template.md` |
 | Reviewer packets | `reviewers/artifact-fidelity.md`; `reviewers/decomposition-design.md`; `reviewers/plan-clarity.md` |
-| References | `references/analysis-and-approval.md`; `references/artifact-validation.md`; `references/checkpoint-integration.md`; `references/concurrency-policy.md`; `references/decomposition.md`; `references/documentation-planning.md`; `references/execution-lifecycle.md`; `references/model-and-worker-selection.md`; `references/planning-grounding.md`; `references/protocol-compatibility.md`; `references/testable-work.md`; `references/workspace-isolation.md` |
+| References | `references/analysis-and-approval.md`; `references/artifact-validation.md`; `references/checkpoint-integration.md`; `references/concurrency-policy.md`; `references/decomposition.md`; `references/documentation-planning.md`; `references/execution-lifecycle.md`; `references/human-review.md`; `references/model-and-worker-selection.md`; `references/planning-grounding.md`; `references/protocol-compatibility.md`; `references/testable-work.md`; `references/workspace-isolation.md` |
 
 ### Manifest Mapping Table
 
 | Type | Name | File | Strategy |
 |------|------|------|----------|
+| command | `speckit.specify` | `commands/speckit.specify.md` | `wrap` |
 | command | `speckit.plan` | `commands/speckit.plan.md` | `wrap` |
 | template | `plan-template` | `templates/plan-template.md` | `wrap` |
 | command | `speckit.tasks` | `commands/speckit.tasks.md` | `replace` |
@@ -74,16 +75,20 @@ or exact file contents.
 
 ### Structural Coherence Rules
 
-- The manifest binds the four command source files to exactly
-  `speckit.plan`, `speckit.tasks`, `speckit.analyze`, and
+- The manifest binds the five command source files to exactly
+  `speckit.specify`, `speckit.plan`, `speckit.tasks`, `speckit.analyze`, and
   `speckit.implement`. Each source's first body phase is `## Package Integrity
   Gate` and consumes this installed `references/protocol-compatibility.md`
   before any command-specific body phase.
-- `speckit.plan` and `plan-template` are the only `wrap` mappings. The plan
-  source retains `{CORE_TEMPLATE}` and omits local `scripts` and
-  `agent_scripts` metadata so native composition inherits those fields from the
-  active lower-priority command. The `plan-template` retains its core
-  composition placeholder.
+- `speckit.specify`, `speckit.plan`, and `plan-template` are the only `wrap`
+  mappings. The specify and plan sources retain `{CORE_TEMPLATE}` and omit local
+  `scripts` and `agent_scripts` metadata so native composition inherits those
+  fields from the active lower-priority command. The `plan-template` retains
+  its core composition placeholder.
+- `speckit.specify` and `speckit.plan` each consume the installed shared
+  `references/human-review.md` only after their respective upstream artifact
+  generation and validation complete. The reference governs optional review
+  mechanics; each command owns phase-specific conceptual guidance.
 - `speckit.tasks`, `speckit.analyze`, `speckit.implement`, and
   `tasks-template` are `replace` mappings. The task command declares `sh`,
   `ps`, and `py` setup variants.

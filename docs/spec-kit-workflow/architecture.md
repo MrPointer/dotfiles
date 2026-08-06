@@ -3,12 +3,13 @@
 ## Overview
 
 `timors-agentic-workflow` is a project-installed Spec Kit preset that connects
-grounded planning, reviewed execution decomposition, explicit human approval,
-and delegated implementation through a versioned Markdown protocol. The preset
-is provider-neutral: it defines command and artifact contracts, while the
-active coding integration supplies concrete workers, models, skills, and
-permissions. Its preset and protocol versions are both `0.1.0`, and it supports
-Spec Kit `>=0.12.11` without an upper support boundary.
+grounded planning, optional human review, reviewed execution decomposition,
+explicit human approval, and delegated implementation through a versioned
+Markdown protocol. The preset is provider-neutral: it defines command and
+artifact contracts, while the active coding integration supplies concrete
+workers, models, skills, and permissions. Its preset version is `0.2.0` and its
+protocol version is `0.1.0`; it supports Spec Kit `>=0.12.11` without an upper
+support boundary.
 
 The implemented package and installation behavior have been validated with
 Spec Kit 0.12.11 and OpenCode 1.17.18. Runtime review and implementation have
@@ -86,10 +87,12 @@ to their owning generation command rather than being migrated or inferred.
 
 The preset deliberately uses different integration strategies by phase:
 
-- `/speckit.specify` and `/speckit.clarify` remain upstream and continue to own
-  requirements and product clarification.
+- `/speckit.specify` composes with upstream specification generation, retaining
+  its behavior and adding optional human review at natural completion;
+  `/speckit.clarify` remains upstream and owns product clarification.
 - `/speckit.plan` and `plan-template` compose with upstream planning, retaining
-  its design artifacts and adding verified grounding and integration context.
+  its design artifacts, adding verified grounding and integration context, and
+  offering optional human review at natural completion.
 - `/speckit.tasks`, `tasks-template`, `/speckit.analyze`, and
   `/speckit.implement` replace their upstream surfaces because decomposition,
   independent review, approval, and delegated execution share a stronger
@@ -102,6 +105,19 @@ artifact schemas, and CLI/package compatibility. In particular,
 [protocol compatibility][compatibility] owns the minimum-version and structural
 package-integrity contract. This architecture overview summarizes those
 boundaries without redefining them.
+
+### Optional Human Review
+
+At the natural completion of specification and planning, after artifacts are
+generated and validated, each phase independently offers a guided walkthrough
+or independent review. Either can be declined. The interaction stores no
+preference, approval record, or workflow gate, and does not apply to analysis.
+The installed `human-review.md` reference owns the mechanics: select small,
+consequential review units using judgment; pause after each; update and
+revalidate current-phase artifacts once a unit is settled; then continue normal
+completion reporting and handoffs. Command projections own the phase-specific
+conceptual focus, while supporting artifacts remain evidence sources rather
+than mandatory walkthrough stops.
 
 ## Artifact Ownership
 
@@ -229,12 +245,13 @@ skills, consume their plan format, or depend on them at runtime.
 ## Verified Scope
 
 Deterministic validation covers the manifest, structural package inventory,
-command and template mappings, project installation and remove/add refresh, all
-six template resolutions, generated OpenCode commands, project-relative preset
-references, tracked asset behavior, and targeted chezmoi rendering. These checks
-do not invoke generated commands through a model and do not prove semantic
-runtime operation. Runtime review, binding, and implementation remain **Not
-exercised** until a normal feature completes them with real assigned work.
+command and template mappings, optional human-review command/reference
+projections, project installation and remove/add refresh, all six template
+resolutions, generated OpenCode commands, project-relative preset references,
+tracked asset behavior, and targeted chezmoi rendering. These checks do not
+invoke generated commands through a model and do not prove semantic runtime
+operation. Runtime review, binding, and implementation remain **Not exercised**
+until a normal feature completes them with real assigned work.
 
 See the [preset README][preset-readme] for installation and diagnostic commands.
 [Protocol compatibility][compatibility], [artifact validation][artifact-validation],
