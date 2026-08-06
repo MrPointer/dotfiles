@@ -201,8 +201,14 @@ Acceptance Criteria, and Verification must be substantive and nonempty.
   includes `read`; a group that changes files includes `edit`.
 - The master Execution Groups `Model` field owns the tier and is exactly
   `Cheapest`, `Mid-tier`, or `Most capable`. Detail `Execution Model` contains
-  only substantive rationale for that selected tier; it must not duplicate or
-  equal a tier token.
+  exactly these two nonempty bold lines, in order:
+
+  ```text
+  **Model Tier**: <tier>
+  **Rationale**: <substantive provider-neutral rationale>
+  ```
+
+  `<tier>` exactly matches that group's master `Model` value.
 - `Primary Files` is a nonempty comma-separated list of project-relative paths
   and exactly matches that group's File Ownership projection.
 - `Test Expectation` is exactly one allowed form: `Tests required`,

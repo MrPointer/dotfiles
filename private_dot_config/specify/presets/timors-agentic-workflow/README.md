@@ -4,7 +4,7 @@
 grounded planning, optional human review, and validated execution artifacts
 while preserving upstream requirements and clarification commands.
 
-- **Preset version**: `0.2.0`
+- **Preset version**: `0.2.1`
 - **Spec Kit compatibility**: `>=0.12.11`
 - **Protocol version**: `0.1.0`
 
@@ -167,7 +167,7 @@ and cannot safely be removed during active execution.
   project installation, resolution, refresh, and tracking checks. This is
   operational history, not a compatibility boundary.
 - **Runtime**: Not yet exercised.
-- **Preset version**: `0.2.0`
+- **Preset version**: `0.2.1`
 - **Spec Kit version**: `0.12.11`
 - **OpenCode version**: `1.17.18`
 - **Binding configuration class**: Not exercised.

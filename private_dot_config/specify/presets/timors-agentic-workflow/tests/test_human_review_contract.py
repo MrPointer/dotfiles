@@ -52,7 +52,7 @@ def test_preset_version_boundary_keeps_protocol_stable():
     manifest = text(MANIFEST)
     execution_plan_template = text(EXECUTION_PLAN_TEMPLATE)
 
-    check('version: "0.2.0"' in manifest, "preset version is not 0.2.0")
+    check('version: "0.2.1"' in manifest, "preset version is not 0.2.1")
     check(
         'protocol_version: "0.1.0"' in manifest,
         "execution-plan protocol version is not 0.1.0",
@@ -60,6 +60,21 @@ def test_preset_version_boundary_keeps_protocol_stable():
     check(
         "**Preset Protocol Version**: 0.1.0" in execution_plan_template,
         "execution-plan template protocol version is not 0.1.0",
+    )
+
+
+def test_execution_model_repeats_the_group_tier_and_rationale():
+    execution_plan_template = text(EXECUTION_PLAN_TEMPLATE)
+    expected_model = (
+        "#### Execution Model\n\n"
+        "**Model Tier**: Mid-tier\n"
+        "**Rationale**: [Provider-neutral rationale for the semantic tier selected "
+        "in Execution Groups.]"
+    )
+
+    check(
+        execution_plan_template.count(expected_model) == 2,
+        "execution-model sections must contain matching model-tier and rationale lines",
     )
 
 
@@ -176,6 +191,7 @@ def test_current_phase_ownership_prevents_specification_reconfirmation():
 def main():
     test_manifest_inventory_and_command_mappings()
     test_preset_version_boundary_keeps_protocol_stable()
+    test_execution_model_repeats_the_group_tier_and_rationale()
     test_completion_projections_preserve_upstream_and_exclude_analyze()
     test_phase_guidance_and_docs_are_present()
     test_current_phase_ownership_prevents_specification_reconfirmation()

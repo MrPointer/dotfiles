@@ -7,7 +7,7 @@ grounded planning, optional human review, reviewed execution decomposition,
 explicit human approval, and delegated implementation through a versioned
 Markdown protocol. The preset is provider-neutral: it defines command and
 artifact contracts, while the active coding integration supplies concrete
-workers, models, skills, and permissions. Its preset version is `0.2.0` and its
+workers, models, skills, and permissions. Its preset version is `0.2.1` and its
 protocol version is `0.1.0`; it supports Spec Kit `>=0.12.11` without an upper
 support boundary.
 

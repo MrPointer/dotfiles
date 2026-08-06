@@ -96,7 +96,8 @@ flowchart LR
 
 #### Execution Model
 
-[Provider-neutral rationale for the semantic tier selected in Execution Groups.]
+**Model Tier**: Mid-tier
+**Rationale**: [Provider-neutral rationale for the semantic tier selected in Execution Groups.]
 
 #### Prerequisites
 
@@ -162,7 +163,8 @@ None
 
 #### Execution Model
 
-[Provider-neutral rationale for the semantic tier selected in Execution Groups.]
+**Model Tier**: Mid-tier
+**Rationale**: [Provider-neutral rationale for the semantic tier selected in Execution Groups.]
 
 #### Prerequisites
 

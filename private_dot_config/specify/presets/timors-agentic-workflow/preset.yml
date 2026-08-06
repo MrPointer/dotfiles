@@ -4,7 +4,7 @@ protocol_version: "0.1.0"
 preset:
   id: "timors-agentic-workflow"
   name: "Timor's Agentic Workflow"
-  version: "0.2.0"
+  version: "0.2.1"
   description: "Grounded planning, optional human review, and validated execution artifacts for Spec Kit."
   author: "Timor Gruber"
   license: "MIT"
