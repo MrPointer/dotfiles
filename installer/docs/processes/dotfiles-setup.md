@@ -2,7 +2,7 @@
 
 ## Overview
 
-Installs chezmoi, prepares the [chezmoi data][domain-data-schema] configuration from all collected input, clones the dotfiles repository, and applies the dotfiles to the home directory. This is the final step of the [installation process][installation] — everything before this was preparation for this moment.
+Installs chezmoi, produces the shared [chezmoi data contract][chezmoi-data-contract] from collected input, clones the dotfiles repository, and applies the dotfiles to the home directory. This is the main handoff from installer orchestration to template rendering in the [installation process][installation].
 
 ## Trigger
 
@@ -70,12 +70,7 @@ flowchart TD
    | `SpecificWorkProfile` | Computed: `~/.work/{work_name}/profile` (if work env) |
 
 5. **Create config directory** — Ensure `~/.config/chezmoi/` exists
-6. **Write config file** — Map the data struct to chezmoi's [data schema][domain-data-schema] and write `~/.config/chezmoi/chezmoi.toml`:
-   - `data.personal.email`, `data.personal.full_name`
-   - `data.personal.work_env`, `data.personal.work_name`, `data.personal.work_email` (if work env)
-   - `data.gpg.signing_key` (if GPG key selected)
-   - `data.system.shell`
-   - `data.system.work_generic_dotfiles_profile`, `data.system.work_specific_dotfiles_profile` (if work env)
+6. **Write config file** — Map the data struct to the [chezmoi data contract][chezmoi-data-contract] and write `~/.config/chezmoi/chezmoi.toml`. The contract owns the exact keys, presence rules, consumers, and known producer-consumer drift.
 
 ### Step 3: Apply Dotfiles
 
@@ -144,4 +139,4 @@ Result: All dotfiles are applied — shell configs, git config, work profiles, S
 
 [installation]: installation.md
 [gpg-setup]: gpg-setup.md
-[domain-data-schema]: ../domain.md#chezmoi-data-schema
+[chezmoi-data-contract]: ../../../docs/contracts/chezmoi-data.md

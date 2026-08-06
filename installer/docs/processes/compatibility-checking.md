@@ -7,7 +7,7 @@ Verifies that the current system can run the dotfiles setup: detects the OS and 
 ## Trigger
 
 Either:
-- The user runs `dotfiles-installer install` (automatically as step 1)
+- The user runs `dotfiles-installer install` (automatically during its compatibility phase)
 - The user runs `dotfiles-installer check-compatibility` (standalone check)
 
 ## Actors
@@ -100,6 +100,6 @@ Result: A `SystemInfo` struct containing OS name, distro name, architecture, and
 - `exec.LookPath` for each prerequisite command
 - `runtime.GOOS` and `runtime.GOARCH`
 
-[compatibility-yaml]: ../../installer/internal/config/compatibility.yaml
+[compatibility-yaml]: ../../internal/config/compatibility.yaml
 [installation]: installation.md
 [prereq-install]: prerequisite-installation.md

@@ -87,7 +87,7 @@ Result: A concrete package name and type that the package manager can install di
 - System info (distro name) must be detected before resolution
 - A package manager must be active (determines which mapping branch to follow)
 
-[packagemap-yaml]: ../../installer/internal/config/packagemap.yaml
+[packagemap-yaml]: ../../internal/config/packagemap.yaml
 [installation]: installation.md
 [domain-pkg-resolution]: ../domain.md#package-resolution
 [domain-pkg-types]: ../domain.md#package-resolution

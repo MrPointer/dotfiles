@@ -115,6 +115,6 @@ Result: Selected tools installed. Failures logged but install continues.
 [installation]: installation.md
 [dotfiles-setup]: dotfiles-setup.md
 [pkg-resolution]: package-resolution.md
-[packagemap-yaml]: ../../installer/internal/config/packagemap.yaml
-[tools-yaml]: ../../installer/internal/config/tools.yaml
-[domain-optional-tools]: ../domain.md#optional-tools
+[packagemap-yaml]: ../../internal/config/packagemap.yaml
+[tools-yaml]: ../../internal/config/tools.yaml
+[domain-optional-tools]: ../domain.md#optional-tool

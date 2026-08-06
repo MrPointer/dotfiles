@@ -36,7 +36,7 @@ Each package under `lib/` owns one domain area:
 | [`packageresolver`][packageresolver] | Abstract key → concrete package name resolution | `Resolver` (struct, not interface — internal use only) |
 | [`shell`][shell] | Shell installation and default-setting | `ShellInstaller`, `ShellResolver`, `ShellChanger` |
 | [`gpg`][gpg] | GPG client installation and key management | `GpgInstaller`, `GpgClient` |
-| [`dotfilesmanager`][dotfilesmanager] | Chezmoi integration | `DotfilesManager` (composed of `DotfilesInstaller`, `DotfilesDataInitializer`, `DotfilesApplier`) |
+| [`dotfilesmanager`][dotfilesmanager] | Chezmoi integration and production of the shared [chezmoi data contract][chezmoi-data-contract] | `DotfilesManager` (composed of `DotfilesInstaller`, `DotfilesDataInitializer`, `DotfilesApplier`) |
 | [`toolsinstaller`][toolsinstaller] | Optional tool installation | `ToolsInstaller` — resolve and install user-selected CLI tools |
 
 **Dependency direction within lib**: Packages depend on `pkgmanager` (the interface), never on each other's concrete implementations. For example, `shell` accepts a `PackageManager` — it doesn't know whether it's brew or apt.
@@ -179,18 +179,19 @@ flowchart TD
 - **Privilege boundaries**: The installer itself runs as a regular user. Privileged operations (package installation, shell registration) use explicit privilege escalation via `sudo`/`doas`. The escalator detects which tool is available.
 
 [installation]: processes/installation.md
-[domain-display-modes]: domain.md#display-modes
-[compatibility-yaml]: ../installer/internal/config/compatibility.yaml
-[packagemap-yaml]: ../installer/internal/config/packagemap.yaml
+[domain-display-modes]: domain.md#display-mode
+[compatibility-yaml]: ../internal/config/compatibility.yaml
+[packagemap-yaml]: ../internal/config/packagemap.yaml
 [huh]: https://github.com/charmbracelet/huh
-[pkgmanager]: ../installer/lib/pkgmanager
-[brew]: ../installer/lib/brew
-[apt]: ../installer/lib/apt
-[dnf]: ../installer/lib/dnf
-[compatibility]: ../installer/lib/compatibility
-[packageresolver]: ../installer/lib/packageresolver
-[shell]: ../installer/lib/shell
-[gpg]: ../installer/lib/gpg
-[dotfilesmanager]: ../installer/lib/dotfilesmanager
-[toolsinstaller]: ../installer/lib/toolsinstaller
-[tools-yaml]: ../installer/internal/config/tools.yaml
+[pkgmanager]: ../lib/pkgmanager
+[brew]: ../lib/brew
+[apt]: ../lib/apt
+[dnf]: ../lib/dnf
+[compatibility]: ../lib/compatibility
+[packageresolver]: ../lib/packageresolver
+[shell]: ../lib/shell
+[gpg]: ../lib/gpg
+[dotfilesmanager]: ../lib/dotfilesmanager
+[toolsinstaller]: ../lib/toolsinstaller
+[tools-yaml]: ../internal/config/tools.yaml
+[chezmoi-data-contract]: ../../docs/contracts/chezmoi-data.md

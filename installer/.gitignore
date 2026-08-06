@@ -27,6 +27,7 @@
 !LICENSE
 !img/**/*
 !docs/img/**/*
+!docs/**/*.md
 
 # Typos
 !.typos.toml

@@ -4,6 +4,12 @@ Development guide for the dotfiles-installer Go codebase.
 
 For general Go coding conventions and testing patterns, see the `writing-go-code` skill.
 
+## Documentation
+
+- Start installer work with `docs/domain.md`, `docs/architecture.md`, and the relevant flow under `docs/processes/`.
+- Installer documentation is scoped to this Go application. Dotfile and shell-runtime documentation lives under `../docs/dotfiles/`.
+- Consult `../docs/contracts/chezmoi-data.md` only when changing the data produced for chezmoi or the templates that consume it; that file is the canonical cross-boundary contract.
+
 ## Project Structure
 
 ```

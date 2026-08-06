@@ -11,7 +11,7 @@ A new Zsh shell session starts — either interactive (terminal) or non-interact
 ## Actors
 
 - **Zsh**: Executes `.zshenv` for all sessions, then `.zshrc` for interactive sessions
-- **Chezmoi templates**: Generate the actual shell files from [`dot_zshenv.tmpl`][zshenv-tmpl] and [`dot_zshrc.tmpl`][zshrc-tmpl] using [chezmoi data][domain-data-schema]
+- **Chezmoi templates**: Generate the actual shell files from [`dot_zshenv.tmpl`][zshenv-tmpl] and [`dot_zshrc.tmpl`][zshrc-tmpl] using the shared [chezmoi data contract][chezmoi-data-contract]
 - **Homebrew**: Provides the `shellenv` command that sets up PATH and environment
 - **Sheldon**: Plugin manager that loads Zsh plugins in interactive sessions
 
@@ -114,7 +114,7 @@ flowchart TD
 #### Work profile not readable
 
 - **Trigger**: `work_env` is true but the profile file doesn't exist or isn't readable
-- **At step**: `.zshenv` step 6
+- **At step**: `.zshenv` step 5
 - **Handling**: The `[[ -r ... ]]` guard skips sourcing. Shell starts without work config.
 - **User impact**: Work-specific environment variables and paths won't be set. Run the installer with `--work-env` to regenerate.
 
@@ -141,11 +141,11 @@ flowchart TD
 ## Dependencies
 
 - Chezmoi must have applied the dotfiles (`.zshenv` and `.zshrc` are generated from templates)
-- [Chezmoi data][domain-data-schema] must be populated (templates reference `.personal.*`, `.system.*`, `.chezmoi.*`)
+- The [chezmoi data contract][chezmoi-data-contract] must be populated for installer-owned values; templates also reference chezmoi's built-in `.chezmoi.*` data
 
-[zshenv-tmpl]: ../../dot_zshenv.tmpl
-[zshrc-tmpl]: ../../dot_zshrc.tmpl
-[sheldon-plugins]: ../../dot_config/sheldon/plugins.toml
-[domain-data-schema]: ../domain.md#chezmoi-data-schema
+[zshenv-tmpl]: ../../../dot_zshenv.tmpl
+[zshrc-tmpl]: ../../../dot_zshrc.tmpl
+[sheldon-plugins]: ../../../private_dot_config/sheldon/plugins.toml
+[chezmoi-data-contract]: ../../contracts/chezmoi-data.md
 [domain-deferred-brew]: ../domain.md#deferred-homebrew-loading
 [work-env-loading]: work-environment-loading.md

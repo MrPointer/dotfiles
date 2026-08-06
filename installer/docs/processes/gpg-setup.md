@@ -2,7 +2,7 @@
 
 ## Overview
 
-Ensures a GPG client is installed and sets up a signing key for the user. Either creates a new key pair interactively or lets the user select from existing keys. The selected key is stored for use in [chezmoi data initialization][dotfiles-setup]. Skipped entirely in non-interactive mode.
+Ensures a GPG client is installed and sets up a signing key for the user. Either creates a new key pair interactively or lets the user select from existing keys. The selected key is passed to [chezmoi data initialization][dotfiles-setup]. Key selection is skipped in non-interactive mode.
 
 ## Trigger
 
@@ -113,4 +113,3 @@ Result: A GPG signing key ID is stored in `selectedGpgKey` for use by the [dotfi
 
 [installation]: installation.md
 [dotfiles-setup]: dotfiles-setup.md
-[domain-data-schema]: ../domain.md#chezmoi-data-schema

@@ -118,5 +118,5 @@ Result: Missing prerequisites installed. The caller re-checks compatibility to c
 [compat-check]: compatibility-checking.md
 [installation]: installation.md
 [pkg-resolution]: package-resolution.md
-[packagemap-yaml]: ../../installer/internal/config/packagemap.yaml
+[packagemap-yaml]: ../../internal/config/packagemap.yaml
 [domain-pkg-resolution]: ../domain.md#package-resolution

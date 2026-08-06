@@ -12,7 +12,7 @@ Called during the [installation process][installation] after prerequisites are s
 
 - **Shell resolver**: Determines the expected shell binary path based on the source strategy
 - **Package manager**: Installs the shell if missing (brew, apt, or dnf)
-- **Shell changer**: Registers the shell in `/etc/shells` and changes the user's default via `chsh`/`dscl`
+- **Shell changer**: Registers the shell in `/etc/shells` and changes the user's default via `usermod` or `dscl`
 - **Privilege escalator**: Provides sudo/doas for system modifications
 
 ## Diagram

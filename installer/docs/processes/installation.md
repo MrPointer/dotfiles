@@ -37,7 +37,7 @@ flowchart TD
     I --> J[Install & set default shell]
     J --> K{Interactive?}
     K -- Yes --> L[Set up GPG keys]
-    K -- No --> M[Skip GPG setup]
+    K -- No --> M[Skip GPG key setup]
     L --> N
     M --> N[Install chezmoi]
     N --> O[Initialize chezmoi data]
@@ -61,11 +61,11 @@ flowchart TD
 5. **Re-check compatibility** — After installing prerequisites, verify the system passes all checks
 6. **Install Homebrew on non-macOS** — If `--install-brew` is set and Homebrew wasn't installed in step 2
 7. **[Install and configure shell][shell-setup]** — Install the target shell (default: zsh) using the [shell source strategy][domain-shell-source], then set it as the user's default shell
-8. **[Set up GPG keys][gpg-setup]** — Check for existing GPG keys. If none exist, create a new key pair interactively. If keys exist, let the user select one. Skipped in non-interactive mode.
-9. **[Set up dotfiles manager][dotfiles-setup]** — Install chezmoi if needed, initialize [chezmoi data][domain-data-schema] from collected input, then apply dotfiles
+8. **[Set up GPG][gpg-setup]** — Ensure the GPG client is available. In interactive mode, create a key when none exists or select from existing keys; non-interactive mode skips only key creation and selection.
+9. **[Set up dotfiles manager][dotfiles-setup]** — Install chezmoi if needed, produce the [chezmoi data contract][chezmoi-data-contract] from collected input, then apply dotfiles
 10. **[Install optional tools][tools-install]** — Load [tool definitions][domain-optional-tools] from `tools.yaml`, pre-filter against the active package manager, then either auto-install all (if `--install-tools`) or present an interactive multi-select. Individual failures are logged but never abort the install.
 
-Result: Machine is fully configured with the user's dotfiles, shell, GPG setup, and selected optional tools.
+Result: Machine is configured with the user's dotfiles and shell, an available GPG client, any interactively selected signing key, and the selected optional tools.
 
 ### Failure Scenarios
 
@@ -84,7 +84,7 @@ See the individual process docs for detailed failure scenarios and handling.
 - **Homebrew**: Installed and on PATH (if opted in)
 - **Default shell**: Changed to the target shell (see [shell setup][shell-setup])
 - **GPG keyring**: New key pair created or existing key selected (see [GPG setup][gpg-setup])
-- **Chezmoi config**: `~/.config/chezmoi/chezmoi.toml` written with all data namespaces (see [dotfiles setup][dotfiles-setup])
+- **Chezmoi config**: `~/.config/chezmoi/chezmoi.toml` written with the applicable contract keys (see [dotfiles setup][dotfiles-setup])
 - **Home directory**: Dotfiles applied — shell configs, git config, work profiles, etc.
 - **Optional tools**: Selected CLI tools installed via the active package manager (if any were chosen)
 
@@ -98,7 +98,7 @@ See the individual process docs for detailed failure scenarios and handling.
 | [Shell Setup][shell-setup] | Install shell and set as default |
 | [GPG Setup][gpg-setup] | Install GPG client, create or select signing key |
 | [Dotfiles Setup][dotfiles-setup] | Install chezmoi, write config, clone repo, apply dotfiles |
-| [Optional Tools Installation][tools-install] | Load tool definitions, pre-filter by platform, select and install optional CLI tools |
+| [Optional Tools Installation][tools-install] | Load tool definitions, pre-filter by active package manager, select and install optional CLI tools |
 
 ## Dependencies
 
@@ -106,8 +106,7 @@ See the individual process docs for detailed failure scenarios and handling.
 - Sufficient privileges for package installation and shell changing (sudo)
 - Git (listed as a prerequisite, installed automatically if missing)
 
-[compatibility-yaml]: ../../installer/internal/config/compatibility.yaml
-[packagemap-yaml]: ../../installer/internal/config/packagemap.yaml
+[compatibility-yaml]: ../../internal/config/compatibility.yaml
 [compat-check]: compatibility-checking.md
 [prereq-install]: prerequisite-installation.md
 [pkg-resolution]: package-resolution.md
@@ -116,6 +115,6 @@ See the individual process docs for detailed failure scenarios and handling.
 [dotfiles-setup]: dotfiles-setup.md
 [tools-install]: tools-installation.md
 [domain-shell-source]: ../domain.md#shell-source-strategy
-[domain-data-schema]: ../domain.md#chezmoi-data-schema
-[domain-optional-tools]: ../domain.md#optional-tools
+[chezmoi-data-contract]: ../../../docs/contracts/chezmoi-data.md
+[domain-optional-tools]: ../domain.md#optional-tool
 [domain-pkg-resolution]: ../domain.md#package-resolution
