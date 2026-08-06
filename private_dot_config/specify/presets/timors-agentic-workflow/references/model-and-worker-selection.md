@@ -14,8 +14,9 @@ needs, ambiguity, integration risk, and required verification:
   work where a weaker tier materially threatens correctness.
 
 Do not choose a tier from provider names, availability guesses, or cost alone.
-The Execution Groups table owns the tier. Each detail's Execution Model records
-substantive rationale only and must not repeat a tier token as its value.
+The Execution Groups table owns the tier. Each detail's Execution Model repeats
+that tier in its `Model Tier` field and records substantive rationale in its
+`Rationale` field.
 
 ## Runtime Boundary
 

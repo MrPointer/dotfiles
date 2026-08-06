@@ -9,7 +9,7 @@ and declared command/template mappings. The current package requires Spec Kit
 `>=0.12.11`; it has no upper support boundary.
 
 - Preset ID: `timors-agentic-workflow`
-- Preset version: `0.2.0`
+- Preset version: `0.2.1`
 - Execution-plan protocol version: `0.1.0`
 
 ## Shared Minimum-Version And Package-Integrity Gate
