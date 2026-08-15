@@ -1,41 +1,29 @@
-# Review: [ROLE NAME]
+# Review: [Role]
 
-- **Role ID**: [role-id]
-- **Model Tier**: [Cheapest | Mid-tier | Most capable]
-- **Latest Round**: RNN
-- **Latest Verdict**: [Passed | Passed with concerns | Blocking]
-- **Reviewed At**: [ISO-8601 timestamp]
-
-## Scope
-
-[The role packet's question boundary and the current review scope]
+- **Role**: [Role name]
+- **Tier**: mid-tier | most-capable
+- **Latest Round**: RNN | None
+- **Latest Verdict**: passed | passed-with-concerns | blocking | pending
 
 ## Rounds
 
 ### RNN
 
-- **Analysis Run**: ARNN
-- **Trigger**: [initial | baseline | tasks | decomposition-design | documentation | reviewer-config | all | explicit | comma-separated union]
-- **Inputs**: [project-relative artifact paths]
-- **Planned Tier Verified**: Yes
-- **Fresh Context Verified**: Yes
-- **Attributable Result Verified**: Yes
-- **Verdict**: [Passed | Passed with concerns | Blocking]
+- **Trigger**: initial | targeted change | recovery
+- **Scope**: [Complete current-state review scope]
+- **Reviewed Paths**: [Project-relative paths]
+- **Binding Evidence**: [Candidate, tier/skills, workspace, invocation, start, result]
+- **Verdict**: passed | passed-with-concerns | blocking
 
-| ID | Category | Severity | Location | Summary | Recommendation | Resolution |
-|----|----------|----------|----------|---------|----------------|------------|
-| None | None | None | None | None | None | None |
+#### Current Findings
 
-#### Prior Finding Dispositions
+### [Semantic Finding Title]
 
-| Prior Finding ID | Disposition | Current Finding ID | Notes |
-|------------------|-------------|--------------------|-------|
-| None | None | None | None |
+- **Impact**: blocking | concern
+- **Location**: [Semantic artifact location]
+- **Evidence**: [Observed condition]
+- **Recommendation**: [Concrete remediation]
 
-<!--
-Include exactly the role-specific section required by the role packet after the
-common round records. Artifact fidelity uses Requirement Coverage;
-decomposition design uses Execution Plan Validation; plan clarity and project
-roles use no core role-specific table unless their valid packet requires one.
-Do not include another core role's table as a semantic conclusion.
--->
+Every appended round is a complete current snapshot and carries unaffected current
+findings during a targeted rerun. Do not use opaque finding IDs or disposition
+matrices.

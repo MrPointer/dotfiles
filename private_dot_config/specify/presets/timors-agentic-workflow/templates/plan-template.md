@@ -1,41 +1,58 @@
-{CORE_TEMPLATE}
+# RFC: [Feature Name]
 
-## Current-State Grounding
+- **Revision**: R0
 
-<!--
-  Record verified facts about the repository and feature's current state before
-  implementation. Cite project-relative paths and the observed interface or
-  behavior. Do not make design decisions here; record decisions in research.md.
--->
+## Feature Definition Alignment
 
-[Current-state facts, evidence, and relevant existing behavior]
+[Exact Feature Definition section paths and semantic titles.]
 
-## Existing Interfaces And Integration Seams
+## Verified Current State
 
-<!--
-  Record verified interfaces, callers, consumers, extension points, generated
-  artifacts, and integration boundaries that the implementation must preserve.
-  Refer to data-model.md and contracts/ for data and interface detail.
--->
+[Verified facts, constraints, and source attribution.]
 
-[Existing interfaces, seams, owners, and compatibility considerations]
+## Design Decisions
 
-## Planning Constraints
+### [Semantic Decision Title]
 
-<!--
-  Record constraints already imposed by the feature specification, constitution,
-  repository conventions, dependencies, and compatibility commitments. Keep
-  selected approaches and their rationale in research.md.
--->
+[Decision, rationale, consequences, and Feature Definition alignment.]
 
-[Constraints and their evidence]
+## Proposed Architecture
 
-## Documentation Impact
+[Components, boundaries, state, and integration seams.]
 
-<!--
-  Identify documentation that implementation must create, update, or leave
-  unchanged, with project-relative paths and rationale. Do not repeat execution
-  decomposition here; it belongs in execution-plan.md.
--->
+## Contracts and Flows
 
-[Documentation impact and rationale]
+[Interfaces, data, failure behavior, compatibility, and migration.]
+
+## Alternatives and Risks
+
+[Genuine alternatives, risks, and mitigations.]
+
+## Verification Strategy
+
+[Evidence implementation must produce.]
+
+## Planning Handoff
+
+[Execution boundaries, dependencies, documentation impact, and considerations.]
+
+## Source References
+
+[Feature-local and project evidence.]
+
+## Review Record
+
+| Role | Report | Round | Revision | Status | Verdict |
+|---|---|---|---|---|---|
+| rfc_design | reviews/rfc-design.md | None | None | Pending | Pending |
+| rfc_clarity | reviews/rfc-clarity.md | None | None | Pending | Pending |
+
+## Design Acceptance
+
+| Field | Value |
+|---|---|
+| Status | Pending |
+| Applies To Revision | None |
+| Recorded By | Pending |
+| Recorded At | Pending |
+| Rationale | Pending |

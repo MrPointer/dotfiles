@@ -1,177 +1,58 @@
 # Timor's Agentic Workflow
 
-`timors-agentic-workflow` is a project-installed Spec Kit preset that adds
-grounded planning, optional human review, and validated execution artifacts
-while preserving upstream requirements and clarification commands.
+Preset `0.3.0` supplies one project-installed lifecycle:
 
-- **Preset version**: `0.2.1`
-- **Spec Kit compatibility**: `>=0.12.11`
-- **Protocol version**: `0.1.0`
+`specify` → `clarify` when Draft → `plan` → `tasks` → `implement`.
 
-The installed manifest is the compatibility authority. Every composed or
-replaced command completes the installed shared package-integrity gate before
-hooks, scripts, dispatch, or writes. The gate fails only for a version below the
-minimum, an explicit installed-manifest exclusion, or a missing, malformed, or
-incoherent required package contract. A newer untested CLI version does not
-produce a warning, prompt, or block.
+`spec.md` is the Feature Definition, `plan.md` is the sole normative RFC,
+`tasks.md` and `subplans/` are the reviewed execution package, and ignored local
+`progress.md` is coordinator runtime evidence. Design Acceptance precedes task
+creation; Implementation Authorization precedes mutation.
 
-## Provided Surfaces
+## Installation and Refresh
 
-| Surface | Strategy | Installed source |
-|---------|----------|------------------|
-| `speckit.specify` | Composed (`wrap`) | `commands/speckit.specify.md` |
-| `speckit.plan` | Composed (`wrap`) | `commands/speckit.plan.md` |
-| `plan-template` | Composed (`wrap`) | `templates/plan-template.md` |
-| `speckit.tasks` | Replaced | `commands/speckit.tasks.md` |
-| `tasks-template` | Replaced | `templates/tasks-template.md` |
-| `speckit.analyze` | Replaced | `commands/speckit.analyze.md` |
-| `speckit.implement` | Replaced | `commands/speckit.implement.md` |
-| `execution-plan-template` | Replaced | `templates/execution-plan-template.md` |
-| `analysis-template` | Replaced | `templates/analysis-template.md` |
-| `review-report-template` | Replaced | `templates/review-report-template.md` |
-| `progress-template` | Replaced | `templates/progress-template.md` |
-
-The composed specify command retains active lower-layer specification behavior
-and adds optional human review at natural completion. The composed plan retains
-active lower-layer planning behavior, adds grounding, and offers the same
-optional review at natural completion. Both native `wrap` commands inherit
-lower-layer `scripts` and `agent_scripts` metadata. `speckit.clarify` remains
-upstream. The task, analysis, and implementation replacements operate on the
-preset protocol; analyze does not offer this human-review interaction.
-
-The review offer is independent for specification and planning: users may take
-a guided walkthrough, review the key artifacts independently, or continue
-without either. It stores no preference, approval record, or workflow gate.
-The shared `references/human-review.md` owns the interaction mechanics, while
-the commands name phase-specific conceptual concerns.
-
-## Install In A Project
-
-Chezmoi manages the global source package, but it does not activate the preset
-for a project. From the project root, initialize Spec Kit if needed, then
-install the preset explicitly:
+Chezmoi manages the global distribution source but does not activate a project.
+From a project root:
 
 ```sh
 specify init --here --integration opencode --ignore-agent-tools
 specify preset add --dev "$HOME/.config/specify/presets/timors-agentic-workflow"
 ```
 
-The direct `specify preset add --dev` command copies the source into the
-project's `.specify/presets/timors-agentic-workflow/` and generates the active
-integration's command files. The copy is independent of the global source;
-global changes take effect in a project only after an explicit refresh.
-
-Refresh a development install by removing and adding it again when distributing
-a changed preset source:
+Project copies remain pinned. To distribute a source update, the operator
+performs this explicit remove/add refresh:
 
 ```sh
 specify preset remove timors-agentic-workflow
 specify preset add --dev "$HOME/.config/specify/presets/timors-agentic-workflow"
 ```
 
-## Diagnose Installation And Resolution
+After installation, manually inspect generated integration files: `specify`,
+`clarify`, `plan`, `tasks`, and `implement` must reference the project-relative
+installed copy; `analyze` must resolve from a lower layer. This confirmation is
+operator-controlled, not a workflow command gate.
 
-Run these commands from the project root:
+## Execution Boundaries
 
-```sh
-specify preset list
-specify preset info timors-agentic-workflow
-specify preset resolve plan-template
-specify preset resolve tasks-template
-specify preset resolve execution-plan-template
-specify preset resolve analysis-template
-specify preset resolve review-report-template
-specify preset resolve progress-template
-```
+Task packages contain provider-neutral tiers and exact skills, not concrete
+workers, model IDs, credentials, local workspace paths, or dispatch identities.
+Binding is just in time and requires tier, skills, discoverability, invokability,
+correct workspace targeting, and attributable results. Project-local candidates
+are preferred; ambiguity requires a human choice. Runtime considerations neither
+grant access nor alter eligibility.
 
-All six listed templates should resolve through `timors-agentic-workflow`.
-During the non-normative Spec Kit `0.12.11` installation validation, `preset
-resolve` accepted templates only, so command names reported as not found rather
-than identifying their source. Verify the five installed command surfaces by
-checking the generated OpenCode files for project-relative
-`.specify/presets/timors-agentic-workflow/` references; those files must never
-contain the global source path. `speckit.clarify` remains upstream and outside
-this preset.
+Each packet has a dedicated branch and worktree. Workers may commit only there;
+the coordinator alone advances the active branch. The approved tracked feature
+directory is immutable during execution and is compared at dispatch, result
+acceptance, rebase, and integration. Packet branches integrate in topological
+order as one repository-policy-compliant commit per packet. Nothing is pushed.
 
-## Artifact And State Ownership
+## Replacement Cautions
 
-The project tracks the installed preset copy, generated integration commands,
-normal Spec Kit design artifacts, `plan.md`, `tasks.md`,
-`execution-plan.md`, `reviews/*.md`, and `analysis.md`. Only
-`specs/**/progress.md` is ignored: it is local runtime state and can contain
-binding, workspace, checkpoint, failure, and test evidence.
-
-`tasks.md` owns atomic task records and checkboxes. `execution-plan.md` owns
-execution groups and orchestration. Role reports own cumulative findings, and
-`analysis.md` owns aggregate review state and human approval. `progress.md`
-owns local execution state.
-
-The chezmoi source package is the editable distribution source. The installed
-project copy is an informational, refresh-replaceable copy used by command
-resolution. Commands read installed preset files but never mutate the installed
-copy or its README.
-
-## Adoption And Lifecycle
-
-- A project with only `spec.md` follows the normal enhanced flow: run plan,
-  then tasks, analyze, and implement as applicable.
-- A feature with `plan.md` and no `tasks.md` reruns `/speckit.plan` before
-  task generation.
-- A feature with upstream `tasks.md` and no conforming `execution-plan.md`
-  reruns `/speckit.tasks`.
-- A malformed, unsupported, missing, or nonconforming task/execution-plan pair
-  reruns `/speckit.tasks`; this release defines no migration, repair, or
-  inferred protocol data.
-- A conforming task/execution-plan pair with missing or nonconforming role
-  reports or `analysis.md` reruns `/speckit.analyze`. Replace an unparseable
-  report only after explicit human confirmation so cumulative findings and an
-  existing approval decision are not silently discarded.
-- A feature already executing through upstream behavior or another preset must
-  finish or be explicitly abandoned before adoption. Mixed execution semantics
-  are rejected.
-
-Removing the preset is safe before enhanced artifacts exist. For planned work
-that has not started execution, revert the enhanced artifacts or retain them as
-inert history; do not treat them as core implementation plans. For in-flight
-work, finish with the installed preset, pause with the pinned preset and local
-state retained, or explicitly abandon back to the recorded execution base.
-Never automatically delete branches, worktrees, checkpoint refs, dirty output,
-progress, or feature artifacts.
-
-When changing CLI versions, retain the installed preset unless its shared gate
-reports a concrete failure. Refresh a project-installed preset only to
-distribute changed preset source, then verify its package and resolution state.
-The preset does not require a review or release for each new CLI minor version;
-a future manifest may add a constraint only for a known incompatibility.
-
-## No-Probe Semantics And Limitations
-
-The preset defines data contracts, not worker provisioning, provider/model
-bindings, or runtime-specific behavior. Binding discovery and checks use runtime
-metadata and configuration; no suitability probe, calibration task, canary,
-sacrificial invocation, or model call occurs before real assigned work. The
-first dispatch is the real review or execution assignment.
-
-Installation and resolution validation prove packaging and materialization, not
-semantic compatibility or runtime operation. Operational support requires a
-normal feature to complete the required real-work handshake. The preset does
-not migrate existing artifacts, does not automatically refresh project copies,
-and cannot safely be removed during active execution.
-
-## Operational Status
-
-> This is a non-normative installation observation, not a runtime-support or
-> binding guarantee. It contains no provider, model, or sensitive binding data.
-
-- **Installation**: Verified by temporary source-to-target materialization,
-  project installation, resolution, refresh, and tracking checks. This is
-  operational history, not a compatibility boundary.
-- **Runtime**: Not yet exercised.
-- **Preset version**: `0.2.1`
-- **Spec Kit version**: `0.12.11`
-- **OpenCode version**: `1.17.18`
-- **Binding configuration class**: Not exercised.
-- **Validation date**: `2026-07-12`
-
-Installed README copies are informational and refresh-replaceable. Commands
-never mutate them.
+This release performs no migration. It does not interpret old atomic task lists,
+old execution or review artifacts, or old local runtime state. A non-executing
+old feature starts again at `specify`. Before replacement, finish or explicitly
+abandon an in-flight old run while its old installed copy remains available.
+Premature replacement has no automatic detection, rollback, or repair: manually
+restore the old preset to recover it, or preserve old state and start a fresh
+lifecycle. Do not remove an active package expecting this preset to resume it.

@@ -1,41 +1,49 @@
-# Workspace Isolation
+# Worktree Isolation, Signing Policy, and Integration
 
-## Purpose
+Every packet has a dedicated branch and worktree. Workers may modify and commit
+only selected packet-owned implementation or documentation paths outside protected
+feature directory. Only the coordinator advances the explicit active target.
+Workers never alter protected planning files, rewrite prerequisite history, merge
+unrelated work, push, stash, reset, revert, rewrite, or auto-commit unrelated
+files. Retain blocked or unresolved branches/worktrees and evidence.
 
-Isolation prevents concurrent groups from sharing a dirty working tree. It does not prove worker capacity, build-output safety, cache correctness, or dependency independence; those are separate ready-group gates in `execution-lifecycle.md`.
+Before dispatch, resume, result acceptance, rebase, squash, amend, corrective
+commit, or integration, resolve signing policy against repository-controlled
+instruction files and effective Git configuration for the target repository.
+Apply repository instruction scope hierarchy: nearest scoped explicit signing
+directive wins; contradictory directives at equal precedence require one human
+resolution. Global agent instructions and prompt text are excluded. Without an
+applicable directive, normal Git configuration precedence decides whether signing
+is enabled. Signed history is evidence, never policy.
 
-## Workspace Selection
+Resolve exactly one mode: `required` when winning repository instruction requires
+signatures; `enabled` when no instruction requires/prohibits and effective Git
+configuration enables signing; `disabled` when a winning instruction prohibits
+signing or no directive applies and configuration does not enable it. Absence of a
+directive and enabled configuration is disabled without prompting. Record mode,
+every applicable instruction path/content digest, effective signing values and
+reported origins, active target observation commit, and human-resolution evidence.
+Observation commit is provenance, not a policy-equality input.
 
-- Resolve and record an absolute workspace path for every bound group.
-- Parallel groups use separate worktrees. A dependent worktree starts only from an integration-branch checkpoint containing every prerequisite output.
-- Sequential groups may use the integration workspace unless the plan requires isolation.
-- A `Linear DAG` is always serialized. `Parallel allowed` may be serialized when capacity or output/cache safety cannot be proven; record the fallback and reason in progress.
-- Never create a dependent workspace from prerequisite output that exists only as dirty files.
+Before each named operation resolve again. Equality compares mode, instruction
+paths/digests, effective values/origins, and human resolution, excluding only
+observation commit. An unambiguous change automatically audits and repins,
+including transition to disabled; reject and recreate any candidate formed under
+the old policy. Prompt only for unresolved equal-precedence contradiction. A
+candidate that changes repository instruction is governed by pre-integration active
+target policy; after advancement resolve, audit, and repin before later work.
 
-## Dirty-State Preflight
+Every worker/coordinator commit and operation recreating a commit applies pinned
+mode. Required and enabled create and verify signatures; signing failure blocks
+with no unsigned fallback. Disabled does not invoke signing. No workflow default
+changes repository policy.
 
-Immediately before a ready group creates, enters, or mutates a workspace, inspect tracked modifications and untracked non-ignored files in the coordinator and target workspace. Record the exact evidence in Execution Audit.
-
-If unexpected state exists, stop before workspace mutation, edits, or dispatch. Never stash, delete, commit, copy, ignore, reset, or otherwise relocate dirty state without explicit authorization. If authorization permits proceeding, record the paths, scope, decision, and resulting target status. Unrelated state carried into a worktree still blocks dispatch.
-
-`progress.md` is a coordinator artifact and must remain ignored. Do not copy progress, plans, reviews, or other coordinator artifacts into worker worktrees.
-
-## Concurrent Capacity And Output Safety
-
-Before any member of a parallel set starts, prove that all members can run concurrently and that each has:
-
-- a distinct absolute worktree;
-- an available attributable worker binding;
-- nonoverlapping planned file ownership;
-- safe generated-output and build directories; and
-- a project-documented or verified cache strategy, or an explicit no-reuse result.
-
-Start none until all pass. Filesystem isolation alone is not evidence that path-sensitive caches or shared generated outputs are safe.
-
-Prefer project-documented shared caches. Seed only ignored build/cache artifacts when project instructions or targeted verification proves portability between absolute paths. Never seed source, plans, reviews, progress, or checkpoints. If reuse is unsafe or unnecessary, record that it is skipped. If required reuse cannot be proven, block.
-
-## Workspace Result Retention
-
-Verify dispatch actually targeted the recorded absolute path. After result return, inspect changed and untracked files against group ownership and the attributable Result. Keep a worktree when dispatch start/result is ambiguous, integration or verification fails, a checkpoint is missing, or recovery is required.
-
-Never automatically remove a branch or worktree. Release a workspace only after its exact result is integrated and checkpointed, or after explicit abandonment records the disposition of every dirty file and checkpoint.
+Before target advancement, rebase packet branch on current active HEAD, recheck
+baseline, and construct a separately inspectable squash candidate. Verify candidate
+tree, required signature, ownership, and output evidence before a no-new-commit
+fast-forward. Worktrunk is preferred only after a non-mutating capability check
+proves it can make this candidate, apply pinned mode, and avoid early target
+advancement. If not, plain Git creates and verifies the candidate independently.
+Resolve only conflict-local mechanics outside the protected baseline; a semantic or
+scope choice blocks. Advance active branch by exactly one policy-compliant commit
+per packet, record it, then make consumers ready.

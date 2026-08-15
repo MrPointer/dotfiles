@@ -1,71 +1,50 @@
-# Execution Progress: <feature>
+# Execution Progress: [Feature Name]
 
 ## Execution Context
 
-- **Feature Directory**: <project-relative path>
-- **Started**: <ISO-8601 timestamp>
-- **Last Updated**: <ISO-8601 timestamp>
-- **Status**: in-progress | blocked | complete
-- **Review Branch**: <branch or detached HEAD>
-- **Execution Base**: <commit SHA>
-- **Integration Branch**: <local branch>
-- **Concurrency Policy**: Linear DAG | Parallel allowed
-- **Final Review Mode**: aggregate dirty diff
-- **Checkpoint Range**: <base>..<tip> | Pending
-- **Checkpoint Ref**: refs/agent-checkpoints/<feature> | Pending
+- **Feature Directory**: [Project-relative canonical directory]
+- **Package Status**: in-progress | blocked | complete | abandoned
+- **Active Branch**: [Named target branch]
+- **Starting Commit**: [Pinned target commit]
+- **Protected Baseline**: [Tracked feature-directory inventory and content evidence]
+- **Signing Policy**: [Mode, instruction paths/digests, Git values/origins, observation commit, human resolution]
 
-## Execution Groups
+## Packet States
 
-| Group | Task IDs | Planned Model | Required Skills | Required Capabilities | Resolved Worker / Model | Workspace | Tests | Implementation | Integration | Status | Notes |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| EGNN | TNNN | Cheapest \| Mid-tier \| Most capable | <exact skill identifiers> | <exact capabilities> | pending | pending | pending | pending | pending | pending | |
+| Canonical Identity | Locator | Worktree | Branch | Binding | State | Final Commit |
+|---|---|---|---|---|---|---|
+| subplans/01-semantic-name.md | [worktree-root-relative] | pending | pending | pending | pending | pending |
 
-Group `Status` is exactly `pending`, `binding`, `in progress`, `blocked: <reason>`, `ready for integration/checkpoint`, or `done`. `Tests`, `Implementation`, and `Integration` are exactly `pending`, `in progress`, `done`, `skipped: <reason>`, or `blocked: <reason>`.
-
-## Current State
-
-<Current group, transition, or reason execution is waiting.>
+State is exactly `pending`, `in-progress`, `ready`, `blocked`, or `done`.
 
 ## Execution Audit
 
-| Group | Tier Evidence | Skill Evidence | Capability Evidence | Dispatch Evidence | Dirty-State Preflight | Build/Cache Reuse | Checkpoint | Verification |
-|---|---|---|---|---|---|---|---|---|
-| EGNN | pending | pending | pending | pending | pending | pending | pending | pending |
-
-## Test Evidence
-
-| Group | Tests / Exception | Verification |
-|---|---|---|
-| EGNN | <test evidence or exact planned exception> | pending |
-
-## Completed Artifacts
-
-| Group | Flow ID | Contract ID | Files / Outputs | Result Summary | Checkpoint |
-|---|---|---|---|---|---|
-| EGNN | DFNN or None | CTNN or None | <project-relative paths or outputs> | <attributable result summary> | <commit SHA> |
-
-Use `None` for `Flow ID` and `Contract ID` only when the output does not cross a group boundary.
-
-## Checkpoints
-
-| Group | Commit | Local Ref | State |
+| Event | Packet | Evidence | Outcome |
 |---|---|---|---|
-| EGNN | Pending | Pending | pending |
+| [Policy freshness, pin/repin, dispatch, result, rebase, candidate, integration] | [Identity or package] | [Attributable durable evidence] | [Outcome] |
 
-Checkpoint `State` is exactly `pending`, `retained`, `released`, or `missing`.
+## Test and Verification Evidence
 
-## Exceptions / Blockers
+| Packet | Planned Mode and Basis | Commands or Checks | Outcome | Changed Test Paths |
+|---|---|---|---|---|
 
-<Authorization, serialized parallel fallback, contract mismatch, ambiguity, or blocker.>
+## Runtime Consideration Evidence
 
-## Failures
+| Packet | Condition | Attempt / Failure | Alternative | Residual Limitation |
+|---|---|---|---|---|
 
-<Implementation or integration failures.>
+Record an explicit empty entry when no listed condition affected a packet.
 
-## Regressions
+## Contract Outputs
 
-<Previously passing behavior that failed during verification.>
+| Name | Producer Identity | Final Commit | Returned Evidence | Coordinator Validation | Consumers |
+|---|---|---|---|---|---|
+
+## Blockers and Recovery
+
+[Collected blocker batches, known-start recovery evidence, abandonment, and decisions.]
 
 ## Final Verification
 
-<Required full verification, final checkpoint/ref evidence, aggregate preparation, and outcome.>
+[Aggregate verification, component-documentation review, every packet’s mode and
+outcome, affected runtime conditions, alternatives, residual limits, and result.]
