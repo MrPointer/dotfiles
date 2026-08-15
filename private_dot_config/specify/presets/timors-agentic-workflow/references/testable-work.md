@@ -1,36 +1,28 @@
-# Testable Work Policy
+# Test Modes and Evidence
 
-## Default
+Every packet has one `test.mode` and a nonempty substantive `basis`; Acceptance
+and Verification supplies exact commands/checks and expected outcomes without
+changing mode.
 
-Tests are the default for behavior that can regress. Derive test tasks from user
-story independent tests, interface contracts, quickstart scenarios, existing
-test conventions, and the observable behavior being changed. Put tests and the
-implementation they prove in the same execution group so a delegated group can
-reach a verified outcome without another group's uncommitted work.
+| Mode | Required basis | Worker evidence |
+|---|---|---|
+| `required` | planned test scope and exact test location, suite, or command | implement changed behavior and tests together; run and report coverage and results |
+| `existing-coverage` | exact existing test files, cases, suites, or commands and the acceptance behavior they prove | run cited evidence; if it does not prove changed behavior, add/update owned tests and report the false assumption and correction |
+| `not-applicable` | substantial out-of-scope infrastructure or restructuring barrier, why it is substantial, and alternative verification | perform/report alternative verification and preserve named automated-testing gap |
+| `no-testable-behavior` | why no behavior is meaningfully automatable and applicable non-test verification | perform/report named non-test verification; do not supply synthetic test evidence |
 
-When practical, order a test task before its implementation task and require
-the test to demonstrate the missing or incorrect behavior before implementation.
-Use exact project-relative test paths in `tasks.md`.
+Required and existing-coverage packets reserve all test paths needed for planned
+coverage or bounded correction. Existing coverage cannot cite generic suite
+existence. Preference or inconvenience never justifies not-applicable. If required
+or corrected existing coverage cannot produce meaningful coverage within approved
+ownership and scope, block the packet and dependents; frozen mode and basis do not
+change. Continuing requires explicit abandonment, task replanning, applicable
+review, and renewed authorization. Not-applicable means a known gap, not absence of
+testable behavior; only no-testable-behavior makes that assertion.
 
-## Exact Test Expectation
-
-Every execution-group detail uses exactly one of these values:
-
-- `Tests required`
-- `Existing coverage: <evidence expected>`
-- `Not applicable: <reason>`
-
-Use `Tests required` when the group creates or changes testable behavior. Use
-Existing coverage only when named current tests or a concrete verification
-surface already proves the result and the group does not need a new test task.
-Use Not applicable only for work with no meaningful automated test surface,
-with a concrete reason tied to that work. Bare `None`, generic claims such as
-"docs only", and preference-based omissions are invalid.
-
-## Behavioral Checks
-
-Story Independent Test, group Acceptance Criteria, and group Verification must
-describe observable behavior or artifacts. Acceptance and Verification are
-bullets, not task checkboxes. Commands alone are insufficient unless the
-expected result is also stated. A build or lint command does not replace a
-behavioral test when behavior changed.
+Progress records each packet’s planned mode/basis, commands/checks, outcomes, and
+added or changed tests. It retains a not-applicable barrier and alternative through
+completion and records incorrect existing-coverage assumption. Final Verification
+and user completion reporting must agree with this evidence and runtime outcomes.
+An approved testing gap is reportable and adds no approval gate, but insufficient
+resulting verification blocks completion.

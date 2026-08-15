@@ -1,100 +1,61 @@
 ---
-
-description: "Task list template for feature implementation"
+kind: task-package
+subplans:
+  - path: subplans/01-semantic-name.md
+    after: []
+reviews:
+  rfc_fidelity:
+    report: reviews/tasks-rfc-fidelity.md
+    round: null
+    status: pending
+    verdict: pending
+  executability:
+    report: reviews/tasks-executability.md
+    round: null
+    status: pending
+    verdict: pending
+authorization: pending
 ---
 
-# Tasks: [FEATURE NAME]
+# Execution Package: [Feature Name]
 
-**Input**: Design documents from `/specs/[###-feature-name]/`
+## Overview
 
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+[Accepted RFC scope, package objective, canonical feature directory.]
 
-**Tests**: Generate tests by default for testable behavior. When new tests are
-not practical, state either `Existing coverage: <concrete evidence expected>`
-or `Not applicable: <concrete reason>` in that phase.
+## Sub-Plan Ledger
 
-**Organization**: Tasks are grouped by user story for independent delivery.
-Shared foundation and cross-cutting work have dedicated phases only when they
-cannot be owned by one story.
+| Order | Path | Direct Predecessors | Objective |
+|---|---|---|---|
+| 1 | subplans/01-semantic-name.md | None | [Bounded objective] |
 
-## Format: `[ID] [P?] [Story?] Description with exact path`
+Ledger rows, order, paths, and direct predecessor sets exactly project frontmatter.
 
-- Every task is `- [ ] TNNN [P?] [Story?] <action with exact path>`.
-- IDs start at `T001` and increase sequentially without gaps.
-- `[P]` is task-local: the task touches different files and does not depend on
-  an incomplete task. It does not declare execution-group concurrency.
-- `[Story]` is required for story tasks and omitted from setup, foundation, and
-  cross-cutting phases.
-- Every task description names its exact project-relative file path.
+## Dependency Graph
 
-<!--
-  __SPECKIT_COMMAND_TASKS__ replaces all bracketed prompts with feature-specific
-  content. Keep task descriptions, checks, goals, independent tests, and
-  checkpoints here. Execution groups, global dependencies, models, workers,
-  capabilities, contracts, and data flows belong only in execution-plan.md.
--->
+```mermaid
+graph TD
+  P1[01 semantic name]
+```
 
-## Phase 1: Setup
+This is a human projection; frontmatter alone schedules.
 
-**Purpose**: [Feature-specific initialization purpose]
+## Execution Inputs and Requirements
 
-**Test Expectation**: [Tests required | Existing coverage: concrete evidence expected | Not applicable: concrete reason]
+[Aggregate verification, accepted scope, baseline constraints, and requirements.]
 
-- [ ] T001 [Action] in [exact/project-relative/path]
+## Review Record
 
-**Checkpoint**: [Observable setup state]
+| Role | Report | Round | Status | Verdict |
+|---|---|---|---|---|
+| rfc_fidelity | reviews/tasks-rfc-fidelity.md | null | pending | pending |
+| executability | reviews/tasks-executability.md | null | pending | pending |
 
----
+## Implementation Authorization
 
-## Phase 2: Foundation
+[Human rationale and decision context. Only `approved` frontmatter permits execution.]
 
-**Purpose**: [Shared prerequisite that cannot be owned by one user story]
+## Execution Handoff
 
-**Test Expectation**: [Tests required | Existing coverage: concrete evidence expected | Not applicable: concrete reason]
-
-- [ ] T002 [Action] in [exact/project-relative/path]
-
-**Checkpoint**: [Observable foundation state]
-
----
-
-## Phase 3: User Story 1 - [Title] (Priority: P1)
-
-**Goal**: [Behavior or value delivered by this story]
-
-**Independent Test**: [Observable steps and result proving this story alone]
-
-**Test Expectation**: [Tests required | Existing coverage: concrete evidence expected | Not applicable: concrete reason]
-
-### Tests for User Story 1
-
-- [ ] T003 [P] [US1] [Test behavior] in [exact/project-relative/test-path]
-
-### Implementation for User Story 1
-
-- [ ] T004 [US1] [Implement behavior] in [exact/project-relative/source-path]
-
-**Checkpoint**: [Observable, independently testable story result]
-
----
-
-<!-- Repeat one phase per remaining user story in priority order. Continue TNNN
-without gaps and use the matching [USN] label. -->
-
-## Final Phase: Cross-Cutting Concerns
-
-**Purpose**: [Work that necessarily spans completed stories]
-
-**Test Expectation**: [Tests required | Existing coverage: concrete evidence expected | Not applicable: concrete reason]
-
-- [ ] TNNN [Action] in [exact/project-relative/path]
-
-**Checkpoint**: [Observable final state and regression result]
-
-## Task Checks
-
-- Every task has a sequential `TNNN`, an exact path, and the applicable
-  story label.
-- Every `[P]` marker is justified by that task's files and prerequisites.
-- Every story has a goal, independent test, and behavioral checkpoint.
-- Every phase records an allowed concrete test expectation.
+- **Component Documentation Review**: required | not-applicable
+- **Paths or Reason**: [Relevant paths or substantive skip reason.]

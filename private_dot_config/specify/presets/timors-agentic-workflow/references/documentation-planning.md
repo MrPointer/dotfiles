@@ -1,43 +1,23 @@
-# Documentation Planning Policy
+# Documentation Planning and Final Review
 
-## Trigger
+When accepted design changes documented domain concepts, architecture, or
+business/operational processes and relevant project documentation exists, task
+planning creates a final most-capable documentation packet. It states exact paths,
+stale sections, proportional scope, and documentation skills. Skip it only when no
+conceptual documentation exists, no documented concept or flow changes, or only
+component-level implementation detail may drift.
 
-Plan a dedicated documentation execution group when implementation changes
-domain terminology or rules, architecture or component boundaries, or an
-end-to-end business or operational process. Also create one when `plan.md`'s
-Documentation Impact names substantive documentation work that cannot remain
-with one story.
+Component documentation is deferred. Execution Handoff records `required` with
+relevant paths when existing component documentation describes a modified
+component, interface, or behavior; otherwise it records `not-applicable` with a
+substantive reason. At completion, the coordinator checks both the handoff and
+current repository documentation. A not-applicable handoff contradicted by current
+documentation is a planning defect, not a skip.
 
-Keep a small, story-specific documentation change in that story's group when it
-shares the same ownership and verification seam. Do not create documentation
-tasks merely to restate code or preserve planning conversation.
-
-## Placement And Ownership
-
-Place a dedicated documentation group after the implementation groups whose
-integrated behavior it documents. Give it logical predecessors for concrete
-implementation facts it consumes. It owns exact documentation paths and has
-its own applicable documentation skill IDs, test expectation, behavioral
-acceptance criteria, and verification.
-
-Document only current, reader-relevant behavior. Include context that affects
-the required outcome, a plausible implementation choice, an interface,
-verification, or a concrete risk. Omit conversation residue, rejected
-alternatives already settled elsewhere, and unrelated non-goals. State a
-negative constraint only when naming the plausible competing behavior or risk
-that makes the constraint relevant.
-
-## Documentation Data Flow
-
-When a documentation group depends on implementation results, record explicit
-flows and contracts for the shapes or artifacts it consumes. Do not use a vague
-"implementation complete" flow. Name the interface, behavior, schema, or
-verified artifact that becomes documentation input, and keep producer and
-consumer shape strings identical.
-
-## Post-Execution
-
-Post-Execution states how integrated behavior and documentation are checked for
-agreement. Include an applicable project documentation reviewer from
-`.specify/reviewers/` when its triggers match; ask the user if applicability is
-ambiguous.
+After final code exists, bind the independent read-only most-capable
+`reviewers/component-docs.md` role. Its result gates completion but creates no
+human approval gate. If it finds incomplete work within accepted requirements,
+design, task scope, and acceptance, coordinator or bounded delegate may repair it,
+append a policy-compliant corrective commit, and rerun the review. New scope,
+undefined behavior, contract change, or acceptance exception returns to Feature
+Definition, RFC, or task planning ownership.
