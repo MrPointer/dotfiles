@@ -13,6 +13,8 @@
          "$XDG_CACHE_HOME/huggingface/hub/models--minishlab--potion-code-16M-v2", // Semble model cache
          "$HOME/.azure",
          "$HOME/.azure-devops",
+         "$XDG_DATA_HOME/deck/status", // Deck writes agent status JSON here
+         "$XDG_DATA_HOME/deck/hooks", // Deck writes session sidecar JSON here
          "$TMPDIR"
       ],
       "read": [
@@ -32,6 +34,7 @@
          "$HOME/.ssh/known_hosts",
          "$HOME/.ssh/config",
          "$HOME/.local/bin/nono-git-ssh",
+         "$XDG_DATA_HOME/deck/bin/deck-claude-hook.sh", // Deck VS Code agent-management hook
          "$XDG_CONFIG_HOME/git/common.gitconfig",
          "$XDG_CONFIG_HOME/git/allowed_signers",
          "$XDG_CONFIG_HOME/worktrunk/config.toml",

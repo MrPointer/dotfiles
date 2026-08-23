@@ -40,11 +40,25 @@ function _nono_agent_run() {
     ssh_agent_args=(--allow-unix-socket "$SSH_AUTH_SOCK")
   fi
 
+  # Deck (VS Code agent manager) hosts agents in a `tmux -L deck` server and
+  # renames its window via the socket; only granted when running under Deck.
+  local -a deck_socket_args=()
+  if [[ -n "${DECK_SESSION:-}" ]]; then
+    deck_socket_args=(--allow-unix-socket "${TMUX_TMPDIR:-/tmp}/tmux-${UID}/deck")
+  fi
+
   local -a git_common_dir_args=()
   local git_common_dir
   if git_common_dir="$(command git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
     git_common_dir_args=(--allow "$git_common_dir")
   fi
 
-  GIT_CONFIG_GLOBAL="$git_config" nono run --profile "$profile" --allow-cwd "${git_common_dir_args[@]}" "${ssh_agent_args[@]}" -- "$command_name" "$@"
+  GIT_CONFIG_GLOBAL="$git_config" \
+    nono run \
+    --profile "$profile" \
+    --allow-cwd \
+    "${git_common_dir_args[@]}" \
+    "${ssh_agent_args[@]}" \
+    "${deck_socket_args[@]}" \
+    -- "$command_name" "$@"
 }
