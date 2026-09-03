@@ -4,9 +4,9 @@ description: Converge a Feature Definition through one-question human dialogue.
 
 ## Authority and Inputs
 
-Read canonical `spec.md`, `references/artifact-contracts.md`,
-`references/feature-definition.md`, `references/clarification.md`, and
-`references/review-lifecycle.md`. `spec.md` is the only authority for product
+Read canonical `spec.md`, `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`,
+`.specify/presets/timors-agentic-workflow/references/feature-definition.md`, `.specify/presets/timors-agentic-workflow/references/clarification.md`, and
+`.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`. `spec.md` is the only authority for product
 intent. Do not inspect repository reality or make technical design choices.
 
 ## Procedure
