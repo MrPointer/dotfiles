@@ -1,0 +1,9 @@
+# Managed by chezmoi. Maps the active git identity to its SSH signing key.
+# The key follows the same work/personal branch as the gitconfig.
+{{ $signingKey := "" -}}
+{{ if and .personal.work_env (eq .personal.work_name "sedg") -}}
+{{   $signingKey = joinPath .chezmoi.homeDir ".ssh/id_rsa.pub" -}}
+{{ else -}}
+{{   $signingKey = joinPath .chezmoi.homeDir ".ssh/id_ed25519.pub" -}}
+{{ end -}}
+{{ .personal.email }} {{ output "cat" $signingKey | trim }}
