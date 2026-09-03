@@ -82,7 +82,7 @@ Shared nono wrapper helpers live in `dot_agents/shell/nono.zsh.tmpl`.
 Per-agent files should call `_nono_agent_run` instead of duplicating nono setup:
 
 - `dot_agents/shell/opencode.zsh`
-- `dot_agents/shell/claude.zsh.tmpl`
+- `dot_agents/shell/claude.zsh`
 - `dot_agents/shell/codex.zsh`
 
 Use wrapper functions, not aliases, when SSH signing support or profile selection is needed.

@@ -1,20 +1,19 @@
-{{- $workName := .personal.work_name -}}
 function _claude_nono() {
   local profile="$1"
   shift
 
   _nono_agent_ensure_ssh_signing_keys \
-    "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}.pub}" \
-    "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}}" \
-    "${CLAUDE_ED25519_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519_{{ $workName }}.pub}" \
-    "${CLAUDE_ED25519_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519_{{ $workName }}}"
+    "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_rsa.pub}" \
+    "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_rsa}" \
+    "${CLAUDE_ED25519_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
+    "${CLAUDE_ED25519_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519}"
 
   _nono_agent_run \
     "$profile" \
     "$HOME/.claude/gitconfig" \
     claude \
-    "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}.pub}" \
-    "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_rsa_{{ $workName }}}" \
+    "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_rsa.pub}" \
+    "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_rsa}" \
     --dangerously-skip-permissions \
     "$@"
 }
