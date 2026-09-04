@@ -7,7 +7,7 @@ grounded planning, optional human review, reviewed execution decomposition,
 explicit human approval, and delegated implementation through a versioned
 Markdown protocol. The preset is provider-neutral: it defines command and
 artifact contracts, while the active coding integration supplies concrete
-workers, models, skills, and permissions. Its preset version is `0.3.2` and its
+workers, models, skills, and permissions. Its preset version is `0.3.3` and its
 protocol version is `0.1.0`; it supports Spec Kit `>=0.12.11` without an upper
 support boundary.
 
@@ -81,7 +81,7 @@ dispatch, or writes. It fails closed only below the minimum, on an explicit
 installed-manifest exclusion, or when a required contract is missing, malformed,
 or incoherent. Newer untested CLI versions neither warn nor block. This protects
 generated commands that remain in a project after the CLI changes without
-changing required public integration behavior. The accepted execution-plan
+changing required public integration behavior. The accepted execution-package
 protocol is likewise `0.1.0`; unsupported or malformed protocol artifacts return
 to their owning generation command rather than being migrated or inferred.
 
@@ -93,25 +93,35 @@ The preset deliberately uses different integration strategies by phase:
 - `/speckit.plan` and `plan-template` compose with upstream planning, retaining
   its design artifacts, adding verified grounding and integration context, and
   offering optional human review at natural completion.
-- `/speckit.tasks`, `tasks-template`, `/speckit.analyze`, and
-  `/speckit.implement` replace their upstream surfaces because decomposition,
-  independent review, approval, and delegated execution share a stronger
-  protocol.
-- Auxiliary templates provide the execution plan, cumulative review reports,
-  aggregate analysis, and local progress ledger used by those replacements.
+- `/speckit.tasks`, `tasks-template`, and `/speckit.implement` replace their
+  upstream surfaces because decomposition, independent review, approval, and
+  delegated execution share a stronger protocol. The preset provides no
+  `/speckit.analyze`; it folds independent review and human approval into
+  `/speckit.plan` and `/speckit.tasks`. The stock `/speckit.analyze` resolves from
+  a lower layer and is not part of this lifecycle.
+- Auxiliary templates provide the indexed sub-plans, cumulative review reports,
+  and local progress ledger used by those replacements.
+
+The preset does not run Spec Kit extension hooks. Stock command bodies dispatch
+`before_*` and `after_*` hooks from `.specify/extensions.yml`. The preset
+replacements omit that mechanism, so no phase runs an extension automatically. The
+git extension branch and commit hooks never fire from the workflow. An operator
+runs an extension command manually when wanted.
 
 The installed preset references are the normative source for workflow behavior,
-artifact schemas, and CLI/package compatibility. In particular,
-[protocol compatibility][compatibility] owns the minimum-version and structural
-package-integrity contract. This architecture overview summarizes those
-boundaries without redefining them.
+artifact schemas, and CLI/package compatibility. The minimum supported version and
+the structural package-integrity contract come from the installed manifest and its
+`requires.speckit_version`, as described in the Package-Integrity Command Boundary
+section above. This architecture overview summarizes those boundaries without
+redefining them.
 
 ### Optional Human Review
 
 At the natural completion of specification and planning, after artifacts are
 generated and validated, each phase independently offers a guided walkthrough
 or independent review. Either can be declined. The interaction stores no
-preference, approval record, or workflow gate, and does not apply to analysis.
+preference, approval record, or workflow gate, and does not apply to the
+independent review or approval gates.
 The installed `human-review.md` reference owns the mechanics: select small,
 consequential review units using judgment; pause after each; update and
 revalidate current-phase artifacts once a unit is settled; then continue normal
@@ -128,15 +138,16 @@ The protocol separates durable planning truth from local runtime evidence:
   inputs.
 - `tasks.md` is the sole atomic task ledger. It owns task identity, task text,
   paths, story labels, task-local parallel hints, and completion checkboxes.
-- `execution-plan.md` owns execution groups, the dependency graph and order,
+- The indexed `subplans/` own execution groups, the dependency graph and order,
   file ownership, cross-group contracts and data flow, semantic model tiers,
   required skills and capabilities, tests, acceptance criteria, and
   verification.
 - `specs/<feature>/reviews/<role-id>.md` files are tracked cumulative sources of
   reviewer findings. Reruns append current-state rounds rather than replacing
   review history.
-- `analysis.md` is the tracked aggregate of applicable review rounds and the
-  location of the explicit human approval decision.
+- The human approval decisions live in their owning artifacts: Design Acceptance
+  in `plan.md` and Implementation Authorization in `tasks.md`. The preset produces
+  no separate `analysis.md` aggregate.
 - `specs/<feature>/progress.md` is an ignored local ledger for concrete workers
   and models, workspaces, dispatch and test evidence, checkpoints, blockers,
   failures, integration state, and resume decisions. It does not duplicate
@@ -148,29 +159,29 @@ artifacts while preserving a reviewable decomposition and approval record.
 ## Planning And Review Flow
 
 Task generation reads the specification, plan, and available design artifacts,
-then creates `tasks.md` and `execution-plan.md` as one normalized pair. It
-validates the pair before writing either artifact, so task descriptions and
-checkboxes remain in the task ledger while execution policy remains in the
-orchestration plan.
+then creates `tasks.md` and its indexed `subplans/` as one normalized set. It
+validates the set before writing, so task descriptions and checkboxes remain in
+the task ledger while execution policy remains in the sub-plans.
 
-Before semantic review, analysis consumes the shared installed structural
-validator. Structural failure blocks before reviewer dispatch or report writes.
-After a successful preflight, the coordinator requires independent
-fresh-context reviews from:
+Independent review runs inside two phases, not a separate command. Each producing
+phase dispatches fresh-context, read-only reviewers and blocks its own human
+approval until the reviews permit it:
 
-- Mid-tier `artifact-fidelity`, which traces the approved inputs into the
-  planned work;
-- Most capable `decomposition-design`, which judges execution feasibility and
-  decomposition quality; and
-- Mid-tier `plan-clarity`, which judges whether the handoff is unambiguous to a
-  cold reader.
+- `/speckit.plan` requires most-capable `rfc-design`, which judges technical
+  coherence of the RFC, and mid-tier `rfc-clarity`, which judges cold-reader
+  clarity of the RFC. Both feed Design Acceptance in `plan.md`.
+- `/speckit.tasks` requires mid-tier `tasks-rfc-fidelity`, which traces the
+  accepted RFC and Feature Definition into the task package, and most-capable
+  `tasks-executability`, which judges decomposition feasibility and testable
+  work. Both feed Implementation Authorization in `tasks.md`.
 
-Projects may select additional project-owned reviewer packets. Each required
-role writes to its cumulative report, and the coordinator preserves source
-finding ownership while producing `analysis.md`. The coordinator validates and
-aggregates reviewer output but does not perform a fallback semantic review.
-Implementation remains blocked until the latest run is complete and the human
-approval record authorizes it.
+Before task review, the shared installed structural validator runs first. A
+structural failure blocks before reviewer dispatch or report writes. Projects may
+select additional project-owned reviewer packets. Each role appends to its
+cumulative report under `specs/<feature>/reviews/`, and the producing phase
+preserves source finding ownership. No phase performs a fallback self-review, and
+no phase produces an `analysis.md` aggregate. Implementation remains blocked until
+the latest reviews are complete and the recorded human approval authorizes it.
 
 ## Delegated Implementation Flow
 
@@ -220,9 +231,10 @@ The protocol fails closed at ownership boundaries rather than repairing state
 in a later phase:
 
 - Unsupported, missing, or malformed task/execution artifacts are regenerated
-  by `/speckit.tasks`; invalid review reports or aggregate state return to
-  `/speckit.analyze` with explicit confirmation where history could be lost.
-- An incomplete analysis run or a role marked `Recovery required` blocks
+  by `/speckit.tasks`; invalid review reports or approval state return to their
+  producing phase (`/speckit.plan` or `/speckit.tasks`) with explicit
+  confirmation where history could be lost.
+- An incomplete review round or a role marked `Recovery required` blocks
   implementation. Ambiguous started invocations are retained for explicit
   recovery and are not automatically redispatched.
 - Unsafe worker binding, worktree targeting, dirty state, test evidence,
@@ -254,12 +266,11 @@ operation. Runtime review, binding, and implementation remain **Not exercised**
 until a normal feature completes them with real assigned work.
 
 See the [preset README][preset-readme] for installation and diagnostic commands.
-[Protocol compatibility][compatibility], [artifact validation][artifact-validation],
-[analysis and approval][analysis], and [execution lifecycle][execution] define
-their respective installed protocol contracts.
+[Artifact contracts][artifact-contracts], [review lifecycle][review-lifecycle],
+and [execution lifecycle][execution] define their respective installed protocol
+contracts.
 
 [preset-readme]: ../../private_dot_config/specify/presets/timors-agentic-workflow/README.md
-[compatibility]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/protocol-compatibility.md
-[artifact-validation]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/artifact-validation.md
-[analysis]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/analysis-and-approval.md
+[artifact-contracts]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/artifact-contracts.md
+[review-lifecycle]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/review-lifecycle.md
 [execution]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/execution-lifecycle.md
