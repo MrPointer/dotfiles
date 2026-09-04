@@ -5,7 +5,10 @@ description: Produce, review, and authorize an immutable sub-plan task package.
 ## Authority and Inputs
 
 Require Ready canonical `spec.md` and canonical `plan.md` with Design Acceptance
-Accepted for its current Revision. Read `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`,
+Accepted for its current Revision. Resolve the canonical feature directory from
+`.specify/feature.json` per
+`.specify/presets/timors-agentic-workflow/references/artifact-contracts.md` before
+reading any artifact. Read `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`,
 `.specify/presets/timors-agentic-workflow/references/task-planning.md`, `.specify/presets/timors-agentic-workflow/references/scheduling-policy.md`,
 `.specify/presets/timors-agentic-workflow/references/testable-work.md`, `.specify/presets/timors-agentic-workflow/references/documentation-planning.md`,
 `.specify/presets/timors-agentic-workflow/references/model-and-worker-selection.md`, and `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`.

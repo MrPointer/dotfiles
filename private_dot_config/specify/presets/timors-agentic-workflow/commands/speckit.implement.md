@@ -6,7 +6,10 @@ description: Execute approved sub-plans in isolated worktrees and integrate pack
 
 Require Ready canonical `spec.md`; canonical `plan.md` Design Acceptance Accepted
 for its current Revision; a closed, reviewed `tasks.md`; `authorization: approved`;
-and a fully clean, named, stable active branch. Read
+and a fully clean, named, stable active branch. Resolve the canonical feature
+directory from `.specify/feature.json` per
+`.specify/presets/timors-agentic-workflow/references/artifact-contracts.md` before
+reading any artifact. Read
 `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`, `.specify/presets/timors-agentic-workflow/references/execution-lifecycle.md`,
 `.specify/presets/timors-agentic-workflow/references/workspace-isolation.md`, `.specify/presets/timors-agentic-workflow/references/scheduling-policy.md`,
 `.specify/presets/timors-agentic-workflow/references/model-and-worker-selection.md`, `.specify/presets/timors-agentic-workflow/references/testable-work.md`, and

@@ -4,7 +4,10 @@ description: Ground, design, review, and obtain acceptance for the normative RFC
 
 ## Authority and Inputs
 
-Require canonical `spec.md` with status Ready. Read
+Require canonical `spec.md` with status Ready. Resolve the canonical feature
+directory from `.specify/feature.json` per
+`.specify/presets/timors-agentic-workflow/references/artifact-contracts.md` before
+reading any artifact. Read
 `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`, `.specify/presets/timors-agentic-workflow/references/planning-grounding.md`,
 `.specify/presets/timors-agentic-workflow/references/rfc-planning.md`, `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`,
 `.specify/presets/timors-agentic-workflow/references/model-and-worker-selection.md`, and reviewer packets

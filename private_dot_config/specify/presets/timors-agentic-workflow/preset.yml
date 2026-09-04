@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "timors-agentic-workflow"
   name: "Timor's Agentic Workflow"
-  version: "0.3.2"
+  version: "0.3.3"
   description: "RFC-backed feature definition, reviewed task packages, and isolated packet execution."
   author: "Timor Gruber"
   license: "MIT"

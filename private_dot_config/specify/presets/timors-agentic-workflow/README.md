@@ -1,6 +1,6 @@
 # Timor's Agentic Workflow
 
-Preset `0.3.2` supplies one project-installed lifecycle:
+Preset `0.3.3` supplies one project-installed lifecycle:
 
 `specify` → `clarify` when Draft → `plan` → `tasks` → `implement`.
 
