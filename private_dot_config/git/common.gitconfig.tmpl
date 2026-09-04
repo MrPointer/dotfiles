@@ -1,6 +1,6 @@
 [user]
    name = {{ .personal.full_name }}
-   email = {{ .personal.email }}
+   email = {{ if and .personal.work_env .personal.work_email }}{{ .personal.work_email }}{{ else }}{{ .personal.email }}{{ end }}
 [branch]
    sort = committerdate
 [pull]
@@ -37,3 +37,6 @@
    gpgSign = true
 [gpg "ssh"]
    allowedSignersFile = {{ .chezmoi.homeDir }}/.config/git/allowed_signers
+{{- /* This dotfiles repo commits under the personal identity, even on work machines. */}}
+[includeIf "gitdir:{{ .chezmoi.sourceDir }}/"]
+   path = {{ .chezmoi.homeDir }}/.config/git/personal.gitconfig

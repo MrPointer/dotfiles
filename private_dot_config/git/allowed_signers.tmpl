@@ -1,9 +1,13 @@
-# Managed by chezmoi. Maps the active git identity to its SSH signing key.
-# The key follows the same work/personal branch as the gitconfig.
-{{ $signingKey := "" -}}
-{{ if and .personal.work_env (eq .personal.work_name "sedg") -}}
-{{   $signingKey = joinPath .chezmoi.homeDir ".ssh/id_rsa.pub" -}}
-{{ else -}}
-{{   $signingKey = joinPath .chezmoi.homeDir ".ssh/id_ed25519.pub" -}}
+# Managed by chezmoi. Trusts each active git identity signed by any available local key.
+{{ $emails := list .personal.email -}}
+{{ if and .personal.work_env .personal.work_email -}}
+{{ $emails = append $emails .personal.work_email -}}
 {{ end -}}
-{{ .personal.email }} {{ output "cat" $signingKey | trim }}
+{{ range $email := $emails -}}
+{{ range $name := (list "id_rsa.pub" "id_ed25519.pub") -}}
+{{ $path := joinPath $.chezmoi.homeDir ".ssh" $name -}}
+{{ if stat $path -}}
+{{ $email }} {{ output "cat" $path | trim }}
+{{ end -}}
+{{ end -}}
+{{ end -}}

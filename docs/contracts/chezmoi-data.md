@@ -22,11 +22,11 @@ Chezmoi's built-in `.chezmoi.*` values are not part of this installer-owned cont
 
 | TOML key | Template access | Presence | Producer source | Current consumers |
 |----------|-----------------|----------|-----------------|-------------------|
-| `data.personal.email` | `.personal.email` | Always | `DotfilesData.Email` | Common Git identity template |
+| `data.personal.email` | `.personal.email` | Always | `DotfilesData.Email` | Common Git identity (non-work fallback), personal-repo override, and signer templates |
 | `data.personal.full_name` | `.personal.full_name` | Always | `FirstName` and `LastName`, joined with a space | Common Git identity template |
 | `data.personal.work_env` | `.personal.work_env` | Always | Whether `DotfilesData.WorkEnv` is present | `.chezmoiignore`, shell templates, and work-dependent agent/Git templates |
 | `data.personal.work_name` | `.personal.work_name` | Work environments only | `DotfilesWorkEnvData.WorkName` | Work profile extensions and work-dependent agent/Git templates |
-| `data.personal.work_email` | `.personal.work_email` | Work environments only | `DotfilesWorkEnvData.WorkEmail` | No current source-template consumer |
+| `data.personal.work_email` | `.personal.work_email` | Work environments only | `DotfilesWorkEnvData.WorkEmail` | Common Git identity and signer templates (work environments) |
 
 ### `system`
 
