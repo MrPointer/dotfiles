@@ -27,6 +27,7 @@
          "$HOME/.ssh/config",
          "$HOME/.local/bin/nono-git-ssh",
          "$XDG_CONFIG_HOME/git/common.gitconfig",
+         "$XDG_CONFIG_HOME/git/personal.gitconfig", // Pinned identity for the dotfiles repo
          "$XDG_CONFIG_HOME/git/allowed_signers",
          "$XDG_CONFIG_HOME/worktrunk/config.toml",
          "$XDG_CONFIG_HOME/gh/config.yml",
