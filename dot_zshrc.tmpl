@@ -111,8 +111,8 @@ if command -v jfrog &>/dev/null; then
 fi
 
 # Setup custom aliases
-{{ if (hasKey .personal "signing_key") -}}
-alias gpg-unlock='gpg --sign --local-user {{ .personal.signing_key }} --output /dev/null /dev/null'
+{{ if (hasKey (default (dict) .gpg) "signing_key") -}}
+alias gpg-unlock='gpg --sign --local-user {{ .gpg.signing_key }} --output /dev/null /dev/null'
 {{- end }}
 
 {{ if .personal.work_env -}}

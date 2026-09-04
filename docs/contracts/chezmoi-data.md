@@ -40,7 +40,7 @@ Chezmoi's built-in `.chezmoi.*` values are not part of this installer-owned cont
 
 | TOML key | Template access | Presence | Producer source | Current consumers |
 |----------|-----------------|----------|-----------------|-------------------|
-| `data.gpg.signing_key` | `.gpg.signing_key` | Only when interactive GPG setup selects or creates a key | `DotfilesData.GpgSigningKey` | No current source-template consumer |
+| `data.gpg.signing_key` | `.gpg.signing_key` | Only when interactive GPG setup selects or creates a key | `DotfilesData.GpgSigningKey` | `dot_gitconfig.tmpl` (`user.signingkey`) and `dot_zshrc.tmpl` (`gpg-unlock` alias) |
 
 ## Work-Environment Invariants
 
@@ -48,11 +48,9 @@ When `personal.work_env` is `false`, the installer omits `work_name`, `work_emai
 
 When `personal.work_env` is `true`, the installer writes the work identity and both profile paths. Templates may therefore treat those conditional values as a group. The dotfile meaning of the two profile paths is documented in the [dotfiles domain][dotfiles-domain], and their runtime use is documented by [work environment loading][work-environment-loading].
 
-## Current Contract Drift
+## GPG Signing Key
 
-The installer writes the selected GPG key as `data.gpg.signing_key`, but [`dot_gitconfig.tmpl`][gitconfig-template] and [`dot_zshrc.tmpl`][zshrc-template] currently test and read `personal.signing_key`. No template reads `.gpg.signing_key`, and the installer does not write `data.personal.signing_key`. Consequently, installer-selected GPG data does not currently activate those signing-key template blocks.
-
-This document records the implemented mismatch; it does not redefine either side. A code change must align the producer and consumers before documentation can describe GPG signing as connected end to end.
+The installer writes the selected GPG key as `data.gpg.signing_key`. [`dot_gitconfig.tmpl`][gitconfig-template] reads `.gpg.signing_key` to set `user.signingkey`, and [`dot_zshrc.tmpl`][zshrc-template] reads it to define the `gpg-unlock` alias. Both templates guard on the presence of the `gpg` namespace, so a personal or work render without a selected key omits both blocks.
 
 ## Change Rules
 
