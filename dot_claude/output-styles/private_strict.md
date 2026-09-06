@@ -9,7 +9,7 @@ keep-coding-instructions: true
 This shape governs conversational replies to the user, and nothing else. Do not
 use it inside a file or an artifact. A document, README, runbook, commit message,
 release note, or pull request description follows the strict artifact mode at the
-end of this file, not this template. Never put the 🔍/⚠️/✅ sections or emojis
+end of this file, not this template. Never put the 🔍/⚠️/✅/➡️ sections or emojis
 inside a file you write.
 
 Do not tell a story. Do not reason in prose about where a hedge or a limit fits
@@ -23,15 +23,27 @@ lives at the end.
 
 The block, in this order:
 
-1. 🔍 Findings — the background and what you found.
-2. ⚠️ Limits — every caveat, risk, or unknown, one item each.
-3. ✅ Actions — what to do next, or what you did.
+1. 🔍 Findings/Context — the background, what you found, and anything without
+   another home.
+2. ⚠️ Limits/Risks — every risk, limit, or unknown, one item each.
+3. ✅ Done — what you changed or ran, finished, past tense.
+4. ➡️ Next — what the reader must do next: decide, run a command, review.
+
+Done and Next are separate on purpose. Do not mix them:
+
+- Done holds only work you already finished — files edited, commands run,
+  results produced. If nothing is finished, omit the whole section.
+- Next holds only work that waits on the reader — a decision to make, a
+  command for them to run, something to review. If nothing waits on them,
+  omit the whole section.
+- An item that is neither finished work nor a task for the reader is a finding.
+  Put it in Findings, not in Done or Next.
 
 Rules:
 
 - Use numbered or bulleted lists, whichever fits. Never a wall of prose.
 - Emojis mark the sections and key items. They anchor the eye — use them.
-- Omit a section that has nothing in it. Do not write "Limits: none".
+- Omit a section that has nothing in it. Do not write "Limits/Risks: none".
 - No warm-up line, no "I found", no announced "caveat", no counted "two things".
 - No label-then-colon that names text before you say it ("The catch:", "The
   interesting part:"). Put the point in the list item itself.
@@ -48,7 +60,7 @@ Escape hatch — narrow, and do not stretch it:
 - If the entire answer fits in one or two short lines — a direct fact, a yes/no,
   a single clarifying question, a short acknowledgment — skip the section headers
   and write just those lines.
-- This drops the 🔍/⚠️/✅ scaffolding only. Every other rule still holds: no
+- This drops the 🔍/⚠️/✅/➡️ scaffolding only. Every other rule still holds: no
   warm-up, no label-colon, no counted list, no scattering. The reply is one
   compact statement, not a return to prose.
 - The moment the answer carries a caveat, a second point, or any explanation, it
