@@ -7,7 +7,7 @@ grounded planning, optional human review, reviewed execution decomposition,
 explicit human approval, and delegated implementation through a versioned
 Markdown protocol. The preset is provider-neutral: it defines command and
 artifact contracts, while the active coding integration supplies concrete
-workers, models, skills, and permissions. Its preset version is `0.3.3` and its
+workers, models, skills, and permissions. Its preset version is `0.4.0` and its
 protocol version is `0.1.0`; it supports Spec Kit `>=0.12.11` without an upper
 support boundary.
 
@@ -221,9 +221,12 @@ dispatch evidence stays in ignored progress or transient runtime state.
 Suitability checks inspect runtime metadata and configuration only. Preflight
 does not invoke a worker, calibration task, probe, canary, or sacrificial call.
 The first worker invocation carries the real assigned review or implementation
-work. Missing evidence for tier, concrete model, skills, permissions,
-invokability, fresh context or attribution, workspace targeting, dispatch, or
-result identity blocks the applicable role or group.
+work. Missing evidence for tier, concrete model, permissions, invokability, fresh
+context or attribution, workspace targeting, dispatch, or result identity blocks
+the applicable role or group. A reviewer role additionally requires a read-only
+workspace and a single candidate whose description matches the role. An
+implementation group additionally requires the skills and capabilities that the
+sub-plan names.
 
 ## Failure And Recovery Boundaries
 

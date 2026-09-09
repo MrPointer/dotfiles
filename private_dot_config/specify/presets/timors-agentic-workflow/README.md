@@ -1,6 +1,6 @@
 # Timor's Agentic Workflow
 
-Preset `0.3.3` supplies one project-installed lifecycle:
+Preset `0.4.0` supplies one project-installed lifecycle:
 
 `specify` → `clarify` when Draft → `plan` → `tasks` → `implement`.
 
@@ -34,12 +34,14 @@ operator-controlled, not a workflow command gate.
 
 ## Execution Boundaries
 
-Task packages contain provider-neutral tiers and exact skills, not concrete
-workers, model IDs, credentials, local workspace paths, or dispatch identities.
-Binding is just in time and requires tier, skills, discoverability, invokability,
-correct workspace targeting, and attributable results. Project-local candidates
-are preferred; ambiguity requires a human choice. Runtime considerations neither
-grant access nor alter eligibility.
+Task packages contain provider-neutral tiers and the skills each group needs, not
+concrete workers, model IDs, credentials, local workspace paths, or dispatch
+identities. Binding is just in time. An implementation group requires its tier,
+skills, discoverability, invokability, correct workspace targeting, and
+attributable results. A reviewer role requires its tier, a read-only workspace,
+and a single candidate whose description matches the role. Project-local
+candidates are preferred; ambiguity requires a human choice. Runtime
+considerations neither grant access nor alter eligibility.
 
 Each packet has a dedicated branch and worktree. Workers may commit only there;
 the coordinator alone advances the active branch. The approved tracked feature

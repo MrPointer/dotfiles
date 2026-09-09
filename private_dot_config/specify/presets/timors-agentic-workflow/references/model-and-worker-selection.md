@@ -1,12 +1,18 @@
 # Binding, Runtime Conditions, and Result Attribution
 
-Tracked reviewers and implementation packets name only a provider-neutral tier and
-exact skills. Eligibility requires those exact values plus native discoverability,
-invokability, correct workspace targeting, and attributable results. Prefer a
-project-local candidate. Select a unique preferred candidate, sole eligible
-candidate, or an explicit human choice. Abstract capabilities and permission
-breadth are excluded. Zero or ambiguous candidates are collected blockers. Do not
-provision a worker or perform a suitability probe; first invocation is real work.
+A tracked reviewer names a provider-neutral tier and a role description. A tracked
+implementation packet names a provider-neutral tier and the skills and
+capabilities the group needs. Eligibility requires the requested tier, native
+discoverability, invokability, correct workspace targeting, and attributable
+results; a reviewer additionally requires a read-only workspace. Prefer a
+project-local candidate. For a reviewer, match the role description against the
+candidate descriptions and select a single clear fit. For an implementation
+packet, match the named skills and capabilities and select a single eligible
+candidate. A unique fit, a sole eligible candidate, or an explicit human choice
+binds; zero clear or several plausible candidates are collected blockers. Abstract
+capabilities and permission breadth neither grant nor gate eligibility. Do not
+provision a worker or perform a suitability probe; the first invocation is real
+work. Record the concrete binding in runtime evidence, never in a tracked artifact.
 
 Runtime Considerations are anticipated network, local tool, nested-dispatch,
 cache, or similar conditions. They are planning context only: neither access grants
