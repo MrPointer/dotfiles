@@ -167,11 +167,11 @@ Independent review runs inside two phases, not a separate command. Each producin
 phase dispatches fresh-context, read-only reviewers and blocks its own human
 approval until the reviews permit it:
 
-- `/speckit.plan` requires most-capable `rfc-design`, which judges technical
-  coherence of the RFC, and mid-tier `rfc-clarity`, which judges cold-reader
-  clarity of the RFC. Both feed Design Acceptance in `plan.md`.
-- `/speckit.tasks` requires mid-tier `tasks-rfc-fidelity`, which traces the
-  accepted RFC and Feature Definition into the task package, and most-capable
+- `/speckit.plan` requires most-capable `plan-design`, which judges technical
+  coherence of the plan, and mid-tier `plan-clarity`, which judges cold-reader
+  clarity of the plan. Both feed Design Acceptance in `plan.md`.
+- `/speckit.tasks` requires mid-tier `tasks-plan-fidelity`, which traces the
+  accepted plan and Feature Definition into the task package, and most-capable
   `tasks-executability`, which judges decomposition feasibility and testable
   work. Both feed Implementation Authorization in `tasks.md`.
 

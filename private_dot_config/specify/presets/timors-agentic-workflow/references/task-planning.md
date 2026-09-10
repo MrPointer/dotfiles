@@ -15,8 +15,8 @@ subplans:
     after:
       - subplans/NN-predecessor.md
 reviews:
-  rfc_fidelity:
-    report: reviews/tasks-rfc-fidelity.md
+  plan_fidelity:
+    report: reviews/tasks-plan-fidelity.md
     round: null
     status: pending
     verdict: pending
@@ -98,8 +98,8 @@ Task review pointer round is `null` or `RNN`; status is `pending`, `reviewed`,
 `rejected`. Authorization may be approved only when both roles are reviewed or
 retained, point to existing rounds, and pass or pass with concerns. Initial review
 runs both. Cosmetic or scoped implementation-detail correction needs no rerun by
-default. RFC-fidelity reruns when changed scope can affect Feature Definition or
-RFC scope, constraints, risks, accepted design, or producer-owned definitions.
+default. plan-fidelity reruns when changed scope can affect Feature Definition or
+plan scope, constraints, risks, accepted design, or producer-owned definitions.
 Executability reruns when ownership, dependencies, concurrency, routing, body
 agreement, producer resolution, output evidence, test mode/basis, acceptance,
 verification, or handoff changes. Packet addition/removal, split/merge, boundary,

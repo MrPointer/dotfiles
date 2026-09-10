@@ -1,5 +1,5 @@
 ---
-description: Ground, design, review, and obtain acceptance for the normative RFC.
+description: Ground, design, review, and obtain acceptance for the normative plan.
 ---
 
 ## Authority and Inputs
@@ -9,12 +9,12 @@ directory from `.specify/feature.json` per
 `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md` before
 reading any artifact. Read
 `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`, `.specify/presets/timors-agentic-workflow/references/planning-grounding.md`,
-`.specify/presets/timors-agentic-workflow/references/rfc-planning.md`, `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`,
+`.specify/presets/timors-agentic-workflow/references/plan-lifecycle.md`, `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`,
 `.specify/presets/timors-agentic-workflow/references/model-and-worker-selection.md`, and reviewer packets
-`.specify/presets/timors-agentic-workflow/reviewers/rfc-design.md` and `.specify/presets/timors-agentic-workflow/reviewers/rfc-clarity.md`. Use
+`.specify/presets/timors-agentic-workflow/reviewers/plan-design.md` and `.specify/presets/timors-agentic-workflow/reviewers/plan-clarity.md`. Use
 `.specify/presets/timors-agentic-workflow/templates/grounding-notes-template.md`, `.specify/presets/timors-agentic-workflow/templates/research-template.md`,
 `.specify/presets/timors-agentic-workflow/templates/plan-template.md`, and `.specify/presets/timors-agentic-workflow/templates/review-report-template.md`. A project
-constitution is optional governance input. `plan.md` is the sole normative RFC.
+constitution is optional governance input. `plan.md` is the sole normative plan.
 
 ## Procedure
 
@@ -28,9 +28,9 @@ constitution is optional governance input. `plan.md` is the sole normative RFC.
    evidence that contradicts intent. Correct only non-semantic metadata or an
    unambiguous transcription in `spec.md`; any other correction returns it to
    Draft and `clarify` before this command continues.
-3. Write a self-contained RFC that restates every durable decision needed by task
+3. Write a self-contained plan that restates every durable decision needed by task
    planning. Classify changes before writing, apply Revision, acceptance, and
-   review-pointer transitions exactly as `.specify/presets/timors-agentic-workflow/references/rfc-planning.md` requires,
+   review-pointer transitions exactly as `.specify/presets/timors-agentic-workflow/references/plan-lifecycle.md` requires,
    and refuse a material change after the package lock.
 4. Bind, invoke, and record independent design and clarity reviews under
    `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`. Remediate accepted findings. Rerun only
@@ -38,5 +38,5 @@ constitution is optional governance input. `plan.md` is the sole normative RFC.
    pointer transition. At review quiescence present one collected blocker
    interaction. A started incomplete review uses recovery, never self-review.
 5. Request Design Acceptance only when both pointers are current, attributable,
-   and non-blocking for the current RFC Revision. Record the human decision and
+   and non-blocking for the current plan Revision. Record the human decision and
    rationale in `plan.md`. Only current Revision Accepted permits `tasks`.

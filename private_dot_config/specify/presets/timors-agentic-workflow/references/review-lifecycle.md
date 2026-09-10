@@ -19,7 +19,7 @@ titles, not opaque identifiers. The review pointer holds only its declared repor
 round, revision when applicable, status, and verdict; detailed evidence remains in
 the report.
 
-For an RFC review that may have started without attributable complete result, set
+For a plan review that may have started without attributable complete result, set
 its pointer to unchanged report path, round `None`, revision `None`, status
 `Recovery required`, verdict `Pending`. For a task review use unchanged report,
 round `null`, status `recovery-required`, verdict `pending`. Do not retain an old
