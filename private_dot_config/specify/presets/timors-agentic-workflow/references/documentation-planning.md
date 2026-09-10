@@ -20,4 +20,4 @@ human approval gate. If it finds incomplete work within accepted requirements,
 design, task scope, and acceptance, coordinator or bounded delegate may repair it,
 append a policy-compliant corrective commit, and rerun the review. New scope,
 undefined behavior, contract change, or acceptance exception returns to Feature
-Definition, RFC, or task planning ownership.
+Definition, plan, or task planning ownership.

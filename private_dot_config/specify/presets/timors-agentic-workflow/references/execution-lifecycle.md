@@ -20,7 +20,7 @@ worktree/branch attribution, and all durable runtime transitions.
 
 At lock, pin the complete path set and content of every tracked file beneath the
 canonical feature directory. The baseline includes every feature-local artifact,
-including spec, RFC, package, sub-plans, reports, grounding, research, and tracked
+including spec, plan, package, sub-plans, reports, grounding, research, and tracked
 additions. Progress is excluded. At dispatch, result acceptance, after rebase, and
 integration, compare paths, content, tracked additions/deletions/replacements, and
 file types to this exact baseline. Any difference rejects dispatch or candidate;

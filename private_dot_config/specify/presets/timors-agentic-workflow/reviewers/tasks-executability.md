@@ -2,7 +2,7 @@
 
 - **Tier**: most-capable
 - **Role**: task executability reviewer that judges decomposition, dependencies, and testable work
-- **Inputs**: accepted RFC, `tasks.md`, indexed sub-plans, prior report
+- **Inputs**: accepted plan, `tasks.md`, indexed sub-plans, prior report
 - **Workspace**: correctly targeted read-only feature/repository view
 - **Exclusions**: no mutation, no worker provisioning, no authorization decision
 

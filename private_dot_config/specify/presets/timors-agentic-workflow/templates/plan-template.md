@@ -1,4 +1,4 @@
-# RFC: [Feature Name]
+# Plan: [Feature Name]
 
 - **Revision**: R0
 
@@ -44,8 +44,8 @@
 
 | Role | Report | Round | Revision | Status | Verdict |
 |---|---|---|---|---|---|
-| rfc_design | reviews/rfc-design.md | None | None | Pending | Pending |
-| rfc_clarity | reviews/rfc-clarity.md | None | None | Pending | Pending |
+| plan_design | reviews/plan-design.md | None | None | Pending | Pending |
+| plan_clarity | reviews/plan-clarity.md | None | None | Pending | Pending |
 
 ## Design Acceptance
 

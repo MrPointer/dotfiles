@@ -1,7 +1,7 @@
-# RFC Clarity Review Packet
+# Plan Clarity Review Packet
 
 - **Tier**: mid-tier
-- **Role**: RFC clarity reviewer that judges whether a cold reader can follow the RFC
+- **Role**: plan clarity reviewer that judges whether a cold reader can follow the plan
 - **Inputs**: current `spec.md`, `plan.md`, prior role report
 - **Workspace**: correctly targeted read-only feature/repository view
 - **Exclusions**: no mutation, no design substitution, no human acceptance decision

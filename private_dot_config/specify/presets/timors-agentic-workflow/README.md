@@ -4,7 +4,7 @@ Preset `0.4.0` supplies one project-installed lifecycle:
 
 `specify` → `clarify` when Draft → `plan` → `tasks` → `implement`.
 
-`spec.md` is the Feature Definition, `plan.md` is the sole normative RFC,
+`spec.md` is the Feature Definition, `plan.md` is the sole normative plan,
 `tasks.md` and `subplans/` are the reviewed execution package, and ignored local
 `progress.md` is coordinator runtime evidence. Design Acceptance precedes task
 creation; Implementation Authorization precedes mutation.

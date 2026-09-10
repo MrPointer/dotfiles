@@ -14,7 +14,7 @@ reading any artifact. Read `.specify/presets/timors-agentic-workflow/references/
 `.specify/presets/timors-agentic-workflow/references/model-and-worker-selection.md`, and `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`.
 Use `.specify/presets/timors-agentic-workflow/templates/tasks-template.md`, `.specify/presets/timors-agentic-workflow/templates/subplan-template.md`, and
 `.specify/presets/timors-agentic-workflow/templates/review-report-template.md`; use reviewer packets
-`.specify/presets/timors-agentic-workflow/reviewers/tasks-rfc-fidelity.md` and `.specify/presets/timors-agentic-workflow/reviewers/tasks-executability.md`.
+`.specify/presets/timors-agentic-workflow/reviewers/tasks-plan-fidelity.md` and `.specify/presets/timors-agentic-workflow/reviewers/tasks-executability.md`.
 
 ## Procedure
 
