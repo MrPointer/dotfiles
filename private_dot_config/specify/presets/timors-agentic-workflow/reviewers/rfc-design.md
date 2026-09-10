@@ -1,7 +1,7 @@
 # RFC Design Review Packet
 
 - **Tier**: most-capable
-- **Required skills**: exact project RFC and architecture-review skill identifiers
+- **Role**: RFC design reviewer that judges the technical coherence and architecture of the RFC
 - **Inputs**: current `spec.md`, `plan.md`, relevant grounding/research, prior role report
 - **Workspace**: correctly targeted read-only feature/repository view
 - **Exclusions**: no mutation, no binding choice, no human acceptance decision

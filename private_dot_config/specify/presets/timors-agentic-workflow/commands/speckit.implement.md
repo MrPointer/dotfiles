@@ -6,31 +6,34 @@ description: Execute approved sub-plans in isolated worktrees and integrate pack
 
 Require Ready canonical `spec.md`; canonical `plan.md` Design Acceptance Accepted
 for its current Revision; a closed, reviewed `tasks.md`; `authorization: approved`;
-and a fully clean, named, stable active branch. Read
-`references/artifact-contracts.md`, `references/execution-lifecycle.md`,
-`references/workspace-isolation.md`, `references/scheduling-policy.md`,
-`references/model-and-worker-selection.md`, `references/testable-work.md`, and
-`references/documentation-planning.md`. Use `templates/progress-template.md` and,
-when required, `reviewers/component-docs.md` with
-`templates/review-report-template.md`.
+and a fully clean, named, stable active branch. Resolve the canonical feature
+directory from `.specify/feature.json` per
+`.specify/presets/timors-agentic-workflow/references/artifact-contracts.md` before
+reading any artifact. Read
+`.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`, `.specify/presets/timors-agentic-workflow/references/execution-lifecycle.md`,
+`.specify/presets/timors-agentic-workflow/references/workspace-isolation.md`, `.specify/presets/timors-agentic-workflow/references/scheduling-policy.md`,
+`.specify/presets/timors-agentic-workflow/references/model-and-worker-selection.md`, `.specify/presets/timors-agentic-workflow/references/testable-work.md`, and
+`.specify/presets/timors-agentic-workflow/references/documentation-planning.md`. Use `.specify/presets/timors-agentic-workflow/templates/progress-template.md` and,
+when required, `.specify/presets/timors-agentic-workflow/reviewers/component-docs.md` with
+`.specify/presets/timors-agentic-workflow/templates/review-report-template.md`.
 
 ## Procedure
 
-1. Perform the concrete phase checks in `references/execution-lifecycle.md`; do
+1. Perform the concrete phase checks in `.specify/presets/timors-agentic-workflow/references/execution-lifecycle.md`; do
    not redesign the approved package. Resolve, pin, and later refresh signing
-   policy exactly under `references/workspace-isolation.md`. Add the exact local
+   policy exactly under `.specify/presets/timors-agentic-workflow/references/workspace-isolation.md`. Add the exact local
    progress path to `.git/info/exclude` after clean preflight, then create initial
    progress from its template. Creation is the lock event and records active branch,
    starting commit, complete protected baseline, and policy evidence.
 2. For each ready canonical identity, validate closed package structure, selected
    tracked regular file, predecessor status and contract evidence, ownership, test
    mode/basis, and baseline equality. Bind a worker under
-   `references/model-and-worker-selection.md`. Create a dedicated branch/worktree,
+   `.specify/presets/timors-agentic-workflow/references/model-and-worker-selection.md`. Create a dedicated branch/worktree,
    derive and record its worktree-root-relative locator, and dispatch only the
    identity, locator, invocation-specific constraints, prerequisite evidence,
    recovery context, and limited result envelope. Do not copy packet prose into
    the prompt.
-3. Let `references/scheduling-policy.md` control waves. Workers may browse but not
+3. Let `.specify/presets/timors-agentic-workflow/references/scheduling-policy.md` control waves. Workers may browse but not
    expand authority, modify protected feature files, rewrite history, merge
    unrelated work, or push. Validate returned changed paths, commits, verification,
    output evidence, runtime outcomes, attribution, clean branch, and baseline at

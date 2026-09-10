@@ -1,7 +1,7 @@
 # Task Executability Review Packet
 
 - **Tier**: most-capable
-- **Required skills**: exact project decomposition, testing, and execution-review skill identifiers
+- **Role**: task executability reviewer that judges decomposition, dependencies, and testable work
 - **Inputs**: accepted RFC, `tasks.md`, indexed sub-plans, prior report
 - **Workspace**: correctly targeted read-only feature/repository view
 - **Exclusions**: no mutation, no worker provisioning, no authorization decision

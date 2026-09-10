@@ -1,7 +1,7 @@
 # Component Documentation Review Packet
 
 - **Tier**: most-capable
-- **Required skills**: exact project component-documentation skill identifiers
+- **Role**: component-documentation reviewer that finds documentation made stale or wrong by the final code
 - **Inputs**: final integrated code, relevant current documentation, Execution Handoff, progress evidence
 - **Workspace**: correctly targeted read-only repository view after final code
 - **Exclusions**: no mutation, no scope expansion, no authorization decision

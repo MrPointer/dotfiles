@@ -1,11 +1,15 @@
 # Independent Review Lifecycle
 
-Review roles are independent and read-only. Bind only a candidate with requested
-tier, exact skills, native discoverability, invokability, correct workspace
-targeting, and attributable results; project-local candidates are preferred.
-Select a unique preferred candidate, a sole eligible candidate, or an explicit
-human choice. Abstract capabilities and permission breadth are not eligibility
-inputs. The first invocation is the real review assignment; there is no probe.
+Review roles are independent and read-only. Each role names a tier and a role
+description. Bind a candidate that meets the requested tier and is natively
+discoverable, invokable, correctly targeted to a read-only workspace, and able to
+attribute results; project-local candidates are preferred. Among these safe
+candidates, match the role description against the candidate descriptions and bind
+only a single clear fit. Zero clear fits or several plausible fits produce a
+collected blocker for one human choice. Record the chosen binding in runtime
+evidence; no tracked artifact names a candidate. Declared skills, abstract
+capabilities, permission breadth, and worker names are not eligibility inputs. The
+first invocation is the real review assignment; there is no probe.
 
 Every role report is cumulative and appends a complete current-state round with
 trigger, scope, reviewed paths, binding/invocation/workspace/start/result evidence,

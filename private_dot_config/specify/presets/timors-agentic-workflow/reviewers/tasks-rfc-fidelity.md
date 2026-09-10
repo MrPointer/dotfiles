@@ -1,7 +1,7 @@
 # Task RFC-Fidelity Review Packet
 
 - **Tier**: mid-tier
-- **Required skills**: exact project RFC-reading and task-review skill identifiers
+- **Role**: task RFC-fidelity reviewer that traces the accepted RFC into the task package
 - **Inputs**: Ready `spec.md`, current accepted `plan.md`, `tasks.md`, indexed sub-plans, prior report
 - **Workspace**: correctly targeted read-only feature/repository view
 - **Exclusions**: no mutation, no implementation dispatch, no authorization decision

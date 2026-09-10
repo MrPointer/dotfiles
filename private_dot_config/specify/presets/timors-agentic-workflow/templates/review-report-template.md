@@ -12,7 +12,7 @@
 - **Trigger**: initial | targeted change | recovery
 - **Scope**: [Complete current-state review scope]
 - **Reviewed Paths**: [Project-relative paths]
-- **Binding Evidence**: [Candidate, tier/skills, workspace, invocation, start, result]
+- **Binding Evidence**: [Candidate, tier, role match, workspace, invocation, start, result]
 - **Verdict**: passed | passed-with-concerns | blocking
 
 #### Current Findings
