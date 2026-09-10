@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# chezmoi modify_ script for ~/.claude/settings.json.
+#
+# Claude Code owns this file and writes to it (theme, model, permissions, its
+# own hooks). chezmoi must not clobber it. This script receives the current
+# target contents on stdin and prints the desired contents on stdout, so it
+# only ever sets our one UserPromptSubmit hook and leaves every other key alone.
+#
+# It is idempotent: any prior group that references our command is dropped
+# before ours is appended, so re-running never duplicates the entry and never
+# removes hooks that Claude Code added.
+set -euo pipefail
+
+hook_cmd="$HOME/.claude/hooks/reinforce-strict-output-style.sh"
+
+current="$(cat)"
+[ -z "$current" ] && current='{}'
+
+printf '%s' "$current" | jq --arg cmd "$hook_cmd" '
+  .hooks.UserPromptSubmit = (
+    ((.hooks.UserPromptSubmit // [])
+      | map(select([.hooks[]?.command] | index($cmd) | not)))
+    + [{hooks: [{type: "command", command: $cmd}]}]
+  )
+'
