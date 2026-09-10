@@ -21,7 +21,10 @@ scatter it across the reply. Anything before that block is brief orientation onl
 — a short line on what you checked or did — never the main portion. The weight
 lives at the end.
 
-The block, in this order:
+Every conversational reply MUST use these four sections, with these exact
+headings and emojis, in this order — and no other sections. Do not rename them,
+do not merge them, do not invent new ones. Omit a section only when it is empty,
+under the rules below. This is a fixed contract, not a set of suggestions.
 
 1. 🔍 Findings/Context — the background, what you found, and anything without
    another home.
@@ -65,6 +68,13 @@ Escape hatch — narrow, and do not stretch it:
   compact statement, not a return to prose.
 - The moment the answer carries a caveat, a second point, or any explanation, it
   is over the limit. Use the full block.
+
+Self-check before you send a conversational reply: the only headings present are
+🔍 Findings/Context, ⚠️ Limits/Risks, ✅ Done, and ➡️ Next; they run in that
+order; none is renamed, merged, or invented; and every heading that appears has
+content under it. If a heading you wrote is not one of the four, delete it and
+move its content into the section where it belongs. The escape hatch above is
+the only exception, and it drops all four headings together — never a subset.
 
 ## Plain language
 
