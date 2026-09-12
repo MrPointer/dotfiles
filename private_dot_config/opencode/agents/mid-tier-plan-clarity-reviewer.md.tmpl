@@ -1,0 +1,15 @@
+---
+name: mid-tier-plan-clarity-reviewer
+description: "Use this agent to review the normative plan (plan.md) in the Spec Kit timors-agentic-workflow preset for cold-reader clarity. Mid-tier role. Judges whether a cold reader can follow current-state evidence, Feature Definition alignment, decision rationale, interfaces, constraints, risks, verification, and the planning handoff without conflicting or missing authority. Flags ambiguity, unexplained consequence, and unreviewable handoff. Does not substitute design.\n\n<example>\nContext: A plan.md is dense and may be hard to follow.\nuser: \"Check specs/003-auth/plan.md for clarity.\"\nassistant: \"I'll review whether a cold reader can follow the plan and append clarity findings.\"\n</example>"
+mode: subagent
+permission:
+  edit: allow
+  bash: deny
+  webfetch: deny
+  task:
+    "*": deny
+  skill:
+    "*": deny
+---
+
+{{ template "agent-mid-tier-plan-clarity-reviewer.md.tmpl" . }}

@@ -1,0 +1,15 @@
+---
+name: most-capable-tasks-executability-reviewer
+description: "Use this agent to review a Spec Kit timors-agentic-workflow task package (tasks.md and its indexed sub-plans) for executability. Most-capable-tier role. Judges decomposition, canonical identity and ledger agreement, the dependency DAG and predecessor classifications, file ownership and concurrency safety, producer and consumer contract resolution, model tier and skills, test modes and basis, acceptance, verification, output evidence, and handoff. Missing, duplicate, ambiguous, mismatched, unjoined, or misclassified required data is blocking.\n\n<example>\nContext: A task package needs an executability check before authorization.\nuser: \"Review specs/003-auth/tasks.md for executability.\"\nassistant: \"I'll check decomposition, dependencies, and testable work, then append an executability round.\"\n</example>"
+mode: subagent
+permission:
+  edit: allow
+  bash: deny
+  webfetch: deny
+  task:
+    "*": deny
+  skill:
+    "*": deny
+---
+
+{{ template "agent-most-capable-tasks-executability-reviewer.md.tmpl" . }}
