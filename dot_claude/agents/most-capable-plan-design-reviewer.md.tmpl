@@ -1,0 +1,7 @@
+---
+name: most-capable-plan-design-reviewer
+description: "Use this agent to review the normative plan (plan.md) in the Spec Kit timors-agentic-workflow preset for technical coherence and architecture before Design Acceptance. Most-capable-tier role. Judges verified current state, boundaries, contracts, data and control flow, state ownership, failure behavior, compatibility, migration, rollback, risks, verification, and Feature Definition alignment. A passing verdict never grants Design Acceptance.\n\n<example>\nContext: A feature's plan.md is drafted and awaiting design review.\nuser: \"Review specs/003-auth/plan.md for design soundness.\"\nassistant: \"I'll independently review the plan for technical coherence, risks, and Feature Definition alignment, then append a review round.\"\n</example>"
+tools: Read, Glob, Grep, Write, Edit
+---
+
+{{ template "agent-most-capable-plan-design-reviewer.md.tmpl" . }}

@@ -1,0 +1,7 @@
+---
+name: most-capable-component-docs-reviewer
+description: "Use this agent to review component documentation after final integrated code in the Spec Kit timors-agentic-workflow preset. Most-capable-tier role. Finds existing component documentation that a modified component, interface, or behavior made stale, incomplete, or contradictory. Runs only after final code and gates completion; an in-scope doc repair may be performed or delegated, then reviewed again, while genuinely new scope returns to planning.\n\n<example>\nContext: A feature's implementation is integrated and complete.\nuser: \"Review the docs affected by the finished auth feature.\"\nassistant: \"I'll identify component docs made stale by the final code and append findings.\"\n</example>"
+tools: Read, Glob, Grep, Write, Edit
+---
+
+{{ template "agent-most-capable-component-docs-reviewer.md.tmpl" . }}
