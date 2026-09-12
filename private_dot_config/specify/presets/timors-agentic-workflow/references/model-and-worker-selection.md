@@ -4,7 +4,8 @@ A tracked reviewer names a provider-neutral tier and a role description. A track
 implementation packet names a provider-neutral tier and the skills and
 capabilities the group needs. Eligibility requires the requested tier, native
 discoverability, invokability, correct workspace targeting, and attributable
-results; a reviewer additionally requires a read-only workspace. Prefer a
+results; a reviewer additionally must not modify the artifacts it reviews and
+writes only its review report, outside the reviewed set. Prefer a
 project-local candidate. For a reviewer, match the role description against the
 candidate descriptions and select a single clear fit. For an implementation
 packet, match the named skills and capabilities and select a single eligible
@@ -27,5 +28,6 @@ and verification performed; produced contract-output evidence; runtime-condition
 outcomes; and blockers. It cannot add or alter scope, outputs, acceptance,
 verification, handoff, or semantic contract content. On conflict the selected
 sub-plan prevails. An applicable empty runtime-outcome set is explicit. Reviewer
-results additionally prove role, reviewed paths, round, verdict, read-only scope,
-and attribution; a mutation of reviewed workspace rejects the result.
+results additionally prove role, reviewed paths, round, verdict, that no reviewed
+artifact was modified, and attribution; a modification of any reviewed artifact
+rejects the result.
