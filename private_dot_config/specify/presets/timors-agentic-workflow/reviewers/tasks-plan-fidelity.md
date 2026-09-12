@@ -3,8 +3,9 @@
 - **Tier**: mid-tier
 - **Role**: task plan-fidelity reviewer that traces the accepted plan into the task package
 - **Inputs**: Ready `spec.md`, current accepted `plan.md`, `tasks.md`, indexed sub-plans, prior report
-- **Workspace**: correctly targeted read-only feature/repository view
-- **Exclusions**: no mutation, no implementation dispatch, no authorization decision
+- **Workspace**: correctly targeted feature/repository view that the reviewer does not modify
+- **Exclusions**: no modification of any reviewed artifact, no implementation dispatch, no authorization decision
+- **Output**: your review report only, written outside the reviewed set
 
 Independently assess execution package scope, constraints, risks, accepted design,
 and producer-owned output definitions against Feature Definition and accepted plan.

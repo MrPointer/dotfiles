@@ -3,8 +3,9 @@
 - **Tier**: most-capable
 - **Role**: task executability reviewer that judges decomposition, dependencies, and testable work
 - **Inputs**: accepted plan, `tasks.md`, indexed sub-plans, prior report
-- **Workspace**: correctly targeted read-only feature/repository view
-- **Exclusions**: no mutation, no worker provisioning, no authorization decision
+- **Workspace**: correctly targeted feature/repository view that the reviewer does not modify
+- **Exclusions**: no modification of any reviewed artifact, no worker provisioning, no authorization decision
+- **Output**: your review report only, written outside the reviewed set
 
 Independently check all requirements in `references/task-planning.md` and
 `references/testable-work.md`: closed fields; canonical identity and ledger;

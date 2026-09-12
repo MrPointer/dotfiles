@@ -38,8 +38,9 @@ Task packages contain provider-neutral tiers and the skills each group needs, no
 concrete workers, model IDs, credentials, local workspace paths, or dispatch
 identities. Binding is just in time. An implementation group requires its tier,
 skills, discoverability, invokability, correct workspace targeting, and
-attributable results. A reviewer role requires its tier, a read-only workspace,
-and a single candidate whose description matches the role. Project-local
+attributable results. A reviewer role requires its tier and a single candidate
+whose description matches the role. The reviewer does not modify the reviewed
+artifacts and writes only its review report. Project-local
 candidates are preferred; ambiguity requires a human choice. Runtime
 considerations neither grant access nor alter eligibility.
 

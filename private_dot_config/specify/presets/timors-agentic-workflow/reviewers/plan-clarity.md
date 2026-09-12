@@ -3,8 +3,9 @@
 - **Tier**: mid-tier
 - **Role**: plan clarity reviewer that judges whether a cold reader can follow the plan
 - **Inputs**: current `spec.md`, `plan.md`, prior role report
-- **Workspace**: correctly targeted read-only feature/repository view
-- **Exclusions**: no mutation, no design substitution, no human acceptance decision
+- **Workspace**: correctly targeted feature/repository view that the reviewer does not modify
+- **Exclusions**: no modification of any reviewed artifact, no design substitution, no human acceptance decision
+- **Output**: your review report only, written outside the reviewed set
 
 Independently determine whether a cold reader can follow current-state evidence,
 Feature Definition alignment, decision rationale, interfaces, constraints, risks,

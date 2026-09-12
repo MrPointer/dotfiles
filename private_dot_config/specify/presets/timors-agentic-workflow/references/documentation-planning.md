@@ -14,8 +14,9 @@ substantive reason. At completion, the coordinator checks both the handoff and
 current repository documentation. A not-applicable handoff contradicted by current
 documentation is a planning defect, not a skip.
 
-After final code exists, bind the independent read-only most-capable
-`reviewers/component-docs.md` role. Its result gates completion but creates no
+After final code exists, bind the independent most-capable
+`reviewers/component-docs.md` role. The review does not modify the artifacts it
+reviews; a repair, when needed, is a separate step described below. Its result gates completion but creates no
 human approval gate. If it finds incomplete work within accepted requirements,
 design, task scope, and acceptance, coordinator or bounded delegate may repair it,
 append a policy-compliant corrective commit, and rerun the review. New scope,
