@@ -20,6 +20,8 @@ function _claude_nono() {
 
 function claude() { _claude_nono my-claude-code "$@" }
 
+function claude-chezmoi() { _claude_nono claude-code-chezmoi "$@" }
+
 function claude-go() { _claude_nono claude-code-go "$@" }
 
 function claude-lcp-docs() { _claude_nono claude-code-lcp-docs "$@" }
