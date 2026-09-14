@@ -3,7 +3,7 @@
 | Artifact | Authority | Required consumer state |
 |---|---|---|
 | `spec.md` | Feature Definition | `status: Ready` before `plan` |
-| `plan.md` | Sole normative RFC | current Revision has human Design Acceptance `Accepted` before `tasks` |
+| `plan.md` | Sole normative plan | current Revision has human Design Acceptance `Accepted` before `tasks` |
 | `tasks.md` and indexed `subplans/` | immutable execution package | both current reviews permit and `authorization: approved` before `implement` |
 | role reports | cumulative review evidence | pointer resolves to an attributable applicable non-blocking complete round |
 | ignored `progress.md` | coordinator-owned runtime evidence | exact durable evidence before resume, integration, or completion |
@@ -23,8 +23,8 @@ Material Feature Definition writes are forbidden after the initial progress lock
 or completion. Before an otherwise permitted material definition write, mark a
 current Accepted or Rejected Design Acceptance Stale while preserving decision
 provenance; Pending remains Pending. Return authorization to `pending` and make
-existing RFC and task review pointers pending with no applicable round. Before a
-material accepted RFC write, return authorization to `pending`, apply the same
+existing plan and task review pointers pending with no applicable round. Before a
+material accepted plan write, return authorization to `pending`, apply the same
 acceptance transition, and make task review pointers pending. Consumers never
 repair a partially written transition by inference.
 

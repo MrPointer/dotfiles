@@ -1,0 +1,15 @@
+---
+name: mid-tier-tasks-fidelity-reviewer
+description: "Use this agent to review a Spec Kit timors-agentic-workflow task package (tasks.md and its indexed sub-plans) for fidelity to the accepted plan (plan.md) and Feature Definition (spec.md). Mid-tier role. Traces accepted design, scope, constraints, risks, and producer-owned output definitions into the package and flags any undefined behavior, scope, contract, or acceptance exception. Unapproved deviation is blocking.\n\n<example>\nContext: A task package was generated from an accepted plan.\nuser: \"Review specs/003-auth/tasks.md against the accepted plan for fidelity.\"\nassistant: \"I'll trace the accepted plan and Feature Definition into the package and append fidelity findings.\"\n</example>"
+mode: subagent
+permission:
+  edit: allow
+  bash: deny
+  webfetch: deny
+  task:
+    "*": deny
+  skill:
+    "*": deny
+---
+
+{{ template "agent-mid-tier-tasks-fidelity-reviewer.md.tmpl" . }}

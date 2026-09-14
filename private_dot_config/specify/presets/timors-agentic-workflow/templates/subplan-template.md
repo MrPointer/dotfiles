@@ -23,7 +23,7 @@ contracts:
 
 ## Baseline Context and Constraints
 
-[Accepted RFC context, constraints, and protected feature-directory boundary.]
+[Accepted plan context, constraints, and protected feature-directory boundary.]
 
 ## Scope and Primary Files
 

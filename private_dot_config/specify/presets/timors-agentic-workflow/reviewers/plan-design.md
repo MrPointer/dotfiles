@@ -1,12 +1,13 @@
-# RFC Design Review Packet
+# Plan Design Review Packet
 
 - **Tier**: most-capable
-- **Role**: RFC design reviewer that judges the technical coherence and architecture of the RFC
+- **Role**: plan design reviewer that judges the technical coherence and architecture of the plan
 - **Inputs**: current `spec.md`, `plan.md`, relevant grounding/research, prior role report
-- **Workspace**: correctly targeted read-only feature/repository view
-- **Exclusions**: no mutation, no binding choice, no human acceptance decision
+- **Workspace**: correctly targeted feature/repository view that the reviewer does not modify
+- **Exclusions**: no modification of any reviewed artifact, no binding choice, no human acceptance decision
+- **Output**: your review report only, written outside the reviewed set
 
-Independently assess whether the current RFC is technically coherent and complete:
+Independently assess whether the current plan is technically coherent and complete:
 verified current state, architecture, boundaries, contracts, flows, state,
 failure behavior, compatibility/migration, risks, verification, and Feature
 Definition alignment. Check that durable decisions are in `plan.md`, not only

@@ -4,8 +4,8 @@ subplans:
   - path: subplans/01-semantic-name.md
     after: []
 reviews:
-  rfc_fidelity:
-    report: reviews/tasks-rfc-fidelity.md
+  plan_fidelity:
+    report: reviews/tasks-plan-fidelity.md
     round: null
     status: pending
     verdict: pending
@@ -21,7 +21,7 @@ authorization: pending
 
 ## Overview
 
-[Accepted RFC scope, package objective, canonical feature directory.]
+[Accepted plan scope, package objective, canonical feature directory.]
 
 ## Sub-Plan Ledger
 
@@ -48,7 +48,7 @@ This is a human projection; frontmatter alone schedules.
 
 | Role | Report | Round | Status | Verdict |
 |---|---|---|---|---|
-| rfc_fidelity | reviews/tasks-rfc-fidelity.md | null | pending | pending |
+| plan_fidelity | reviews/tasks-plan-fidelity.md | null | pending | pending |
 | executability | reviews/tasks-executability.md | null | pending | pending |
 
 ## Implementation Authorization
