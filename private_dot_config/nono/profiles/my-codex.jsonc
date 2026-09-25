@@ -1,0 +1,31 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "codex"
+   ],
+   "meta": {
+      "name": "my-codex",
+      "description": "Personal Codex profile for daily development"
+   },
+   "filesystem": {
+      "allow": [
+         "$HOME/.npm"
+      ],
+      "read": [
+         "$HOME/.local/bin",
+         "$XDG_CONFIG_HOME/git"
+      ],
+      "read_file": [
+         "$HOME/.ssh/id_ed25519.pub",
+         "$HOME/.ssh/known_hosts",
+         "$HOME/.ssh/config",
+         "$HOME/.local/bin/nono-git-ssh",
+         "$XDG_CONFIG_HOME/opencode/gitconfig"
+      ],
+      "bypass_protection": [
+         "$HOME/.ssh/id_ed25519.pub",
+         "$HOME/.ssh/known_hosts",
+         "$HOME/.ssh/config"
+      ]
+   }
+}
