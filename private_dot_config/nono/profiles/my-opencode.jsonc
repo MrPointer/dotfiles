@@ -58,7 +58,8 @@
          "openai.com",
          "auth.openai.com",
          "models.dev",
-         "mcp.context7.com"
+         "mcp.context7.com",
+         "opencode.ai"
       ]
    },
    "environment": null,
