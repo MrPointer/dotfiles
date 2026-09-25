@@ -3,18 +3,22 @@
 path=("$HOME/.local/bin" "$HOME/bin" /opt/homebrew/bin /usr/local/bin $path)
 export PATH
 
-agent="${1:-}"
-case "$agent" in
-  codex)
+profile="${1:-}"
+case "$profile" in
+  codex|my-codex|codex-*)
+    [[ "$profile" == codex ]] && profile=my-codex
     source "$HOME/.nvm/nvm.sh" || exit
     nvm use --silent default || exit
     agent_shell_config="$HOME/.agents/shell/codex.zsh"
+    runtime=codex
     ;;
-  opencode-chezmoi)
+  opencode|my-opencode|opencode-*)
+    [[ "$profile" == opencode ]] && profile=my-opencode
     agent_shell_config="$HOME/.agents/shell/opencode.zsh"
+    runtime=opencode
     ;;
   *)
-    print -u2 'Usage: zed-agent-acp {codex|opencode-chezmoi}'
+    print -u2 'Usage: zed-agent-acp {codex|my-codex|codex-*|opencode|my-opencode|opencode-*} [args...]'
     exit 2
     ;;
 esac
@@ -23,7 +27,7 @@ shift
 source "$HOME/.agents/shell/nono.zsh" || exit
 source "$agent_shell_config" || exit
 
-case "$agent" in
-  codex) codex-acp "$@" ;;
-  opencode-chezmoi) opencode-chezmoi acp "$@" ;;
+case "$runtime" in
+  codex) _codex_acp "$profile" "$@" ;;
+  opencode) _opencode_nono "$profile" acp "$@" ;;
 esac
