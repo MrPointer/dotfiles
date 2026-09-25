@@ -1,8 +1,16 @@
+function _codex_nono_run() {
+  local -x NPM_CONFIG_CACHE="$HOME/.codex/npm-cache"
+  local -x npm_config_cache="$NPM_CONFIG_CACHE"
+  mkdir -p "$NPM_CONFIG_CACHE" || return
+
+  _nono_agent_run "$@"
+}
+
 function _codex() {
   local profile="$1"
   shift
 
-  _nono_agent_run \
+  _codex_nono_run \
     "$profile" \
     "$HOME/.codex/gitconfig" \
     codex \
@@ -18,7 +26,7 @@ function _codex_acp() {
   local NONO_AGENT_ACP=1
   local -x INITIAL_AGENT_MODE=agent-full-access
 
-  _nono_agent_run \
+  _codex_nono_run \
     "$profile" \
     "$HOME/.codex/gitconfig" \
     npx \

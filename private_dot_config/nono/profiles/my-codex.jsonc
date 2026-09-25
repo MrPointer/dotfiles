@@ -8,9 +8,6 @@
       "description": "Personal Codex profile for daily development"
    },
    "filesystem": {
-      "allow": [
-         "$HOME/.npm"
-      ],
       "read": [
          "$HOME/.local/bin",
          "$XDG_CONFIG_HOME/git"
