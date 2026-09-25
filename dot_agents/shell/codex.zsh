@@ -1,7 +1,7 @@
 function codex() {
   _nono_agent_run \
     my-codex \
-    "$HOME/.config/opencode/gitconfig" \
+    "$HOME/.codex/gitconfig" \
     codex \
     "${CODEX_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
     "${CODEX_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519}" \
@@ -14,7 +14,7 @@ function codex-acp() {
 
   _nono_agent_run \
     my-codex \
-    "$HOME/.config/opencode/gitconfig" \
+    "$HOME/.codex/gitconfig" \
     npx \
     "${CODEX_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
     "${CODEX_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519}" \
