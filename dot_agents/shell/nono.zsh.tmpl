@@ -53,10 +53,19 @@ function _nono_agent_run() {
     git_common_dir_args=(--allow "$git_common_dir")
   fi
 
+  local -a acp_args=()
+  if [[ "${NONO_AGENT_ACP:-}" == 1 ]]; then
+    acp_args=(--silent --startup-timeout 0)
+  fi
+  if [[ "$command_name" == opencode && "${1:-}" == acp ]]; then
+    acp_args=(--silent --startup-timeout 0 --open-port 0)
+  fi
+
   GIT_CONFIG_GLOBAL="$git_config" \
     nono run \
     --profile "$profile" \
     --allow-cwd \
+    "${acp_args[@]}" \
     "${git_common_dir_args[@]}" \
     "${ssh_agent_args[@]}" \
     "${deck_socket_args[@]}" \

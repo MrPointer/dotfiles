@@ -1,0 +1,29 @@
+#!/bin/zsh
+
+path=("$HOME/.local/bin" "$HOME/bin" /opt/homebrew/bin /usr/local/bin $path)
+export PATH
+
+agent="${1:-}"
+case "$agent" in
+  codex)
+    source "$HOME/.nvm/nvm.sh" || exit
+    nvm use --silent default || exit
+    agent_shell_config="$HOME/.agents/shell/codex.zsh"
+    ;;
+  opencode-chezmoi)
+    agent_shell_config="$HOME/.agents/shell/opencode.zsh"
+    ;;
+  *)
+    print -u2 'Usage: zed-agent-acp {codex|opencode-chezmoi}'
+    exit 2
+    ;;
+esac
+shift
+
+source "$HOME/.agents/shell/nono.zsh" || exit
+source "$agent_shell_config" || exit
+
+case "$agent" in
+  codex) codex-acp "$@" ;;
+  opencode-chezmoi) opencode-chezmoi acp "$@" ;;
+esac
