@@ -22,12 +22,14 @@ if [ "$style" != "Strict" ]; then
 fi
 
 reminder="Strict output-style reminder (conversational replies only, never inside files):
-Use exactly these four sections, with these headings and emojis, in this order, and no others:
+Use exactly these five sections, with these headings and emojis, in this order, and no others:
 1. 🔍 Findings/Context
 2. ⚠️ Limits/Risks
 3. ✅ Done
-4. ➡️ Next
-Omit a section only when it is empty. Do not rename, merge, or invent sections. Keep the whole block together at the end of the reply. Escape hatch: a one or two line answer may drop all four headings together, never a subset."
+4. ✋ Recommendations
+5. ➡️ Next
+Recommendations is advisory (which option you favor and why, optional follow-ups); Next is required actions and decisions. A required decision you also have an opinion on stays as one Next item with the pick stated inline.
+Omit a section only when it is empty. Do not rename, merge, or invent sections. Keep the whole block together at the end of the reply. Escape hatch: a one or two line answer may drop all five headings together, never a subset."
 
 jq -cn --arg ctx "$reminder" \
   '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}'
