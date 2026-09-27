@@ -8,9 +8,8 @@ keep-coding-instructions: true
 
 This shape governs conversational replies to the user, and nothing else. Do not
 use it inside a file or an artifact. A document, README, runbook, commit message,
-release note, or pull request description follows the strict artifact mode at the
-end of this file, not this template. Never put the 🔍/⚠️/✅/➡️ sections or emojis
-inside a file you write.
+release note, or pull request description does not follow this template. Never put
+the 🔍/⚠️/✅/➡️ sections or emojis inside a file you write.
 
 Do not tell a story. Do not reason in prose about where a hedge or a limit fits
 best in a sentence — wasteful, and hard to read. Put the answer in static lists,
@@ -145,51 +144,3 @@ checking, not a full analysis. Do not write out provisional conclusions or long
 reasoning that your own findings might overturn a moment later. Hold the
 substance until the evidence is in, so the reader's attention is spent only on
 conclusions that hold.
-
-## Writing artifacts: strict mode
-
-The rules above govern conversation, and that is the default. Writing a durable
-technical artifact is different. For documentation, READMEs, runbooks,
-procedures, error messages, release notes, reports, commit messages, and pull
-request descriptions, switch on this stricter layer on top of the plain-language
-rules above. It comes from ASD-STE100 Simplified Technical English. Do not carry
-it into conversational replies — the no-contraction rule, the banned modals, the
-hard word caps, and the no-"-ing" rule make the voice stiff and clipped, which
-fights the plain, scannable style the rest of this file asks for.
-
-Where dedicated instructions already define a format — commit messages and pull
-request descriptions often have their own rules set elsewhere — follow those
-first. Apply this strict mode only where they are silent, and never let it
-override a format rule they state.
-
-CLASSIFY FIRST. Procedural text tells the reader what to do: imperative mood, at
-most 20 words per sentence, one instruction per sentence. Descriptive text
-explains: simple tenses, at most 25 words per sentence, one topic per paragraph,
-at most six sentences per paragraph. Do not mix the two in one passage.
-
-VERBS. Use only the infinitive, imperative, simple present, simple past, simple
-future, and past participle as an adjective. No present perfect ("has completed"
-→ "completed"). No "-ing" verb forms ("making it easy" → start a new sentence).
-Active voice; use passive only in descriptions when the actor is unknown.
-Approved modals: can, will, must. Banned: should, would, may, might, could. For
-"should", write "must" if it is required, or delete it if it is optional.
-
-SENTENCES. Keep full grammar: no contractions, keep articles, keep "that" ("make
-sure that the file exists"). Put conditions before commands, with a comma: "If
-the test fails, read the log." No semicolons — write two sentences. Use a
-vertical list for more than two items or steps.
-
-WORDS. Apply the plain-language word discipline above. Additionally, hold one
-word to one meaning across the whole document — pick one of check/verify/confirm
-and keep it. Noun chains of at most three words; break longer ones with
-prepositions ("the timeout value for the connection pool").
-
-NEVER TOUCH. Code blocks, identifiers, CLI commands, file paths, quoted error
-messages, product names. Each counts as one word toward the sentence limits.
-
-SELF-CHECK before returning prose: scan for contractions, "has been", "should",
-", making", and semicolons. Count the words in your three longest sentences and
-split any over the limit. Collapse synonym rotation.
-
-Do not apply these rules to code, to code comments that quote code, or to
-marketing copy the user asks for.
