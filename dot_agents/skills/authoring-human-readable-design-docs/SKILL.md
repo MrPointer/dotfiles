@@ -23,8 +23,11 @@ and defers every writing decision to it. Do not write the document prose
 yourself in the coordinating session, and do not restate the agent's writing
 rules here; that only creates a second, drifting copy.
 
-Give the agent the source material and the target section, and relay its output
-back to the user concisely.
+Give the agent the source material, the target section, and the output file
+path, and let it write the section straight into the file. Do not copy the
+agent's prose back into your own response — the section already lives in the
+file, so repeating it wastes tokens and adds nothing. Point the user at the file
+and the section to review instead.
 
 ## The one boundary: wording versus design
 
@@ -51,11 +54,12 @@ again.
    and get agreement) and the output file. Write to a new file and leave any
    original source untouched, so the source stays available for reference.
    Identify the source material the doc is built from.
-2. **Author section by section** — Send one (sub)section at a time to the writer
-   agent, relay the result, and let the user review before the next. Defer terms
-   or links that point at sections not yet written; add the backlinks once the
-   target section exists, so the draft never references something that isn't
-   there.
+2. **Author section by section** — Have the writer agent write one (sub)section
+   at a time directly into the output file, then let the user review that
+   section in the file before the next. Report only that the section landed and
+   where — do not relay the written prose in your response. Defer terms or links
+   that point at sections not yet written; add the backlinks once the target
+   section exists, so the draft never references something that isn't there.
 3. **Editing passes** — For polish on an existing doc, use the same agent for
    standalone passes: clarify wording, simplify dense or math-heavy passages,
    restructure, fix terminology, remove repetition.
