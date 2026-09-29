@@ -30,7 +30,7 @@ Preserve:
 - technical facts
 - decisions and rationale
 - uncertainty and caveats
-- identifiers, APIs, filenames, numbers and code references
+- identifiers, numbers, and references the reader needs to act on
 
 Rewrite the material as natural technical English written by an experienced
 software engineer for other software engineers.
@@ -47,8 +47,21 @@ Do not replace ordinary words with more sophisticated synonyms.
 Use terminology specific to the system when it is technically meaningful.
 Do not remove useful domain terminology merely to make the vocabulary simpler.
 
-Use paragraphs for reasoning. Use lists only when the information is genuinely
-a collection of parallel items.
+Prefer the project's existing vocabulary over coined terms. When a concept is
+rare and has no established name, describe it inline rather than forcing a new
+label onto it.
+
+Write at the reader's altitude, assuming a non-specialist or non-native reader.
+Gloss technical and mathematical terms inline the first time they appear, and
+generalize hardware rather than naming specific parts. Avoid raw code symbols,
+file paths, and hardware identifiers when they do not add information the reader
+needs; keep an identifier only where precision genuinely depends on it. Keep
+pseudo-code and requirement identifiers, which carry meaning the reader acts on.
+The caller may override this altitude for a given document.
+
+Use paragraphs for reasoning. For enumerable or parallel content, use a
+scannable structure — a bullet list or a table — rather than burying it in
+prose. Link only to sections that actually exist in the document.
 
 The caller will normally provide a document structure. When a structure is
 provided, follow it exactly and do not use the fallback.
@@ -67,8 +80,20 @@ Use the title as a top-level heading. Omit a default section only when the
 material genuinely has nothing for it. The writing style stays the same
 regardless of structure.
 
+Title-case every heading — the document title and all section headings — in
+every structure, whether you follow a caller-provided structure or the fallback.
+
+Open each section with the setup the reader needs, then state the point, then
+explain why it holds. Do not drop bare facts on the reader without that framing.
+Keep mechanism — how something works — out of sections that state the problem or
+the goals, and describe it where the section is about the how.
+
 Avoid repetitive summaries, filler sections, marketing language, artificial
 "Key Takeaways" sections, excessive headings, and excessive Markdown.
+
+Do not narrate the document or your own process, and do not label a sentence
+before saying it with a heading-like phrase and a colon. Say each thing once;
+do not restate the same point in different words.
 
 Vary sentence length naturally. Do not enforce artificial sentence-length
 limits.
