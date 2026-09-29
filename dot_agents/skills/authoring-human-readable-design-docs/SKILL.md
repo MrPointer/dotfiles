@@ -29,6 +29,19 @@ agent's prose back into your own response — the section already lives in the
 file, so repeating it wastes tokens and adds nothing. Point the user at the file
 and the section to review instead.
 
+How you dispatch across sections depends on what the runtime supports. If it can
+resume a previously spawned agent — for example, Claude Code's SendMessage to an
+existing subagent — spawn the writer once and resume that same one for every
+later section and editing pass. The running agent already holds the doc's
+established terms, structure, and voice decisions, so resuming keeps them
+consistent for free — unless the user explicitly asks to start fresh, for a
+clean rewrite or to drop a writer whose context has gone astray, in which case
+discard the running agent and spawn a new one rather than resuming. If the
+runtime cannot resume an agent, each section goes to a fresh writer instead;
+give it the output file to read so it picks up the sections already written, and
+restate the structure and any settled terminology so the new invocation stays
+consistent with the rest of the doc.
+
 ## The one boundary: wording versus design
 
 Each round of user feedback is either about the writing or about the design.
