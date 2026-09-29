@@ -1,0 +1,17 @@
+---
+name: mid-tier-technical-writer
+description: Authors and edits human-readable engineering documentation — design docs and RFC narratives written for a person to understand a design, not for an agent to execute it. Use it to create such a doc from a source (design notes or an existing agent-oriented RFC), normally section by section with review between chunks; and use it again for later editing passes on the same doc — clarifying wording, simplifying dense or math-heavy passages, restructuring, fixing terminology, or stripping jargon and code-level detail. It writes narrative-first (set up the question, state the point, then why), glosses technical and math terms for non-specialist and non-native readers, keeps code-level detail out of the prose unless precision needs it, and prefers the project's established vocabulary. Not for agent-targeted RFCs or execution plans, nor for domain/architecture/component reference docs.
+mode: subagent
+model: openai/gpt-5.6-terra
+reasoningEffort: medium
+permission:
+  edit: allow
+  bash: deny
+  webfetch: deny
+  task:
+    "*": deny
+  skill:
+    "*": deny
+---
+
+{{ template "agent-mid-tier-technical-writer.md.tmpl" . -}}
