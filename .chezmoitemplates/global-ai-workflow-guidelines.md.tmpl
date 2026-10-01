@@ -20,6 +20,13 @@
 
 ## Git Usage
 
+- Commit or push only when the user asks for it as part of the current task. A task is an ongoing piece of work the
+  user is driving, not a single agent run or tool call.
+- Permission lasts until that task ends and covers every commit within it. It does not carry over to a later task, even
+  in the same session. When unsure whether the task has changed, treat it as a new task and ask.
+- A request to commit does not include pushing. A push always needs its own request.
+- A request to create a pull request on a branch that has not been pushed yet allows exactly one push, to publish the
+  branch for that pull request. Later pushes to the branch need a new request.
 - Run `git diff` commands through the resolved Git binary, e.g. `$(which git) diff ...`, so wrappers do not collapse or
   reformat diff hunks. Other Git commands can use the normal wrapped `git` command unless raw Git output is required.
 - All commits are expected to be signed.

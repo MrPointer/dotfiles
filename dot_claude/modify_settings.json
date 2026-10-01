@@ -4,22 +4,26 @@
 # Claude Code owns this file and writes to it (theme, model, permissions, its
 # own hooks). chezmoi must not clobber it. This script receives the current
 # target contents on stdin and prints the desired contents on stdout, so it
-# only ever sets our one UserPromptSubmit hook and leaves every other key alone.
+# only ever sets our UserPromptSubmit hooks and leaves every other key alone.
 #
-# It is idempotent: any prior group that references our command is dropped
-# before ours is appended, so re-running never duplicates the entry and never
-# removes hooks that Claude Code added.
+# It is idempotent: any prior group that references one of our commands is
+# dropped before ours are appended, so re-running never duplicates an entry and
+# never removes hooks that Claude Code added.
 set -euo pipefail
 
-hook_cmd="$HOME/.claude/hooks/reinforce-strict-output-style.sh"
+hook_cmds=(
+  "$HOME/.claude/hooks/reinforce-strict-output-style.sh"
+  "$HOME/.claude/hooks/reinforce-git-consent.sh"
+)
 
 current="$(cat)"
 [ -z "$current" ] && current='{}'
 
-printf '%s' "$current" | jq --arg cmd "$hook_cmd" '
-  .hooks.UserPromptSubmit = (
+printf '%s' "$current" | jq --args '
+  $ARGS.positional as $cmds
+  | .hooks.UserPromptSubmit = (
     ((.hooks.UserPromptSubmit // [])
-      | map(select([.hooks[]?.command] | index($cmd) | not)))
-    + [{hooks: [{type: "command", command: $cmd}]}]
+      | map(select([.hooks[]?.command] | any(. as $c | $cmds | index($c)) | not)))
+    + [$cmds[] | {hooks: [{type: "command", command: .}]}]
   )
-'
+' "${hook_cmds[@]}"
