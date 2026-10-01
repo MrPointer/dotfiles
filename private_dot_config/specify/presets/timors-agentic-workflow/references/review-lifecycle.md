@@ -33,9 +33,20 @@ result appends the next complete round and updates the pointer normally. Ambiguo
 start, mutation, target, or result stops the producing phase: never self-review,
 infer a verdict, request a downstream human gate, or abandon implementation work.
 
+The producing phase never applies a finding on its own judgment. A fix limited to
+wording, formatting, or source citation that leaves every decision, scope,
+requirement, constraint, boundary, contract, flow, state, failure behavior, risk
+posture, and acceptance evidence unchanged may be applied directly and is listed in
+the phase completion report. Every other fix, including one that fills a gap no
+human decided, is a proposed remediation: collect it with its finding, the
+reviewer recommendation, and the affected artifact sections, and apply it only
+after a human accepts it. Report each declined proposal with its human disposition
+at phase completion.
+
 A producing phase is quiescent only when no pending role can safely dispatch,
 resume, or complete without a collected binding or recovery blocker. Then present
-one interaction with all current blockers. After a response resume work; a later
+one interaction with all current blockers and proposed remediations. After a
+response resume work; a later
 quiescent state may present one later batch. Automatic redispatch after known start
 is forbidden. Material artifact changes follow their owner’s invalidation and
 fresh-review rules; a later invocation may resume recovery only against unchanged

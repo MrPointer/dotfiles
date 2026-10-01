@@ -33,10 +33,12 @@ constitution is optional governance input. `plan.md` is the sole normative plan.
    review-pointer transitions exactly as `.specify/presets/timors-agentic-workflow/references/plan-lifecycle.md` requires,
    and refuse a material change after the package lock.
 4. Bind, invoke, and record independent design and clarity reviews under
-   `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`. Remediate accepted findings. Rerun only
+   `.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`. Remediate
+   only findings that review lifecycle permits directly or a human accepted. Rerun only
    applicable scope; retain unaffected roles only through the stated retained
-   pointer transition. At review quiescence present one collected blocker
-   interaction. A started incomplete review uses recovery, never self-review.
+   pointer transition. At review quiescence present one collected blocker and
+   proposed-remediation interaction. A started incomplete review uses recovery,
+   never self-review.
 5. Request Design Acceptance only when both pointers are current, attributable,
    and non-blocking for the current plan Revision. Record the human decision and
    rationale in `plan.md`. Only current Revision Accepted permits `tasks`.
