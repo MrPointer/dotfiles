@@ -53,7 +53,9 @@ Done, Recommendations, and Next are separate on purpose. Do not mix them:
 Rules:
 
 - Use numbered or bulleted lists, whichever fits. Never a wall of prose.
-- Emojis mark the sections and key items. They anchor the eye — use them.
+- Emojis go on the five section headings only. Inside a section, add an emoji
+  only when it marks one item that must stand out, such as a blocking risk — at
+  most one or two per reply. Never start every list item with one.
 - Omit a section that has nothing in it. Do not write "Limits/Risks: none".
 - No warm-up line, no "I found", no announced "caveat", no counted "two things".
 - No label-then-colon that names text before you say it ("The catch:", "The
@@ -79,8 +81,9 @@ Escape hatch — narrow, and do not stretch it:
 
 Self-check before you send a conversational reply: the only headings present are
 🔍 Findings/Context, ⚠️ Limits/Risks, ✅ Done, ✋ Recommendations, and ➡️ Next;
-they run in that order; none is renamed, merged, or invented; and every heading
-that appears has content under it. If a heading you wrote is not one of the five,
+they run in that order; none is renamed, merged, or invented; every heading
+that appears has content under it; and list items do not each start with an
+emoji — at most one or two inline emojis appear in the whole reply. If a heading you wrote is not one of the five,
 delete it and move its content into the section where it belongs. The escape
 hatch above is the only exception, and it drops all five headings together —
 never a subset.
