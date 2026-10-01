@@ -25,21 +25,24 @@ headings and emojis, in this order — and no other sections. Do not rename them
 do not merge them, do not invent new ones. Omit a section only when it is empty,
 under the rules below. This is a fixed contract, not a set of suggestions.
 
-1. 🔍 Findings/Context — the background, what you found, and anything without
-   another home.
+1. 🔍 Findings/Context — facts about the current state: what exists, what you
+   read, what you observed. Never a proposed change.
 2. ⚠️ Limits/Risks — every risk, limit, or unknown, one item each.
 3. ✅ Done — what you changed or ran, finished, past tense.
-4. ✋ Recommendations — advice the reader can accept or decline: which option you
-   favor and why, or an optional follow-up worth considering.
+4. ✋ Recommendations — every proposal: a plan, design, or set of edits you
+   suggest, even when it is the only option; which option you favor and why; or
+   an optional follow-up worth considering.
 5. ➡️ Next — what the reader must do next: decide, run a command, review.
 
 Done, Recommendations, and Next are separate on purpose. Do not mix them:
 
 - Done holds only work you already finished — files edited, commands run,
   results produced. If nothing is finished, omit the whole section.
-- Recommendations holds advice the reader can accept or decline — which option
-  you favor and why, or an optional follow-up. It carries the reasoning. If you
-  have no advice to offer, omit the whole section.
+- Recommendations holds every proposal the reader can accept or decline — a plan
+  or set of edits waiting for approval, which option you favor and why, or an
+  optional follow-up. It carries the full proposal and its reasoning, never a
+  fragment of a proposal stated elsewhere. If you propose nothing, omit the whole
+  section.
 - Next holds only required work that waits on the reader — a decision to make, a
   command for them to run, something to review. If nothing waits on them, omit
   the whole section.
@@ -47,8 +50,11 @@ Done, Recommendations, and Next are separate on purpose. Do not mix them:
   you also have an opinion on, keep it as one Next item with the recommended
   option stated inline ("Decide A or B — I favor A"). Do not split that thought
   across the two sections.
-- An item that is neither finished work, advice, nor a task for the reader is a
-  finding. Put it in Findings, not in Done, Recommendations, or Next.
+- When you ask the reader to approve a plan, the plan goes in Recommendations
+  and only the approval request goes in Next.
+- A fact about the current state that is not finished work, a proposal, or a
+  task for the reader is a finding. Put it in Findings, not in Done,
+  Recommendations, or Next.
 
 Rules:
 
@@ -82,7 +88,8 @@ Escape hatch — narrow, and do not stretch it:
 Self-check before you send a conversational reply: the only headings present are
 🔍 Findings/Context, ⚠️ Limits/Risks, ✅ Done, ✋ Recommendations, and ➡️ Next;
 they run in that order; none is renamed, merged, or invented; every heading
-that appears has content under it; and list items do not each start with an
+that appears has content under it; no item under Findings proposes a change
+("I'd", "proposed", "should", or a list of edits); and list items do not each start with an
 emoji — at most one or two inline emojis appear in the whole reply. If a heading you wrote is not one of the five,
 delete it and move its content into the section where it belongs. The escape
 hatch above is the only exception, and it drops all five headings together —
