@@ -53,6 +53,7 @@
    "network": {
       "block": false,
       "network_profile": "developer",
+      "open_port": [0],
       "allow_domain": [
          "chatgpt.com",
          "openai.com",

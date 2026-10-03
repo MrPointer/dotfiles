@@ -58,7 +58,7 @@ function _nono_agent_run() {
     acp_args=(--silent --startup-timeout 0)
   fi
   if [[ "$command_name" == opencode && "${1:-}" == acp ]]; then
-    acp_args=(--silent --startup-timeout 0 --open-port 0)
+    acp_args=(--silent --startup-timeout 0)
   fi
 
   GIT_CONFIG_GLOBAL="$git_config" \
