@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Nono appends this profile argument; ACP already starts a private server.
+if [ "$#" -ne 1 ] || [ "$1" != "--standalone" ]; then
+  printf '%s\n' 'This launcher requires a nono OpenCode profile and no extra ACP arguments.' >&2
+  exit 1
+fi
+
+exec opencode acp
