@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Register the Strict output-style reminder without owning Codex's hooks file.
-# Existing hooks and unrelated configuration remain unchanged.
+# Register global reminder hooks without owning Codex's hooks file. Existing
+# hooks and unrelated configuration remain unchanged.
 
 CONFIG_DIR="$HOME/.codex"
 CONFIG_FILE="$CONFIG_DIR/hooks.json"
-# Codex expands HOME when it runs the registered command.
+# Codex expands HOME when it runs the registered commands.
 # shellcheck disable=SC2016
-HOOK_COMMAND='"$HOME/.codex/hooks/reinforce-strict-output-style.sh"'
+HOOK_COMMANDS=(
+  '"$HOME/.codex/hooks/reinforce-strict-output-style.sh"'
+  '"$HOME/.codex/hooks/reinforce-git-consent.sh"'
+)
 
 if ! command -v codex &>/dev/null; then
   exit 0
@@ -48,26 +51,22 @@ if [[ -f "$CONFIG_FILE" ]]; then
     exit 1
   fi
 
-  matching_count="$(
-    jq --arg command "$HOOK_COMMAND" '
-      [
-        .hooks.UserPromptSubmit[]?.hooks[]?
+  if jq -e --args '
+    . as $root |
+    $ARGS.positional as $commands |
+    all(
+      $commands[];
+      . as $command |
+      ([
+        $root.hooks.UserPromptSubmit[]?.hooks[]?
         | select(.type == "command" and .command == $command)
-      ]
-      | length
-    ' "$CONFIG_FILE"
-  )"
-  exact_count="$(
-    jq --arg command "$HOOK_COMMAND" '
-      [
-        .hooks.UserPromptSubmit[]?.hooks[]?
+      ] | length) == 1 and
+      ([
+        $root.hooks.UserPromptSubmit[]?.hooks[]?
         | select(. == {type: "command", command: $command, timeout: 5})
-      ]
-      | length
-    ' "$CONFIG_FILE"
-  )"
-
-  if [[ "$matching_count" == "1" && "$exact_count" == "1" ]]; then
+      ] | length) == 1
+    )
+  ' "${HOOK_COMMANDS[@]}" <"$CONFIG_FILE" >/dev/null; then
     exit 0
   fi
 fi
@@ -78,32 +77,30 @@ trap 'rm -f "$tmp"' EXIT
 # Dollar-prefixed names in this filter are jq variables.
 # shellcheck disable=SC2016
 merge_filter='
+  def is_owned($commands):
+    .type == "command" and
+    (.command as $command | $commands | index($command) != null);
+
+  $ARGS.positional as $commands |
   .hooks //= {} |
   .hooks.UserPromptSubmit //= [] |
   .hooks.UserPromptSubmit |= (
     map(
-      if ((.hooks // []) | any(.[]; .type == "command" and .command == $command)) then
-        .hooks |= map(select(.type != "command" or .command != $command)) |
+      if ((.hooks // []) | any(.[]; is_owned($commands))) then
+        .hooks |= map(select(is_owned($commands) | not)) |
         if (.hooks | length) == 0 then empty else . end
       else
         .
       end
     ) + [
-      {
-        hooks: [
-          {
-            type: "command",
-            command: $command,
-            timeout: 5
-          }
-        ]
-      }
+      $commands[] |
+      {hooks: [{type: "command", command: ., timeout: 5}]}
     ]
   )
 '
 
 if [[ -f "$CONFIG_FILE" ]]; then
-  jq --arg command "$HOOK_COMMAND" "$merge_filter" "$CONFIG_FILE" >"$tmp"
+  jq --args "$merge_filter" "${HOOK_COMMANDS[@]}" <"$CONFIG_FILE" >"$tmp"
 
   if chmod --reference="$CONFIG_FILE" "$tmp" 2>/dev/null; then
     :
@@ -111,7 +108,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
     chmod "$(stat -f '%Lp' "$CONFIG_FILE")" "$tmp"
   fi
 else
-  jq -n --arg command "$HOOK_COMMAND" "$merge_filter" >"$tmp"
+  jq -n --args "$merge_filter" "${HOOK_COMMANDS[@]}" >"$tmp"
 fi
 
 mv "$tmp" "$CONFIG_FILE"
