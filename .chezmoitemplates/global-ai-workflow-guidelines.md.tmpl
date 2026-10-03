@@ -27,8 +27,9 @@
 - A request to commit does not include pushing. A push always needs its own request.
 - A request to create a pull request on a branch that has not been pushed yet allows exactly one push, to publish the
   branch for that pull request. Later pushes to the branch need a new request.
-- Run `git diff` commands through the resolved Git binary, e.g. `$(which git) diff ...`, so wrappers do not collapse or
-  reformat diff hunks. Other Git commands can use the normal wrapped `git` command unless raw Git output is required.
+- For `git diff`, disable external diff tools, text conversion, paging, and color. Keep RTK filtering enabled: `rtk git
+  --no-pager diff --no-ext-diff --no-textconv --no-color ...`. When complete patch content is required, or filtering omits
+  needed details, use `rtk proxy git --no-pager diff --no-ext-diff --no-textconv --no-color ...`.
 - All commits are expected to be signed.
 - If a commit command fails or accidentally creates an unsigned commit, stop and ask before retrying, amending, or
   rewriting history.
