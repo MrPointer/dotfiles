@@ -4,6 +4,15 @@
 - Ask for clarification if the request is ambiguous.
 - Mentioning a file, config area, bug, or possible solution is not by itself permission to edit.
 
+{{ if eq .chezmoi.os "darwin" }}
+## Shell Utilities
+
+- When shell utilities are needed, prefer GNU versions over BSD versions. Use explicit GNU-prefixed commands such as
+  `gsed`, `gsort`, and `gdate`.
+- Assume GNU utilities are installed and run them directly; do not check availability first. If a command is not found,
+  use an available alternative and continue.
+
+{{ end }}
 ## Accessibility
 
 - The user has ADHD and keratoconus (an eye disease that makes long blocks of text harder to read). These constraints
