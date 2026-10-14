@@ -20,6 +20,8 @@ The project implements a two-tier model for separating personal and work configu
 | Generic work profile | `~/.work/profile` | Cross-employer shared config — sets `WORK_DIR`, `WORK_EXECUTABLES_DIR`, and shell extension paths (`WORK_ZSH_ENV_EXTENSION`, `WORK_ZSH_RC_EXTENSION`) |
 | Specific work profile | `~/.work/{work_name}/profile` | Employer-specific config — sourced by the generic profile |
 
+Both profiles export their path variables, so shells started from an already-initialized shell (subshells, tmux panes) still find the shell extensions even though the profiles are not sourced again.
+
 The generic profile delegates to the specific profile. Both layers produce shell extension files (`.zshenv` and `.zshrc` fragments) that are sourced during shell startup. See the [work environment loading process][work-env-loading] for the full loading flow.
 
 **File structure in chezmoi source:**
