@@ -7,6 +7,11 @@ sudo fix-vpn up
 {{- end }}
 {{- end }}
 
+# Initialize jenv for interactive shells only; its init writes under ~/.jenv
+if command -v jenv &> /dev/null; then
+    eval "$(jenv init -)"
+fi
+
 # Use sandboxed sedg agent launchers if nono is installed
 if command -v nono >/dev/null 2>&1; then
   [[ -r "$SEDG_AGENTS_SHELL_DIR/claude.zsh" ]] && source "$SEDG_AGENTS_SHELL_DIR/claude.zsh"

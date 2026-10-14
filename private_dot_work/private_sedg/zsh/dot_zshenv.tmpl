@@ -44,9 +44,6 @@ if [[ -d "$SEDG_IOE_DEV_ENV_FRAMEWORK_DIR" && -f "$SEDG_IOE_DEV_ENV_FRAMEWORK_EN
 fi
 
 export PATH="$HOME/.jenv/bin:$PATH"
-if command -v jenv &> /dev/null; then
-    eval "$(jenv init -)"
-fi
 
 if [[ -d "$(pwd)/builds/x86/Debug/so_conan" ]]; then
     export LD_LIBRARY_PATH="$(pwd)/builds/x86/Debug/so_conan:$LD_LIBRARY_PATH"
