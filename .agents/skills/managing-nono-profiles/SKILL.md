@@ -43,10 +43,12 @@ Example: profile `claude-code-go` should have a profile file named `claude-code-
 
 Profiles that serve a single employer or employer project are named `work-{work_name}-<profile>` and are installed only on that employer's machines. Their launchers belong to the employer's work tree, not to `dot_agents/shell/`.
 
-1. Add the profile to `private_dot_config/nono/profiles/` as `work-{work_name}-<profile>.jsonc`, with the same `meta.name`.
+1. Add the profile to `private_dot_config/nono/profiles/` as `work-{work_name}-<profile>.jsonc`, with the same `meta.name`. List `work-{work_name}-common` first in `extends`, followed by the personal profiles the project needs.
 2. Make sure `.chezmoiignore` has a block that ignores `.config/nono/profiles/work-{work_name}-*` unless `personal.work_env` is true and `personal.work_name` matches. Each employer needs one block, not one entry per profile.
 3. Add the launcher function to the matching agent file in `private_dot_work/private_{work_name}/agents/shell/`, calling the shared helper with the profile name (for example `_claude_nono work-sedg-claude-code-energy-runtime`).
 4. For a new employer launcher file, source it from `private_dot_work/private_{work_name}/zsh/dot_zshrc.tmpl` inside the existing `command -v nono` block.
+
+Each employer project gets its own profile and launcher; there are no employer variants of the general launchers such as `claude-go`. `work-{work_name}-common` is agent-neutral: it holds the access every project of that employer needs regardless of agent (employer domains, credentials, tool config), extends nothing, and is shared by employer profiles of any agent. Put agent-specific employer access in a separate `work-{work_name}-<agent>-common` profile. Keep employer access out of personal profiles such as `my-claude-code`.
 
 Employer profiles may extend personal profiles by name (for example `claude-code-go`). Renaming a personal profile requires updating those `extends` entries.
 

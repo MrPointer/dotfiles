@@ -1,6 +1,7 @@
 {
    "$schema": "../schemas/nono-profile.schema.json",
    "extends": [
+      "work-sedg-common",
       "claude-code-go",
       "claude-code-typescript"
    ],

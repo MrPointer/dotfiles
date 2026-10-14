@@ -1,0 +1,40 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "meta": {
+      "name": "work-sedg-common",
+      "description": "Shared sedg access, mixed into every sedg project profile"
+   },
+   "filesystem": {
+      "allow": [
+         "$HOME/.azure",
+         "$HOME/.azure-devops"
+      ],
+      "read": [
+         "$HOME/lcp-docs",
+         "$HOME/Library/Application Support/glab-cli"
+      ],
+      "read_file": [
+         "$XDG_DATA_HOME/.atlassian-token" // Atlassian's API token - For agents
+      ],
+      "bypass_protection": [
+         "$HOME/.azure"
+      ],
+      "suppress_save_prompt": [
+         "$HOME/Projects/sedg",
+         "$HOME/Projects/sedg/hark"
+      ]
+   },
+   "network": {
+      "allow_domain": [
+         "mcp.atlassian.com",
+         "gitlab.solaredge.com",
+         "solaredge-prod.atlassian.net",
+         "dev.azure.com",
+         "ssh.dev.azure.com",
+         "balena.io",
+         "docs.balena.io",
+         "balena-cloud.com",
+         "edge-controller-2.internal.hark.network"
+      ]
+   }
+}

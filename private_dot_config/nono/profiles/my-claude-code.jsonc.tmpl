@@ -11,17 +11,13 @@
          "$XDG_CACHE_HOME/uv",
          "$XDG_DATA_HOME/uv/tools", // Mostly for semble search
          "$XDG_CACHE_HOME/huggingface/hub/models--minishlab--potion-code-16M-v2", // Semble model cache
-         "$HOME/.azure",
-         "$HOME/.azure-devops",
          "$XDG_DATA_HOME/deck/status", // Deck writes agent status JSON here
          "$XDG_DATA_HOME/deck/hooks", // Deck writes session sidecar JSON here
          "$TMPDIR"
       ],
       "read": [
          "$HOME/.agents/skills",
-         "$HOME/lcp-docs",
          "$HOME/.context7",
-         "$HOME/Library/Application Support/glab-cli",
          "$HOME/Library/Caches/semble/" // Semble's internal stats
       ],
       "write": [
@@ -40,8 +36,7 @@
          "$XDG_CONFIG_HOME/git/allowed_signers",
          "$XDG_CONFIG_HOME/worktrunk/config.toml",
          "$XDG_CONFIG_HOME/gh/config.yml",
-         "$XDG_CONFIG_HOME/gh/hosts.yml",
-         "$XDG_DATA_HOME/.atlassian-token" // Atlassian's API token - For agents
+         "$XDG_CONFIG_HOME/gh/hosts.yml"
       ],
       "write_file": [],
       "deny": [],
@@ -49,16 +44,13 @@
          "$HOME/.ssh/id_rsa.pub",
          "$HOME/.ssh/id_ed25519.pub",
          "$HOME/.ssh/known_hosts",
-         "$HOME/.ssh/config",
-         "$HOME/.azure"
+         "$HOME/.ssh/config"
       ],
       "suppress_save_prompt": [
          "/Users",
          "$HOME",
          "$HOME/Library/Application Support/Microsoft Edge",
-         "$HOME/Projects",
-         "$HOME/Projects/sedg",
-         "$HOME/Projects/sedg/hark"
+         "$HOME/Projects"
       ]
    },
    "network": {
@@ -68,16 +60,7 @@
          "code.claude.com",
          "docs.claude.com",
          "mcp.context7.com",
-         "mcp.atlassian.com",
-         "mcp-proxy.anthropic.com",
-         "gitlab.solaredge.com",
-         "solaredge-prod.atlassian.net",
-         "dev.azure.com",
-         "ssh.dev.azure.com",
-         "balena.io",
-         "docs.balena.io",
-         "balena-cloud.com",
-         "edge-controller-2.internal.hark.network"
+         "mcp-proxy.anthropic.com"
       ]
    },
    "env_credentials": {},
