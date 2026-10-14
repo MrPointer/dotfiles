@@ -29,7 +29,7 @@ sequenceDiagram
     alt work_env = false
         Note over zshenv: Skip entire work block
     else work_env = true
-        zshenv ->> zshenv: Check WORK_ENV_LOADED guard
+        zshenv ->> zshenv: Check WORK_ENV_LOADED + WORK_ZSH_RC_EXTENSION guard
         alt already loaded
             Note over zshenv: Skip (prevent double-load)
         else not loaded
@@ -69,7 +69,7 @@ sequenceDiagram
 **During `.zshenv`** (all shells):
 
 1. **Check activation** — Template checks `personal.work_env`. If false, the entire work block is skipped at template rendering time (not at runtime).
-2. **Check guard** — If `WORK_ENV_LOADED` is set, skip to prevent double-loading (relevant when `.zshenv` is sourced multiple times)
+2. **Check guard** — If `WORK_ENV_LOADED` and `WORK_ZSH_RC_EXTENSION` are both set, skip to prevent double-loading (relevant when `.zshenv` is sourced multiple times or a child shell inherits the exported work variables). If only `WORK_ENV_LOADED` is set, the guard was inherited from a parent that lacks the exported work paths (for example a tmux server started before they were exported), so the profiles load again.
 3. **Source generic work profile** — [`~/.work/profile`][generic-profile-tmpl] runs, setting:
    - `WORK_DIR` (`~/.work`)
    - `WORK_EXECUTABLES_DIR` (`~/.work/bin`)

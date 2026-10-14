@@ -59,8 +59,9 @@ fi
 {{- end -}}
 
 {{ if .personal.work_env -}}
-# Load work environment with caching
-if [[ -z "$WORK_ENV_LOADED" ]]; then
+# Load work environment with caching. Also reload when the guard was
+# inherited without the exported work paths (e.g. a stale tmux server).
+if [[ -z "$WORK_ENV_LOADED" || -z "$WORK_ZSH_RC_EXTENSION" ]]; then
     if [[ -r "{{ .system.work_generic_dotfiles_profile }}" ]]; then
         source {{ .system.work_generic_dotfiles_profile }}
     fi
