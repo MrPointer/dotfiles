@@ -3,7 +3,7 @@
    "extends": [
       "work-sedg-common",
       "claude-code-go",
-      "claude-code-typescript"
+      "claude-code-node"
    ],
    "meta": {
       "name": "work-sedg-claude-code-energy-runtime",
