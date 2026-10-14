@@ -35,3 +35,7 @@ Taskfile.yml
 .agents/shell/claude.zsh
 .config/nono/profiles/my-claude-code.jsonc
 {{- end }}
+
+{{- if not (and .personal.work_env (eq .personal.work_name "sedg")) }}
+.config/nono/profiles/work-sedg-* # only install sedg profiles on sedg work machines
+{{- end }}

@@ -1,6 +1,6 @@
 ---
 name: managing-nono-profiles
-description: Manage nono sandbox profiles and their shell launch wrappers in this dotfiles repo. Use when editing private_dot_config/nono/profiles, nono profile schemas, dot_agents/shell wrappers, SSH signing access for sandboxed agents, or adding/renaming agent-specific nono profiles.
+description: Manage nono sandbox profiles and their shell launch wrappers in this dotfiles repo. Use when editing private_dot_config/nono/profiles, nono profile schemas, dot_agents/shell wrappers, employer-specific work-* profiles and launchers under private_dot_work, SSH signing access for sandboxed agents, or adding/renaming agent-specific nono profiles.
 ---
 
 # Managing Nono Profiles
@@ -19,8 +19,12 @@ Edit chezmoi source files, not applied targets:
 | Profile schema | `private_dot_config/nono/schemas/nono-profile.schema.json` | `~/.config/nono/schemas/nono-profile.schema.json` |
 | Agent shell wrappers | `dot_agents/shell/` | `~/.agents/shell/` |
 | Wrapper sourcing | `dot_zshrc.tmpl` | `~/.zshrc` |
+| Employer profiles | `private_dot_config/nono/profiles/work-{work_name}-*.jsonc` | `~/.config/nono/profiles/work-{work_name}-*.jsonc` |
+| Employer profile filtering | `.chezmoiignore` | — |
+| Employer launchers | `private_dot_work/private_{work_name}/agents/shell/` | `~/.work/{work_name}/agents/shell/` |
+| Employer launcher sourcing | `private_dot_work/private_{work_name}/zsh/dot_zshrc.tmpl` | `~/.work/{work_name}/zsh/.zshrc` |
 
-`.zshrc` sources `~/.agents/shell/nono.zsh` first, then per-agent shell files, only when `nono` is installed.
+`.zshrc` sources `~/.agents/shell/nono.zsh` first, then per-agent shell files, only when `nono` is installed. The employer zshrc extension sources the employer launchers, also only when `nono` is installed.
 
 ## Core Rule
 
@@ -34,6 +38,17 @@ When adding or renaming a profile:
 4. If the profile is for a new agent shell file, add that file to the source list in `dot_zshrc.tmpl` after `nono.zsh`.
 
 Example: profile `claude-code-go` should have a profile file named `claude-code-go.jsonc`, `meta.name: "claude-code-go"`, and a wrapper that calls `nono run --profile claude-code-go`.
+
+## Employer-Specific Profiles
+
+Profiles that serve a single employer or employer project are named `work-{work_name}-<profile>` and are installed only on that employer's machines. Their launchers belong to the employer's work tree, not to `dot_agents/shell/`.
+
+1. Add the profile to `private_dot_config/nono/profiles/` as `work-{work_name}-<profile>.jsonc`, with the same `meta.name`.
+2. Make sure `.chezmoiignore` has a block that ignores `.config/nono/profiles/work-{work_name}-*` unless `personal.work_env` is true and `personal.work_name` matches. Each employer needs one block, not one entry per profile.
+3. Add the launcher function to the matching agent file in `private_dot_work/private_{work_name}/agents/shell/`, calling the shared helper with the profile name (for example `_claude_nono work-sedg-claude-code-energy-runtime`).
+4. For a new employer launcher file, source it from `private_dot_work/private_{work_name}/zsh/dot_zshrc.tmpl` inside the existing `command -v nono` block.
+
+Employer profiles may extend personal profiles by name (for example `claude-code-go`). Renaming a personal profile requires updating those `extends` entries.
 
 ## Path Conventions
 

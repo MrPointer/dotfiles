@@ -34,10 +34,13 @@ private_dot_work/
 │   └── dot_zshrc.tmpl        # Generic work zshrc extension
 └── private_{work_name}/
     ├── profile               # Employer-specific profile
+    ├── agents/shell/         # Employer-specific agent launchers, sourced by the zshrc extension
     └── zsh/
         ├── dot_zshenv.tmpl   # Employer-specific zshenv extension
         └── dot_zshrc.tmpl    # Employer-specific zshrc extension
 ```
+
+**Employer-specific nono profiles:** Employer profiles live with the personal profiles in `~/.config/nono/profiles/`, named `work-{work_name}-*`. A `.chezmoiignore` block per employer skips them unless `personal.work_env` is true and `personal.work_name` matches. The employer's launchers live in `~/.work/{work_name}/agents/shell/` and call the shared wrapper helpers from `~/.agents/shell/` with these profile names.
 
 ### Deferred Homebrew Loading
 

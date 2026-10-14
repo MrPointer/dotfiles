@@ -109,9 +109,9 @@ Result: Work-specific environment variables, paths, aliases, and functions are a
 
 ## State Changes
 
-- **Environment variables** (exported): `WORK_DIR`, `WORK_EXECUTABLES_DIR`, `WORK_ZSH_DIR`, `WORK_ZSH_RC_EXTENSION`, `WORK_ZSH_ENV_EXTENSION`, `WORK_ENV_LOADED`, plus employer-specific path variables (e.g., `SEDG_ZSH_RC_EXTENSION`). Child shells inherit them, so steps 1–5 are skipped there but step 6 still finds the zshrc extensions. Non-exported state created by the zshenv extensions (shell functions, unexported variables) does not reach child shells.
+- **Environment variables** (exported): `WORK_DIR`, `WORK_EXECUTABLES_DIR`, `WORK_ZSH_DIR`, `WORK_ZSH_RC_EXTENSION`, `WORK_ZSH_ENV_EXTENSION`, `WORK_ENV_LOADED`, plus employer-specific path variables (e.g., `SEDG_ZSH_RC_EXTENSION`, `SEDG_AGENTS_SHELL_DIR`). Child shells inherit them, so steps 1–5 are skipped there but step 6 still finds the zshrc extensions. Non-exported state created by the zshenv extensions (shell functions, unexported variables) does not reach child shells.
 - **PATH**: May be extended with `WORK_EXECUTABLES_DIR` and employer-specific paths
-- **Shell functions/aliases**: Employer-specific additions from zshrc extension
+- **Shell functions/aliases**: Employer-specific additions from zshrc extension, including the employer's nono agent launchers when `nono` is installed
 
 ## Dependencies
 
