@@ -1,0 +1,16 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "work-sedg-common",
+      "claude-code-go"
+   ],
+   "meta": {
+      "name": "work-sedg-claude-code-inverter-driver",
+      "description": "Profile for developing the Inverter Driver project with Claude Code"
+   },
+   "network": {
+      "open_port": [
+         1502 // Required for Modbus
+      ]
+   }
+}
