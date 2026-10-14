@@ -1,0 +1,17 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "work-sedg-common",
+      "claude-code-go",
+      "claude-code-node"
+   ],
+   "meta": {
+      "name": "work-sedg-claude-code-energy-runtime",
+      "description": "Profile for developing the Energy Runtime project with Claude Code"
+   },
+   "network": {
+      "open_port": [
+         0 // Any localhost port; tests bind to random ports with :0
+      ]
+   }
+}

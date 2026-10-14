@@ -24,10 +24,8 @@ function claude-chezmoi() { _claude_nono claude-code-chezmoi "$@" }
 
 function claude-go() { _claude_nono claude-code-go "$@" }
 
-function claude-lcp-docs() { _claude_nono claude-code-lcp-docs "$@" }
+function claude-node() { _claude_nono claude-code-node "$@" }
 
 function claude-python() { _claude_nono claude-code-python "$@" }
 
 function claude-rust() { _claude_nono claude-code-rust "$@" }
-
-function claude-typescript() { _claude_nono claude-code-typescript "$@" }

@@ -20,6 +20,8 @@ The project implements a two-tier model for separating personal and work configu
 | Generic work profile | `~/.work/profile` | Cross-employer shared config — sets `WORK_DIR`, `WORK_EXECUTABLES_DIR`, and shell extension paths (`WORK_ZSH_ENV_EXTENSION`, `WORK_ZSH_RC_EXTENSION`) |
 | Specific work profile | `~/.work/{work_name}/profile` | Employer-specific config — sourced by the generic profile |
 
+Both profiles export their path variables, so shells started from an already-initialized shell (subshells, tmux panes) still find the shell extensions even though the profiles are not sourced again.
+
 The generic profile delegates to the specific profile. Both layers produce shell extension files (`.zshenv` and `.zshrc` fragments) that are sourced during shell startup. See the [work environment loading process][work-env-loading] for the full loading flow.
 
 **File structure in chezmoi source:**
@@ -32,10 +34,13 @@ private_dot_work/
 │   └── dot_zshrc.tmpl        # Generic work zshrc extension
 └── private_{work_name}/
     ├── profile               # Employer-specific profile
+    ├── agents/shell/         # Employer-specific agent launchers, sourced by the zshrc extension
     └── zsh/
         ├── dot_zshenv.tmpl   # Employer-specific zshenv extension
         └── dot_zshrc.tmpl    # Employer-specific zshrc extension
 ```
+
+**Employer-specific nono profiles:** Employer profiles live with the personal profiles in `~/.config/nono/profiles/`, named `work-{work_name}-*`. A `.chezmoiignore` block per employer skips them unless `personal.work_env` is true and `personal.work_name` matches. Each employer project has its own profile and launcher. Project profiles extend `work-{work_name}-common`, an agent-neutral profile that holds the employer's shared access (domains, credentials, tool config), plus the personal profiles they need. The launchers live in `~/.work/{work_name}/agents/shell/` and call the shared wrapper helpers from `~/.agents/shell/` with these profile names.
 
 ### Deferred Homebrew Loading
 

@@ -5,7 +5,7 @@
       "my-claude-code"
    ],
    "meta": {
-      "name": "claude-code-typescript",
-      "description": "Profile for developing TypeScript applications with Claude Code"
+      "name": "claude-code-node",
+      "description": "Profile for developing Node.js applications with Claude Code"
    }
 }

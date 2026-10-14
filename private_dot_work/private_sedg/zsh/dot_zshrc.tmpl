@@ -6,3 +6,8 @@
 sudo fix-vpn up
 {{- end }}
 {{- end }}
+
+# Use sandboxed sedg agent launchers if nono is installed
+if command -v nono >/dev/null 2>&1; then
+  [[ -r "$SEDG_AGENTS_SHELL_DIR/claude.zsh" ]] && source "$SEDG_AGENTS_SHELL_DIR/claude.zsh"
+fi
