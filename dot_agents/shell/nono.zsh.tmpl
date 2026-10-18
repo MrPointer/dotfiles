@@ -18,13 +18,6 @@ function _nono_agent_ensure_ssh_signing_key() {
 {{- end }}
 }
 
-function _nono_agent_ensure_ssh_signing_keys() {
-  while (( $# >= 2 )); do
-    _nono_agent_ensure_ssh_signing_key "$1" "$2"
-    shift 2
-  done
-}
-
 function _nono_agent_run() {
   local profile="$1"
   local git_config="$2"
