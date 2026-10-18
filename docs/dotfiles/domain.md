@@ -42,6 +42,16 @@ private_dot_work/
 
 **Employer-specific nono profiles:** Employer profiles live with the personal profiles in `~/.config/nono/profiles/`, named `work-{work_name}-*`. A `.chezmoiignore` block per employer skips them unless `personal.work_env` is true and `personal.work_name` matches. Each employer project has its own profile and launcher. Project profiles extend `work-{work_name}-common`, an agent-neutral profile that holds the employer's shared access (domains, credentials, tool config), plus the personal profiles they need. The launchers live in `~/.work/{work_name}/agents/shell/` and call the shared wrapper helpers from `~/.agents/shell/` with these profile names.
 
+### Agent Git Signing
+
+OpenCode, Claude Code, and Codex launched through the shared nono helpers use `~/.config/git/agent.gitconfig`. The [agent Git template][agent-git-template] includes the common Git configuration, selects SSH signing with `~/.ssh/id_ed25519.pub`, and sets `core.sshCommand` to `~/.local/bin/nono-git-ssh` for Git SSH transport.
+
+Signing method and Git identity are separate. The [common Git template][common-git-template] selects the work email on work machines and the personal email otherwise; its repository-specific include selects the personal email for this dotfiles repository.
+
+The shared `_nono_agent_run` helper sets `GIT_CONFIG_GLOBAL`, attempts to preload the key into the host `ssh-agent`, and grants access to its socket. Sandboxed agents read public metadata, not private key files. Preloading is best-effort and does not guarantee that signing will succeed. Manual Git sessions use the GPG configuration in `~/.gitconfig`.
+
+See the [agent commit signing process][agent-commit-signing] for host setup, sandbox access, and verification.
+
 ### Deferred Homebrew Loading
 
 A shell startup optimization pattern where Homebrew's expensive `shellenv` evaluation is postponed from `.zshenv` to `.zshrc` on macOS. This avoids the cost in non-interactive shells while keeping the environment available for interactive use.
@@ -79,3 +89,6 @@ See the [shell startup process][shell-startup] for the full shell startup flow i
 [shell-startup]: processes/shell-startup.md
 [work-env-loading]: processes/work-environment-loading.md
 [chezmoi-data-contract]: ../contracts/chezmoi-data.md
+[agent-git-template]: ../../private_dot_config/git/agent.gitconfig.tmpl
+[common-git-template]: ../../private_dot_config/git/common.gitconfig.tmpl
+[agent-commit-signing]: processes/agent-commit-signing.md

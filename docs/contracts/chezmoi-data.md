@@ -24,8 +24,8 @@ Chezmoi's built-in `.chezmoi.*` values are not part of this installer-owned cont
 |----------|-----------------|----------|-----------------|-------------------|
 | `data.personal.email` | `.personal.email` | Always | `DotfilesData.Email` | Common Git identity (non-work fallback), personal-repo override, and signer templates |
 | `data.personal.full_name` | `.personal.full_name` | Always | `FirstName` and `LastName`, joined with a space | Common Git identity template |
-| `data.personal.work_env` | `.personal.work_env` | Always | Whether `DotfilesData.WorkEnv` is present | `.chezmoiignore`, shell templates, and work-dependent agent/Git templates |
-| `data.personal.work_name` | `.personal.work_name` | Work environments only | `DotfilesWorkEnvData.WorkName` | Work profile extensions and work-dependent agent/Git templates |
+| `data.personal.work_env` | `.personal.work_env` | Always | Whether `DotfilesData.WorkEnv` is present | `.chezmoiignore`, work shell templates, common Git identity, and allowed signer identities |
+| `data.personal.work_name` | `.personal.work_name` | Work environments only | `DotfilesWorkEnvData.WorkName` | Work shell profile extensions and employer nono profile filtering |
 | `data.personal.work_email` | `.personal.work_email` | Work environments only | `DotfilesWorkEnvData.WorkEmail` | Common Git identity and signer templates (work environments) |
 
 ### `system`
@@ -44,7 +44,7 @@ Chezmoi's built-in `.chezmoi.*` values are not part of this installer-owned cont
 
 ## Work-Environment Invariants
 
-When `personal.work_env` is `false`, the installer omits `work_name`, `work_email`, and both work-profile paths. `.chezmoiignore` excludes the managed work tree and work-dependent agent configuration in that mode.
+When `personal.work_env` is `false`, the installer omits `work_name`, `work_email`, and both work-profile paths. `.chezmoiignore` excludes the managed work tree and employer-specific nono profiles in that mode.
 
 When `personal.work_env` is `true`, the installer writes the work identity and both profile paths. Templates may therefore treat those conditional values as a group. The dotfile meaning of the two profile paths is documented in the [dotfiles domain][dotfiles-domain], and their runtime use is documented by [work environment loading][work-environment-loading].
 
