@@ -20,11 +20,10 @@ function _nono_agent_ensure_ssh_signing_key() {
 
 function _nono_agent_run() {
   local profile="$1"
-  local git_config="$2"
-  local command_name="$3"
-  local public_key="$4"
-  local private_key="$5"
-  shift 5
+  local command_name="$2"
+  local public_key="$3"
+  local private_key="$4"
+  shift 4
 
   _nono_agent_ensure_ssh_signing_key "$public_key" "$private_key"
 
@@ -74,7 +73,7 @@ function _nono_agent_run() {
     acp_args=(--silent --startup-timeout 0)
   fi
 
-  GIT_CONFIG_GLOBAL="$git_config" \
+  GIT_CONFIG_GLOBAL="$HOME/.config/git/agent.gitconfig" \
     nono run \
     --profile "$profile" \
     --allow-cwd \

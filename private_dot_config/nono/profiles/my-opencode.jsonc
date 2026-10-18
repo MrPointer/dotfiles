@@ -26,6 +26,7 @@
          "$HOME/.ssh/known_hosts",
          "$HOME/.ssh/config",
          "$HOME/.local/bin/nono-git-ssh",
+         "$XDG_CONFIG_HOME/git/agent.gitconfig",
          "$XDG_CONFIG_HOME/git/common.gitconfig",
          "$XDG_CONFIG_HOME/git/personal.gitconfig", // Pinned identity for the dotfiles repo
          "$XDG_CONFIG_HOME/git/allowed_signers",

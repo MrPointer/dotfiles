@@ -4,7 +4,6 @@ function _claude_nono() {
 
   _nono_agent_run \
     "$profile" \
-    "$HOME/.claude/gitconfig" \
     claude \
     "${CLAUDE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
     "${CLAUDE_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519}" \

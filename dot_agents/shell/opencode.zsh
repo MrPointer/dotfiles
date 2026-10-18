@@ -11,7 +11,6 @@ function _opencode_nono() {
 
   _nono_agent_run \
     "$profile" \
-    "$HOME/.config/opencode/gitconfig" \
     "$command_name" \
     "${OPENCODE_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
     "${OPENCODE_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519}" \
