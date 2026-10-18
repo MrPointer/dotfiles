@@ -31,6 +31,7 @@ Taskfile.yml
 
 {{- if not .personal.work_env }}
 .work/ # only manage work state on work machines
+.config/git/work.gitconfig
 {{- end }}
 
 {{- if not (and .personal.work_env (eq .personal.work_name "sedg")) }}

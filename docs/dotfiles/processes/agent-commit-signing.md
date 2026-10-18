@@ -2,7 +2,7 @@
 
 ## Overview
 
-Signs Git commits from nono-launched OpenCode, Claude Code, and Codex with the host's Ed25519 key through `ssh-agent`. The [shared agent Git configuration][agent-git] selects the signing key; the [common configuration][common-git] supplies the name and email. See [agent Git signing][domain-signing] for identity selection and configuration ownership.
+Signs Git commits from nono-launched OpenCode, Claude Code, and Codex with the host's Ed25519 key through `ssh-agent`. The [shared agent Git configuration][agent-git] selects the signing key, while the [common configuration][common-git] supplies the shared name and personal-email fallback. See [agent Git signing][domain-signing] for identity selection and configuration ownership.
 
 ## Trigger
 
@@ -33,6 +33,12 @@ A coding agent starts through a shell wrapper and later runs a Git commit with s
 5. For Git SSH transport, `core.sshCommand` selects [`nono-git-ssh`][git-ssh], which uses `ncat` for proxy-aware SSH connections. This transport setting is separate from commit signing.
 
 Preloading is best-effort: missing prerequisites or failed key loading do not stop agent launch. The `OPENCODE_SSH_SIGNING_PUBLIC_KEY` / `OPENCODE_SSH_SIGNING_KEY`, `CLAUDE_SSH_SIGNING_PUBLIC_KEY` / `CLAUDE_SSH_SIGNING_KEY`, and `CODEX_SSH_SIGNING_PUBLIC_KEY` / `CODEX_SSH_SIGNING_KEY` overrides change only preload inputs. They do not change Git's configured `~/.ssh/id_ed25519.pub` signing key.
+
+### Identity Selection
+
+The common configuration sets the personal email and `user.useConfigOnly=true`. On work machines, conditional includes override it with the work email for GitLab `gitlab.solaredge.com`, Azure SSH `ssh.dev.azure.com`, and Azure HTTP(S) `dev.azure.com` URLs. Any remote can match; Git does not limit the check to `origin`.
+
+Repositories that do not match, including those without remotes, use the personal email. Repository-local settings and environment overrides still take precedence. URL spelling and SSH aliases affect matching, and Git 2.36 or later is required. These identity rules do not change GPG or SSH signing methods, signing keys, or repository authentication. Conditional configuration files select identity only; they must not define remote URLs.
 
 ### Sandbox Access
 

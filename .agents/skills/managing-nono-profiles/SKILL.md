@@ -85,7 +85,7 @@ Public SSH metadata commonly needed by Git:
 - `$HOME/.ssh/known_hosts`
 - `$HOME/.ssh/config`
 
-Profiles also need read access to the shared agent, common, and personal Git configs, `allowed_signers`, and `nono-git-ssh`. Grant the required public SSH metadata through both `read_file` and `bypass_protection`, while keeping private keys excluded.
+Profiles also need read access to the shared agent, common, and personal Git configs, the work Git config on work machines, `allowed_signers`, and `nono-git-ssh`. Grant the required public SSH metadata through both `read_file` and `bypass_protection`, while keeping private keys excluded.
 
 Validate private keys remain blocked with:
 

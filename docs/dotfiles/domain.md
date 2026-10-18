@@ -46,7 +46,9 @@ private_dot_work/
 
 OpenCode, Claude Code, and Codex launched through the shared nono helpers use `~/.config/git/agent.gitconfig`. The [agent Git template][agent-git-template] includes the common Git configuration, selects SSH signing with `~/.ssh/id_ed25519.pub`, and sets `core.sshCommand` to `~/.local/bin/nono-git-ssh` for Git SSH transport.
 
-Signing method and Git identity are separate. The [common Git template][common-git-template] selects the work email on work machines and the personal email otherwise; its repository-specific include selects the personal email for this dotfiles repository.
+Signing method and Git identity are separate. The [common Git template][common-git-template] sets the shared name, personal email, and `user.useConfigOnly=true`. On work machines, conditional includes override the personal email with the work identity for configured GitLab and Azure DevOps repository URLs. These rules examine every remote, not only `origin`.
+
+Unmatched repositories, including repositories without remotes, use the personal email. Existing repository-local settings and environment overrides still take precedence. URL spelling and SSH aliases affect matching. Identity here means Git authorship metadata, not signing or repository authentication. The conditional includes require Git 2.36 or later and must not define remote URLs.
 
 The shared `_nono_agent_run` helper sets `GIT_CONFIG_GLOBAL`, attempts to preload the key into the host `ssh-agent`, and grants access to its socket. Sandboxed agents read public metadata, not private key files. Preloading is best-effort and does not guarantee that signing will succeed. Manual Git sessions use the GPG configuration in `~/.gitconfig`.
 
