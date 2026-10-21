@@ -18,7 +18,7 @@ This repo is edited from inside a nono sandbox. Treat chezmoi source files as th
 
 ## Default Workflow
 
-1. **Confirm source ownership**: before editing a file under `~`, use `chezmoi source-path <target>` or inspect whether the source uses `dot_*`, `private_dot_*`, `dot_config/`, `private_dot_config/`, or a template source
+1. **Confirm source ownership**: before editing a file under `~`, use `chezmoi source-path <target>` or inspect whether the source uses `dot_*`, `private_dot_*`, `dot_config/`, `private_dot_config/`, or a template source. When `source-path` reports "not managed", search the `run_*` scripts at the repo root for the target path before treating the file as unmanaged: some scripts own keys inside target config files, and the next apply overwrites manual edits to those keys
 2. **Inspect state**: use `chezmoi status` and `chezmoi diff` for managed targets; use `git diff` for repo-only files that chezmoi does not manage as targets
 3. **Edit source directly**: modify files in this repo (the source state)
 4. **Validate safely**: run `chezmoi diff` and `chezmoi apply --dry-run -v` for managed targets; stop at source review and git diff for unmanaged repo files
