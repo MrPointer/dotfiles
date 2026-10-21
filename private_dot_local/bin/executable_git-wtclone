@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Clone a repository into the bare worktree layout:
+#   <dir>/.git      bare repository
+#   <dir>/<branch>  worktree of the default branch, submodules initialized
+# Arguments match git clone: git wtclone [<clone options>] <repo> [<dir>]
+
+die() {
+   echo "git-wtclone: $*" >&2
+   exit 1
+}
+
+usage() {
+   echo "usage: git wtclone [<git clone options>] <repo> [<dir>]" >&2
+   exit 2
+}
+
+# git clone options that take their value as a separate argument.
+takes_value() {
+   case "$1" in
+      -o | --origin | -b | --branch | -u | --upload-pack | --reference | --reference-if-able | \
+         --depth | --shallow-since | --shallow-exclude | -c | --config | --server-option | \
+         -j | --jobs | --filter | --bundle-uri | --template | --ref-format | --revision)
+         return 0
+         ;;
+   esac
+   return 1
+}
+
+clone_opts=()
+positional=()
+single_branch=false
+while (( $# > 0 )); do
+   case "$1" in
+      --)
+         shift
+         positional+=("$@")
+         break
+         ;;
+      -h | --help)
+         usage
+         ;;
+      --bare | --mirror | --separate-git-dir | --separate-git-dir=*)
+         die "$1 conflicts with the worktree layout"
+         ;;
+      --recurse-submodules | --recurse-submodules=* | --recursive)
+         # Submodules are always initialized in the worktree after cloning.
+         shift
+         ;;
+      --single-branch)
+         single_branch=true
+         clone_opts+=("$1")
+         shift
+         ;;
+      -*)
+         if takes_value "$1"; then
+            (( $# >= 2 )) || usage
+            clone_opts+=("$1" "$2")
+            shift 2
+         else
+            clone_opts+=("$1")
+            shift
+         fi
+         ;;
+      *)
+         positional+=("$1")
+         shift
+         ;;
+   esac
+done
+
+(( ${#positional[@]} >= 1 && ${#positional[@]} <= 2 )) || usage
+repo="${positional[0]}"
+dir="${positional[1]:-}"
+
+if [[ -z "$dir" ]]; then
+   # Same naming rule as git clone: last path component without .git.
+   dir="${repo%/}"
+   dir="${dir%/.git}"
+   dir="${dir%.git}"
+   dir="${dir##*/}"
+   dir="${dir##*:}"
+   [[ -n "$dir" ]] || die "cannot derive a directory name from '$repo'; pass <dir>"
+fi
+
+if [[ -e "$dir" && -n "$(ls -A "$dir")" ]]; then
+   die "destination path '$dir' already exists and is not an empty directory"
+fi
+
+git clone --bare ${clone_opts[@]+"${clone_opts[@]}"} -- "$repo" "$dir/.git"
+
+git_dir="$(cd "$dir/.git" && pwd -P)"
+container="${git_dir%/.git}"
+
+g() {
+   git --git-dir="$git_dir" "$@"
+}
+
+remote="$(g remote | head -n 1)"
+branch="$(g symbolic-ref --short HEAD)"
+
+# A bare clone maps remote branches straight onto local branches and sets no
+# fetch refspec. Track them as remote-tracking branches instead, like a normal
+# clone, and keep only the checked-out branch local.
+if [[ "$single_branch" == true ]]; then
+   g config "remote.$remote.fetch" "+refs/heads/$branch:refs/remotes/$remote/$branch"
+else
+   g config "remote.$remote.fetch" "+refs/heads/*:refs/remotes/$remote/*"
+fi
+g fetch --quiet "$remote"
+g remote set-head "$remote" --auto >/dev/null 2>&1 ||
+   echo "git-wtclone: could not set $remote/HEAD; run 'git remote set-head $remote --auto' later" >&2
+
+g for-each-ref --format='%(refname)' refs/heads/ | while IFS= read -r ref; do
+   [[ "$ref" == "refs/heads/$branch" ]] || g update-ref -d "$ref"
+done
+g branch --quiet --set-upstream-to="$remote/$branch" "$branch"
+
+# Folder name follows worktrunk's sanitize filter: / and \ become -.
+worktree="$container/${branch//[\/\\]/-}"
+g worktree add --quiet "$worktree" "$branch"
+git -C "$worktree" submodule update --init --recursive --quiet
+
+echo "Cloned into $worktree"

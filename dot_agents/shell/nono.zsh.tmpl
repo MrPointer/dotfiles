@@ -50,7 +50,14 @@ function _nono_agent_run() {
   local -a git_common_dir_args=()
   local git_common_dir
   if git_common_dir="$(command git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
-    git_common_dir_args=(--allow "$git_common_dir")
+    # The folder holding .git is the main checkout, or in the bare worktree
+    # layout (git wtclone) the container of every worktree. Never widen to
+    # $HOME or / when a repository lives there.
+    if [[ "${git_common_dir:t}" == .git && "${git_common_dir:h}" != "$HOME" && "${git_common_dir:h}" != / ]]; then
+      git_common_dir_args=(--allow "${git_common_dir:h}")
+    else
+      git_common_dir_args=(--allow "$git_common_dir")
+    fi
   fi
 
   local -a acp_args=()

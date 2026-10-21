@@ -1,0 +1,113 @@
+.TH GIT-WTCLONE 1 2026-10-21 dotfiles "User Commands"
+.SH NAME
+git-wtclone \- clone a repository into the bare worktree layout
+.SH SYNOPSIS
+.B git wtclone
+.RI [ "clone options" ]
+.I repo
+.RI [ dir ]
+.SH DESCRIPTION
+Clones
+.I repo
+the way
+.BR git\-clone (1)
+does, but lays it out so every worktree sits in one folder:
+.PP
+.RS
+.nf
+<dir>/.git        bare repository (git data only)
+<dir>/<branch>    worktree of the checked-out branch
+.fi
+.RE
+.PP
+Worktrees that
+.BR wt (1)
+creates later land next to it as
+.IR <dir>/<branch> .
+The nono agent launchers grant the whole
+.I <dir>
+folder, so one agent session can work across all worktrees.
+.PP
+After cloning,
+.B git wtclone
+sets up the bare repository to behave like a normal clone:
+.IP \(bu 2
+remote branches are fetched as remote-tracking branches
+.RI ( origin/* ),
+and
+.I origin/HEAD
+points at the remote's default branch;
+.IP \(bu 2
+only the checked-out branch exists as a local branch, tracking its remote
+branch;
+.IP \(bu 2
+submodules are initialized recursively in the new worktree.
+.SH ARGUMENTS
+.TP
+.I repo
+The repository to clone, in any form
+.BR git\-clone (1)
+accepts.
+.TP
+.I dir
+The container folder. Defaults to the last path component of
+.I repo
+without
+.IR .git ,
+created in the current folder. It must not exist or must be empty.
+.SH OPTIONS
+Options are passed on to
+.BR git\-clone (1),
+with these exceptions:
+.TP
+.BR \-\-bare ", " \-\-mirror ", " \-\-separate\-git\-dir
+Rejected; they conflict with the layout.
+.TP
+.BR \-\-recurse\-submodules ", " \-\-recursive
+Ignored; submodules are always initialized.
+.TP
+.BI \-b " branch"
+Checks out
+.I branch
+instead of the remote's default branch. The worktree folder is named after it.
+.TP
+.B \-\-single\-branch
+Fetches only the checked-out branch, now and on later fetches.
+.SH FOLDER NAMES
+Worktree folders use the branch name with
+.B /
+and
+.B \e
+replaced by
+.BR \- ,
+matching the
+.B sanitize
+filter of
+.BR wt (1).
+For example, branch
+.I feature/login
+becomes the folder
+.IR feature\-login .
+.SH EXAMPLES
+.TP
+.B git wtclone git@github.com:acme/foo.git
+Creates
+.I ./foo/.git
+and
+.I ./foo/main
+(if
+.I main
+is the default branch).
+.TP
+.B git wtclone \-\-depth 1 git@github.com:acme/foo.git ~/projects/acme/foo
+Shallow clone into
+.IR ~/projects/acme/foo .
+.TP
+.B wt switch \-\-create feature/login
+Run inside the container or a worktree afterwards; creates
+.IR foo/feature\-login .
+.SH SEE ALSO
+.BR git\-wtmigrate (1),
+.BR git\-clone (1),
+.BR git\-worktree (1),
+.BR wt (1)

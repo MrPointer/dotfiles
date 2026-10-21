@@ -1,0 +1,93 @@
+.TH GIT-WTMIGRATE 1 2026-10-21 dotfiles "User Commands"
+.SH NAME
+git-wtmigrate \- convert an existing clone into the bare worktree layout
+.SH SYNOPSIS
+.B git wtmigrate
+.RI [ path ]
+.SH DESCRIPTION
+Converts a regular clone into the layout that
+.BR git\-wtclone (1)
+creates. For a clone at
+.I foo
+whose main checkout is on branch
+.IR main :
+.PP
+.RS
+.nf
+before                      after
+foo/                        foo/.git       (bare repository)
+foo/.git/                   foo/main/      (former main checkout)
+foo-feature-x/  (worktree)  foo/feature-x/ (moved worktree)
+.fi
+.RE
+.PP
+Every file in the main checkout stays as it was, including uncommitted,
+staged, untracked, and ignored files. The former
+.I .git
+folder becomes the bare repository in place, so worktrees that are not
+moved keep working.
+.PP
+Linked worktrees that are on a branch move to
+.IR foo/<branch> .
+Detached or locked worktrees, and worktrees whose target folder already
+exists, stay where they are, with a warning.
+.PP
+Shells that were inside the old main checkout keep a stale path; run
+.B cd
+to the new folder afterwards.
+.SH ARGUMENTS
+.TP
+.I path
+Any folder inside the repository to convert, including a linked worktree.
+Defaults to the current folder.
+.SH REFUSED CASES
+.B git wtmigrate
+stops without changing anything when:
+.IP \(bu 2
+the repository already uses the bare layout;
+.IP \(bu 2
+the main checkout has a detached HEAD;
+.IP \(bu 2
+a merge, rebase, cherry-pick, revert, or bisect is in progress;
+.IP \(bu 2
+the repository has initialized submodules;
+.IP \(bu 2
+.I core.worktree
+is set;
+.IP \(bu 2
+a linked worktree sits inside the main checkout;
+.IP \(bu 2
+two worktrees would get the same folder name.
+.SH FAILURE
+The checkout is first moved to a temporary folder named
+.I .<repo>.wtmigrate.XXXXXX
+next to the repository. If a step fails after that, the error names both
+locations, so the pieces can be put back by hand.
+.SH NOTES
+The command moves the repository folder, so it needs write access to the
+folder that contains it. Run it outside agent sandboxes.
+.PP
+Folder names follow the same rule as
+.BR git\-wtclone (1):
+.B /
+and
+.B \e
+in branch names become
+.BR \- .
+.SH EXAMPLES
+.TP
+.B git wtmigrate ~/projects/acme/foo
+Converts
+.I foo
+from anywhere.
+.TP
+.B git wtmigrate && cd ~/projects/acme/foo/main
+Run inside
+.IR foo ;
+converts it, then moves the shell into the former main checkout (here on
+branch
+.IR main ).
+.SH SEE ALSO
+.BR git\-wtclone (1),
+.BR git\-worktree (1),
+.BR wt (1)

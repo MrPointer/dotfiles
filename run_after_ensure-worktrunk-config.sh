@@ -11,8 +11,9 @@ set -euo pipefail
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/worktrunk"
 CONFIG_FILE="$CONFIG_DIR/config.toml"
 
-# Sibling worktrees joined with a dash; nono cannot open directories with dots.
-WORKTREE_PATH_LINE='worktree-path = "{{ repo_path }}/../{{ repo }}-{{ branch | sanitize }}"'
+# Bare worktree layout (git wtclone / git wtmigrate): repo_path is <repo>/.git,
+# so every worktree lands in <repo>/<branch> next to the bare repository.
+WORKTREE_PATH_LINE='worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"'
 
 HOOK_NAME="agents-settings"
 LEGACY_HOOK_NAME="claude-settings"
