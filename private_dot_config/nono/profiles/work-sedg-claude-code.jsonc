@@ -1,0 +1,11 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "work-sedg-common",
+      "my-claude-code"
+   ],
+   "meta": {
+      "name": "work-sedg-claude-code",
+      "description": "Profile for sedg projects without a dedicated profile, with Claude Code"
+   }
+}
