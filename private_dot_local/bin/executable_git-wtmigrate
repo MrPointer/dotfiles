@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Convert a regular clone into the bare worktree layout used by git wtclone:
+#   <repo>/.git      the former .git directory, now a bare repository
+#   <repo>/<branch>  the former main checkout, now a linked worktree
+# Linked worktrees on a branch move to <repo>/<branch> as well. Uncommitted,
+# staged, untracked, and ignored files stay in place.
+# Usage: git wtmigrate [<path>]  (default: the repository of the current directory)
+
+die() {
+   echo "git-wtmigrate: $*" >&2
+   exit 1
+}
+
+warn() {
+   echo "git-wtmigrate: $*" >&2
+}
+
+# Folder name follows worktrunk's sanitize filter: / and \ become -.
+sanitize() {
+   local name="$1"
+   echo "${name//[\/\\]/-}"
+}
+
+(( $# <= 1 )) || die "usage: git wtmigrate [<path>]"
+target="${1:-.}"
+
+common="$(git -C "$target" rev-parse --path-format=absolute --git-common-dir)" ||
+   die "'$target' is not inside a git repository"
+[[ "$(basename "$common")" == .git && -d "$common" ]] ||
+   die "expected the repository data in a .git directory, found $common"
+[[ "$(git --git-dir="$common" config --bool --get core.bare || echo false)" == false ]] ||
+   die "$(dirname "$common") already uses the bare layout"
+[[ -z "$(git --git-dir="$common" config --get core.worktree || true)" ]] ||
+   die "core.worktree is set; this layout is not supported"
+[[ ! -d "$common/modules" ]] ||
+   die "repositories with initialized submodules are not supported"
+
+for state in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD BISECT_LOG rebase-merge rebase-apply sequencer; do
+   [[ ! -e "$common/$state" ]] ||
+      die "an operation is in progress ($state); finish or abort it first"
+done
+
+repo="$(dirname "$common")"
+branch="$(git --git-dir="$common" symbolic-ref --quiet --short HEAD)" ||
+   die "the main checkout has a detached HEAD; check out a branch first"
+main_dir="$(sanitize "$branch")"
+
+# Collect linked worktrees that sit on a branch; others stay where they are.
+linked_paths=()
+linked_dests=()
+used_names="$main_dir"
+wt_path=""
+wt_branch=""
+wt_skip=false
+flush_worktree() {
+   if [[ -n "$wt_path" && "$wt_path" != "$repo" ]]; then
+      if [[ "$wt_path" == "$repo"/* ]]; then
+         die "worktree $wt_path is nested inside the main checkout; move it out first"
+      fi
+      if [[ "$wt_skip" == true || -z "$wt_branch" ]]; then
+         warn "leaving $wt_path in place (detached, locked, or missing)"
+      else
+         local name
+         name="$(sanitize "$wt_branch")"
+         if grep -Fxq -- "$name" <<<"$used_names"; then
+            die "two worktrees map to the folder name '$name'"
+         fi
+         used_names+=$'\n'"$name"
+         linked_paths+=("$wt_path")
+         linked_dests+=("$repo/$name")
+      fi
+   fi
+   wt_path=""
+   wt_branch=""
+   wt_skip=false
+}
+while IFS= read -r line; do
+   case "$line" in
+      "worktree "*) wt_path="${line#worktree }" ;;
+      "branch refs/heads/"*) wt_branch="${line#branch refs/heads/}" ;;
+      locked* | prunable*) wt_skip=true ;;
+      "") flush_worktree ;;
+   esac
+done < <(git --git-dir="$common" worktree list --porcelain)
+flush_worktree
+
+[[ "$main_dir" != .git ]] || die "a branch named '.git' cannot become a folder"
+
+parent="$(dirname "$repo")"
+tmp="$(mktemp -d "$parent/.$(basename "$repo").wtmigrate.XXXXXX")"
+trap 'warn "failed partway; pieces of the repository may be in $repo and $tmp"' ERR
+
+# Move the main checkout aside, then put its .git back as the bare repository.
+mv "$repo" "$tmp/checkout"
+mkdir "$repo"
+mv "$tmp/checkout/.git" "$common"
+git --git-dir="$common" config core.bare true
+
+# Register the checkout as a linked worktree. Keep its index (staged changes)
+# and HEAD reflog, then swap the real files in under the new .git file.
+[[ ! -f "$common/index" ]] || mv "$common/index" "$tmp/index"
+git --git-dir="$common" worktree add --quiet --no-checkout "$repo/$main_dir" "$branch"
+admin="$(git -C "$repo/$main_dir" rev-parse --path-format=absolute --git-dir)"
+[[ ! -f "$tmp/index" ]] || mv "$tmp/index" "$admin/index"
+if [[ -f "$common/logs/HEAD" ]]; then
+   mkdir -p "$admin/logs"
+   mv "$common/logs/HEAD" "$admin/logs/HEAD"
+fi
+mv "$repo/$main_dir/.git" "$tmp/checkout/.git"
+rmdir "$repo/$main_dir"
+mv "$tmp/checkout" "$repo/$main_dir"
+rmdir "$tmp"
+trap - ERR
+
+git -C "$repo/$main_dir" update-index -q --refresh >/dev/null || true
+
+for (( i = 0; i < ${#linked_paths[@]}; i++ )); do
+   src="${linked_paths[$i]}"
+   dest="${linked_dests[$i]}"
+   if [[ -e "$dest" ]]; then
+      warn "leaving $src in place; $dest already exists"
+   elif ! git --git-dir="$common" worktree move "$src" "$dest"; then
+      warn "could not move $src to $dest"
+   fi
+done
+
+echo "Migrated $repo; the former main checkout is now $repo/$main_dir"
+echo "Shells inside the old checkout should cd to the new path."
