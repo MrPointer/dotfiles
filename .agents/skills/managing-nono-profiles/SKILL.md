@@ -75,14 +75,17 @@ Use this pattern instead:
 - Grant exact public SSH metadata with `filesystem.read_file`.
 - Add the same exact public/metadata files to `filesystem.bypass_protection` when they live under denied paths like `$HOME/.ssh`.
 - Never add `$HOME/.ssh` as a directory grant or bypass unless explicitly requested and security-reviewed.
-- Let shell wrappers preload keys into the host `ssh-agent` before entering nono.
-- Let wrappers pass `--allow-unix-socket "$SSH_AUTH_SOCK"` so the sandbox can ask the host agent to sign without reading private key files.
+- Use the shared `~/.config/git/agent.gitconfig` for agent Git configuration.
+- Let `_nono_agent_run` attempt to preload the key into the host `ssh-agent` before entering nono. This is best-effort, not a fail-fast check; missing sockets, missing keys, or failed loads do not prevent launch.
+- Let `_nono_agent_run` pass `--allow-unix-socket "$SSH_AUTH_SOCK"` when the socket variable is set, so the sandbox can ask the host agent to sign without reading private key files.
 
 Public SSH metadata commonly needed by Git:
 
 - `$HOME/.ssh/<key>.pub`
 - `$HOME/.ssh/known_hosts`
 - `$HOME/.ssh/config`
+
+Profiles also need read access to the shared agent, common, and personal Git configs, the work Git config on work machines, `allowed_signers`, and `nono-git-ssh`. Grant the required public SSH metadata through both `read_file` and `bypass_protection`, while keeping private keys excluded.
 
 Validate private keys remain blocked with:
 
@@ -95,6 +98,8 @@ Expected result: `DENIED` by `deny_credentials`.
 ## Shell Wrapper Pattern
 
 Shared nono wrapper helpers live in `dot_agents/shell/nono.zsh.tmpl`.
+
+`_nono_agent_run` owns `GIT_CONFIG_GLOBAL="$HOME/.config/git/agent.gitconfig"` for all agents. Per-agent wrappers pass the profile, command, preload key paths, and command arguments. The `OPENCODE_SSH_SIGNING_*`, `CLAUDE_SSH_SIGNING_*`, and `CODEX_SSH_SIGNING_*` environment overrides affect preloading only; they do not change Git's configured signing key.
 
 Per-agent files should call `_nono_agent_run` instead of duplicating nono setup:
 

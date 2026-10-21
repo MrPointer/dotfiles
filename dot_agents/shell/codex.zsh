@@ -12,7 +12,6 @@ function _codex() {
 
   _codex_nono_run \
     "$profile" \
-    "$HOME/.codex/gitconfig" \
     codex \
     "${CODEX_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
     "${CODEX_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519}" \
@@ -28,7 +27,6 @@ function _codex_acp() {
 
   _codex_nono_run \
     "$profile" \
-    "$HOME/.codex/gitconfig" \
     npx \
     "${CODEX_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
     "${CODEX_SSH_SIGNING_KEY:-$HOME/.ssh/id_ed25519}" \

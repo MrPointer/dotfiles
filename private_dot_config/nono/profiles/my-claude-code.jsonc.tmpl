@@ -25,14 +25,15 @@
       ],
       "allow_file": [],
       "read_file": [
-         "$HOME/.ssh/id_rsa.pub",
          "$HOME/.ssh/id_ed25519.pub",
          "$HOME/.ssh/known_hosts",
          "$HOME/.ssh/config",
          "$HOME/.local/bin/nono-git-ssh",
          "$XDG_DATA_HOME/deck/bin/deck-claude-hook.sh", // Deck VS Code agent-management hook
+         "$XDG_CONFIG_HOME/git/agent.gitconfig",
          "$XDG_CONFIG_HOME/git/common.gitconfig",
-         "$XDG_CONFIG_HOME/git/personal.gitconfig", // Pinned identity for the dotfiles repo
+         "$XDG_CONFIG_HOME/git/personal.gitconfig",
+         "$XDG_CONFIG_HOME/git/work.gitconfig",
          "$XDG_CONFIG_HOME/git/allowed_signers",
          "$XDG_CONFIG_HOME/worktrunk/config.toml",
          "$XDG_CONFIG_HOME/gh/config.yml",
@@ -41,7 +42,6 @@
       "write_file": [],
       "deny": [],
       "bypass_protection": [
-         "$HOME/.ssh/id_rsa.pub",
          "$HOME/.ssh/id_ed25519.pub",
          "$HOME/.ssh/known_hosts",
          "$HOME/.ssh/config"

@@ -1,6 +1,7 @@
 [user]
    name = {{ .personal.full_name }}
-   email = {{ if and .personal.work_env .personal.work_email }}{{ .personal.work_email }}{{ else }}{{ .personal.email }}{{ end }}
+   email = {{ .personal.email }}
+   useConfigOnly = true
 [branch]
    sort = committerdate
 [pull]
@@ -37,6 +38,19 @@
    gpgSign = true
 [gpg "ssh"]
    allowedSignersFile = {{ .chezmoi.homeDir }}/.config/git/allowed_signers
-{{- /* This dotfiles repo commits under the personal identity, even on work machines. */}}
-[includeIf "gitdir:{{ .chezmoi.sourceDir }}/"]
-   path = {{ .chezmoi.homeDir }}/.config/git/personal.gitconfig
+{{ if .personal.work_env -}}
+{{ range $host := list "gitlab.solaredge.com" "ssh.dev.azure.com" -}}
+[includeIf "hasconfig:remote.*.url:*@{{ $host }}:*/**"]
+   path = {{ $.chezmoi.homeDir }}/.config/git/work.gitconfig
+[includeIf "hasconfig:remote.*.url:ssh://*@{{ $host }}/**"]
+   path = {{ $.chezmoi.homeDir }}/.config/git/work.gitconfig
+{{ end -}}
+{{ range $host := list "gitlab.solaredge.com" "dev.azure.com" -}}
+{{ range $scheme := list "https" "http" -}}
+[includeIf "hasconfig:remote.*.url:{{ $scheme }}://{{ $host }}/**"]
+   path = {{ $.chezmoi.homeDir }}/.config/git/work.gitconfig
+[includeIf "hasconfig:remote.*.url:{{ $scheme }}://*@{{ $host }}/**"]
+   path = {{ $.chezmoi.homeDir }}/.config/git/work.gitconfig
+{{ end -}}
+{{ end -}}
+{{ end -}}
