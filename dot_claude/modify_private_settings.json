@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# chezmoi modify_ script for ~/.claude/settings.json.
+#
+# Claude Code owns this file and writes to it (theme, model, permissions, its
+# own hooks). chezmoi must not clobber it. This script receives the current
+# target contents on stdin and prints the desired contents on stdout, so it
+# only ever ensures our UserPromptSubmit hooks and leaves every other key alone.
+#
+# It is idempotent: a hook of ours that is already registered stays where it
+# is, and only missing ones are appended. Extra copies of our hooks are removed
+# one hook at a time, so hooks that other tools share a group with are kept.
+set -euo pipefail
+
+hook_cmds=(
+  "$HOME/.claude/hooks/reinforce-strict-output-style.sh"
+  "$HOME/.claude/hooks/reinforce-git-consent.sh"
+)
+
+current="$(cat)"
+[ -z "$current" ] && current='{}'
+
+printf '%s' "$current" | jq --args '
+  $ARGS.positional as $cmds
+  | def ours: .command as $c | $c != null and ($cmds | index($c)) != null;
+  .hooks.UserPromptSubmit = (
+    reduce (.hooks.UserPromptSubmit // [])[] as $group ({seen: [], out: []};
+      if ($group.hooks // []) | any(ours) | not then
+        .out += [$group]
+      else
+        (reduce $group.hooks[] as $hook ({seen: .seen, kept: []};
+          if ($hook | ours) and (.seen | index($hook.command)) != null then .
+          elif ($hook | ours) then .seen += [$hook.command] | .kept += [$hook]
+          else .kept += [$hook]
+          end)) as $r
+        | .seen = $r.seen
+        | if ($r.kept | length) > 0 then .out += [$group | .hooks = $r.kept] else . end
+      end)
+    | .seen as $seen
+    | .out + [$cmds[] | select(. as $c | $seen | index($c) == null)
+        | {hooks: [{type: "command", command: .}]}]
+  )
+' "${hook_cmds[@]}"
