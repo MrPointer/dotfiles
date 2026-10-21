@@ -88,6 +88,31 @@ For example, branch
 .I feature/login
 becomes the folder
 .IR feature\-login .
+.SH CLASSIC REPOSITORIES
+Repositories that must stay a regular clone, because another tool decides
+where they live, keep working. For them,
+.BR wt (1)
+creates worktrees in a central folder instead:
+.PP
+.RS
+.nf
+~/.local/share/worktrees/<key>/<branch>
+.fi
+.RE
+.PP
+.I <key>
+is the path of the main checkout with
+.BR / ,
+.BR \e ,
+and
+.B .
+replaced by
+.BR \- ,
+for example
+.I \-Users\-me\-\-local\-share\-chezmoi
+for
+.IR /Users/me/.local/share/chezmoi .
+The nono agent launchers grant the main checkout and that folder.
 .SH EXAMPLES
 .TP
 .B git wtclone git@github.com:acme/foo.git
