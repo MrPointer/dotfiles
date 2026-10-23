@@ -1,3 +1,5 @@
+{{- $nvmRelease := (gitHubLatestRelease "nvm-sh/nvm").TagName | toString -}}
+
 [".local/share/nvim/site/autoload/plug.vim"]
 type = "file"
 url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
@@ -26,4 +28,20 @@ refreshPeriod = "168h"
 [".config/eza/theme.yml"]
 type = "file"
 url = "https://raw.githubusercontent.com/eza-community/eza-themes/refs/heads/main/themes/tokyonight.yml"
+refreshPeriod = "168h"
+
+[".nvm/nvm.sh"]
+type = "file"
+url = "https://raw.githubusercontent.com/nvm-sh/nvm/{{ $nvmRelease }}/nvm.sh"
+refreshPeriod = "168h"
+
+[".nvm/nvm-exec"]
+type = "file"
+url = "https://raw.githubusercontent.com/nvm-sh/nvm/{{ $nvmRelease }}/nvm-exec"
+executable = true
+refreshPeriod = "168h"
+
+[".nvm/bash_completion"]
+type = "file"
+url = "https://raw.githubusercontent.com/nvm-sh/nvm/{{ $nvmRelease }}/bash_completion"
 refreshPeriod = "168h"
