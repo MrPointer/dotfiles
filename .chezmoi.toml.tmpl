@@ -1,0 +1,3 @@
+{{ dict "data" (omit . "chezmoi") | toToml }}
+[diff]
+    exclude = ["scripts"]

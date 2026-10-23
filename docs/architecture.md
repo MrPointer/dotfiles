@@ -2,11 +2,11 @@
 
 ## Overview
 
-The project has three major parts that interact through a clear data contract: a **Go installer** that bootstraps a new machine and produces configuration, **chezmoi templates** that consume that configuration to generate dotfiles, and the **resulting shell environment** that loads the generated files at runtime. The installer writes, templates read, the shell executes.
+The project has three major parts that interact through a clear data contract: a **Go installer** that bootstraps a new machine and initially produces configuration, **chezmoi templates** that consume that configuration to generate dotfiles and preserve its data during initialization, and the **resulting shell environment** that loads the generated files at runtime.
 
 ## Design Principles
 
-- **Write once, consume everywhere**: The installer produces the shared [chezmoi data contract][chezmoi-data-contract]; templates consume it during rendering. This keeps the integration boundary explicit and makes producer-consumer drift visible.
+- **Produce once, preserve on init**: The installer initially produces the shared [chezmoi data contract][chezmoi-data-contract]. Normal dotfile templates consume it during rendering, while the repository config template preserves its data when chezmoi initialization regenerates the config. This keeps the integration boundary explicit and makes producer-consumer drift visible.
 - **Progressive enhancement**: Each part of the system degrades gracefully. Shell startup skips unavailable tools rather than failing. Chezmoi installation can fall back from the active package manager to its download script. Templates use conditionals to omit features that are not configured.
 - **Separation of concerns by lifecycle**: The installer runs once (at setup time), chezmoi applies periodically (when dotfiles change), and shell config runs every session. Each part only does work appropriate to its lifecycle.
 
@@ -15,15 +15,15 @@ The project has three major parts that interact through a clear data contract: a
 ### Installer (`installer/`)
 
 - **Responsibility**: Bootstrap a new machine — install prerequisites, configure the shell, set up GPG, collect user input, produce the [chezmoi data contract][chezmoi-data-contract], clone and apply dotfiles
-- **Boundaries**: Produces `~/.config/chezmoi/chezmoi.toml` as its primary output. Does not manage dotfile content — that's chezmoi's job. Does not define shell behavior — that's the templates' job.
+- **Boundaries**: Initially produces `~/.config/chezmoi/chezmoi.toml` as its primary output. Does not manage dotfile content — that's chezmoi's job. Does not define shell behavior — that's the templates' job.
 - **Dependencies**: System package managers (apt, dnf, brew), Git, network access, `gpg`
 - **Internal architecture**: See [installer architecture][arch-installer]
 
 ### Chezmoi Templates (`dot_*`, `private_dot_*`, `*.tmpl`)
 
 - **Responsibility**: Define what dotfiles look like on the target machine. Templates use the [chezmoi data contract][chezmoi-data-contract] and chezmoi built-ins to conditionally include or exclude configuration blocks.
-- **Boundaries**: Reads chezmoi data (`~/.config/chezmoi/chezmoi.toml`). Writes to the home directory via `chezmoi apply`. Never modifies its own source or the chezmoi config.
-- **Dependencies**: Chezmoi binary, chezmoi data (written by the installer)
+- **Boundaries**: Normal dotfile templates read chezmoi data (`~/.config/chezmoi/chezmoi.toml`) and write to the home directory via `chezmoi apply`; they do not modify the config. The separate repository-root `.chezmoi.toml.tmpl` regenerates the config during `chezmoi init` and `chezmoi update --init`, not during a normal apply.
+- **Dependencies**: Chezmoi binary and chezmoi data initially written by the installer or preserved by the config template
 
 ### Shell Configuration (`dot_zshenv.tmpl`, `dot_zshrc.tmpl`, `private_dot_work/`)
 
@@ -35,7 +35,7 @@ The project has three major parts that interact through a clear data contract: a
 
 ### Installer → Chezmoi (data contract)
 
-The installer writes `~/.config/chezmoi/chezmoi.toml`, and chezmoi exposes its `data.*` entries to source templates. The exact keys, presence rules, consumers, and current producer-consumer drift are owned by the [chezmoi data contract][chezmoi-data-contract]. This file is the configuration interface between installer orchestration and template rendering.
+The installer initially writes `~/.config/chezmoi/chezmoi.toml`, and chezmoi exposes its `data.*` entries to source templates. During later initialization, the repository config template writes those values back while excluding chezmoi's built-in namespace; this preserves installer and unknown custom data keys. Other manually customized top-level config is not preserved. The exact keys, presence rules, and consumers are owned by the [chezmoi data contract][chezmoi-data-contract].
 
 **Why TOML**: Chezmoi natively supports TOML config files. Viper (used by the installer) can write TOML. No translation layer needed.
 

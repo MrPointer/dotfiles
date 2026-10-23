@@ -2,19 +2,26 @@
 
 ## Overview
 
-This document is the canonical contract between the Go installer and the chezmoi source. The installer produces `~/.config/chezmoi/chezmoi.toml`; chezmoi exposes the entries below to templates without the TOML `data` prefix. The templates and `.chezmoiignore` consume those values while rendering the target state.
+This document is the canonical contract between the Go installer and the chezmoi source. The installer initially produces `~/.config/chezmoi/chezmoi.toml`; chezmoi exposes the entries below to templates without the TOML `data` prefix. The templates and `.chezmoiignore` consume those values while rendering the target state.
 
-The installer owns production of this file. Dotfile templates are read-only consumers. Running installation initializes the file from current installer input rather than reconciling arbitrary manual changes.
+The installer supplies the machine-specific `data.*` values during installation. On a later `chezmoi init`, the repository-root `.chezmoi.toml.tmpl` regenerates the config from the data already exposed to templates. Normal dotfile templates remain read-only consumers of the config.
 
 ## Contract Boundary
 
 | Side | Implementation | Responsibility |
 |------|----------------|----------------|
-| Producer | [`installer/lib/dotfilesmanager.DotfilesData`][dotfiles-data] and [`chezmoi.ChezmoiManager.Initialize`][data-initializer] | Assemble installer state and map it to `data.*` keys in the TOML config |
+| Initial producer | [`installer/lib/dotfilesmanager.DotfilesData`][dotfiles-data] and [`chezmoi.ChezmoiManager.Initialize`][data-initializer] | Assemble installer state and map it to `data.*` keys in the TOML config |
+| Init-time producer | [`.chezmoi.toml.tmpl`][config-template] | Regenerate the config during `chezmoi init` while carrying forward the available template data |
 | Transport | `~/.config/chezmoi/chezmoi.toml` | Persist the data used for one or more chezmoi renders |
-| Consumers | `.chezmoiignore`, `*.tmpl`, and templated source files | Read `.personal.*`, `.system.*`, and other produced namespaces while deciding what to render |
+| Consumers | `.chezmoiignore` and normal dotfile templates | Read `.personal.*`, `.system.*`, and other namespaces while deciding what to render |
 
-Chezmoi's built-in `.chezmoi.*` values are not part of this installer-owned contract.
+Chezmoi's built-in `.chezmoi.*` values are not part of this shared data contract.
+
+### Init-Time Preservation
+
+For an existing installation, run `chezmoi init` or `chezmoi update --init` once to adopt the repository config template. The template builds a `data` table from `omit . "chezmoi"` and serializes it with `toToml`, so personal, work, GPG, and unknown custom data keys survive repeated initialization. A fresh init with no existing data writes no installer-specific data; it does not invent identity, work-environment, system, or GPG values.
+
+This preservation applies only to template data. Manually customized top-level config outside `data` is not carried forward; the template currently writes the preserved `data` plus `diff.exclude = ["scripts"]`. A normal `chezmoi apply` does not regenerate the config.
 
 ## Data Schema
 
@@ -66,6 +73,7 @@ Installer-only concepts such as package resolution, display modes, shell source 
 
 [dotfiles-data]: ../../installer/lib/dotfilesmanager/data.go
 [data-initializer]: ../../installer/lib/dotfilesmanager/chezmoi/data.go
+[config-template]: ../../.chezmoi.toml.tmpl
 [dotfiles-domain]: ../dotfiles/domain.md
 [work-environment-loading]: ../dotfiles/processes/work-environment-loading.md
 [gitconfig-template]: ../../dot_gitconfig.tmpl

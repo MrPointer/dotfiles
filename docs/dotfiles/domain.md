@@ -76,7 +76,7 @@ See the [shell startup process][shell-startup] for the full shell startup flow i
 ## Domain Rules
 
 - **Work environment is all-or-nothing at the profile level**: If `work_env` is true, the entire generic profile is sourced. Individual work features cannot be toggled independently.
-- **Templates consume shared configuration**: Dotfile templates read the values defined by the [chezmoi data contract][chezmoi-data-contract] and do not write the chezmoi config.
+- **Normal dotfile templates consume shared configuration**: They read the values defined by the [chezmoi data contract][chezmoi-data-contract] and do not write the chezmoi config. The repository-root config template is a separate init-time template that preserves existing template data when chezmoi regenerates its config.
 
 ## Glossary
 
