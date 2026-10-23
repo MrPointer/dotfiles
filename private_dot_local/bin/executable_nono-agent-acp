@@ -25,7 +25,7 @@ case "$profile" in
     runtime=opencode
     ;;
   *)
-    print -u2 'Usage: zed-agent-acp {claude|my-claude-code|claude-code-*|codex|my-codex|codex-*|opencode|my-opencode|opencode-*|work-*-<agent>[-*]} [args...]'
+    print -u2 'Usage: nono-agent-acp {claude|my-claude-code|claude-code-*|codex|my-codex|codex-*|opencode|my-opencode|opencode-*|work-*-<agent>[-*]} [args...]'
     exit 2
     ;;
 esac
