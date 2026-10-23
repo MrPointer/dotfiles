@@ -5,6 +5,13 @@ export PATH
 
 profile="${1:-}"
 case "$profile" in
+  claude|my-claude-code|claude-code-*|work-*-claude-code|work-*-claude-code-*)
+    [[ "$profile" == claude ]] && profile=my-claude-code
+    source "$HOME/.nvm/nvm.sh" || exit
+    nvm use --silent default || exit
+    agent_shell_config="$HOME/.agents/shell/claude.zsh"
+    runtime=claude
+    ;;
   codex|my-codex|codex-*|work-*-codex|work-*-codex-*)
     [[ "$profile" == codex ]] && profile=my-codex
     source "$HOME/.nvm/nvm.sh" || exit
@@ -18,7 +25,7 @@ case "$profile" in
     runtime=opencode
     ;;
   *)
-    print -u2 'Usage: zed-agent-acp {codex|my-codex|codex-*|opencode|my-opencode|opencode-*|work-*-codex|work-*-codex-*|work-*-opencode|work-*-opencode-*} [args...]'
+    print -u2 'Usage: zed-agent-acp {claude|my-claude-code|claude-code-*|codex|my-codex|codex-*|opencode|my-opencode|opencode-*|work-*-<agent>[-*]} [args...]'
     exit 2
     ;;
 esac
@@ -28,6 +35,7 @@ source "$HOME/.agents/shell/nono.zsh" || exit
 source "$agent_shell_config" || exit
 
 case "$runtime" in
+  claude) _claude_acp "$profile" "$@" ;;
   codex) _codex_acp "$profile" "$@" ;;
   opencode) _opencode_nono "$profile" acp "$@" ;;
 esac
