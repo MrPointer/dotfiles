@@ -55,14 +55,17 @@
    "network": {
       "block": false,
       "network_profile": "developer",
-      "open_port": [0],
+      "open_port": [
+         0
+      ],
       "allow_domain": [
          "chatgpt.com",
          "openai.com",
          "auth.openai.com",
          "models.dev",
          "mcp.context7.com",
-         "opencode.ai"
+         "opencode.ai",
+         "models.opencode.ai"
       ]
    },
    "environment": null,
