@@ -8,12 +8,9 @@
 # - Minimal overhead: precmd detector only does file checks (no subshells)
 # - chpwd hook only active while in a project
 
-# Requires BREW_HOME to be set
-[[ -z "$BREW_HOME" ]] && return
-[[ ! -f "$BREW_HOME/opt/nvm/nvm.sh" ]] && return
-
 # Export NVM_DIR for nvm to work properly
 export NVM_DIR="$HOME/.nvm"
+[[ ! -s "$NVM_DIR/nvm.sh" ]] && return
 
 # Find .nvmrc from current dir up to git root (or current dir only if not in git repo)
 _nvm_find_project_nvmrc() {
@@ -49,7 +46,10 @@ _nvm_load() {
     unfunction nvm node npm npx 2>/dev/null
 
     # Load nvm
-    source "$BREW_HOME/opt/nvm/nvm.sh"
+    source "$NVM_DIR/nvm.sh"
+    if [[ -s "$NVM_DIR/bash_completion" ]]; then
+        source "$NVM_DIR/bash_completion"
+    fi
 }
 
 # Full hook - only active while in a project
