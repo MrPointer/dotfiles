@@ -1,4 +1,5 @@
-function _codex_nono_run() {
+function _codex_nono_with_npm_cache() {
+  # npm uses the uppercase form directly; lifecycle tooling may read the lowercase form.
   local -x NPM_CONFIG_CACHE="$HOME/.codex/npm-cache"
   local -x npm_config_cache="$NPM_CONFIG_CACHE"
   mkdir -p "$NPM_CONFIG_CACHE" || return
@@ -6,11 +7,11 @@ function _codex_nono_run() {
   _nono_agent_run "$@"
 }
 
-function _codex() {
+function _codex_nono() {
   local profile="$1"
   shift
 
-  _codex_nono_run \
+  _codex_nono_with_npm_cache \
     "$profile" \
     codex \
     "${CODEX_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
@@ -25,7 +26,7 @@ function _codex_acp() {
   local NONO_AGENT_ACP=1
   local -x INITIAL_AGENT_MODE=agent-full-access
 
-  _codex_nono_run \
+  _codex_nono_with_npm_cache \
     "$profile" \
     npx \
     "${CODEX_SSH_SIGNING_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}" \
@@ -34,9 +35,9 @@ function _codex_acp() {
     "$@"
 }
 
-function codex() { _codex my-codex "$@" }
+function codex() { _codex_nono my-codex "$@" }
 
-function codex-chezmoi() { _codex codex-chezmoi "$@" }
+function codex-chezmoi() { _codex_nono codex-chezmoi "$@" }
 
 function codex-acp() { _codex_acp my-codex "$@" }
 
