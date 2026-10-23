@@ -53,7 +53,7 @@ function _nono_agent_run() {
 
     # A classic (non-bare) clone keeps its worktrees in a central folder keyed
     # by the main checkout path, matching the worktree-path template that
-    # run_after_ensure-worktrunk-config.sh writes for worktrunk.
+    # private_dot_config/worktrunk/modify_config.toml writes for worktrunk.
     if [[ "$(command git --git-dir="$git_common_dir" config --bool core.bare 2>/dev/null)" != true ]]; then
       local main_checkout
       main_checkout="$(command git worktree list --porcelain 2>/dev/null | command sed -n '1s/^worktree //p')"

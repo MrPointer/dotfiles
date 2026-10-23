@@ -1,0 +1,95 @@
+#!/bin/bash
+# The values below are literal TOML text: quotes, braces, and $dir have to reach
+# the file unchanged, so the usual shell quoting warnings do not apply.
+# shellcheck disable=SC2016,SC2089,SC2090
+set -euo pipefail
+
+# Manages ~/.config/worktrunk/config.toml as a chezmoi modify script: chezmoi
+# passes the current file contents on stdin and writes this script's stdout
+# back to the file. The script only adds or updates its own keys, so anything
+# else worktrunk or a person wrote in the file is preserved.
+#
+# Ensures the worktrunk worktree path template is set and the pre-start hook
+# for copying agent settings is registered. Copies missing files from the
+# primary worktree's .claude, .agents, .codex, and .opencode directories so
+# new worktrees inherit local agents, skills, and permissions.
+# Idempotent: chezmoi only writes when the output differs from the file.
+# Removes the legacy Claude-specific hook name from previous configurations.
+
+# Bare worktree layout (git wtclone / git wtmigrate): repo_path is <repo>/.git,
+# so every worktree lands in <repo>/<branch> next to the bare repository.
+# Classic clones whose location is fixed get a central folder instead, keyed by
+# the checkout path with / and . replaced by -. The nono launcher in
+# ~/.agents/shell/nono.zsh derives the same key, so keep both in sync.
+WORKTREE_PATH_LINE="worktree-path = \"{% if repo_path is endingwith('/.git') %}{{ repo_path }}/../{{ branch | sanitize }}{% else %}~/.local/share/worktrees/{{ repo_path | sanitize | replace('.', '-') }}/{{ branch | sanitize }}{% endif %}\""
+
+HOOK_NAME="agents-settings"
+LEGACY_HOOK_NAME="claude-settings"
+HOOK_COMMAND='for dir in .claude .agents .codex .opencode; do mkdir -p "$dir"; cp -Rn "{{ primary_worktree_path }}/$dir/." "$dir/" 2>/dev/null || true; done'
+HOOK_LINE="$HOOK_NAME = '$HOOK_COMMAND'"
+
+# Leave a missing config missing until worktrunk is installed. Passing the
+# contents through unchanged also leaves an existing file untouched.
+if ! command -v wt >/dev/null 2>&1; then
+    cat
+    exit 0
+fi
+
+export WORKTREE_PATH_LINE HOOK_LINE HOOK_NAME LEGACY_HOOK_NAME
+
+exec awk '
+BEGIN {
+    worktree_path = ENVIRON["WORKTREE_PATH_LINE"]
+    hook = ENVIRON["HOOK_LINE"]
+    hook_name = ENVIRON["HOOK_NAME"]
+    legacy_name = ENVIRON["LEGACY_HOOK_NAME"]
+
+    # A top-level key has to come before the first table, so it always goes first.
+    print worktree_path
+    hook_written = 0
+    in_prestart = 0
+}
+
+# Drop every existing key line; the canonical one is written above.
+$0 ~ "^[[:space:]]*worktree-path[[:space:]]*=" { next }
+$0 ~ ("^[[:space:]]*" legacy_name "[[:space:]]*=") { next }
+
+# Keep the hook where it already is instead of moving it within the table.
+$0 ~ ("^[[:space:]]*" hook_name "[[:space:]]*=") {
+    if (!hook_written) {
+        print hook
+        hook_written = 1
+    }
+    next
+}
+
+/^[[:space:]]*\[pre-start\][[:space:]]*(#.*)?$/ {
+    print
+    in_prestart = 1
+    next
+}
+
+# A missing hook is added at the end of [pre-start], not at its start.
+/^[[:space:]]*\[/ {
+    if (in_prestart && !hook_written) {
+        print hook
+        hook_written = 1
+    }
+    in_prestart = 0
+    print
+    next
+}
+
+{ print }
+
+END {
+    if (!hook_written) {
+        if (in_prestart) {
+            print hook
+        } else {
+            print ""
+            print "[pre-start]"
+            print hook
+        }
+    }
+}'

@@ -48,7 +48,8 @@ This file is a *practical* quick reference for `chezmoi` operations in a dotfile
 
 - Some files in this repo are not managed as chezmoi targets.
 - `chezmoi source-path <target>` only knows targets that map to a source file. A target that a `run_*` script writes or edits also reports "not managed".
-- Before treating a target as unmanaged, search the `run_*` scripts at the repo root for its path, for example `grep -l 'worktrunk' run_*`. If a script owns the setting, change the value in the script, not in the target file: the script rewrites the target on every apply.
+- Before treating a target as unmanaged, search the `run_*` scripts at the repo root for its path, for example `grep -l 'codex' run_*`. If a script owns the setting, change the value in the script, not in the target file: the script rewrites the target on every apply.
+- A setting that only touches one file belongs in a `modify_` target instead, such as `private_dot_config/worktrunk/modify_config.toml` for `~/.config/worktrunk/config.toml`. Chezmoi runs the script itself, so `chezmoi status` and `chezmoi diff` report drift.
 - For repo files that no target or script uses, validate with source review and `git diff` instead of trying to apply.
 
 ## Day-to-day commands
