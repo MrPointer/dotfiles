@@ -5,3 +5,5 @@ function claude-energy-runtime() { _claude_nono work-sedg-claude-code-energy-run
 function claude-inverter-driver() { _claude_nono work-sedg-claude-code-inverter-driver "$@" }
 
 function claude-lcp-docs() { _claude_nono work-sedg-claude-code-lcp-docs "$@" }
+
+function claude-edge-metadata() { _claude_nono work-sedg-claude-code-edge-metadata "$@" }

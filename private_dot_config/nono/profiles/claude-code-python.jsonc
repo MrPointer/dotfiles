@@ -7,5 +7,10 @@
    "meta": {
       "name": "claude-code-python",
       "description": "Profile for developing Python applications with Claude Code"
+   },
+   "filesystem": {
+      "read": [
+         "$HOME/Library/Application Support/pypoetry"
+      ]
    }
 }
