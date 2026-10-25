@@ -34,7 +34,9 @@
          "balena.io",
          "docs.balena.io",
          "balena-cloud.com",
-         "edge-controller-2.internal.hark.network"
+         "edge-controller-2.internal.hark.network",
+         "docker-esh.solaredge.com",
+         "seil-nexus-rnd.solaredge.com"
       ]
    }
 }
