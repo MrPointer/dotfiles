@@ -1,0 +1,12 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "work-sedg-common",
+      "claude-code-python",
+      "claude-code-node"
+   ],
+   "meta": {
+      "name": "work-sedg-claude-code-edge-metadata",
+      "description": "Profile for developing the Edge Metadata project with Claude Code"
+   }
+}
