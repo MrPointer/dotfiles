@@ -14,10 +14,12 @@
          "$HOME/Library/Application Support/glab-cli"
       ],
       "read_file": [
-         "$XDG_DATA_HOME/.atlassian-token" // Atlassian's API token - For agents
+         "$XDG_DATA_HOME/.atlassian-token", // Atlassian's API token - For agents
+         "$HOME/.ssh/id_rsa.pub" // Lets ssh match the host agent's RSA key for Azure DevOps auth
       ],
       "bypass_protection": [
-         "$HOME/.azure"
+         "$HOME/.azure",
+         "$HOME/.ssh/id_rsa.pub"
       ],
       "suppress_save_prompt": [
          "$HOME/Projects/sedg",
