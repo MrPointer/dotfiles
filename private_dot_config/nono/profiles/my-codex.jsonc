@@ -1,7 +1,7 @@
 {
    "$schema": "../schemas/nono-profile.schema.json",
    "extends": [
-      "codex"
+      "nolabs-ai/codex"
    ],
    "meta": {
       "name": "my-codex",

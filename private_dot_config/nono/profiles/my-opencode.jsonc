@@ -1,7 +1,7 @@
 {
    "$schema": "../schemas/nono-profile.schema.json",
    "extends": [
-      "opencode"
+      "nolabs-ai/opencode"
    ],
    "meta": {
       "name": "my-opencode",
