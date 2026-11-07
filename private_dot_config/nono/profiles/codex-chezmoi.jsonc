@@ -40,11 +40,13 @@
       "read_file": [
          "$HOME/.gitconfig",
          "$HOME/.zshenv",
-         "$HOME/.zshrc"
+         "$HOME/.zshrc",
+         "$HOME/.gnupg/gpg-agent.conf"
       ],
       "bypass_protection": [
          "$HOME/.zshenv",
-         "$HOME/.zshrc"
+         "$HOME/.zshrc",
+         "$HOME/.gnupg/gpg-agent.conf"
       ],
       "suppress_save_prompt": [
          "$HOME/.work"
