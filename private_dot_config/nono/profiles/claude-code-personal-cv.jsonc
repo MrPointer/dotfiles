@@ -1,0 +1,20 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "claude-code-python"
+   ],
+   "meta": {
+      "name": "claude-code-personal-cv",
+      "description": "Claude Code profile for the personal CV project"
+   },
+   "filesystem": {
+      "allow": [
+         "$XDG_CACHE_HOME/typst"
+      ]
+   },
+   "network": {
+      "allow_domain": [
+         "packages.typst.org"
+      ]
+   }
+}

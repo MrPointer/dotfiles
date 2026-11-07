@@ -1,7 +1,7 @@
 {
    "$schema": "../schemas/nono-profile.schema.json",
    "extends": [
-      "python-dev",
+      "rust-dev",
       "my-opencode"
    ],
    "meta": {

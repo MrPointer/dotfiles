@@ -24,3 +24,5 @@ function opencode-go() { _opencode_nono opencode-go "$@" }
 function opencode-rust() { _opencode_nono opencode-rust "$@" }
 
 function opencode-chezmoi() { _opencode_nono opencode-chezmoi "$@" }
+
+function opencode-personal-cv() { _opencode_nono opencode-personal-cv "$@" }

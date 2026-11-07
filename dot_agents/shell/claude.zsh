@@ -43,6 +43,8 @@ function claude-python() { _claude_nono claude-code-python "$@" }
 
 function claude-rust() { _claude_nono claude-code-rust "$@" }
 
+function claude-personal-cv() { _claude_nono claude-code-personal-cv "$@" }
+
 function claude-acp() { _claude_acp my-claude-code "$@" }
 
 function claude-chezmoi-acp() { _claude_acp claude-code-chezmoi "$@" }

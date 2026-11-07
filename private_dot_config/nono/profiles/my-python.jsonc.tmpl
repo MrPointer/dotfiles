@@ -1,0 +1,15 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "python-dev"
+   ],
+   "meta": {
+      "name": "my-python",
+      "description": "Shared Python development permissions"
+   }{{ if eq .chezmoi.os "darwin" }},
+   "filesystem": {
+      "read": [
+         "$HOME/Library/Application Support/pypoetry"
+      ]
+   }{{ end }}
+}

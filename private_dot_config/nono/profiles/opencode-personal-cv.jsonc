@@ -1,0 +1,20 @@
+{
+   "$schema": "../schemas/nono-profile.schema.json",
+   "extends": [
+      "opencode-python"
+   ],
+   "meta": {
+      "name": "opencode-personal-cv",
+      "description": "OpenCode profile for the personal cv project"
+   },
+   "filesystem": {
+      "allow": [
+         "$XDG_CACHE_HOME/typst"
+      ]
+   },
+   "network": {
+      "allow_domain": [
+         "packages.typst.org"
+      ]
+   }
+}
