@@ -65,7 +65,12 @@
          "models.dev",
          "mcp.context7.com",
          "opencode.ai",
-         "models.opencode.ai"
+         "models.opencode.ai",
+         "mcp.exa.ai",
+         "api.tavily.com",
+         "mcp.firecrawl.dev",
+         "search.parallel.ai",
+         "agent.tinyfish.ai"
       ]
    },
    "environment": null,
