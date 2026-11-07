@@ -38,9 +38,6 @@
 !.typos.toml
 !cspell.json
 
-# Task
-!Taskfile.yml
-
 # Agents
 !AGENTS.md
 !CLAUDE.md

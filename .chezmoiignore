@@ -13,7 +13,6 @@ dist/
 .vscode/
 .zed/
 cspell.json
-Taskfile.yml
 
 # OpenCode installs plugin dependencies into its config directory at runtime.
 .config/opencode/.gitignore
