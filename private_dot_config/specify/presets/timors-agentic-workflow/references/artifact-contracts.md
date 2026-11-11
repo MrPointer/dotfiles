@@ -4,6 +4,8 @@
 |---|---|---|
 | `spec.md` | Feature Definition | `status: Ready` before `plan` |
 | `plan.md` | Sole normative plan | current Revision has human Design Acceptance `Accepted` before `tasks` |
+| `plan-overview.md` | non-normative human view of `plan.md` | none; no phase reads it, and `plan.md` prevails on conflict |
+| `review-dispositions.md` | human dispositions of plan review findings | read only by `plan_design` and `plan_clarity` reviewers; no `tasks` or `implement` input |
 | `tasks.md` and indexed `subplans/` | immutable execution package | both current reviews permit and `authorization: approved` before `implement` |
 | role reports | cumulative review evidence | pointer resolves to an attributable applicable non-blocking complete round |
 | ignored `progress.md` | coordinator-owned runtime evidence | exact durable evidence before resume, integration, or completion |

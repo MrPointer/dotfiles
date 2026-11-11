@@ -1,0 +1,15 @@
+---
+name: mid-tier-plan-overview-fidelity-reviewer
+description: "Use this agent to review the human plan overview (plan-overview.md) in the Spec Kit timors-agentic-workflow preset for fidelity to the normative plan (plan.md). Mid-tier role. Runs after the plan design and clarity reviews pass. Checks that the overview names the current plan Revision, agrees with the Feature Definition intent, does not contradict, bend, or add to any plan decision, and explains or lists every titled Design Decision. Does not review plan design or clarity.\n\n<example>\nContext: A plan passed design and clarity review and its overview was regenerated.\nuser: \"Check specs/003-auth/plan-overview.md against plan.md for fidelity.\"\nassistant: \"I'll check that the overview matches the plan and append fidelity findings.\"\n</example>"
+mode: subagent
+permission:
+  edit: allow
+  bash: deny
+  webfetch: deny
+  task:
+    "*": deny
+  skill:
+    "*": deny
+---
+
+{{ template "agent-mid-tier-plan-overview-fidelity-reviewer.md.tmpl" . }}

@@ -41,7 +41,17 @@ the phase completion report. Every other fix, including one that fills a gap no
 human decided, is a proposed remediation: collect it with its finding, the
 reviewer recommendation, and the affected artifact sections, and apply it only
 after a human accepts it. Report each declined proposal with its human disposition
-at phase completion.
+at phase completion. A `plan_overview_fidelity` fix that only brings
+`plan-overview.md` into agreement with `plan.md` changes no decision: the bound
+writer applies it directly, and it is listed in the phase completion report. A
+fidelity finding located in `plan.md` is a proposed remediation.
+
+After a human answers a batch of plan review findings, and before any rerun,
+the producing phase appends one section to `review-dispositions.md` from
+`.specify/presets/timors-agentic-workflow/templates/review-dispositions-template.md`:
+each finding title, its role and round, accepted or declined, the applied
+`plan.md` location, and the human's reason. Plan reviewers read it; no other
+phase does.
 
 A producing phase is quiescent only when no pending role can safely dispatch,
 resume, or complete without a collected binding or recovery blocker. Then present

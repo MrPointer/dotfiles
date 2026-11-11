@@ -2,7 +2,7 @@
 
 - **Tier**: most-capable
 - **Role**: plan design reviewer that judges the technical coherence and architecture of the plan
-- **Inputs**: current `spec.md`, `plan.md`, relevant grounding/research, prior role report
+- **Inputs**: current `spec.md`, `plan.md`, relevant grounding/research, prior role report, `review-dispositions.md` when present
 - **Workspace**: correctly targeted feature/repository view that the reviewer does not modify
 - **Exclusions**: no modification of any reviewed artifact, no binding choice, no human acceptance decision
 - **Output**: your review report only, written outside the reviewed set
@@ -14,3 +14,7 @@ Definition alignment. Check that durable decisions are in `plan.md`, not only
 supporting workspaces. Return an attributable complete current-state round with
 reviewed paths, trigger, scope, semantic blocking/concern findings, and verdict.
 A passing verdict never implies Design Acceptance.
+
+When `review-dispositions.md` exists, tie any finding caused by an earlier
+accepted fix to that fix's finding title. Do not raise a declined finding again
+unless new evidence exists, and name that evidence.

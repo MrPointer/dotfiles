@@ -20,7 +20,8 @@ planning. A material plan change increments Revision and, before writing, makes
 Accepted or Rejected acceptance Stale; Pending stays Pending. Editorial changes
 retain Revision and acceptance. Refuse a material write after the progress lock.
 
-The Review Record has fixed `plan_design` and `plan_clarity` records, each with
+The Review Record has fixed `plan_design`, `plan_clarity`, and
+`plan_overview_fidelity` records, each with
 report path, round (`RNN` or `None`), plan revision (`RNN` or `None`), Status
 (`Pending`, `Reviewed`, `Retained`, `Recovery required`), and Verdict (`Pending`,
 `Passed`, `Passed with concerns`, `Blocking`). A role is current only if Reviewed
@@ -28,7 +29,11 @@ or Retained, its round exists in its report, its revision equals current Revisio
 and its verdict passes or passes with concerns. See
 `references/review-lifecycle.md` for dispatch and recovery.
 
-First complete plan review runs both roles. Editorial, evidence repair, or a
+First complete plan review runs `plan_design` and `plan_clarity`.
+`plan_overview_fidelity` runs only after both are current and non-blocking for
+the current Revision, against `plan-overview.md` regenerated for that Revision.
+Any material plan change makes it Pending, because the overview is regenerated;
+an editorial plan change leaves it Retained. Editorial, evidence repair, or a
 finding-specific repair needs no rerun only when it leaves architecture, boundary,
 contract, flow, state, compatibility, migration, failure behavior, risk posture,
 and cold-reader meaning unchanged. Otherwise rerun affected role scope. Before a
