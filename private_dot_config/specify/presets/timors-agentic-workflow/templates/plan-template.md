@@ -46,6 +46,7 @@
 |---|---|---|---|---|---|
 | plan_design | reviews/plan-design.md | None | None | Pending | Pending |
 | plan_clarity | reviews/plan-clarity.md | None | None | Pending | Pending |
+| plan_overview_fidelity | reviews/plan-overview-fidelity.md | None | None | Pending | Pending |
 
 ## Design Acceptance
 

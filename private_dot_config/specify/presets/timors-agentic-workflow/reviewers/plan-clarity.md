@@ -2,7 +2,7 @@
 
 - **Tier**: mid-tier
 - **Role**: plan clarity reviewer that judges whether a cold reader can follow the plan
-- **Inputs**: current `spec.md`, `plan.md`, prior role report
+- **Inputs**: current `spec.md`, `plan.md`, prior role report, `review-dispositions.md` when present
 - **Workspace**: correctly targeted feature/repository view that the reviewer does not modify
 - **Exclusions**: no modification of any reviewed artifact, no design substitution, no human acceptance decision
 - **Output**: your review report only, written outside the reviewed set
@@ -13,3 +13,7 @@ verification, and planning handoff without conflicting or missing authority.
 Identify ambiguity, unexplained consequence, or unreviewable handoff as semantic
 findings. Return an attributable complete current-state round with reviewed paths,
 trigger, scope, blocking/concern findings, and verdict.
+
+When `review-dispositions.md` exists, tie any finding caused by an earlier
+accepted fix to that fix's finding title. Do not raise a declined finding again
+unless new evidence exists, and name that evidence.

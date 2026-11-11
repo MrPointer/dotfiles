@@ -1,12 +1,13 @@
 # Binding, Runtime Conditions, and Result Attribution
 
-A tracked reviewer names a provider-neutral tier and a role description. A tracked
+A tracked reviewer or writer names a provider-neutral tier and a role description. A tracked
 implementation packet names a provider-neutral tier and the skills and
 capabilities the group needs. Eligibility requires the requested tier, native
 discoverability, invokability, correct workspace targeting, and attributable
 results; a reviewer additionally must not modify the artifacts it reviews and
-writes only its review report, outside the reviewed set. Prefer a
-project-local candidate. For a reviewer, match the role description against the
+writes only its review report, outside the reviewed set; a writer additionally
+modifies only its declared output. Prefer a
+project-local candidate. For a reviewer or writer, match the role description against the
 candidate descriptions and select a single clear fit. For an implementation
 packet, match the named skills and capabilities and select a single eligible
 candidate. A unique fit, a sole eligible candidate, or an explicit human choice
@@ -30,4 +31,6 @@ verification, handoff, or semantic contract content. On conflict the selected
 sub-plan prevails. An applicable empty runtime-outcome set is explicit. Reviewer
 results additionally prove role, reviewed paths, round, verdict, that no reviewed
 artifact was modified, and attribution; a modification of any reviewed artifact
-rejects the result.
+rejects the result. Writer results additionally prove role, written path,
+reflected plan Revision, and that no other artifact was modified; a modification
+of any other artifact rejects the result.

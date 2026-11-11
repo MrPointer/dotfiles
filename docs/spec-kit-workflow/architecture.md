@@ -3,11 +3,11 @@
 ## Overview
 
 `timors-agentic-workflow` is a project-installed Spec Kit preset that connects
-grounded planning, optional human review, reviewed execution decomposition,
+grounded planning, a generated human plan overview, reviewed execution decomposition,
 explicit human approval, and delegated implementation through a versioned
 Markdown protocol. The preset is provider-neutral: it defines command and
 artifact contracts, while the active coding integration supplies concrete
-workers, models, skills, and permissions. Its preset version is `0.4.1` and its
+workers, models, skills, and permissions. Its preset version is `0.5.0` and its
 protocol version is `0.1.0`; it supports Spec Kit `>=0.12.11` without an upper
 support boundary.
 
@@ -88,11 +88,11 @@ to their owning generation command rather than being migrated or inferred.
 The preset deliberately uses different integration strategies by phase:
 
 - `/speckit.specify` composes with upstream specification generation, retaining
-  its behavior and adding optional human review at natural completion;
+  its behavior;
   `/speckit.clarify` remains upstream and owns product clarification.
 - `/speckit.plan` and `plan-template` compose with upstream planning, retaining
   its design artifacts, adding verified grounding and integration context, and
-  offering optional human review at natural completion.
+  generating the human plan overview.
 - `/speckit.tasks`, `tasks-template`, and `/speckit.implement` replace their
   upstream surfaces because decomposition, independent review, approval, and
   delegated execution share a stronger protocol. The preset provides no
@@ -115,19 +115,19 @@ the structural package-integrity contract come from the installed manifest and i
 section above. This architecture overview summarizes those boundaries without
 redefining them.
 
-### Optional Human Review
+### Plan Overview
 
-At the natural completion of specification and planning, after artifacts are
-generated and validated, each phase independently offers a guided walkthrough
-or independent review. Either can be declined. The interaction stores no
-preference, approval record, or workflow gate, and does not apply to the
-independent review or approval gates.
-The installed `human-review.md` reference owns the mechanics: select small,
-consequential review units using judgment; pause after each; update and
-revalidate current-phase artifacts once a unit is settled; then continue normal
-completion reporting and handoffs. Command projections own the phase-specific
-conceptual focus, while supporting artifacts remain evidence sources rather
-than mandatory walkthrough stops.
+`/speckit.plan` has a bound mid-tier writer generate `plan-overview.md`, a
+non-normative human view of `plan.md`, twice: after the first plan draft, so the
+human confirms direction before reviews, and after design and clarity reviews
+pass, so the human reads the final shape before Design Acceptance. The overview
+names the plan Revision it reflects, restates the Feature Definition intent,
+explains only what the human needs to accept or reject the design, and lists
+every other topic under Not Covered Here with a pointer into `plan.md`. The
+writer never adds, changes, or settles a decision; a change of mind becomes a
+`plan.md` decision and the overview is regenerated. No phase reads the overview
+as input. The writer packet in `writers/plan-overview.md` owns the overview
+contract.
 
 ## Artifact Ownership
 
@@ -148,6 +148,12 @@ The protocol separates durable planning truth from local runtime evidence:
 - The human approval decisions live in their owning artifacts: Design Acceptance
   in `plan.md` and Implementation Authorization in `tasks.md`. The preset produces
   no separate `analysis.md` aggregate.
+- `plan-overview.md` is the generated, non-normative human view of `plan.md`.
+  `plan.md` prevails on conflict, and no phase reads the overview as input.
+- `review-dispositions.md` records, per answered plan review batch, each
+  finding's disposition and the human's reason. Only the `plan-design` and
+  `plan-clarity` reviewers read it, so reruns can tie new findings to earlier
+  fixes and do not raise declined findings again without new evidence.
 - `specs/<feature>/progress.md` is an ignored local ledger for concrete workers
   and models, workspaces, dispatch and test evidence, checkpoints, blockers,
   failures, integration state, and resume decisions. It does not duplicate
@@ -169,7 +175,9 @@ approval until the reviews permit it:
 
 - `/speckit.plan` requires most-capable `plan-design`, which judges technical
   coherence of the plan, and mid-tier `plan-clarity`, which judges cold-reader
-  clarity of the plan. Both feed Design Acceptance in `plan.md`.
+  clarity of the plan. After both pass, mid-tier `plan-overview-fidelity` checks
+  that `plan-overview.md` matches `plan.md`. All three feed Design Acceptance in
+  `plan.md`.
 - `/speckit.tasks` requires mid-tier `tasks-plan-fidelity`, which traces the
   accepted plan and Feature Definition into the task package, and most-capable
   `tasks-executability`, which judges decomposition feasibility and testable
@@ -260,8 +268,7 @@ skills, consume their plan format, or depend on them at runtime.
 ## Verified Scope
 
 Deterministic validation covers the manifest, structural package inventory,
-command and template mappings, optional human-review command/reference
-projections, project installation and remove/add refresh, all six template
+command and template mappings, project installation and remove/add refresh, all six template
 resolutions, generated OpenCode commands, project-relative preset references,
 tracked asset behavior, and targeted chezmoi rendering. These checks do not
 invoke generated commands through a model and do not prove semantic runtime

@@ -1,10 +1,12 @@
 # Timor's Agentic Workflow
 
-Preset `0.4.1` supplies one project-installed lifecycle:
+Preset `0.5.0` supplies one project-installed lifecycle:
 
 `specify` → `clarify` when Draft → `plan` → `tasks` → `implement`.
 
 `spec.md` is the Feature Definition, `plan.md` is the sole normative plan,
+`plan-overview.md` is its generated, non-normative human view,
+`review-dispositions.md` records human answers to plan review findings,
 `tasks.md` and `subplans/` are the reviewed execution package, and ignored local
 `progress.md` is coordinator runtime evidence. Design Acceptance precedes task
 creation; Implementation Authorization precedes mutation.
@@ -38,9 +40,10 @@ Task packages contain provider-neutral tiers and the skills each group needs, no
 concrete workers, model IDs, credentials, local workspace paths, or dispatch
 identities. Binding is just in time. An implementation group requires its tier,
 skills, discoverability, invokability, correct workspace targeting, and
-attributable results. A reviewer role requires its tier and a single candidate
+attributable results. A reviewer or writer role requires its tier and a single candidate
 whose description matches the role. The reviewer does not modify the reviewed
-artifacts and writes only its review report. Project-local
+artifacts and writes only its review report; the writer modifies only its
+declared output. Project-local
 candidates are preferred; ambiguity requires a human choice. Runtime
 considerations neither grant access nor alter eligibility.
 
@@ -52,7 +55,8 @@ order as one repository-policy-compliant commit per packet. Nothing is pushed.
 
 ## Replacement Cautions
 
-This release performs no migration. It does not interpret old atomic task lists,
+This release performs no migration. A plan created under `0.4.x` lacks the
+`plan_overview_fidelity` Review Record entry and restarts its plan phase. It does not interpret old atomic task lists,
 old execution or review artifacts, or old local runtime state. A non-executing
 old feature starts again at `specify`. Before replacement, finish or explicitly
 abandon an in-flight old run while its old installed copy remains available.
