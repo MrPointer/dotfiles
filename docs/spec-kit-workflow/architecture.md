@@ -3,19 +3,13 @@
 ## Overview
 
 `timors-agentic-workflow` is a project-installed Spec Kit preset that connects
-grounded planning, a generated human plan overview, reviewed execution decomposition,
-explicit human approval, and delegated implementation through a versioned
-Markdown protocol. The preset is provider-neutral: it defines command and
-artifact contracts, while the active coding integration supplies concrete
-workers, models, skills, and permissions. Its preset version is `0.5.0` and its
-protocol version is `0.1.0`; it supports Spec Kit `>=0.12.11` without an upper
-support boundary.
-
-The implemented package and installation behavior have been validated with
-Spec Kit 0.12.11 and OpenCode 1.17.18. Runtime review and implementation have
-not yet been exercised, so this document describes the implemented contracts
-without claiming operational runtime support. This validation is operational
-history, not a support boundary.
+a human-owned Feature Definition, grounded planning, a generated human plan
+overview, a reviewed execution package, explicit human approval, and delegated
+implementation in isolated worktrees through Markdown contracts. The preset is
+provider-neutral: it defines command and artifact contracts, while the active
+coding integration supplies concrete workers, models, skills, and permissions.
+Its preset version is `0.5.0`; it supports Spec Kit `>=0.12.11` without an
+upper support boundary.
 
 ## Source, Installation, And Activation Boundaries
 
@@ -40,17 +34,11 @@ installation. Installation copies the package into the tracked project path
 `.specify/presets/timors-agentic-workflow/` and generates tracked command files
 for the active coding integration. Generated commands refer to the installed,
 project-relative preset path rather than the global source, leaving the project
-independent of the dotfiles repository after installation.
+independent of the dotfiles repository after installation. Project copies stay
+pinned until an operator refreshes them with an explicit remove/add.
 
-For the verified OpenCode integration, those generated files are under
+For the OpenCode integration, those generated files are under
 `.opencode/commands/`.
-
-During the non-normative Spec Kit 0.12.11 installation validation, a project
-received global source changes through an explicit remove/add refresh, and
-`preset resolve` accepted template names only. Command installation was instead
-evidenced by generated integration commands and their project-relative
-installed-preset references. These observations are operational history, not
-future compatibility constraints.
 
 ```mermaid
 flowchart TD
@@ -60,47 +48,42 @@ flowchart TD
     commands["Tracked integration commands"]
     artifacts["Tracked feature artifacts"]
     runtime["Native project/global workers"]
+    worktrees["Packet branches and worktrees"]
     progress["Ignored local progress"]
 
     source -->|"chezmoi source-to-target mapping"| global
     global -->|"explicit preset add; remove/add to refresh"| installed
     installed -->|"generates project-relative references"| commands
-    commands -->|"plan, decompose, review, execute"| artifacts
+    commands -->|"define, plan, decompose, review"| artifacts
     commands -->|"metadata binding; real-work dispatch"| runtime
-    runtime -->|"attributable results"| commands
+    runtime -->|"packet-scoped commits"| worktrees
+    worktrees -->|"one integrated commit per packet"| commands
     commands -->|"runtime evidence and resume state"| progress
 ```
 
-## Package-Integrity Command Boundary
+## Command Integration Boundary
 
-Every command composed or replaced by the preset begins with the same complete
-installed package-integrity gate. It checks the manifest and active `specify`
-version, complete required package inventory, declared mappings and strategies,
-and preset/protocol identity before extension hooks, prerequisite scripts,
-dispatch, or writes. It fails closed only below the minimum, on an explicit
-installed-manifest exclusion, or when a required contract is missing, malformed,
-or incoherent. Newer untested CLI versions neither warn nor block. This protects
-generated commands that remain in a project after the CLI changes without
-changing required public integration behavior. The accepted execution-package
-protocol is likewise `0.1.0`; unsupported or malformed protocol artifacts return
-to their owning generation command rather than being migrated or inferred.
+The manifest replaces all five lifecycle commands (`/speckit.specify`,
+`/speckit.clarify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`) and
+the `spec-template`, `plan-template`, and `tasks-template` templates. Every phase
+shares one protocol of artifact authorities, human gates, and invalidation rules,
+so composing with upstream bodies would mix two sets of rules. The preset provides
+no `/speckit.analyze`; it folds independent review and human approval into
+`/speckit.plan` and `/speckit.tasks`. The stock `/speckit.analyze` resolves from a
+lower layer and is not part of this lifecycle.
 
-The preset deliberately uses different integration strategies by phase:
+The other templates (grounding notes, research, plan overview, review dispositions,
+review report, sub-plan, and progress) and the reviewer and writer packets are not
+registered in the manifest. Commands read them by their installed project-relative
+path.
 
-- `/speckit.specify` composes with upstream specification generation, retaining
-  its behavior;
-  `/speckit.clarify` remains upstream and owns product clarification.
-- `/speckit.plan` and `plan-template` compose with upstream planning, retaining
-  its design artifacts, adding verified grounding and integration context, and
-  generating the human plan overview.
-- `/speckit.tasks`, `tasks-template`, and `/speckit.implement` replace their
-  upstream surfaces because decomposition, independent review, approval, and
-  delegated execution share a stronger protocol. The preset provides no
-  `/speckit.analyze`; it folds independent review and human approval into
-  `/speckit.plan` and `/speckit.tasks`. The stock `/speckit.analyze` resolves from
-  a lower layer and is not part of this lifecycle.
-- Auxiliary templates provide the indexed sub-plans, cumulative review reports,
-  and local progress ledger used by those replacements.
+Commands run no package, manifest, installed-inventory, mapping, or CLI-version
+preflight. The only version requirement is the manifest's
+`requires.speckit_version`. Instead, every command first resolves the canonical
+feature directory, and each consumer checks the concrete fields its phase reads
+and fails closed on missing, partial, contradictory, or malformed state. Old
+artifacts are never migrated or inferred; they return to their owning phase or
+restart the lifecycle.
 
 The preset does not run Spec Kit extension hooks. Stock command bodies dispatch
 `before_*` and `after_*` hooks from `.specify/extensions.yml`. The preset
@@ -108,11 +91,8 @@ replacements omit that mechanism, so no phase runs an extension automatically. T
 git extension branch and commit hooks never fire from the workflow. An operator
 runs an extension command manually when wanted.
 
-The installed preset references are the normative source for workflow behavior,
-artifact schemas, and CLI/package compatibility. The minimum supported version and
-the structural package-integrity contract come from the installed manifest and its
-`requires.speckit_version`, as described in the Package-Integrity Command Boundary
-section above. This architecture overview summarizes those boundaries without
+The installed preset references are the normative source for workflow behavior and
+artifact schemas. This architecture overview summarizes those boundaries without
 redefining them.
 
 ### Plan Overview
@@ -133,45 +113,60 @@ contract.
 
 The protocol separates durable planning truth from local runtime evidence:
 
-- `spec.md`, `plan.md`, and the normal design artifacts provide requirements,
-  technical design, decisions, data models, contracts, and other planning
-  inputs.
-- `tasks.md` is the sole atomic task ledger. It owns task identity, task text,
-  paths, story labels, task-local parallel hints, and completion checkboxes.
-- The indexed `subplans/` own execution groups, the dependency graph and order,
-  file ownership, cross-group contracts and data flow, semantic model tiers,
-  required skills and capabilities, tests, acceptance criteria, and
-  verification.
-- `specs/<feature>/reviews/<role-id>.md` files are tracked cumulative sources of
-  reviewer findings. Reruns append current-state rounds rather than replacing
-  review history.
-- The human approval decisions live in their owning artifacts: Design Acceptance
-  in `plan.md` and Implementation Authorization in `tasks.md`. The preset produces
-  no separate `analysis.md` aggregate.
+- `spec.md` is the Feature Definition and the only authority for product intent.
+  It is `Draft` or `Ready`. `/speckit.specify` writes it without asking
+  questions; `/speckit.clarify` converges it through one-question human dialogue.
+  It excludes repository feasibility on purpose.
+- `grounding-notes.md` stores attributed repository evidence with no
+  recommendations. `research.md` is tracked, non-normative working space for
+  alternatives and working decisions.
+- `plan.md` is the sole normative plan. It restates every decision task planning
+  needs, carries a `Revision` (`R0`, `R1`, ...), the Review Record pointers, and
+  the human Design Acceptance.
 - `plan-overview.md` is the generated, non-normative human view of `plan.md`.
   `plan.md` prevails on conflict, and no phase reads the overview as input.
 - `review-dispositions.md` records, per answered plan review batch, each
   finding's disposition and the human's reason. Only the `plan-design` and
   `plan-clarity` reviewers read it, so reruns can tie new findings to earlier
   fixes and do not raise declined findings again without new evidence.
-- `specs/<feature>/progress.md` is an ignored local ledger for concrete workers
-  and models, workspaces, dispatch and test evidence, checkpoints, blockers,
-  failures, integration state, and resume decisions. It does not duplicate
-  atomic task completion truth.
+- `tasks.md` is the execution package index. Its closed frontmatter is the sole
+  machine authority for sub-plan identities, the predecessor graph, task review
+  pointers, and Implementation Authorization. It holds no atomic tasks or
+  checkboxes; its ledger table and Mermaid graph are human projections.
+- Each indexed `subplans/` file is one packet. It owns its primary files,
+  semantic model tier, required skills, test mode and basis, acceptance and
+  verification, and the contracts it produces or consumes. A producer's
+  sub-plan holds the only definition of each contract it produces.
+- `reviews/<role-id>.md` files are tracked cumulative reviewer reports. Reruns
+  append complete current-state rounds rather than replacing review history.
+- `progress.md` is an ignored local ledger owned by the coordinator. It records
+  concrete bindings, packet states, signing policy, the protected baseline, test
+  evidence, contract outputs, blockers, and final verification.
+
+The human approval decisions live in their owning artifacts: Design Acceptance in
+`plan.md` and Implementation Authorization in `tasks.md`. The preset produces no
+separate `analysis.md` aggregate.
+
+Creating `progress.md` is the lock event. After it, the tracked feature directory
+is immutable, and material `spec.md` or `plan.md` writes are refused. Before the
+lock, a material Feature Definition or plan change marks Design Acceptance
+`Stale`, returns authorization to `pending`, and makes affected review pointers
+pending, so no gate stays valid for changed content.
 
 This split keeps provider- and machine-specific details out of tracked planning
-artifacts while preserving a reviewable decomposition and approval record.
+artifacts while preserving a reviewable package and approval record.
 
 ## Planning And Review Flow
 
-Task generation reads the specification, plan, and available design artifacts,
-then creates `tasks.md` and its indexed `subplans/` as one normalized set. It
-validates the set before writing, so task descriptions and checkboxes remain in
-the task ledger while execution policy remains in the sub-plans.
+Planning grounds repository reality before it designs, writes `plan.md`, and
+generates the first overview. Task generation reads the accepted plan and creates
+`tasks.md` and its indexed `subplans/` together. Before review, it applies every
+closed-schema and structural check in the task-planning reference; a failure
+blocks review and authorization.
 
 Independent review runs inside two phases, not a separate command. Each producing
-phase dispatches fresh-context, read-only reviewers and blocks its own human
-approval until the reviews permit it:
+phase dispatches fresh-context reviewers that do not modify the artifacts they
+review, and blocks its own human approval until the reviews permit it:
 
 - `/speckit.plan` requires most-capable `plan-design`, which judges technical
   coherence of the plan, and mid-tier `plan-clarity`, which judges cold-reader
@@ -180,42 +175,52 @@ approval until the reviews permit it:
   `plan.md`.
 - `/speckit.tasks` requires mid-tier `tasks-plan-fidelity`, which traces the
   accepted plan and Feature Definition into the task package, and most-capable
-  `tasks-executability`, which judges decomposition feasibility and testable
+  `tasks-executability`, which judges decomposition, dependencies, and testable
   work. Both feed Implementation Authorization in `tasks.md`.
 
-Before task review, the shared installed structural validator runs first. A
-structural failure blocks before reviewer dispatch or report writes. Projects may
-select additional project-owned reviewer packets. Each role appends to its
-cumulative report under `specs/<feature>/reviews/`, and the producing phase
-preserves source finding ownership. No phase performs a fallback self-review, and
-no phase produces an `analysis.md` aggregate. Implementation remains blocked until
-the latest reviews are complete and the recorded human approval authorizes it.
+The producing phase never applies a finding on its own judgment. It applies
+wording, formatting, or citation fixes directly and lists them. Every other fix,
+including one that fills a gap no human decided, is a proposed remediation that
+waits for human acceptance. This keeps design decisions from entering the plan
+without the human seeing them. The one exception is an overview fidelity fix that
+only brings `plan-overview.md` back into agreement with `plan.md`; it changes no
+decision, so the writer applies it directly.
+
+Each role appends to its cumulative report, and the producing phase preserves
+source finding ownership. At quiescence, the phase presents all current blockers
+and proposed remediations in one interaction. No phase performs a fallback
+self-review. Implementation remains blocked until the latest reviews are complete
+and the recorded human approval authorizes it.
 
 ## Delegated Implementation Flow
 
-Before mutation, implementation repeats the same installed structural
-validation and checks report consistency and human authorization. It then
-initializes or reconciles local progress and processes only groups made ready by
-the approved dependency graph.
+Before mutation, implementation requires a Ready `spec.md`, an accepted current
+plan Revision, a reviewed and approved package, and a clean, named active branch.
+It resolves and pins the repository's signing policy, then creates `progress.md`,
+which pins the active branch, its starting commit, and the protected baseline of
+every tracked feature-directory file.
 
-For each ready group, the coordinator binds the planned semantic tier, skills,
-capabilities, and workspace requirements to an eligible native worker. It
-constructs a deterministic packet from the canonical group record, group
-details, owned task lines, and checkpointed prerequisite contract outputs. It
-does not redesign groups or silently change their dependencies, ownership,
-contracts, model tiers, tests, or acceptance criteria.
+The predecessor graph in `tasks.md` frontmatter is the only scheduling authority.
+Every ready packet is dispatched concurrently unless a concrete binding, harness,
+resource, or workspace limit forces serialization. For each packet, the
+coordinator binds an eligible native worker to the planned tier and skills,
+creates a dedicated branch and worktree, and sends the packet's identity and
+locator plus verified evidence for each consumed contract, not the packet text.
+The worker reads its packet from the sub-plan. The coordinator does not redesign
+packets or change their dependencies, ownership, contracts, tiers, tests, or
+acceptance.
 
-Policy-permitted parallel groups run in separate worktrees only after every
-member of the dispatch set passes readiness and output/cache safety checks.
-Completed results are integrated and verified, then retained in signed local
-checkpoints before task checkboxes and group state become complete. Dependent
-groups consume verified checkpoint outputs rather than uncommitted files. Once
-all groups pass final verification, checkpoint history is materialized as one
-aggregate dirty review diff while a local checkpoint reference preserves
-recovery evidence.
+Workers commit only on their packet branch. The coordinator checks the returned
+diff, ownership, tests, acceptance, contract-output evidence, attribution, and
+the protected baseline. It then integrates packets in approved topological order:
+rebase, build a separately inspectable squash candidate, verify it, and
+fast-forward the active branch by exactly one policy-compliant commit per packet.
+A consumer becomes ready only after its producer's final commit and contract
+evidence are recorded. Nothing is pushed.
 
-These are implemented command contracts, but their runtime operation has not
-yet been exercised through a normal feature.
+After all packets are done, aggregate verification and an independent
+most-capable `component-docs` review gate completion. Bounded in-scope repairs
+land as corrective commits; new scope returns to its owning phase.
 
 ## Provider-Neutral Runtime Binding
 
@@ -228,35 +233,39 @@ dispatch evidence stays in ignored progress or transient runtime state.
 
 Suitability checks inspect runtime metadata and configuration only. Preflight
 does not invoke a worker, calibration task, probe, canary, or sacrificial call.
-The first worker invocation carries the real assigned review or implementation
-work. Missing evidence for tier, concrete model, permissions, invokability, fresh
-context or attribution, workspace targeting, dispatch, or result identity blocks
-the applicable role or group. A reviewer role additionally requires a read-only
-workspace and a single candidate whose description matches the role. An
-implementation group additionally requires the skills and capabilities that the
-sub-plan names.
+The first worker invocation carries the real assigned work. Every role or packet
+requires its tier, native discoverability, invokability, correct workspace
+targeting, and attributable results:
+
+- A reviewer or writer role binds the single candidate whose description matches
+  the role description. A reviewer does not modify the artifacts it reviews and
+  writes only its report; a writer modifies only its declared output.
+- An implementation packet binds a candidate that has the skills the sub-plan
+  names.
+
+Zero or several plausible candidates become a collected blocker for one human
+choice.
 
 ## Failure And Recovery Boundaries
 
 The protocol fails closed at ownership boundaries rather than repairing state
 in a later phase:
 
-- Unsupported, missing, or malformed task/execution artifacts are regenerated
-  by `/speckit.tasks`; invalid review reports or approval state return to their
-  producing phase (`/speckit.plan` or `/speckit.tasks`) with explicit
-  confirmation where history could be lost.
-- An incomplete review round or a role marked `Recovery required` blocks
-  implementation. Ambiguous started invocations are retained for explicit
+- Missing, malformed, or old task artifacts are regenerated by `/speckit.tasks`;
+  invalid review reports or approval state return to their producing phase
+  (`/speckit.plan` or `/speckit.tasks`).
+- An incomplete review round or a role marked `Recovery required` blocks the
+  phase's human gate. Ambiguous started invocations are retained for explicit
   recovery and are not automatically redispatched.
-- Unsafe worker binding, worktree targeting, dirty state, test evidence,
-  integration, checkpoint signing, or prerequisite state blocks the affected
-  execution boundary.
-- Missing checkpoint, artifact, verification, or attributable result evidence
-  cannot be replaced by checked task boxes or optimistic inference.
-- Branches, worktrees, checkpoint references, unrelated dirty files, and
-  feature artifacts are never automatically stashed, discarded, reset,
-  committed, or deleted. Recovery or abandonment requires an explicit human
-  disposition.
+- Unsafe worker binding, worktree targeting, baseline change, test evidence,
+  integration, signing, or prerequisite state blocks the affected packet and its
+  dependents, while independent ready packets continue.
+- Missing contract output, verification, or attributable result evidence cannot
+  be replaced by inference from commits.
+- Branches, worktrees, unrelated dirty files, and feature artifacts are never
+  automatically stashed, discarded, reset, or deleted, and unrelated files are
+  never committed. Abandonment requires an explicit human disposition and
+  archives progress rather than deleting it.
 
 ## Coexistence With Existing Workflows
 
@@ -265,22 +274,18 @@ separate and unchanged. The preset adapts compatible guarantees into its own
 Spec Kit artifacts and installed references, but it does not invoke those
 skills, consume their plan format, or depend on them at runtime.
 
-## Verified Scope
+## References
 
-Deterministic validation covers the manifest, structural package inventory,
-command and template mappings, project installation and remove/add refresh, all six template
-resolutions, generated OpenCode commands, project-relative preset references,
-tracked asset behavior, and targeted chezmoi rendering. These checks do not
-invoke generated commands through a model and do not prove semantic runtime
-operation. Runtime review, binding, and implementation remain **Not exercised**
-until a normal feature completes them with real assigned work.
-
-See the [preset README][preset-readme] for installation and diagnostic commands.
-[Artifact contracts][artifact-contracts], [review lifecycle][review-lifecycle],
-and [execution lifecycle][execution] define their respective installed protocol
-contracts.
+See the [preset README][preset-readme] for installation and replacement cautions.
+[Artifact contracts][artifact-contracts], [plan lifecycle][plan-lifecycle],
+[review lifecycle][review-lifecycle], [task planning][task-planning],
+[execution lifecycle][execution], and [workspace isolation][workspace-isolation]
+define their respective installed protocol contracts.
 
 [preset-readme]: ../../private_dot_config/specify/presets/timors-agentic-workflow/README.md
 [artifact-contracts]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/artifact-contracts.md
+[plan-lifecycle]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/plan-lifecycle.md
 [review-lifecycle]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/review-lifecycle.md
+[task-planning]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/task-planning.md
 [execution]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/execution-lifecycle.md
+[workspace-isolation]: ../../private_dot_config/specify/presets/timors-agentic-workflow/references/workspace-isolation.md
