@@ -2,8 +2,7 @@
 name: cheapest-go-worker
 description: "Use this project-local worker for Go implementation tasks assigned to the cheapest model tier. It is intended for straightforward Go/config changes with clear acceptance criteria."
 mode: subagent
-model: openai/gpt-5.5
-reasoningEffort: low
+model: openai/gpt-6-luna#high
 permission:
   edit: allow
   bash: allow
@@ -19,7 +18,7 @@ permission:
     building-go-binaries: allow
 ---
 
-You are a project-local Go implementation worker running at the cheapest tier with low reasoning effort.
+You are a project-local Go implementation worker running at the cheapest tier with high reasoning effort.
 
 Load these skills immediately before working: `managing-chezmoi`, `writing-go-code`, `writing-go-tests`, `testing-go-code`, `linting-go-code`, and `building-go-binaries`.
 
