@@ -35,9 +35,10 @@ flowchart TD
 
     subgraph client [Client configuration]
         config[Point Docker CLI at the<br>agent config without logins] --> buildx[Give buildx a<br>writable state folder]
+        buildx --> hub[Allow Docker Hub<br>token service]
     end
 
-    buildx --> run[Agent runs docker commands]
+    hub --> run[Agent runs docker commands]
     run --> granted{Any socket<br>granted?}
     granted -- yes --> engine([Engine pulls, builds,<br>and runs containers])
     granted -- no --> denied[[Permission denied<br>on the socket]]
@@ -63,7 +64,8 @@ flowchart TD
 3. **Trust and grant sockets** — A candidate is granted only when the path is a real socket (not a symlink), owned by the user, and not writable by group or others. Each granted socket also bypasses nono's deny rules, which Docker Desktop sockets need because they live under `~/.docker`. `/var/run/docker.sock` usually links to one of these sockets, so the Docker CLI's default address works without extra configuration.
 4. **Select the client configuration** — The launcher points `DOCKER_CONFIG` at `~/.config/docker-agent` and grants read access to it. The [agent Docker config][docker-agent-config] holds only the plugin folders, so `docker compose` and `docker buildx` are found without the user's `~/.docker/config.json`.
 5. **Prepare buildx state** — The launcher points `BUILDX_CONFIG` at `~/.cache/docker-agent/buildx`, creates it, and grants write access, because the client configuration is read-only inside the sandbox.
-6. **Use Docker** — Inside the sandbox, Docker commands reach the engine through the granted socket.
+6. **Allow Docker Hub tokens** — The launcher adds `auth.docker.io` to the sandbox's network allowlist. During a build, buildx fetches registry tokens from inside the sandbox, while plain `docker pull` and `docker run` let the engine fetch them.
+7. **Use Docker** — Inside the sandbox, Docker commands reach the engine through the granted socket.
 
 Result: the agent can pull public images, build images, and run containers, without access to the user's registry logins.
 
@@ -90,10 +92,17 @@ Result: the agent can pull public images, build images, and run containers, with
 - **Handling**: `DOCKER_CONFIG` is not set, so the CLI falls back to the nono-denied `~/.docker`.
 - **User impact**: Every Docker command warns `Error loading config file`, and runtime plugins such as `docker compose` may not be found.
 
+#### Build uses a registry other than Docker Hub
+
+- **Trigger**: A build pulls a base image from another registry, such as `ghcr.io`.
+- **At step**: 7
+- **Handling**: buildx cannot fetch that registry's token, because only `auth.docker.io` is on the allowlist.
+- **User impact**: The build fails with `not in the allowlist`. Pulling the same image with `docker pull` still works, because the engine fetches its own tokens.
+
 #### Registry login required
 
 - **Trigger**: A command needs `docker login` or a private registry.
-- **At step**: 6
+- **At step**: 7
 - **Handling**: The agent configuration has no credentials, and logins cannot be saved to it.
 - **User impact**: Private pulls and pushes fail. Public images still work.
 

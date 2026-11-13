@@ -135,6 +135,7 @@ The `docker` feature lets a profile use the host Docker engine. Enable it only f
 - Do not add Docker sockets to profile `unix_socket` lists. nono grants whatever socket exists at a listed path at launch, without ownership or runtime checks.
 - Do not grant `~/.docker` or `~/.docker/config.json`; it can hold registry logins. Agents use `DOCKER_CONFIG=~/.config/docker-agent`, rendered from `private_dot_config/docker-agent/config.json.tmpl`, which only lists plugin folders.
 - `BUILDX_CONFIG=~/.cache/docker-agent/buildx` keeps buildx state writable while the client config stays read-only.
+- Allow `auth.docker.io` through the proxy. buildx fetches registry tokens from inside the sandbox during builds; plain pulls and runs do not need it. Builds from other registries need their token host added too.
 - Linux is untested. Native Docker Engine (`/run/docker.sock`) and rootless Docker are not candidates, and nono does not mediate Unix sockets on Linux without `linux.af_unix_mediation: "pathname"`, so the opt-in may not be enforced there. Test on Linux before relying on it.
 
 Verify from a restarted agent session with the feature:

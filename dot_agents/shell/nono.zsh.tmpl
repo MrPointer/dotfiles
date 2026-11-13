@@ -109,6 +109,10 @@ function _nono_agent_run() {
     local -x BUILDX_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache}/docker-agent/buildx"
     command mkdir -p "$BUILDX_CONFIG" &&
       docker_args+=(--allow "$BUILDX_CONFIG")
+
+    # Builds run through buildx fetch registry tokens from the client side,
+    # inside the sandbox, so Docker Hub's token service must pass the proxy.
+    docker_args+=(--allow-domain auth.docker.io)
   fi
 
   local -a git_common_dir_args=()
