@@ -1,3 +1,8 @@
+# Opt-in sandbox features per profile. These run when the file is sourced, not
+# inside a launcher, because nono-agent-acp starts profiles by name without
+# calling any launcher function below.
+_nono_agent_enable claude-code-chezmoi docker
+
 function _claude_nono() {
   local profile="$1"
   shift

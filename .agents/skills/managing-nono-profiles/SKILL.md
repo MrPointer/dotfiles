@@ -1,6 +1,6 @@
 ---
 name: managing-nono-profiles
-description: Manage nono sandbox profiles and their shell launch wrappers in this dotfiles repo. Use when editing private_dot_config/nono/profiles, nono profile schemas, dot_agents/shell wrappers, employer-specific work-* profiles and launchers under private_dot_work, SSH signing access for sandboxed agents, or adding/renaming agent-specific nono profiles.
+description: Manage nono sandbox profiles and their shell launch wrappers in this dotfiles repo. Use when editing private_dot_config/nono/profiles, nono profile schemas, dot_agents/shell wrappers, employer-specific work-* profiles and launchers under private_dot_work, SSH signing or Docker access for sandboxed agents, per-profile agent sandbox features, the nono-agent-acp editor launcher, or adding/renaming agent-specific nono profiles.
 ---
 
 # Managing Nono Profiles
@@ -19,6 +19,8 @@ Edit chezmoi source files, not applied targets:
 | Profile schema | `private_dot_config/nono/schemas/nono-profile.schema.json` | `~/.config/nono/schemas/nono-profile.schema.json` |
 | Agent shell wrappers | `dot_agents/shell/` | `~/.agents/shell/` |
 | Wrapper sourcing | `dot_zshrc.tmpl` | `~/.zshrc` |
+| Editor (ACP) launcher | `private_dot_local/bin/executable_nono-agent-acp` | `~/.local/bin/nono-agent-acp` |
+| Agent Docker client config | `private_dot_config/docker-agent/config.json.tmpl` | `~/.config/docker-agent/config.json` |
 | Employer profiles | `private_dot_config/nono/profiles/work-{work_name}-*.jsonc` | `~/.config/nono/profiles/work-{work_name}-*.jsonc` |
 | Employer profile filtering | `.chezmoiignore` | — |
 | Employer launchers | `private_dot_work/private_{work_name}/agents/shell/` | `~/.work/{work_name}/agents/shell/` |
@@ -108,6 +110,42 @@ Per-agent files should call `_nono_agent_run` instead of duplicating nono setup:
 - `dot_agents/shell/codex.zsh`
 
 Use wrapper functions, not aliases, when SSH signing support or profile selection is needed.
+
+### Launch Paths
+
+Agents start through two paths, and both must behave the same for a given profile:
+
+- Shell launcher functions such as `claude-chezmoi` or `claude-chezmoi-acp`, loaded by `.zshrc`.
+- `private_dot_local/bin/executable_nono-agent-acp`, which editors such as Zed run with a profile name. It sources `nono.zsh` and the agent file, then calls `_claude_acp`, `_codex_acp`, or `_opencode_nono` directly. It never calls the named launcher functions.
+
+Put per-profile launch behavior in `_nono_agent_run` or in file-level declarations, never only inside a named launcher function.
+
+## Agent Sandbox Features
+
+Use a feature when a profile needs launch-time access that a static profile grant cannot express safely, for example access conditional on host checks.
+
+- Declare features at the top of the agent file, outside any launcher, with `_nono_agent_enable <profile> <feature>`.
+- `_nono_agent_run` checks `_nono_agent_has_feature "$profile" <feature>`. Keep profile names out of `nono.zsh.tmpl`.
+
+### Docker Feature
+
+The `docker` feature lets a profile use the host Docker engine. Enable it only for profiles that need Docker; the socket gives full control of the engine, which can mount nono-denied host folders into containers. See `docs/dotfiles/processes/agent-docker-access.md` for the full flow.
+
+- `_nono_agent_docker_args` grants a socket only when its runtime (OrbStack, Colima, Docker Desktop) is installed and the socket is a real socket owned by the user and not group- or other-writable.
+- Do not add Docker sockets to profile `unix_socket` lists. nono grants whatever socket exists at a listed path at launch, without ownership or runtime checks.
+- Do not grant `~/.docker` or `~/.docker/config.json`; it can hold registry logins. Agents use `DOCKER_CONFIG=~/.config/docker-agent`, rendered from `private_dot_config/docker-agent/config.json.tmpl`, which only lists plugin folders.
+- `BUILDX_CONFIG=~/.cache/docker-agent/buildx` keeps buildx state writable while the client config stays read-only.
+- Linux is untested. Native Docker Engine (`/run/docker.sock`) and rootless Docker are not candidates, and nono does not mediate Unix sockets on Linux without `linux.af_unix_mediation: "pathname"`, so the opt-in may not be enforced there. Test on Linux before relying on it.
+
+Verify from a restarted agent session with the feature:
+
+```sh
+docker ps
+docker compose version
+docker buildx version
+```
+
+None of these should print `Error loading config file`.
 
 ## Validation
 

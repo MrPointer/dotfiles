@@ -1,5 +1,22 @@
 # Shared helpers for coding agents launched through nono.
 
+# Records opt-in sandbox features per profile. Agent shell files declare them
+# next to the launchers that name each profile, so every launch path that
+# sources those files (interactive shells and nono-agent-acp) sees the same set.
+typeset -gA _NONO_AGENT_FEATURES
+
+function _nono_agent_enable() {
+  local profile="$1"
+  local feature="$2"
+
+  _nono_agent_has_feature "$profile" "$feature" ||
+    _NONO_AGENT_FEATURES[$profile]+=" $feature "
+}
+
+function _nono_agent_has_feature() {
+  [[ "${_NONO_AGENT_FEATURES[$1]:-}" == *" $2 "* ]]
+}
+
 function _nono_agent_ensure_ssh_signing_key() {
   local public_key="$1"
   local private_key="${2:-${public_key%.pub}}"
@@ -16,6 +33,42 @@ function _nono_agent_ensure_ssh_signing_key() {
 {{- else }}
   ssh-add -q "$private_key" || true
 {{- end }}
+}
+
+# Prints nono arguments that grant the Docker daemon socket of each installed
+# Docker runtime. The socket gives full control of the host's Docker engine, so
+# a socket is granted only when its runtime is installed and the path is a real
+# socket (not a symlink) owned by this user and not writable by group or others.
+# Grants target the real socket paths: /var/run/docker.sock is only a symlink to
+# one of them.
+function _nono_agent_docker_args() {
+  local -a candidates=()
+{{- if eq .chezmoi.os "darwin" }}
+  if [[ -d /Applications/OrbStack.app || -d "$HOME/Applications/OrbStack.app" ]]; then
+    candidates+=("$HOME/.orbstack/run/docker.sock")
+  fi
+  if [[ -d /Applications/Docker.app || -d "$HOME/Applications/Docker.app" ]]; then
+    candidates+=("$HOME/.docker/run/docker.sock")
+  fi
+{{- else }}
+  if [[ -d /opt/docker-desktop ]]; then
+    candidates+=("$HOME/.docker/desktop/docker.sock")
+  fi
+{{- end }}
+  if (( $+commands[colima] )); then
+    candidates+=("${COLIMA_HOME:-$HOME/.colima}/default/docker.sock")
+  fi
+
+  local socket
+  local -a trusted
+  for socket in "${candidates[@]}"; do
+    # Glob qualifiers check the path itself without following symlinks:
+    # = socket, U owned by this user, f:go-w: no group or other write bit.
+    trusted=("$socket"(N=Uf:go-w:))
+    (( ${#trusted} )) || continue
+    # Docker Desktop sockets live under ~/.docker, which nono denies by default.
+    print -rl -- --allow-unix-socket "$socket" --bypass-protection "$socket"
+  done
 }
 
 function _nono_agent_run() {
@@ -37,6 +90,25 @@ function _nono_agent_run() {
   local -a deck_socket_args=()
   if [[ -n "${DECK_SESSION:-}" ]]; then
     deck_socket_args=(--allow-unix-socket "${TMUX_TMPDIR:-/tmp}/tmux-${UID}/deck")
+  fi
+
+  # Docker-enabled profiles use a dedicated Docker client config without
+  # registry logins instead of ~/.docker, which nono denies. That config is
+  # read-only inside the sandbox, so buildx keeps its state in a separate
+  # writable folder.
+  local -a docker_args=()
+  if _nono_agent_has_feature "$profile" docker; then
+    docker_args=(${(f)"$(_nono_agent_docker_args)"})
+
+    local docker_config="$HOME/.config/docker-agent"
+    if [[ -d "$docker_config" ]]; then
+      local -x DOCKER_CONFIG="$docker_config"
+      docker_args+=(--read "$docker_config")
+    fi
+
+    local -x BUILDX_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache}/docker-agent/buildx"
+    command mkdir -p "$BUILDX_CONFIG" &&
+      docker_args+=(--allow "$BUILDX_CONFIG")
   fi
 
   local -a git_common_dir_args=()
@@ -81,5 +153,6 @@ function _nono_agent_run() {
     "${git_common_dir_args[@]}" \
     "${ssh_agent_args[@]}" \
     "${deck_socket_args[@]}" \
+    "${docker_args[@]}" \
     -- "$command_name" "$@"
 }

@@ -54,6 +54,14 @@ The shared `_nono_agent_run` helper sets `GIT_CONFIG_GLOBAL`, attempts to preloa
 
 See the [agent commit signing process][agent-commit-signing] for host setup, sandbox access, and verification.
 
+### Agent Sandbox Features
+
+An agent sandbox feature is extra access that `_nono_agent_run` adds at launch for selected profiles only, when the access cannot be expressed as a static nono profile grant. Each agent shell file declares its features at the top of the file with `_nono_agent_enable <profile> <feature>`. The shared launcher holds no profile names; it checks `_nono_agent_has_feature` for the profile being launched.
+
+Agents start through two paths: shell launcher functions such as `claude-chezmoi`, and `~/.local/bin/nono-agent-acp`, which editors such as Zed run with a profile name. `nono-agent-acp` sources the agent shell files but calls the internal launch helpers directly, so features must be declared at file level, keyed by profile, and not inside launcher functions.
+
+The `docker` feature grants trusted Docker engine sockets and a Docker client config without registry logins. See the [agent Docker access process][agent-docker-access].
+
 ### Deferred Homebrew Loading
 
 A shell startup optimization pattern where Homebrew's expensive `shellenv` evaluation is postponed from `.zshenv` to `.zshrc` on macOS. This avoids the cost in non-interactive shells while keeping the environment available for interactive use.
@@ -76,12 +84,16 @@ See the [shell startup process][shell-startup] for the full shell startup flow i
 ## Domain Rules
 
 - **Work environment is all-or-nothing at the profile level**: If `work_env` is true, the entire generic profile is sourced. Individual work features cannot be toggled independently.
+- **Docker access is opt-in and bypasses the sandbox boundary**: The Docker socket gives full control of an engine that runs outside the sandbox and can mount nono-denied host folders into containers. Only profiles that need Docker get the `docker` feature. On Linux this opt-in is untested and may not be enforced; see the [agent Docker access process][agent-docker-access].
+- **Agents never read `~/.docker`**: Its `config.json` can hold registry logins, proxy credentials, and HTTP headers, and its credential helpers can read the keychain. Sandboxed agents use the separate agent Docker config instead.
+- **Docker sockets are not listed in nono profiles**: A profile `unix_socket` entry grants whatever socket exists at that path at launch. Socket grants come from the shared launcher, which checks the runtime and socket ownership first.
 - **Normal dotfile templates consume shared configuration**: They read the values defined by the [chezmoi data contract][chezmoi-data-contract] and do not write the chezmoi config. The repository-root config template is a separate init-time template that preserves existing template data when chezmoi regenerates its config.
 
 ## Glossary
 
 | Term | Definition |
 |------|-----------|
+| Agent sandbox feature | Per-profile launch-time access, such as `docker`, declared with `_nono_agent_enable` in an agent shell file |
 | Deferred brew loading | Pattern where Homebrew's shell environment setup is postponed from `.zshenv` to `.zshrc` on macOS |
 | Generic work profile | Shared work configuration at `~/.work/profile`, loaded for any employer |
 | Specific work profile | Employer-specific configuration at `~/.work/{work_name}/profile` |
@@ -94,3 +106,4 @@ See the [shell startup process][shell-startup] for the full shell startup flow i
 [agent-git-template]: ../../private_dot_config/git/agent.gitconfig.tmpl
 [common-git-template]: ../../private_dot_config/git/common.gitconfig.tmpl
 [agent-commit-signing]: processes/agent-commit-signing.md
+[agent-docker-access]: processes/agent-docker-access.md
