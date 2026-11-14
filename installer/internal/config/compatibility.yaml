@@ -32,6 +32,10 @@ operatingSystems:
             command: "git"
             description: "Git version control system"
             install_hint: "sudo apt-get install git"
+          - name: "jq"
+            command: "jq"
+            description: "JSON processor required to apply dotfiles and run agent hooks"
+            install_hint: "sudo apt-get install jq"
       debian:
         supported: true
         version_constraint: ">= 10"
@@ -57,6 +61,10 @@ operatingSystems:
             command: "git"
             description: "Git version control system"
             install_hint: "sudo apt-get install git"
+          - name: "jq"
+            command: "jq"
+            description: "JSON processor required to apply dotfiles and run agent hooks"
+            install_hint: "sudo apt-get install jq"
       fedora:
         supported: true
         version_constraint: ">= 35"
@@ -84,6 +92,10 @@ operatingSystems:
             command: "git"
             description: "Git version control system"
             install_hint: "sudo dnf install git"
+          - name: "jq"
+            command: "jq"
+            description: "JSON processor required to apply dotfiles and run agent hooks"
+            install_hint: "sudo dnf install jq"
       centos:
         supported: true
         notes: "CentOS 6 or newer"
@@ -111,6 +123,10 @@ operatingSystems:
             command: "git"
             description: "Git version control system"
             install_hint: "sudo dnf install git"
+          - name: "jq"
+            command: "jq"
+            description: "JSON processor required to apply dotfiles and run agent hooks"
+            install_hint: "sudo dnf install jq"
       redhat:
         supported: true
         notes: "Red Hat Enterprise Linux 6 or newer"
@@ -138,6 +154,10 @@ operatingSystems:
             command: "git"
             description: "Git version control system"
             install_hint: "sudo dnf install git"
+          - name: "jq"
+            command: "jq"
+            description: "JSON processor required to apply dotfiles and run agent hooks"
+            install_hint: "sudo dnf install jq"
       rocky:
         supported: false
         notes: "No current plans for support"
@@ -164,6 +184,10 @@ operatingSystems:
         command: "git"
         description: "Git version control system (included with Command Line Tools)"
         install_hint: "Install Command Line Tools: xcode-select --install"
+      - name: "jq"
+        command: "jq"
+        description: "JSON processor required to apply dotfiles and run agent hooks"
+        install_hint: "brew install jq"
   windows:
     supported: false
     notes: "Windows is not supported"

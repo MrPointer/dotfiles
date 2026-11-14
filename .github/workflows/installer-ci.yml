@@ -224,6 +224,8 @@ jobs:
           exit $exit_code
 
       - name: Test Non-Interactive Installation
+        env:
+          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
         run: |
           echo "Testing installer in non-interactive mode..."
 
@@ -277,6 +279,8 @@ jobs:
           fi
 
       - name: Test Interactive Installer
+        env:
+          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
         run: |
           echo "Testing installer in interactive mode with expect automation..."
 

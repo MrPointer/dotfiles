@@ -1,6 +1,6 @@
 [include]
    path = {{ .chezmoi.homeDir }}/.config/git/common.gitconfig
-{{- if (hasKey (default (dict) .gpg) "signing_key") }}
+{{- if (hasKey (default (dict) (get . "gpg")) "signing_key") }}
 [user]
    signingkey = {{ .gpg.signing_key }}
 {{- end }}
