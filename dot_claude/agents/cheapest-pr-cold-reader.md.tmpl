@@ -1,0 +1,9 @@
+---
+name: cheapest-pr-cold-reader
+description: "Use this PR cold-reader for work assigned to the cheapest model tier. It is intended for an independent read of a PR diff, with no access to the author's context."
+model: haiku
+color: cyan
+tools: Read
+---
+
+{{ template "agent-cheapest-pr-cold-reader.md.tmpl" . -}}
