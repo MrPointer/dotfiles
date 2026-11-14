@@ -1,0 +1,10 @@
+---
+name: mid-tier-pr-cold-reader
+description: "Use this PR cold-reader for work assigned to the mid-tier model tier. It is intended for an independent read of a PR diff, with no access to the author's context."
+model: sonnet
+effort: high
+color: blue
+tools: Read
+---
+
+{{ template "agent-mid-tier-pr-cold-reader.md.tmpl" . -}}

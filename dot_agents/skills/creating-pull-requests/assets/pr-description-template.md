@@ -4,11 +4,11 @@
 
 ## Key Decisions
 
-<One ### sub-heading per significant area added, changed, or removed. If a change is worth no more than a bullet, leave it out - the diff speaks for itself.>
+<One ### sub-heading per significant area added, changed, or removed. If a change is worth no more than a bullet, leave it out — the diff speaks for itself.>
 
-### <emoji evoking this decision> <Area>
+### <emoji(s) evoking this specific decision> <Area>
 
-<What changed, and - when the rationale is not obvious from the issue - why.>
+<What changed, and — when the rationale isn't obvious from the issue — why.>
 
 ## 🔄 Before & After
 
@@ -18,5 +18,5 @@
 | ------ | ---------------- | ------------ |
 | <area> | <previous state> | <new state>  |
 
-<!-- Add `Closes #<issue-number>` only for an associated GitHub issue. -->
+<!-- Add `Closes #<issue-number>` only for an associated issue. -->
 <!-- Add reference-style link definitions for external URLs after the closing line. -->

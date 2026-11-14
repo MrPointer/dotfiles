@@ -1,0 +1,17 @@
+---
+name: cheapest-pr-cold-reader
+description: Use this PR cold-reader for work assigned to the cheapest model tier. It is intended for an independent read of a PR diff, with no access to the author's context.
+mode: subagent
+model: openai/gpt-5.6-luna
+permission:
+  edit: deny
+  bash: deny
+  read: allow
+  webfetch: deny
+  task:
+    "*": deny
+  skill:
+    "*": deny
+---
+
+{{ template "agent-cheapest-pr-cold-reader.md.tmpl" . -}}
