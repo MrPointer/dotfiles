@@ -2,8 +2,7 @@
 name: most-capable-go-worker
 description: "Use this project-local worker for Go implementation tasks assigned to the most capable model tier. It is intended for complex Go work requiring broad reasoning or high correctness confidence."
 mode: subagent
-model: openai/gpt-5.5
-reasoningEffort: xhigh
+model: openai/gpt-6.1-sol#medium
 permission:
   edit: allow
   bash: allow

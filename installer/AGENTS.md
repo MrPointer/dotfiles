@@ -40,6 +40,7 @@ installer/
 │   └── httpclient/          # HTTP client interface
 ├── cli/                       # Interactive UI components
 ├── internal/config/           # Embedded YAML configs
+├── tests/privilege/           # Shared real-sudo integration test scripts
 ├── Taskfile.yml              # Task runner commands
 └── .goreleaser.yaml          # Release configuration
 ```
@@ -91,11 +92,16 @@ OS-level operations (user management, environment, program queries, permissions)
 
 ### Privilege Escalator (utils/privilege/)
 
-Smart privilege escalation (prefers sudo, falls back to doas):
+Privilege escalation selects commands without probing authentication: root runs
+the command directly; a non-root user uses installed `sudo` in preference to
+installed `doas`; and a non-root user with neither tool receives an actionable
+error. Authentication occurs when the selected command runs. In particular,
+`sudo` may prompt through the terminal; the installer does not read or store the
+password.
 
 ```go
-escalatedCmd, escalatedArgs, err := escalator.EscalateCommand("apt-get", []string{"install", "git"})
-isRoot := escalator.IsRunningAsRoot()
+escalated, err := escalator.EscalateCommand("apt-get", []string{"install", "git"})
+isRoot, err := escalator.IsRunningAsRoot()
 ```
 
 ## Development Commands
@@ -110,6 +116,32 @@ isRoot := escalator.IsRunningAsRoot()
 | `task cov` | Generate coverage report |
 | `task bench` | Run benchmarks |
 | `task sloc` | Print lines of code stats |
+| `task test:privilege:build` | Cross-compile the Linux privilege test binary |
+| `task test:privilege` | Run the real-sudo privilege checks on disposable Ubuntu or Debian |
+
+## Privilege Integration Tests
+
+The privilege integration test checks real authentication during APT setup
+and shell setup, each with a cold sudo cache and either the correct password or
+a rejected password. It uses the default progress display.
+
+The shared test logic is in `tests/privilege/`. It creates a separate
+password-required user and a temporary root-owned workspace, drives the real
+password prompt through a terminal, and records calls to real `apt`, `tee`, and
+`usermod`. The checks use an offline local package and per-command APT source
+options, so they do not change the machine's configured APT sources. The shell
+check uses a unique temporary shell symlink and does not remove system shells.
+
+Successful authentication must produce the protected root-owned effect. Before
+authentication, and after a rejected password, the checks require no effects and
+no unprivileged retry. The runner resets state between checks and cleans up the
+user, package, sudo rules, temporary workspace, and `/etc/shells`.
+
+Run `task test:privilege` only on a disposable Ubuntu or Debian machine. The
+runner checks the distribution before it changes state, and it requires
+`INSTALLER_PRIVILEGE_TEST_DISPOSABLE=1`; do not run it on a personal Linux
+machine. GitHub Actions runs it directly on an `ubuntu-latest` runner without
+Docker.
 
 ## Adding Features
 

@@ -34,6 +34,30 @@ tasks:
     cmds:
       - go test -race ./... {{ .CLI_ARGS }}
 
+  test:privilege:build:
+    desc: Compile the installer privilege caller test for Linux
+    vars:
+      TARGET_ARCH: '{{default .ARCH .PRIVILEGE_TEST_ARCH}}'
+      OUTPUT: '{{default "bin/privilege.test" .OUTPUT}}'
+    env:
+      GOOS: linux
+      GOARCH: '{{.TARGET_ARCH}}'
+      CGO_ENABLED: '0'
+    cmds:
+      - mkdir -p bin
+      - go test -c -o '{{.OUTPUT}}' ./cmd
+
+  test:privilege:
+    desc: Run real-authentication checks (disposable Ubuntu/Debian only)
+    preconditions:
+      - sh: test "$(uname -s)" = Linux
+        msg: Run task privilege:test from installer/docker/ for local testing on macOS
+      - sh: test "${INSTALLER_PRIVILEGE_TEST_DISPOSABLE:-}" = 1
+        msg: Set INSTALLER_PRIVILEGE_TEST_DISPOSABLE=1 only on a disposable Linux machine
+    cmds:
+      - task: test:privilege:build
+      - sudo env INSTALLER_PRIVILEGE_TEST_DISPOSABLE=1 bash tests/privilege/run.sh bin/privilege.test
+
   build:
     desc: Compile the project binary
     sources:

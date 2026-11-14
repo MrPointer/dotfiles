@@ -103,7 +103,8 @@ See the individual process docs for detailed failure scenarios and handling.
 ## Dependencies
 
 - Internet access (for Homebrew installation, chezmoi installation, dotfiles repo clone)
-- Sufficient privileges for package installation and shell changing (sudo)
+- Root access or installed and configured `sudo`/`doas` for package installation and shell changing
+- A controlling terminal when `sudo` requires authentication
 - Git (listed as a prerequisite, installed automatically if missing)
 
 [compatibility-yaml]: ../../internal/config/compatibility.yaml

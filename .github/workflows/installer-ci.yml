@@ -123,6 +123,31 @@ jobs:
         run: go test -race -v ./...
         working-directory: installer
 
+  privilege-test:
+    name: Installer Privilege Regression
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: installer/go.mod
+      - uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ github.token }}
+      - name: Install privilege test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends sudo expect passwd util-linux
+      - name: Test installer privileges on the disposable Ubuntu runner
+        run: task test:privilege
+        working-directory: installer
+        env:
+          INSTALLER_PRIVILEGE_TEST_DISPOSABLE: '1'
+
   e2e-test:
     name: E2E Tests
     needs: build
@@ -385,7 +410,7 @@ jobs:
   ci-status:
     name: Installer CI Status
     if: always()
-    needs: [changes, build, test, e2e-test]
+    needs: [changes, build, test, privilege-test, e2e-test]
     runs-on: ubuntu-latest
     steps:
       - name: Check job results
@@ -393,11 +418,14 @@ jobs:
           echo "changes: ${{ needs.changes.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "test: ${{ needs.test.result }}"
+          echo "privilege-test: ${{ needs.privilege-test.result }}"
           echo "e2e-test: ${{ needs.e2e-test.result }}"
 
           if [[ "${{ needs.changes.result }}" == "failure" || \
                 "${{ needs.build.result }}" == "failure" || \
                 "${{ needs.test.result }}" == "failure" || \
+                "${{ needs.privilege-test.result }}" == "failure" || \
+                "${{ needs.privilege-test.result }}" == "cancelled" || \
                 "${{ needs.e2e-test.result }}" == "failure" ]]; then
             echo "One or more jobs failed"
             exit 1

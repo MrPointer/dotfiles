@@ -13,7 +13,7 @@ Called during the [installation process][installation] after prerequisites are s
 - **Shell resolver**: Determines the expected shell binary path based on the source strategy
 - **Package manager**: Installs the shell if missing (brew, apt, or dnf)
 - **Shell changer**: Registers the shell in `/etc/shells` and changes the user's default via `usermod` or `dscl`
-- **Privilege escalator**: Provides sudo/doas for system modifications
+- **Privilege escalator**: Runs system modifications directly as root or selects installed `sudo` before `doas` for a non-root user
 
 ## Diagram
 
@@ -31,8 +31,8 @@ flowchart TD
     F -- No --> G
     F1 --> G{Shell in<br>/etc/shells?}
     G -- Yes --> H
-    G -- No --> G1["Append to /etc/shells (sudo)"]
-    G1 --> H["Set default shell (sudo)"]
+    G -- No --> G1["Append to /etc/shells (privileged)"]
+    G1 --> H["Set default shell (privileged)"]
     H --> Z2([Shell setup complete])
 
     style Z fill:#36a,stroke:#248,color:#fff
@@ -58,10 +58,15 @@ flowchart TD
    - **macOS**: `dscl . -read /Users/{username} UserShell`
    - **Linux**: Parse field 7 of the user's `/etc/passwd` entry
    - If already set to the target path, skip the remaining steps
-5. **Ensure shell in `/etc/shells`** — Read `/etc/shells` and check if the target path is listed. If not, append it using `sudo tee -a /etc/shells`.
+5. **Ensure shell in `/etc/shells`** — Read `/etc/shells` and check if the target path is listed. If not, append it with privileged `tee -a /etc/shells`.
 6. **Set as default** — Change the user's login shell:
-   - **macOS**: `sudo dscl . -create /Users/{username} UserShell {path}`
-   - **Linux**: `sudo usermod -s {path} {username}`
+   - **macOS**: Run `dscl . -create /Users/{username} UserShell {path}` with the selected privilege strategy
+   - **Linux**: Run `usermod -s {path} {username}` with the selected privilege strategy
+
+For both privileged steps, root runs the command directly. A non-root user uses
+installed `sudo` in preference to installed `doas`. If `sudo` needs
+authentication, it prompts through the terminal when the command runs; the
+installer does not collect or store the password.
 
 Result: The target shell is installed and set as the user's default login shell.
 
@@ -90,7 +95,7 @@ Result: The target shell is installed and set as the user's default login shell.
 
 #### Cannot modify `/etc/shells`
 
-- **Trigger**: Privilege escalation fails (no sudo access, user cancels sudo prompt)
+- **Trigger**: Privilege escalation is unavailable or authorization fails (neither tool is installed, access is rejected, or the terminal needed by `sudo` is unavailable)
 - **At step**: 5
 - **Handling**: Error propagated, installer exits
 - **User impact**: Must manually add the shell path to `/etc/shells`
@@ -111,7 +116,8 @@ Result: The target shell is installed and set as the user's default login shell.
 ## Dependencies
 
 - Package manager (brew, apt, or dnf) for shell installation
-- `sudo`/`doas` for modifying `/etc/shells` and changing the default shell
+- Root access or installed and configured `sudo`/`doas` for modifying `/etc/shells` and changing the default shell
+- A controlling terminal when `sudo` requires authentication
 - `dscl` (macOS) or `usermod` (Linux) for setting the default shell
 - `/etc/passwd` (Linux) for reading the current default shell
 

@@ -18,7 +18,7 @@ const (
 	EscalationSudo EscalationMethod = "sudo"
 	// EscalationDoas indicates using doas for privilege escalation.
 	EscalationDoas EscalationMethod = "doas"
-	// EscalationDirect indicates falling back to direct execution (may fail).
+	// EscalationDirect is the legacy unprivileged fallback, no longer returned by DefaultEscalator.
 	EscalationDirect EscalationMethod = "direct"
 )
 
@@ -37,7 +37,8 @@ type EscalationResult struct {
 // Escalator provides smart privilege escalation for system commands.
 type Escalator interface {
 	// EscalateCommand takes a base command and arguments and returns the appropriate
-	// escalated command based on the current system state and available tools.
+	// escalated command based on the current system state and installed tools.
+	// Authentication is handled when the returned command is executed.
 	EscalateCommand(baseCmd string, baseArgs []string) (EscalationResult, error)
 
 	// IsRunningAsRoot checks if the current process has root privileges.
@@ -68,16 +69,12 @@ func NewDefaultEscalator(logger logger.Logger, commander utils.Commander, progra
 // EscalateCommand implements smart privilege escalation strategy.
 // It determines the best method for privilege escalation based on:
 //
-// 1. Root containers/users: Run commands directly (no privilege escalation needed)
-// 2. Non-root with sudo: Use sudo for privilege escalation
-// 3. Non-root with doas: Use doas as alternative to sudo (OpenBSD, some Linux)
-// 4. Bare containers: Fall back to direct execution with warning
+// 1. Root containers/users: Run commands directly (no privilege escalation needed).
+// 2. Non-root with sudo installed: Use sudo for privilege escalation.
+// 3. Non-root with only doas installed: Use doas for privilege escalation.
+// 4. Non-root without either tool: Return an actionable error.
 //
-// This approach handles common scenarios like:
-// - Docker containers running as root (no sudo needed)
-// - Minimal Ubuntu containers without sudo package
-// - Systems with alternative privilege escalation tools
-// - Regular user systems with proper sudo setup
+// Tool selection does not authenticate; execution handles authentication and authorization.
 func (e *DefaultEscalator) EscalateCommand(baseCmd string, baseArgs []string) (EscalationResult, error) {
 	e.logger.Debug("Escalating command to run with privileges: %s %s", baseCmd, strings.Join(baseArgs, " "))
 
@@ -134,14 +131,7 @@ func (e *DefaultEscalator) EscalateCommand(baseCmd string, baseArgs []string) (E
 		}, nil
 	}
 
-	// Fall back to direct execution (might fail, but let's try)
-	e.logger.Warning("Running as non-root without sudo/doas - command may fail due to insufficient privileges")
-	return EscalationResult{
-		Method:          EscalationDirect,
-		Command:         baseCmd,
-		Args:            baseArgs,
-		NeedsEscalation: false,
-	}, nil
+	return EscalationResult{}, fmt.Errorf("privilege escalation required: install sudo or doas and configure access")
 }
 
 // IsRunningAsRoot checks if the current process is running as root.
@@ -168,7 +158,8 @@ func (e *DefaultEscalator) IsRunningAsRoot() (bool, error) {
 	return uid == "0", nil
 }
 
-// GetAvailableEscalationMethods returns all escalation methods available on this system.
+// GetAvailableEscalationMethods returns installed escalation tools in preference order,
+// or EscalationNone when running as root. It does not check authentication or authorization.
 func (e *DefaultEscalator) GetAvailableEscalationMethods() ([]EscalationMethod, error) {
 	methods := []EscalationMethod{}
 
@@ -190,43 +181,25 @@ func (e *DefaultEscalator) GetAvailableEscalationMethods() ([]EscalationMethod, 
 		methods = append(methods, EscalationDoas)
 	}
 
-	// Direct execution is always available as fallback
-	methods = append(methods, EscalationDirect)
+	if len(methods) == 0 {
+		return nil, fmt.Errorf("privilege escalation required: install sudo or doas and configure access")
+	}
 
 	return methods, nil
 }
 
-// isSudoAvailable checks if sudo is available and usable.
-// First checks if the sudo command exists, then tests if it can be used
-// without a password prompt using the -n (non-interactive) flag.
-// This handles cases where sudo exists but requires password authentication.
+// isSudoAvailable checks if sudo is installed, regardless of authentication state.
 func (e *DefaultEscalator) isSudoAvailable() bool {
 	e.logger.Trace("Checking if sudo is available")
 
-	// First check if sudo command exists
 	exists, err := e.programQuery.ProgramExists("sudo")
-	if err != nil || !exists {
-		return false
-	}
-
-	// Test if sudo can be used (with -n flag for non-interactive)
-	_, err = e.commander.RunCommand("sudo", []string{"-n", "true"}, utils.WithCaptureOutput())
-	return err == nil
+	return err == nil && exists
 }
 
-// isDoasAvailable checks if doas is available and usable.
-// doas is an alternative to sudo commonly found on OpenBSD and some Linux systems.
-// Like sudo, we test both existence and usability with non-interactive flag.
+// isDoasAvailable checks if doas is installed, regardless of authentication state.
 func (e *DefaultEscalator) isDoasAvailable() bool {
 	e.logger.Trace("Checking if doas is available")
 
-	// First check if doas command exists
 	exists, err := e.programQuery.ProgramExists("doas")
-	if err != nil || !exists {
-		return false
-	}
-
-	// Test if doas can be used (with -n flag for non-interactive)
-	_, err = e.commander.RunCommand("doas", []string{"-n", "true"}, utils.WithCaptureOutput())
-	return err == nil
+	return err == nil && exists
 }

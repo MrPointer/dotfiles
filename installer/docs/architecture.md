@@ -64,7 +64,7 @@ Shared utilities that all other layers depend on:
 | `display_mode.go` | [Display mode][domain-display-modes] enum and behavior |
 | `logger/` | Logging with hierarchical progress tracking (spinners, timing, nesting) |
 | `osmanager/` | OS-level operations — user management, `/etc/shells`, `/etc/passwd`, environment |
-| `privilege/` | Privilege escalation — detects and uses `sudo` or `doas` |
+| `privilege/` | Privilege escalation — runs directly as root, otherwise selects installed `sudo` before `doas` |
 | `httpclient/` | HTTP client interface |
 | `files/` | File utility helpers |
 | `collections/` | Generic collection utilities |
@@ -111,6 +111,7 @@ Package managers are the clearest example: `brew`, `apt`, and `dnf` all implemen
 | Global state in cmd, not lib | `globalPackageManager`, `globalSysInfo`, etc. in `cmd/install.go` | Keeps `lib` packages stateless and testable. The orchestration complexity lives in one place (the install command) rather than scattered across packages. |
 | Embedded YAML configs | `go:embed` in `internal/config/` | Single binary distribution. No config files to ship or lose. Overridable via flags for testing and customization. |
 | Mockery for mock generation | `.mockery.yml` config, generated `*_mock.go` files | Consistent mock generation from interface definitions. Mocks stay in sync with interfaces automatically. |
+| Select escalation by installed tool | Root runs directly; non-root prefers installed `sudo`, then installed `doas` | Authentication state is not tool availability. The selected tool authenticates when the privileged command executes, so password-required `sudo` remains usable. |
 
 ## Diagram
 
@@ -176,7 +177,7 @@ flowchart TD
 - **Single binary**: The installer must be distributable as a single binary with no external config files. This drives the `go:embed` pattern for YAML configs.
 - **Cross-platform**: Must build for Linux (amd64, arm64) and macOS (amd64, arm64). Platform-specific logic lives in `lib` packages and `utils/osmanager`, not in `cmd`.
 - **No daemon**: The installer runs once and exits. No persistent state between runs (except what it writes to the filesystem). This means every run is a fresh start — no state recovery or resumption.
-- **Privilege boundaries**: The installer itself runs as a regular user. Privileged operations (package installation, shell registration) use explicit privilege escalation via `sudo`/`doas`. The escalator detects which tool is available.
+- **Privilege boundaries**: A root process runs privileged commands directly. For a non-root process, the escalator prefers installed `sudo`, then installed `doas`; if neither is installed, it returns an error that tells the user to install and configure one. Selection checks installation only, not cached authentication or authorization. The chosen tool authenticates when the command executes; `sudo` can prompt through its controlling terminal, and the installer neither requests nor stores the password.
 
 [installation]: processes/installation.md
 [domain-display-modes]: domain.md#display-mode

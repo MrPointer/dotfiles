@@ -1,6 +1,7 @@
 package osmanager_test
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"testing"
@@ -11,6 +12,70 @@ import (
 	"github.com/MrPointer/dotfiles/installer/utils/privilege"
 	"github.com/stretchr/testify/require"
 )
+
+func Test_ShellChangesPropagatePrivilegeFailuresWithoutRetry(t *testing.T) {
+	tests := []struct {
+		name string
+		run  func(*osmanager.UnixOsManager) error
+		args []string
+	}{
+		{
+			name: "register shell",
+			run: func(manager *osmanager.UnixOsManager) error {
+				return manager.EnsureShellInEtcShells("/bin/zsh")
+			},
+			args: []string{"tee", "-a", "/etc/shells"},
+		},
+		{
+			name: "set shell",
+			run: func(manager *osmanager.UnixOsManager) error {
+				return manager.SetUserShell("alice", "/bin/zsh")
+			},
+			args: []string{"usermod", "-s", "/bin/zsh", "alice"},
+		},
+	}
+	if runtime.GOOS == "darwin" {
+		tests[1].args = []string{"dscl", ".", "-create", "/Users/alice", "UserShell", "/bin/zsh"}
+	}
+	for _, tt := range tests {
+		for _, hasTools := range []bool{false, true} {
+			t.Run(tt.name+"/tools="+fmt.Sprint(hasTools), func(t *testing.T) {
+				commandErr := errors.New("sudo authentication or execution failed")
+				var executed [][]string
+				commander := &utils.MoqCommander{
+					RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+						if name == "id" {
+							return &utils.Result{Stdout: []byte("1000")}, nil
+						}
+						executed = append(executed, append([]string{name}, args...))
+						if name == "sudo" || name == "doas" {
+							return &utils.Result{ExitCode: 1}, commandErr
+						}
+						return &utils.Result{}, nil
+					},
+				}
+				query := &utils.MoqProgramQuery{ProgramExistsFunc: func(name string) (bool, error) {
+					return name == "id" || hasTools && (name == "sudo" || name == "doas"), nil
+				}}
+				fileSystem := &utils.MoqFileSystem{ReadFileContentsFunc: func(path string) ([]byte, error) {
+					return []byte("/bin/sh\n"), nil
+				}}
+				escalator := privilege.NewDefaultEscalator(logger.NoopLogger{}, commander, query)
+				manager := osmanager.NewUnixOsManager(logger.NoopLogger{}, commander, escalator, fileSystem)
+
+				err := tt.run(manager)
+				if hasTools {
+					require.ErrorIs(t, err, commandErr)
+					require.Equal(t, [][]string{append([]string{"sudo"}, tt.args...)}, executed)
+				} else {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), "install sudo or doas")
+					require.Empty(t, executed)
+				}
+			})
+		}
+	}
+}
 
 func Test_UnixOsManager_SetUserShell_UsesEscalatorCommand(t *testing.T) {
 	mockCommander := &utils.MoqCommander{

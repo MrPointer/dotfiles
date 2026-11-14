@@ -14,6 +14,16 @@ tasks:
     cmds:
       - task --list
 
+  privilege:test:
+    desc: Run privilege checks locally using the installer privilege test image
+    dir: ..
+    preconditions:
+      - sh: command -v docker
+        msg: Docker is required for the local installer privilege test image
+    cmds:
+      - task test:privilege:build
+      - bash docker/privilege/run.sh
+
   check:
     desc: Check if Docker and Docker Compose are available
     cmds:

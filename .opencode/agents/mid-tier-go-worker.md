@@ -2,8 +2,7 @@
 name: mid-tier-go-worker
 description: "Use this project-local worker for Go implementation tasks assigned to the mid-tier model. It is intended for Go changes with moderate integration, edge cases, or coordination risk."
 mode: subagent
-model: openai/gpt-5.5
-reasoningEffort: medium
+model: openai/gpt-6.1-terra#medium
 permission:
   edit: allow
   bash: allow

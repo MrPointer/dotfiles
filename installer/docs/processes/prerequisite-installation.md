@@ -13,7 +13,7 @@ The [compatibility check][compat-check] returns one or more missing prerequisite
 - **User**: Selects which prerequisites to install (interactive mode only)
 - **Package resolver**: Translates abstract keys to concrete package names (see [package resolution][pkg-resolution])
 - **Package manager**: Installs the resolved packages (apt, dnf, or brew)
-- **Privilege escalator**: Provides sudo/doas for package installation on Linux
+- **Privilege escalator**: Runs package-manager commands directly as root or selects installed `sudo` before `doas` for a non-root user
 
 ## Diagram
 
@@ -62,6 +62,8 @@ flowchart TD
 5. **Resolve and install each prerequisite** — For each selected prerequisite:
    - Resolve the abstract key to a concrete package name and type via the [package resolution process][pkg-resolution]
    - Install via the package manager (handles regular packages, groups, and patterns)
+   - On Linux, run privileged package-manager commands directly as root; otherwise prefer installed `sudo`, then installed `doas`
+   - If `sudo` needs authentication, `sudo` obtains it from the terminal when the package-manager command runs. The installer does not collect or store the password.
 6. **Trigger re-check** — Return success to the caller, which re-runs compatibility checking to verify all prerequisites are now present
 
 Result: Missing prerequisites installed. The caller re-checks compatibility to confirm.
@@ -91,10 +93,17 @@ Result: Missing prerequisites installed. The caller re-checks compatibility to c
 
 #### Package installation fails
 
-- **Trigger**: Package manager returns an error (network issue, permission denied, package not found)
+- **Trigger**: Package manager returns an error (network issue, rejected or unavailable authorization, package not found)
 - **At step**: 5
 - **Handling**: Logs the failure and returns
 - **User impact**: Must resolve the package manager issue and retry
+
+#### No privilege escalation tool is installed
+
+- **Trigger**: A non-root Linux user reaches package installation with neither `sudo` nor `doas` installed
+- **At step**: 5
+- **Handling**: Returns an error instructing the user to install `sudo` or `doas` and configure access; the package manager is not retried without privileges
+- **User impact**: Must install and configure one of the supported tools, or run in an appropriate root environment
 
 #### Re-check still fails
 
@@ -112,8 +121,9 @@ Result: Missing prerequisites installed. The caller re-checks compatibility to c
 
 - A supported package manager (apt, dnf, or brew)
 - [`packagemap.yaml`][packagemap-yaml] for name resolution
-- Privilege escalation (sudo/doas) for apt/dnf installations
+- Root access or installed and configured `sudo`/`doas` for apt/dnf installations
 - Terminal/TTY for interactive prerequisite selection
+- A controlling terminal when `sudo` requires authentication
 
 [compat-check]: compatibility-checking.md
 [installation]: installation.md
