@@ -51,6 +51,10 @@
 # Expect scripts
 !test-interactive-gpg.exp
 
+# Shared privilege integration checks
+!tests/privilege/*.sh
+!tests/privilege/*.exp
+
 # Agent rules
 !AGENTS.md
 !CLAUDE.md

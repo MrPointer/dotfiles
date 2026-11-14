@@ -112,7 +112,7 @@ func Test_EscalateCommand_NonRootWithDoas_ReturnsDoasCommand(t *testing.T) {
 	require.True(t, result.NeedsEscalation)
 }
 
-func Test_EscalateCommand_NonRootWithoutPrivilegeEscalation_ReturnsDirectCommand(t *testing.T) {
+func Test_EscalateCommand_NonRootWithoutPrivilegeEscalation_ReturnsActionableError(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "id" && len(args) == 1 && args[0] == "-u" {
@@ -136,11 +136,11 @@ func Test_EscalateCommand_NonRootWithoutPrivilegeEscalation_ReturnsDirectCommand
 
 	result, err := escalator.EscalateCommand("apt", []string{"install", "git"})
 
-	require.NoError(t, err)
-	require.Equal(t, privilege.EscalationDirect, result.Method)
-	require.Equal(t, "apt", result.Command)
-	require.Equal(t, []string{"install", "git"}, result.Args)
-	require.False(t, result.NeedsEscalation)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "sudo")
+	require.Contains(t, err.Error(), "doas")
+	require.Contains(t, err.Error(), "install")
+	require.Equal(t, privilege.EscalationResult{}, result)
 }
 
 func Test_EscalateCommand_EmptyCommand_ReturnsError(t *testing.T) {
@@ -256,7 +256,7 @@ func Test_GetAvailableEscalationMethods_AsRoot_ReturnsNoneOnly(t *testing.T) {
 	require.Equal(t, []privilege.EscalationMethod{privilege.EscalationNone}, methods)
 }
 
-func Test_GetAvailableEscalationMethods_AsNonRootWithSudo_ReturnsSudoAndDirect(t *testing.T) {
+func Test_GetAvailableEscalationMethods_AsNonRootWithSudo_ReturnsSudoOnly(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "id" && len(args) == 1 && args[0] == "-u" {
@@ -277,9 +277,7 @@ func Test_GetAvailableEscalationMethods_AsNonRootWithSudo_ReturnsSudoAndDirect(t
 	methods, err := escalator.GetAvailableEscalationMethods()
 
 	require.NoError(t, err)
-	require.Contains(t, methods, privilege.EscalationSudo)
-	require.Contains(t, methods, privilege.EscalationDirect)
-	require.NotContains(t, methods, privilege.EscalationNone)
+	require.Equal(t, []privilege.EscalationMethod{privilege.EscalationSudo}, methods)
 }
 
 func Test_GetAvailableEscalationMethods_AsNonRootWithBothSudoAndDoas_ReturnsAll(t *testing.T) {
@@ -303,13 +301,10 @@ func Test_GetAvailableEscalationMethods_AsNonRootWithBothSudoAndDoas_ReturnsAll(
 	methods, err := escalator.GetAvailableEscalationMethods()
 
 	require.NoError(t, err)
-	require.Contains(t, methods, privilege.EscalationSudo)
-	require.Contains(t, methods, privilege.EscalationDoas)
-	require.Contains(t, methods, privilege.EscalationDirect)
-	require.Len(t, methods, 3)
+	require.Equal(t, []privilege.EscalationMethod{privilege.EscalationSudo, privilege.EscalationDoas}, methods)
 }
 
-func Test_GetAvailableEscalationMethods_AsNonRootWithoutPrivilegeEscalation_ReturnsDirectOnly(t *testing.T) {
+func Test_GetAvailableEscalationMethods_AsNonRootWithoutPrivilegeEscalation_ReturnsActionableError(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
 			if name == "id" && len(args) == 1 && args[0] == "-u" {
@@ -326,8 +321,74 @@ func Test_GetAvailableEscalationMethods_AsNonRootWithoutPrivilegeEscalation_Retu
 
 	methods, err := escalator.GetAvailableEscalationMethods()
 
-	require.NoError(t, err)
-	require.Equal(t, []privilege.EscalationMethod{privilege.EscalationDirect}, methods)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "sudo")
+	require.Contains(t, err.Error(), "doas")
+	require.Contains(t, err.Error(), "install")
+	require.Empty(t, methods)
+}
+
+func Test_EscalationSelectsInstalledToolsWithoutCachedAuthentication(t *testing.T) {
+	tests := []struct {
+		name    string
+		sudo    bool
+		doas    bool
+		method  privilege.EscalationMethod
+		methods []privilege.EscalationMethod
+	}{
+		{
+			name:    "password required sudo",
+			sudo:    true,
+			method:  privilege.EscalationSudo,
+			methods: []privilege.EscalationMethod{privilege.EscalationSudo},
+		},
+		{
+			name:    "password required doas",
+			doas:    true,
+			method:  privilege.EscalationDoas,
+			methods: []privilege.EscalationMethod{privilege.EscalationDoas},
+		},
+		{
+			name:    "sudo preferred over doas",
+			sudo:    true,
+			doas:    true,
+			method:  privilege.EscalationSudo,
+			methods: []privilege.EscalationMethod{privilege.EscalationSudo, privilege.EscalationDoas},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			commander := &utils.MoqCommander{
+				RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+					if name == "id" {
+						require.Equal(t, []string{"-u"}, args)
+						return &utils.Result{Stdout: []byte("1000\n")}, nil
+					}
+					return &utils.Result{ExitCode: 1}, fmt.Errorf("%s: authentication required", name)
+				},
+			}
+			query := &utils.MoqProgramQuery{ProgramExistsFunc: func(name string) (bool, error) {
+				return name == "id" || name == "sudo" && tt.sudo || name == "doas" && tt.doas, nil
+			}}
+			escalator := privilege.NewDefaultEscalator(logger.NoopLogger{}, commander, query)
+
+			t.Run("command", func(t *testing.T) {
+				result, err := escalator.EscalateCommand("apt", []string{"install", "-y", "git"})
+				require.NoError(t, err)
+				require.Equal(t, privilege.EscalationResult{
+					Method:          tt.method,
+					Command:         string(tt.method),
+					Args:            []string{"apt", "install", "-y", "git"},
+					NeedsEscalation: true,
+				}, result)
+			})
+			t.Run("available methods", func(t *testing.T) {
+				methods, err := escalator.GetAvailableEscalationMethods()
+				require.NoError(t, err)
+				require.Equal(t, tt.methods, methods)
+			})
+		})
+	}
 }
 
 func Test_EscalateCommand_HandlesRootCheckFailure_GracefullyFallsBackToNonRoot(t *testing.T) {

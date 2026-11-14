@@ -1,6 +1,7 @@
 package apt_test
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -151,52 +152,88 @@ func Test_InstallPackage_CallsAptInstallCommand_WithSudo(t *testing.T) {
 	require.NotNil(t, installCall, "sudo apt install call not found")
 }
 
-func Test_InstallPackage_CallsAptInstallCommand_WithoutPrivilegeEscalation(t *testing.T) {
+func Test_AptInstallRejectsMissingEscalationTools(t *testing.T) {
 	mockCommander := &utils.MoqCommander{
 		RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+			if name == "id" {
+				return &utils.Result{Stdout: []byte("1000")}, nil
+			}
 			return &utils.Result{}, nil
 		},
 	}
-	mockProgramQuery := &osmanager.MoqProgramQuery{}
-	mockEscalator := &privilege.MoqEscalator{
-		EscalateCommandFunc: func(baseCmd string, baseArgs []string) (privilege.EscalationResult, error) {
-			return privilege.EscalationResult{
-				Method:          privilege.EscalationDirect,
-				Command:         baseCmd,
-				Args:            baseArgs,
-				NeedsEscalation: false,
-			}, nil
-		},
-	}
+	mockProgramQuery := &osmanager.MoqProgramQuery{ProgramExistsFunc: func(name string) (bool, error) {
+		return name == "id", nil
+	}}
+	escalator := privilege.NewDefaultEscalator(
+		logger.NoopLogger{},
+		mockCommander,
+		&utils.MoqProgramQuery{ProgramExistsFunc: mockProgramQuery.ProgramExists},
+	)
 
-	aptManager := apt.NewAptPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator, utils.DisplayModeProgress)
+	aptManager := apt.NewAptPackageManager(
+		logger.NoopLogger{}, mockCommander, mockProgramQuery, escalator, utils.DisplayModeProgress,
+	)
 	packageInfo := pkgmanager.NewRequestedPackageInfo("git", nil)
 
 	err := aptManager.InstallPackage(packageInfo)
 
-	require.NoError(t, err)
-
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "privilege escalation for apt update")
+	require.Contains(t, err.Error(), "install sudo or doas")
 	calls := mockCommander.RunCommandCalls()
-	require.GreaterOrEqual(t, len(calls), 2)
+	require.Len(t, calls, 1)
+	require.Equal(t, "id", calls[0].Name)
+	require.Equal(t, []string{"-u"}, calls[0].Args)
+}
 
-	// Find direct apt calls (no privilege escalation)
-	var updateCall, installCall *struct {
-		Name string
-		Args []string
-		Opts []utils.Option
+func Test_AptPropagatesSudoFailureWithoutRetry(t *testing.T) {
+	for _, operation := range []string{"update", "install", "remove"} {
+		t.Run(operation, func(t *testing.T) {
+			commandErr := errors.New("sudo authentication or execution failed")
+			var executed [][]string
+			commander := &utils.MoqCommander{
+				RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+					if name == "id" {
+						return &utils.Result{Stdout: []byte("1000")}, nil
+					}
+					executed = append(executed, append([]string{name}, args...))
+					if name == "sudo" || name == "doas" {
+						if len(args) > 1 && args[0] == "apt" && args[1] != operation {
+							return &utils.Result{}, nil
+						}
+						return &utils.Result{ExitCode: 1}, commandErr
+					}
+					return &utils.Result{}, nil
+				},
+			}
+			query := &osmanager.MoqProgramQuery{ProgramExistsFunc: func(name string) (bool, error) {
+				return name == "id" || name == "sudo" || name == "doas", nil
+			}}
+			escalator := privilege.NewDefaultEscalator(
+				logger.NoopLogger{},
+				commander,
+				&utils.MoqProgramQuery{ProgramExistsFunc: query.ProgramExists},
+			)
+			manager := apt.NewAptPackageManager(
+				logger.NoopLogger{}, commander, query, escalator, utils.DisplayModeProgress,
+			)
+
+			var err error
+			var expected [][]string
+			if operation == "remove" {
+				err = manager.UninstallPackage(pkgmanager.NewPackageInfo("git", ""))
+				expected = [][]string{{"sudo", "apt", "remove", "-y", "git"}}
+			} else {
+				err = manager.InstallPackage(pkgmanager.NewRequestedPackageInfo("git", nil))
+				expected = [][]string{{"sudo", "apt", "update"}}
+				if operation == "install" {
+					expected = append(expected, []string{"sudo", "apt", "install", "-y", "git"})
+				}
+			}
+			require.ErrorIs(t, err, commandErr)
+			require.Equal(t, expected, executed)
+		})
 	}
-
-	for _, call := range calls {
-		if call.Name == "apt" && len(call.Args) >= 1 && call.Args[0] == "update" {
-			updateCall = &call
-		}
-		if call.Name == "apt" && len(call.Args) >= 3 && call.Args[0] == "install" && call.Args[1] == "-y" {
-			installCall = &call
-		}
-	}
-
-	require.NotNil(t, updateCall, "apt update call not found")
-	require.NotNil(t, installCall, "apt install call not found")
 }
 
 func Test_IsPackageInstalled_ChecksInstalledPackages(t *testing.T) {

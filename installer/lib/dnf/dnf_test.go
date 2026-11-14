@@ -2,6 +2,7 @@ package dnf_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,6 +23,56 @@ func Test_DnfPackageManager_ImplementsPackageManagerInterface(t *testing.T) {
 	dnfManager := dnf.NewDnfPackageManager(logger.DefaultLogger, mockCommander, mockProgramQuery, mockEscalator, utils.DisplayModeProgress)
 
 	require.Implements(t, (*pkgmanager.PackageManager)(nil), dnfManager)
+}
+
+func Test_DnfPropagatesPrivilegeFailuresWithoutRetry(t *testing.T) {
+	for _, operation := range []string{"install", "remove"} {
+		for _, hasTools := range []bool{false, true} {
+			t.Run(operation+"/tools="+fmt.Sprint(hasTools), func(t *testing.T) {
+				commandErr := errors.New("sudo authentication or execution failed")
+				var executed [][]string
+				commander := &utils.MoqCommander{
+					RunCommandFunc: func(name string, args []string, opts ...utils.Option) (*utils.Result, error) {
+						if name == "id" {
+							return &utils.Result{Stdout: []byte("1000")}, nil
+						}
+						executed = append(executed, append([]string{name}, args...))
+						if name == "sudo" || name == "doas" {
+							return &utils.Result{ExitCode: 1}, commandErr
+						}
+						return &utils.Result{}, nil
+					},
+				}
+				query := &osmanager.MoqProgramQuery{ProgramExistsFunc: func(name string) (bool, error) {
+					return name == "id" || hasTools && (name == "sudo" || name == "doas"), nil
+				}}
+				escalator := privilege.NewDefaultEscalator(
+					logger.NoopLogger{},
+					commander,
+					&utils.MoqProgramQuery{ProgramExistsFunc: query.ProgramExists},
+				)
+				manager := dnf.NewDnfPackageManager(
+					logger.NoopLogger{}, commander, query, escalator, utils.DisplayModeProgress,
+				)
+
+				var err error
+				if operation == "remove" {
+					err = manager.UninstallPackage(pkgmanager.NewPackageInfo("git", ""))
+				} else {
+					err = manager.InstallPackage(pkgmanager.NewRequestedPackageInfo("git", nil))
+				}
+				if hasTools {
+					require.ErrorIs(t, err, commandErr)
+					require.Equal(t, [][]string{{"sudo", "dnf", operation, "-y", "git"}}, executed)
+				} else {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), "privilege escalation for dnf "+operation)
+					require.Contains(t, err.Error(), "install sudo or doas")
+					require.Empty(t, executed)
+				}
+			})
+		}
+	}
 }
 
 func Test_NewDnfPackageManager_ReturnsValidInstance(t *testing.T) {
