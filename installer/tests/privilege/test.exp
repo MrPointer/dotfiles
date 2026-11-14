@@ -1,0 +1,70 @@
+#!/usr/bin/expect -f
+set timeout 30
+set work $env(INSTALLER_PRIVILEGE_TEST_DIR)
+set scenario $env(INSTALLER_PRIVILEGE_TEST_SCENARIO)
+set ready 0
+set prompts 0
+set completed 0
+set failed 0
+set context 0
+
+proc fail {message} {
+    puts stderr "FAIL: $message"
+    exit 1
+}
+
+spawn /usr/sbin/runuser -u $env(INSTALLER_PRIVILEGE_TEST_USER) -- /bin/bash $work/invoke.sh
+expect {
+    "AUTH_READY" {
+        set ready 1
+        exp_continue
+    }
+    "INSTALLER_TEST_PASSWORD: " {
+        if {!$ready} { fail "unexpected password prompt during setup" }
+        incr prompts
+        if {$prompts > 1} { fail "unexpected additional password prompt" }
+        # Leave the default progress display running during the password prompt.
+        after 500
+        if {[file size $work/operations] != 0 ||
+            [file exists /usr/share/installer-privilege-test/protected] ||
+            [catch {exec cmp /etc/shells $work/shells.before}] ||
+            [catch {exec cmp /etc/passwd $work/passwd.before}]} {
+            fail "a protected operation ran before authentication"
+        }
+        if {$scenario eq "reject"} {
+            send -- "wrong-test-password\r"
+        } else {
+            send -- "privilege-test-only\r"
+        }
+        exp_continue
+    }
+    "AUTHORIZED_OPERATION_COMPLETED" {
+        set completed 1
+        exp_continue
+    }
+    -re {failed to (update package list|add shell to /etc/shells)} {
+        set context 1
+        exp_continue
+    }
+    -exact "--- FAIL:" {
+        set failed 1
+        exp_continue
+    }
+    timeout { fail "timed out waiting for authentication or caller completion" }
+    eof {}
+}
+
+set result [wait]
+if {[llength $result] != 4 || [lindex $result 2] != 0} {
+    fail "child did not exit normally: $result"
+}
+set status [lindex $result 3]
+if {!$ready || $prompts != 1} { fail "expected one real operation password prompt" }
+if {$scenario eq "reject"} {
+    if {$status != 1 || !$failed || !$context || $completed} {
+        fail "expected a contextual caller failure, got exit $status"
+    }
+} elseif {$status != 0 || !$completed || $failed} {
+    fail "expected authenticated caller success, got exit $status"
+}
+puts "PASS: $scenario prompt and exit assertions"
