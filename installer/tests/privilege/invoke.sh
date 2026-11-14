@@ -2,6 +2,7 @@
 set -euo pipefail
 
 work=${INSTALLER_PRIVILEGE_TEST_DIR:?}
+export SUDO_PROMPT='INSTALLER_TEST_PASSWORD: '
 sudo -K
 if sudo -n true; then
     echo 'Expected password-required sudo with no cached authentication' >&2

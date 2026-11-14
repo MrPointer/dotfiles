@@ -67,8 +67,7 @@ for command in apt tee usermod; do
     ln -s "$work/observe-command.sh" "$work/bin/$command"
 done
 cat > "$sudoers" <<EOF
-Defaults:$username lecture=never, passwd_tries=1, timestamp_type=global
-Defaults:$username passprompt="INSTALLER_TEST_PASSWORD: "
+Defaults:$username lecture=never, passwd_tries=1
 Defaults:$username secure_path="$work/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 $username ALL=(ALL) PASSWD: ALL
 EOF
