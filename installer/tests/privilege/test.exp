@@ -6,7 +6,7 @@ set ready 0
 set prompts 0
 set completed 0
 set failed 0
-set context 0
+set rejected 0
 
 proc fail {message} {
     puts stderr "FAIL: $message"
@@ -42,8 +42,8 @@ expect {
         set completed 1
         exp_continue
     }
-    -re {failed to (update package list|add shell to /etc/shells)} {
-        set context 1
+    "AUTHORIZATION_REJECTED" {
+        set rejected 1
         exp_continue
     }
     -exact "--- FAIL:" {
@@ -59,12 +59,15 @@ if {[llength $result] != 4 || [lindex $result 2] != 0} {
     fail "child did not exit normally: $result"
 }
 set status [lindex $result 3]
+if {$status != 0 || $failed} {
+    fail "caller assertions failed, got exit $status"
+}
 if {!$ready || $prompts != 1} { fail "expected one real operation password prompt" }
 if {$scenario eq "reject"} {
-    if {$status != 1 || !$failed || !$context || $completed} {
-        fail "expected a contextual caller failure, got exit $status"
+    if {!$rejected || $completed} {
+        fail "expected verified authorization rejection"
     }
-} elseif {$status != 0 || !$completed || $failed} {
+} elseif {!$completed || $rejected} {
     fail "expected authenticated caller success, got exit $status"
 }
 puts "PASS: $scenario prompt and exit assertions"

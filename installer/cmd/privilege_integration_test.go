@@ -56,8 +56,17 @@ func Test_InstallingSystemChanges_Should_RequireAuthorization_When_RunAsNormalUs
 		t.Fatal("unknown privilege test caller")
 	}
 
-	// Rejection cases deliberately exit nonzero; the external driver checks the
-	// failure, its context, and the absence of both effects and unprivileged retries.
+	if os.Getenv("INSTALLER_PRIVILEGE_TEST_SCENARIO") == "reject" {
+		require.Error(t, err)
+		if os.Getenv("INSTALLER_PRIVILEGE_TEST_CALLER") == "apt" {
+			require.Contains(t, err.Error(), "failed to update package list")
+		} else {
+			require.Contains(t, err.Error(), "failed to add shell to /etc/shells")
+		}
+		t.Log("AUTHORIZATION_REJECTED")
+		return
+	}
+
 	require.NoError(t, err)
 	t.Log("AUTHORIZED_OPERATION_COMPLETED")
 }
