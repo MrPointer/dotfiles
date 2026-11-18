@@ -22,14 +22,14 @@ subplans:
 reviews:
   plan_fidelity:
     report: reviews/tasks-plan-fidelity.md
-    round: null
-    status: pending
-    verdict: pending
+    round: R02
+    status: reviewed
+    verdict: passed
   executability:
     report: reviews/tasks-executability.md
-    round: null
-    status: pending
-    verdict: pending
+    round: R02
+    status: reviewed
+    verdict: passed
 authorization: pending
 ---
 
@@ -116,8 +116,8 @@ This is a human projection; frontmatter alone schedules.
 
 | Role | Report | Round | Status | Verdict |
 |---|---|---|---|---|
-| plan_fidelity | reviews/tasks-plan-fidelity.md | null | pending | pending |
-| executability | reviews/tasks-executability.md | null | pending | pending |
+| plan_fidelity | reviews/tasks-plan-fidelity.md | R02 | reviewed | passed |
+| executability | reviews/tasks-executability.md | R02 | reviewed | passed |
 
 ## Implementation Authorization
 
