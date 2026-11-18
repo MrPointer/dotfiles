@@ -30,7 +30,7 @@ reviews:
     round: R02
     status: reviewed
     verdict: passed
-authorization: pending
+authorization: approved
 ---
 
 # Execution Package: Dotfile Regression CI
@@ -121,7 +121,8 @@ This is a human projection; frontmatter alone schedules.
 
 ## Implementation Authorization
 
-Pending. Requested after both task reviews permit it.
+Approved by the human at 2026-11-18T21:53:38Z after both task reviews passed in round
+R02. Rationale: the human reviewed the package summary and replied "LGTM".
 
 ## Execution Handoff
 
