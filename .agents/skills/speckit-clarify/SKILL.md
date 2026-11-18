@@ -1,0 +1,38 @@
+---
+name: speckit-clarify
+description: Converge a Feature Definition through one-question human dialogue.
+compatibility: Requires spec-kit project structure with .specify/ directory
+metadata:
+  author: github-spec-kit
+  source: timors-agentic-workflow:commands/speckit.clarify.md
+---
+
+## Authority and Inputs
+
+Resolve the canonical feature directory from `.specify/feature.json` per
+`.specify/presets/timors-agentic-workflow/references/artifact-contracts.md` before
+any read. Read canonical `spec.md`, `.specify/presets/timors-agentic-workflow/references/artifact-contracts.md`,
+`.specify/presets/timors-agentic-workflow/references/feature-definition.md`, `.specify/presets/timors-agentic-workflow/references/clarification.md`, and
+`.specify/presets/timors-agentic-workflow/references/review-lifecycle.md`. `spec.md` is the only authority for product
+intent. Do not inspect repository reality or make technical design choices.
+
+## Procedure
+
+1. Start from Draft or Ready. Proportionally challenge the stated solution versus
+   underlying need, consequential assumptions, actors, boundaries, constraints,
+   failure conditions, and adjacent effects. Do not ask a question already settled
+   in `spec.md`.
+2. If a Ready artifact reveals a material question, first persist it, set Draft,
+   and apply the ordered invalidation before dialogue. A package lock or completion
+   refuses a material change.
+3. Each assistant turn that needs a human answer asks exactly one direct,
+   highest-impact question. Explanatory text cannot hide another question. When
+   there are viable choices, give two or three genuine alternatives, concrete
+   tradeoffs, and a reasoned recommendation; retain human decision ownership.
+4. Immediately after each answer, update all affected Feature Definition sections,
+   remove contradictions and resolved questions, record consequential decision
+   context, apply invalidation, and rescan the complete Ready predicate. Do not
+   batch unanswered questions or silently select an answer.
+5. Mark Ready only when the complete predicate holds. A pause or declined material
+   choice remains explicitly recorded and Draft. Report either the one next
+   question or the Ready handoff to `plan`.
