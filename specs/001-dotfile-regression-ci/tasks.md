@@ -51,6 +51,9 @@ happen after implement, as listed in Execution Handoff.
 Integration follows ledger order, so the active branch holds one commit per
 packet in this order. Consecutive commits form the three delivery pull requests:
 PR A = packets 01 and 02; PR B = packets 03 and 04; PR C = packets 05 and 06.
+`plan.md` assigns no pull request to the repository docs; the human placed them
+in PR C (2026-11-18), after the auto-merge workflow, so `docs/architecture.md`
+can describe automatic merge.
 
 ## Sub-Plan Ledger
 
@@ -156,11 +159,14 @@ human's confirmation immediately before they run.
 
 - **Negative and ordering evidence** after PR B merges, each from a throwaway
   draft pull request closed without merging: unguarded `sheldon` fails the bare
-  jobs; exempt-only changes pass the aggregate with matrix jobs skipped; a change
+  jobs and `Dotfile Validation Status`; exempt-only changes pass the aggregate with matrix jobs skipped; a change
   to only `dot_claude/CLAUDE.md.tmpl` runs all eight jobs with `build` skipped;
   installer E2E stays skipped in both; a broken
   `private_dot_config/sheldon/plugins.toml` entry fails the with-tools jobs. The
-  first installer pull request after PR B provides the ordering evidence.
+  first installer pull request after PR B provides the ordering evidence:
+  dotfile validation starts only after `test`, `privilege-test`, and `e2e-test`
+  succeed and uses the `build` artifact, and a deliberately failing installer
+  test skips dotfile validation and fails `Dotfile Validation Status`.
 - **Interim release rule**: after any merged pull request that changes
   `installer/**` other than `installer/docs/**` and the installer agent guides,
   the owner tags a new release.

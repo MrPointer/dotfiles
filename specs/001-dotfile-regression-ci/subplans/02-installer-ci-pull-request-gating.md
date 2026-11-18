@@ -23,7 +23,8 @@ In `.github/workflows/installer-ci.yml`, remove the `push` trigger so the
 workflow runs only on `pull_request`. Change the `Installer CI Status` aggregate
 job so that it fails when `build`, `test`, `privilege-test`, or `e2e-test` is
 canceled or failed, and still passes when they are skipped because the pull
-request has no installer changes.
+request has no installer changes. Remove the `changes` job lines that served
+only pushes.
 
 ## Baseline Context and Constraints
 
@@ -43,8 +44,10 @@ request has no installer changes.
 
 ## Scope and Primary Files
 
-- `.github/workflows/installer-ci.yml`: the `on:` block and the
-  `Installer CI Status` job only.
+- `.github/workflows/installer-ci.yml`: the `on:` block, the
+  `Installer CI Status` job, and in the `changes` job the checkout step guarded
+  by `if: github.event_name == 'push'` and the paths-filter `base` input, which
+  serve only pushes. The paths filter itself is unchanged.
 - Excluded: dotfile validation jobs, the exemption output, and
   `Dotfile Validation Status`; packet 04 adds those to this same file afterward.
 
@@ -66,10 +69,13 @@ None.
 ## Acceptance and Verification
 
 - The parsed workflow has `pull_request` as its only trigger.
+- The `changes` job has no push-only checkout step and no paths-filter `base`
+  input, and its filter output is unchanged.
 - Inspection of the `Installer CI Status` condition shows this outcome for each
   case:
+  - `changes` failed or was canceled: fail;
   - all four installer jobs succeeded: pass;
-  - all four skipped: pass;
+  - all four skipped and `changes` succeeded: pass;
   - any of `build`, `test`, `privilege-test`, `e2e-test` failed: fail;
   - any of them canceled: fail.
 - `python3 -c 'import yaml,sys; yaml.safe_load(open(sys.argv[1]))'
@@ -81,6 +87,7 @@ None.
 
 - One packet commit.
 - Handoff state for packet 04: `installer-ci.yml` has only the `pull_request`
-  trigger and the tightened `Installer CI Status`; packet 04 adds jobs to this
-  file on top of that state and must keep both changes.
+  trigger, a `changes` job without push-only lines, and the tightened
+  `Installer CI Status`; packet 04 adds jobs to this
+  file on top of that state and must keep all three changes.
 - This packet and packet 01 form delivery PR A.

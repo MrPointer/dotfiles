@@ -30,7 +30,8 @@ external diff.
 ## Baseline Context and Constraints
 
 - Accepted plan: `plan.md` R6 › Planning Handoff › Documentation impact; the
-  installer process docs are owned by packet 01, not this packet.
+  installer process docs are owned by packet 01, not this packet. The human
+  placed this packet in PR C (2026-11-18).
 - Stale sections today:
   - `docs/architecture.md` › Structure and › Communication Patterns describe the
     installer, templates, and shell runtime but no CI validation boundary; the

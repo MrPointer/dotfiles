@@ -14,7 +14,7 @@ execution:
     - testing-e2e-containers
 test:
   mode: not-applicable
-  basis: "Barrier: the workflows run only on hosted GitHub Actions runners for a pushed pull request, workers cannot push, no local Actions runner is installed, and macOS jobs cannot run in a container. Alternative verification: parse both workflows, shellcheck the validation script, and run the script locally for the Ubuntu bare personal and bare work cases inside the installer/docker/ubuntu image with an installer built from this branch, including one run that must fail on an empty managed list. Named gap: hosted evidence for all eight jobs, the macOS jobs, the with-tools jobs, the exemption cases, and ordering, collected on PR B and later per tasks.md › Execution Handoff."
+  basis: "Barrier: the workflows run only on hosted GitHub Actions runners for a pushed pull request, workers cannot push, no local Actions runner is installed, and macOS jobs cannot run in a container. Alternative verification: parse both workflows, shellcheck the validation script, and run the script locally for all four Ubuntu cases (bare personal, bare work, with-tools personal, with-tools work) inside the installer/docker/ubuntu image with an installer built from this branch, including one run that must fail on an empty managed list. Named gap: hosted evidence for the four macOS jobs, the hosted runs of all eight jobs, the exemption cases, and ordering, collected on PR B and later per tasks.md › Execution Handoff."
 contracts:
   produces: []
   consumes: []
@@ -70,8 +70,8 @@ exemption output and the always-running `Dotfile Validation Status` aggregate.
   per job, and keep `pull-requests: read` on `changes`. Keep the existing
   per-pull-request concurrency group.
 - Predecessor state: packet 02 left `installer-ci.yml` with only the
-  `pull_request` trigger and a `Installer CI Status` that fails on canceled
-  jobs. Keep both. Packet 01 added `--prepare-only`. Packet 03 added the guards
+  `pull_request` trigger, a `changes` job without push-only lines, and an
+  `Installer CI Status` that fails on canceled jobs. Keep all three. Packet 01 added `--prepare-only`. Packet 03 added the guards
   that the bare jobs need.
 - The validation steps live in `.github/scripts/validate-dotfiles.sh` so the
   same checks run in the container, on macOS, and locally. The script takes the
@@ -122,9 +122,10 @@ None.
   - the exempt filter matches exactly the plan's list, with root files matched
     only at the repository root.
 - Local Ubuntu run inside the `installer/docker/ubuntu` image as `testuser`,
-  with an installer built from this branch: the bare personal case and the bare
-  work case each pass criteria 1 to 7, and the log shows criteria 2 and 3 called
-  with `--source` and `--config`.
+  with an installer built from this branch: the bare personal, bare work,
+  with-tools personal, and with-tools work cases each pass criteria 1 to 7. The
+  with-tools runs show every listed tool present for criterion 7, and the logs
+  show criteria 2 and 3 called with `--source` and `--config`.
 - A local run of the criterion 3 step against an empty managed list exits
   non-zero.
 - Report the alternative verification performed and restate the named hosted
@@ -133,8 +134,8 @@ None.
 ## Required Outputs and Handoff
 
 - One packet commit.
-- Handoff state: `installer-ci.yml` keeps packet 02's trigger and
-  `Installer CI Status`, and adds the caller job and `Dotfile Validation Status`.
+- Handoff state: `installer-ci.yml` keeps packet 02's trigger, `changes` job
+  cleanup, and `Installer CI Status`, and adds the caller job and `Dotfile Validation Status`.
 - Report the exact required-check name `Dotfile Validation Status` for the
   ruleset step in `tasks.md` › Execution Handoff.
 - This packet and packet 03 form delivery PR B.

@@ -5,6 +5,7 @@ primary_files:
   - installer/cmd/install_prepare_only_test.go
   - installer/docs/processes/installation.md
   - installer/docs/processes/dotfiles-setup.md
+  - installer/docs/processes/tools-installation.md
 execution:
   model_tier: mid-tier
   rationale: "Bounded change to one Cobra command: one new flag, one stop point in an existing sequence, and table-driven unit tests. It needs a small seam for testing but no new package or interface design."
@@ -13,9 +14,10 @@ execution:
     - writing-go-tests
     - developing-cli-apps
     - testing-go-code
+    - linting-go-code
 test:
   mode: required
-  basis: "New test file installer/cmd/install_prepare_only_test.go, run from installer/ with `go test ./cmd/ -run PrepareOnly -v` and then the full `go test ./...`. It covers the three step sequences in plan.md › Verification Strategy › Installer unit tests."
+  basis: "New test file installer/cmd/install_prepare_only_test.go with test functions named `Test_PrepareOnly...`, run from installer/ with `go test ./cmd/ -run Test_PrepareOnly -v` and then the full `go test ./...`. It covers the three step sequences in plan.md › Verification Strategy › Installer unit tests."
 contracts:
   produces: []
   consumes: []
@@ -65,6 +67,9 @@ point.
   flow and the steps list (step 9 and step 10 behavior when the flag is set).
 - `installer/docs/processes/dotfiles-setup.md`: document that `--prepare-only`
   stops after the config is written and before "Apply Dotfiles".
+- `installer/docs/processes/tools-installation.md`: its overview says tools
+  install after dotfiles are applied; note that `--prepare-only
+  --install-tools` installs them without applying dotfiles.
 - Excluded: workflows, dotfiles, `installer/lib/**`, other docs.
 
 ## Prerequisites and Integration
@@ -84,7 +89,9 @@ None.
 
 ## Acceptance and Verification
 
-- `go test ./cmd/ -run PrepareOnly -v` (from `installer/`) passes and shows:
+- Every new test function name starts with `Test_PrepareOnly`.
+- `go test ./cmd/ -run Test_PrepareOnly -v` (from `installer/`) reports at least
+  three passing tests and no "no tests to run" message, and shows:
   - with `--prepare-only` alone, `Initialize` runs, and `Apply` and the
     optional-tool step do not;
   - with `--prepare-only --install-tools`, `Initialize` and the optional-tool
@@ -92,16 +99,16 @@ None.
   - without `--prepare-only`, `Install`, `Initialize`, and `Apply` run in that
     order, unchanged.
 - `go test ./...` from `installer/` passes.
-- The project linter passes on the changed package, per `linting-go-code`.
+- `task lint` (from `installer/`) exits 0.
 - `go run . install --help` (from `installer/`) lists `--prepare-only` with help
   text that says it stops before applying dotfiles.
-- Both process docs describe the flag, the stop point, and the
+- The three process docs describe the flag, the stop point, and the
   `--install-tools` interaction, and no longer imply that every install applies
   dotfiles.
 
 ## Required Outputs and Handoff
 
-- One packet commit with the flag, tests, and the two doc updates.
+- One packet commit with the flag, tests, and the three doc updates.
 - Report the test names added and the test output.
 - This packet and packet 02 form delivery PR A (see `tasks.md` › Execution
   Handoff).
