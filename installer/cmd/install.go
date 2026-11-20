@@ -40,6 +40,7 @@ var (
 	verbose              bool
 	installPrerequisites bool
 	installTools         bool
+	prepareOnly          bool
 )
 
 // global variables for the command execution context.
@@ -127,8 +128,10 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if err := installOptionalTools(installLogger); err != nil {
-			installLogger.Warning("Failed to install optional tools: %v", err)
+		if shouldInstallOptionalTools(prepareOnly, installTools) {
+			if err := installOptionalTools(installLogger); err != nil {
+				installLogger.Warning("Failed to install optional tools: %v", err)
+			}
 		}
 
 		installLogger.Success("Installation completed successfully")
@@ -592,8 +595,20 @@ func setupDotfilesManager(log logger.Logger) error {
 		return err
 	}
 
+	return runDotfilesManagerSetup(log, dm, prepareOnly)
+}
+
+// shouldInstallOptionalTools reports whether the optional tools step runs.
+// A prepare-only install runs it only when tools were explicitly requested.
+func shouldInstallOptionalTools(prepareOnlyMode, installToolsRequested bool) bool {
+	return !prepareOnlyMode || installToolsRequested
+}
+
+// runDotfilesManagerSetup installs the dotfiles manager, writes its data, and applies the dotfiles.
+// In prepare-only mode it stops after the data is written and does not apply the dotfiles.
+func runDotfilesManagerSetup(log logger.Logger, dm dotfilesmanager.DotfilesManager, prepareOnlyMode bool) error {
 	log.StartProgress("Installing dotfiles manager")
-	err = dm.Install()
+	err := dm.Install()
 	if err != nil {
 		log.FailProgress("Failed to install dotfiles manager", err)
 		return err
@@ -606,6 +621,10 @@ func setupDotfilesManager(log logger.Logger) error {
 		return err
 	}
 	log.FinishProgress("Dotfiles manager data initialized successfully")
+
+	if prepareOnlyMode {
+		return log.FinishProgress("Dotfiles manager prepared; skipping dotfiles application (--prepare-only)")
+	}
 
 	log.StartProgress("Applying dotfiles configuration")
 	if err := dm.Apply(); err != nil {
@@ -787,6 +806,9 @@ func init() {
 		"Automatically install missing prerequisites")
 	installCmd.Flags().BoolVar(&installTools, "install-tools", false,
 		"Automatically install all optional tools")
+	installCmd.Flags().BoolVar(&prepareOnly, "prepare-only", false,
+		"Stop before applying dotfiles: install chezmoi and write its config, then exit. "+
+			"Optional tools are installed only when --install-tools is also set")
 
 	viper.BindPFlag("work-env", installCmd.Flags().Lookup("work-env"))
 	viper.BindPFlag("work-name", installCmd.Flags().Lookup("work-name"))
@@ -799,4 +821,5 @@ func init() {
 
 	viper.BindPFlag("install-prerequisites", installCmd.Flags().Lookup("install-prerequisites"))
 	viper.BindPFlag("install-tools", installCmd.Flags().Lookup("install-tools"))
+	cobra.CheckErr(viper.BindPFlag("prepare-only", installCmd.Flags().Lookup("prepare-only")))
 }

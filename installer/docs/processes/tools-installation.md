@@ -2,7 +2,7 @@
 
 ## Overview
 
-Installs optional CLI tools after dotfiles have been applied. Loads [tool definitions][domain-optional-tools] from [`tools.yaml`][tools-yaml], pre-filters them against the active package manager, and installs the user's selection. This step is entirely non-fatal — failures are logged but never abort the install.
+Installs optional CLI tools after dotfiles have been applied. With `--prepare-only --install-tools`, the tools are installed without applying dotfiles; `--prepare-only` alone skips this step. Loads [tool definitions][domain-optional-tools] from [`tools.yaml`][tools-yaml], pre-filters them against the active package manager, and installs the user's selection. This step is entirely non-fatal — failures are logged but never abort the install.
 
 ## Trigger
 
