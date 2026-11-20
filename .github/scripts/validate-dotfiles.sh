@@ -182,25 +182,46 @@ else
 fi
 
 section "Criterion 3: managed targets exist"
+# chezmoi does not create a file whose rendered content is empty (for example a
+# modify script that passes empty stdin through), so a missing managed file is
+# skipped when `chezmoi cat` renders it empty. Missing dirs and symlinks fail.
 managed_file="$WORK_DIR/managed"
-if run_chezmoi managed --include files,dirs,symlinks >"$managed_file"; then
+managed_files_file="$WORK_DIR/managed-files"
+if run_chezmoi managed --include files,dirs,symlinks >"$managed_file" &&
+    run_chezmoi managed --include files >"$managed_files_file"; then
     managed_count=0
     missing_count=0
+    skipped_count=0
     while IFS= read -r target || [[ -n "$target" ]]; do
         [[ -n "$target" ]] || continue
         managed_count=$((managed_count + 1))
-        if [[ ! -e "$HOME/$target" && ! -L "$HOME/$target" ]]; then
+        if [[ -e "$HOME/$target" || -L "$HOME/$target" ]]; then
+            continue
+        fi
+        if grep -Fxq -- "$target" "$managed_files_file"; then
+            if ! rendered=$(run_chezmoi cat "$HOME/$target" </dev/null); then
+                log "missing: ~/$target (chezmoi cat failed)"
+                missing_count=$((missing_count + 1))
+            elif [[ -z "${rendered//[[:space:]]/}" ]]; then
+                log "skipped: ~/$target (rendered content is empty; chezmoi does not create it)"
+                skipped_count=$((skipped_count + 1))
+            else
+                log "missing: ~/$target"
+                missing_count=$((missing_count + 1))
+            fi
+        else
             log "missing: ~/$target"
             missing_count=$((missing_count + 1))
         fi
     done <"$managed_file"
     log "managed paths listed: $managed_count"
+    log "empty-rendering files skipped: $skipped_count"
     if ((managed_count == 0)); then
         fail_criterion 3 "chezmoi managed listed no paths"
     elif ((missing_count > 0)); then
         fail_criterion 3 "$missing_count managed path(s) missing from the home"
     else
-        pass_criterion 3 "all $managed_count managed paths exist"
+        pass_criterion 3 "all $((managed_count - skipped_count)) managed paths exist ($skipped_count empty-rendering file(s) skipped)"
     fi
 else
     fail_criterion 3 "chezmoi managed exited non-zero"
@@ -331,7 +352,7 @@ else
 fi
 show_output "core.pager stdout" "$pager_out"
 show_output "core.pager stderr" "$pager_err"
-if ! grep -q "$marker_new" "$pager_out"; then
+if ! sed 's/\x1b\[[0-9;]*m//g' "$pager_out" | grep -q "$marker_new"; then
     log "core.pager output does not show the change"
     git_failed=1
 fi

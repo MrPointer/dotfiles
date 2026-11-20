@@ -64,7 +64,7 @@ apply = ["defer"]
 # Visual enhancement - can wait
 [plugins.zsh-diff-so-fancy]
 github = "so-fancy/diff-so-fancy"
-apply = ["defer"]
+apply = ["path", "defer"]
 
 # Convenience feature - can load later
 [plugins.zsh-sudo]

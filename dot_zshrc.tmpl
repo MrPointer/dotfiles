@@ -213,8 +213,9 @@ if [[ -n "$fzf_path" ]]; then
   fi
 
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-  # Use pre-generated .fzf.zsh instead of dynamic command substitution
-  [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+  # Use pre-generated .fzf.zsh instead of dynamic command substitution;
+  # fzf key-bindings need a terminal (zle), so skip when stdin is not a tty
+  [[ -f ~/.fzf.zsh && -t 0 ]] && source ~/.fzf.zsh
 fi
 unset fzf_path
 
