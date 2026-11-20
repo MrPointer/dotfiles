@@ -19,7 +19,9 @@ description: Create and troubleshoot GitHub Actions workflows. Use when editing 
 
 ## Project Workflows
 
-- **installer-ci.yml**: Build → test → E2E (matrix: ubuntu, debian, fedora, centos containers + macOS)
+- **installer-ci.yml**: Pull requests only. Change detection (installer filter and documentation-only exempt output) → build → test, privilege test, E2E (matrix: ubuntu, debian, fedora, centos containers + macOS) → dotfile validation; aggregates `Installer CI Status` and `Dotfile Validation Status`
+- **dotfile-validation.yml**: Reusable (`workflow_call`), called by installer-ci.yml; 8 jobs: Ubuntu and macOS × personal and work × bare and with-tools
+- **auto-merge.yml**: Enables squash auto-merge on non-draft same-repository pull requests
 - **release.yml**: GoReleaser on version tags
 
 ## Core Template

@@ -14,7 +14,7 @@ The project has three major parts that interact through a clear data contract: a
 
 ### Installer (`installer/`)
 
-- **Responsibility**: Bootstrap a new machine — install prerequisites, configure the shell, set up GPG, collect user input, produce the [chezmoi data contract][chezmoi-data-contract], clone and apply dotfiles
+- **Responsibility**: Bootstrap a new machine — install prerequisites, configure the shell, set up GPG, collect user input, produce the [chezmoi data contract][chezmoi-data-contract], clone and apply dotfiles. With `--prepare-only`, it stops after writing `chezmoi.toml` and leaves apply to chezmoi, so CI can apply a pull request's dotfiles; `--install-tools` still installs optional tools in that mode.
 - **Boundaries**: Initially produces `~/.config/chezmoi/chezmoi.toml` as its primary output. Does not manage dotfile content — that's chezmoi's job. Does not define shell behavior — that's the templates' job.
 - **Dependencies**: System package managers (apt, dnf, brew), Git, network access, `gpg`
 - **Internal architecture**: See [installer architecture][arch-installer]
@@ -101,6 +101,7 @@ flowchart LR
     C1 --> C2 --> C3
     C3 -- "generated files" --> R1
     C3 --> I4
+    I3 -. "--prepare-only\n--install-tools" .-> I4
     R1 --> R3
     R1 --> R2
     R2 --> R4

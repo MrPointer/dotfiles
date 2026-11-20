@@ -2,7 +2,7 @@
 
 ## Overview
 
-Installs chezmoi, produces the shared [chezmoi data contract][chezmoi-data-contract] from collected input, clones the dotfiles repository, and applies the dotfiles to the home directory. This is the main handoff from installer orchestration to template rendering in the [installation process][installation].
+Installs chezmoi, produces the shared [chezmoi data contract][chezmoi-data-contract] from collected input, clones the dotfiles repository, and applies the dotfiles to the home directory. With `--prepare-only`, it stops after writing the config file and does not clone or apply. This is the main handoff from installer orchestration to template rendering in the [installation process][installation].
 
 ## Trigger
 
@@ -42,10 +42,13 @@ flowchart TD
     end
 
     B --> G
-    I --> J
+    I --> PO{--prepare-only?}
+    PO -- Yes --> PX([Prepared, not applied])
+    PO -- No --> J
 
     style B fill:#36a,stroke:#248,color:#fff
     style L fill:#2d6,stroke:#183,color:#fff
+    style PX fill:#2d6,stroke:#183,color:#fff
 ```
 
 ## Flow
@@ -128,8 +131,8 @@ Result: All dotfiles are applied — shell configs, git config, work profiles, S
 
 - **Chezmoi binary**: Installed (via package manager or `~/.local/bin/chezmoi`)
 - **`~/.config/chezmoi/chezmoi.toml`**: Created with all template data
-- **`~/.local/share/chezmoi/`**: Deleted and re-cloned from GitHub
-- **Home directory**: All managed dotfiles applied (shell configs, git config, work profiles, SSH config, etc.)
+- **`~/.local/share/chezmoi/`**: Deleted and re-cloned from GitHub (full install only; unchanged with `--prepare-only`)
+- **Home directory**: All managed dotfiles applied (shell configs, git config, work profiles, SSH config, etc.) (full install only; nothing applied with `--prepare-only`)
 
 ## Dependencies
 

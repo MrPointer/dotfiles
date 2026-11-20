@@ -89,7 +89,7 @@ See the individual process docs for detailed failure scenarios and handling.
 - **Default shell**: Changed to the target shell (see [shell setup][shell-setup])
 - **GPG keyring**: New key pair created or existing key selected (see [GPG setup][gpg-setup])
 - **Chezmoi config**: `~/.config/chezmoi/chezmoi.toml` written with the applicable contract keys (see [dotfiles setup][dotfiles-setup])
-- **Home directory**: Dotfiles applied — shell configs, git config, work profiles, etc.
+- **Home directory**: Dotfiles applied — shell configs, git config, work profiles, etc. (full install only; nothing applied with `--prepare-only`)
 - **Optional tools**: Selected CLI tools installed via the active package manager (if any were chosen)
 
 ## Sub-Processes
@@ -101,7 +101,7 @@ See the individual process docs for detailed failure scenarios and handling.
 | [Package Resolution][pkg-resolution] | Translate abstract package keys to platform-specific names |
 | [Shell Setup][shell-setup] | Install shell and set as default |
 | [GPG Setup][gpg-setup] | Install GPG client, create or select signing key |
-| [Dotfiles Setup][dotfiles-setup] | Install chezmoi, write config, clone repo, apply dotfiles |
+| [Dotfiles Setup][dotfiles-setup] | Install chezmoi, write config, clone repo, apply dotfiles (`--prepare-only` stops after writing config) |
 | [Optional Tools Installation][tools-install] | Load tool definitions, pre-filter by active package manager, select and install optional CLI tools |
 
 ## Dependencies
