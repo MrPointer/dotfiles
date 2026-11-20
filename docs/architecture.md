@@ -112,3 +112,5 @@ flowchart LR
 [domain-deferred-brew]: dotfiles/domain.md#deferred-homebrew-loading
 [arch-installer]: ../installer/docs/architecture.md
 [shell-startup]: dotfiles/processes/shell-startup.md
+
+<!-- evidence -->
