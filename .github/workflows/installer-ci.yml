@@ -18,6 +18,9 @@ jobs:
       pull-requests: read
     outputs:
       installer: ${{ steps.filter.outputs.installer }}
+      # "true" only when every changed path is on the fixed documentation
+      # exempt list below; such pull requests skip dotfile validation.
+      exempt: ${{ steps.exempt.outputs.non_exempt == 'false' && 'true' || 'false' }}
     steps:
       - uses: dorny/paths-filter@v4
         id: filter
@@ -26,6 +29,28 @@ jobs:
             installer:
               - "installer/**"
               - ".github/workflows/installer-ci.yml"
+
+      # With the "every" quantifier a changed path counts as non-exempt only
+      # when it matches "**" and none of the negated entries. Each entry
+      # matches only at the location shown; root files never match deeper.
+      - uses: dorny/paths-filter@v4
+        id: exempt
+        with:
+          predicate-quantifier: every
+          filters: |
+            non_exempt:
+              - "**"
+              - "!README.md"
+              - "!AGENTS.md"
+              - "!CLAUDE.md"
+              - "!docs/**"
+              - "!specs/**"
+              - "!installer/docs/**"
+              - "!.specify/**"
+              - "!installer/AGENTS.md"
+              - "!installer/CLAUDE.md"
+              - "!installer/docker/AGENTS.md"
+              - "!installer/docker/CLAUDE.md"
 
   build:
     name: Build
@@ -422,3 +447,60 @@ jobs:
           done
 
           echo "All jobs passed (or were skipped)"
+
+  # Runs the dotfile validation matrix after the installer jobs. Starts right
+  # after change detection when the installer filter is false (installer jobs
+  # skipped), and otherwise only when every installer job succeeded.
+  dotfile-validation:
+    name: Dotfile Validation
+    needs: [changes, build, test, privilege-test, e2e-test]
+    if: >-
+      ${{
+        !cancelled() &&
+        needs.changes.result == 'success' &&
+        needs.changes.outputs.exempt == 'false' &&
+        (
+          needs.changes.outputs.installer == 'false' ||
+          (
+            needs.build.result == 'success' &&
+            needs.test.result == 'success' &&
+            needs.privilege-test.result == 'success' &&
+            needs.e2e-test.result == 'success'
+          )
+        )
+      }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/dotfile-validation.yml
+    with:
+      installer-source: ${{ needs.changes.outputs.installer == 'true' && 'build' || 'release' }}
+
+  # Required check: passes only for an exempt pull request or a successful
+  # dotfile validation, and fails in every other case.
+  dotfile-validation-status:
+    name: Dotfile Validation Status
+    if: always()
+    needs: [changes, dotfile-validation]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          EXEMPT: ${{ needs.changes.outputs.exempt }}
+          VALIDATION_RESULT: ${{ needs.dotfile-validation.result }}
+        run: |
+          echo "changes: $CHANGES_RESULT (exempt: ${EXEMPT:-unset})"
+          echo "dotfile-validation: $VALIDATION_RESULT"
+
+          if [[ "$CHANGES_RESULT" == "success" && "$EXEMPT" == "true" ]]; then
+            echo "Pull request changes only exempt documentation paths"
+            exit 0
+          fi
+
+          if [[ "$VALIDATION_RESULT" == "success" ]]; then
+            echo "Dotfile validation passed"
+            exit 0
+          fi
+
+          echo "Dotfile validation did not succeed for a non-exempt pull request"
+          exit 1
