@@ -74,8 +74,4 @@ CI runs the privilege checks natively on a disposable Ubuntu runner, without
 Docker. For the native runner and its safety requirements, see [Privilege
 Integration Tests](../AGENTS.md#privilege-integration-tests).
 
-The Dotfile Validation workflow's Ubuntu jobs build `ubuntu/` and run
-preparation and validation inside that image as `testuser` on the hosted
-runner, so changes to `ubuntu/` also affect dotfile validation.
-
 For E2E testing procedures, load the `testing-e2e-containers` skill.
