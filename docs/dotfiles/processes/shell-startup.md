@@ -97,7 +97,7 @@ flowchart TD
 8. **Cache completions** — Generate completion files for cargo, poetry, pip, pipx only if missing or older than 7 days. `pipx` completion generation requires both `pipx` and `register-python-argcomplete` to exist before invoking argcomplete.
 9. **Source work RC extension** — If `personal.work_env` is true, source `WORK_ZSH_RC_EXTENSION` (see [work environment loading][work-env-loading])
 10. **Load oh-my-zsh functions and plugins** — Vendored git functions, key-bindings, git, dotenv plugins
-11. **Load sheldon plugins** — `eval "$(sheldon source)"` loads the plugin set defined in [`plugins.toml`][sheldon-plugins]
+11. **Load sheldon plugins** — If `sheldon` is on PATH, `eval "$(sheldon source)"` loads the plugin set defined in [`plugins.toml`][sheldon-plugins]; otherwise the step is skipped
 12. **Load Powerlevel10k theme** — Source `~/.p10k.zsh`
 13. **Configure fzf and fzf-tab** — Fuzzy finder integration with completion system
 14. **VS Code shell integration** — If running inside VS Code terminal, load VS Code's shell integration script
@@ -124,6 +124,13 @@ flowchart TD
 - **At step**: `.zshrc` steps 4 and 8
 - **Handling**: Guarded completion setup skips missing tools. Brew-installed uv/uvx completions are available only when Homebrew provides completion files on `fpath` and zsh's completion cache recognizes them.
 - **User impact**: Shell startup succeeds. Missing tools simply do not provide completions or commands until the user installs or activates them.
+
+#### Sheldon not installed
+
+- **Trigger**: `sheldon` is not on PATH, for example on a clean home before optional tools are installed
+- **At step**: `.zshrc` step 11
+- **Handling**: The `$+commands[sheldon]` guard skips plugin loading. The remaining steps still run.
+- **User impact**: Shell startup succeeds, but plugins from [`plugins.toml`][sheldon-plugins], including the Powerlevel10k theme, fzf-tab, autosuggestions, and syntax highlighting, are missing until sheldon is installed and a new shell starts.
 
 #### Stale zsh completion cache after Homebrew uv installation
 

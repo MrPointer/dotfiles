@@ -54,6 +54,10 @@ The shared `_nono_agent_run` helper sets `GIT_CONFIG_GLOBAL`, attempts to preloa
 
 See the [agent commit signing process][agent-commit-signing] for host setup, sandbox access, and verification.
 
+### Git Output Fallbacks
+
+The [common Git template][common-git-template] uses optional tools for diff output but does not require them. The pager runs output through diff-so-fancy when it is installed and passes it through unchanged otherwise, then shows it in `less`. The external diff points to the managed [`~/.local/bin/git-external-diff`][git-external-diff] helper, which uses difftastic (`difft`) when it is installed and prints a standard unified diff otherwise. Git commands that show diffs therefore work on a machine where these tools are not installed yet.
+
 ### Agent Sandbox Features
 
 An agent sandbox feature is extra access that `_nono_agent_run` adds at launch for selected profiles only, when the access cannot be expressed as a static nono profile grant. Each agent shell file declares its features at the top of the file with `_nono_agent_enable <profile> <feature>`. The shared launcher holds no profile names; it checks `_nono_agent_has_feature` for the profile being launched.
@@ -106,4 +110,5 @@ See the [shell startup process][shell-startup] for the full shell startup flow i
 [agent-git-template]: ../../private_dot_config/git/agent.gitconfig.tmpl
 [common-git-template]: ../../private_dot_config/git/common.gitconfig.tmpl
 [agent-commit-signing]: processes/agent-commit-signing.md
+[git-external-diff]: ../../private_dot_local/bin/executable_git-external-diff
 [agent-docker-access]: processes/agent-docker-access.md
