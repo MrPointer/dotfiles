@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Git external diff driver (diff.external). Git calls it with:
+#   path old-file old-hex old-mode new-file new-hex new-mode
+# Uses difftastic when available, otherwise prints a unified diff.
+
+if command -v difft >/dev/null 2>&1; then
+   exec difft "$@"
+fi
+
+path=$1
+old=$2
+new=$5
+
+status=0
+diff -u --label "a/${path}" --label "b/${path}" "${old}" "${new}" || status=$?
+# diff exits 1 when the files differ; git treats any nonzero exit as failure.
+if ((status > 1)); then
+   exit "${status}"
+fi
+exit 0

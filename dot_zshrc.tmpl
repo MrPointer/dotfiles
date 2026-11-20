@@ -180,7 +180,9 @@ bindkey '\e[K' kill-line            # ESC [ K
 bindkey '\ed' kill-word             # ESC d
 
 # Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
-eval "$(sheldon source)"
+if (( $+commands[sheldon] )); then
+  eval "$(sheldon source)"
+fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -211,8 +213,9 @@ if [[ -n "$fzf_path" ]]; then
   fi
 
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-  # Use pre-generated .fzf.zsh instead of dynamic command substitution
-  [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+  # Use pre-generated .fzf.zsh instead of dynamic command substitution;
+  # fzf key-bindings need a terminal (zle), so skip when stdin is not a tty
+  [[ -f ~/.fzf.zsh && -t 0 ]] && source ~/.fzf.zsh
 fi
 unset fzf_path
 

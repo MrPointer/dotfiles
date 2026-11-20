@@ -1,0 +1,201 @@
+name: Dotfile Validation
+
+# Reusable workflow called by Installer CI. Each job prepares a clean home with
+# `dotfiles-installer install --prepare-only`, applies the checked-out
+# pull-request merge commit with chezmoi, and checks the pass criteria in
+# .github/scripts/validate-dotfiles.sh.
+on:
+  workflow_call:
+    inputs:
+      installer-source:
+        description: >-
+          Where the installer binary comes from: "build" uses the
+          build-artifacts artifact of the calling run; "release" downloads the
+          latest published release.
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  validate:
+    name: Validate (${{ matrix.platform }}, ${{ matrix.profile }}, ${{ matrix.variant }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu
+            os: ubuntu-latest
+            profile: personal
+            variant: bare
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only
+          - platform: ubuntu
+            os: ubuntu-latest
+            profile: work
+            variant: bare
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only --work-env
+          - platform: ubuntu
+            os: ubuntu-latest
+            profile: personal
+            variant: with-tools
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only --install-tools
+          - platform: ubuntu
+            os: ubuntu-latest
+            profile: work
+            variant: with-tools
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only --install-tools --work-env
+          - platform: macos
+            os: macos-latest
+            profile: personal
+            variant: bare
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only
+          - platform: macos
+            os: macos-latest
+            profile: work
+            variant: bare
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only --work-env
+          - platform: macos
+            os: macos-latest
+            profile: personal
+            variant: with-tools
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only --install-tools
+          - platform: macos
+            os: macos-latest
+            profile: work
+            variant: with-tools
+            prepare-flags: --non-interactive --plain --install-prerequisites --prepare-only --install-tools --work-env
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      PREPARE_FLAGS: ${{ matrix.prepare-flags }}
+      VARIANT: ${{ matrix.variant }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set Installer Directory
+        run: echo "INSTALLER_DIR=$RUNNER_TEMP/dotfile-validation-installer" >> "$GITHUB_ENV"
+
+      - name: Download Build Artifacts
+        if: inputs.installer-source == 'build'
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ${{ runner.temp }}/build-artifacts
+
+      - name: Select Built Installer
+        if: inputs.installer-source == 'build'
+        env:
+          ARTIFACT_DIR: ${{ runner.temp }}/build-artifacts
+        run: |
+          case "$(uname -s)-$(uname -m)" in
+            Darwin-arm64) build_dir=dotfiles_installer_darwin_arm64_v8.0 ;;
+            Linux-x86_64) build_dir=dotfiles_installer_linux_amd64_v1 ;;
+            Linux-aarch64) build_dir=dotfiles_installer_linux_arm64_v8.0 ;;
+            *) echo "Unsupported runner: $(uname -s)-$(uname -m)"; exit 1 ;;
+          esac
+          mkdir -p "$INSTALLER_DIR"
+          cp "$ARTIFACT_DIR/$build_dir/dotfiles-installer" "$INSTALLER_DIR/dotfiles-installer"
+          chmod 755 "$INSTALLER_DIR/dotfiles-installer"
+          echo "Using build artifact: $build_dir"
+
+      - name: Download Latest Released Installer
+        if: inputs.installer-source == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          case "$(uname -s)-$(uname -m)" in
+            Darwin-arm64) asset_suffix=darwin-arm64 ;;
+            Linux-x86_64) asset_suffix=linux-x86_64 ;;
+            Linux-aarch64) asset_suffix=linux-arm64 ;;
+            *) echo "Unsupported runner: $(uname -s)-$(uname -m)"; exit 1 ;;
+          esac
+          download_dir="$RUNNER_TEMP/release"
+          mkdir -p "$download_dir" "$INSTALLER_DIR"
+          gh release download --repo "$REPOSITORY" \
+            --pattern "dotfiles-installer-*-${asset_suffix}.tar.gz" \
+            --dir "$download_dir"
+          tar -xzf "$download_dir"/dotfiles-installer-*-"${asset_suffix}".tar.gz \
+            -C "$INSTALLER_DIR" dotfiles-installer
+          chmod 755 "$INSTALLER_DIR/dotfiles-installer"
+          echo "Using latest release asset: $(ls "$download_dir")"
+
+      - name: Show Installer Version
+        run: |
+          "$INSTALLER_DIR/dotfiles-installer" --version || true
+          "$INSTALLER_DIR/dotfiles-installer" install --help | grep -- '--prepare-only'
+
+      # Ubuntu: a fresh container from the minimal installer test image, with
+      # preparation and validation running as its passwordless-sudo testuser.
+      - name: Start Ubuntu Container
+        if: matrix.platform == 'ubuntu'
+        run: |
+          docker build -t dotfile-validation-ubuntu installer/docker/ubuntu
+          docker run -d --name dotfile-validation \
+            -v "$GITHUB_WORKSPACE:/workspace/dotfiles:ro" \
+            -v "$INSTALLER_DIR:/opt/dotfile-validation-installer:ro" \
+            dotfile-validation-ubuntu tail -f /dev/null
+
+      - name: Prepare Clean Home (Ubuntu)
+        if: matrix.platform == 'ubuntu'
+        env:
+          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
+        run: |
+          # shellcheck disable=SC2086 # PREPARE_FLAGS is a list of flags
+          docker exec --user testuser --workdir /home/testuser \
+            --env HOME=/home/testuser --env USER=testuser \
+            --env CHEZMOI_GITHUB_ACCESS_TOKEN \
+            dotfile-validation \
+            /opt/dotfile-validation-installer/dotfiles-installer install $PREPARE_FLAGS
+
+      - name: Validate Dotfiles (Ubuntu)
+        if: matrix.platform == 'ubuntu'
+        env:
+          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
+        run: |
+          docker exec --user testuser --workdir /home/testuser \
+            --env HOME=/home/testuser --env USER=testuser \
+            --env CHEZMOI_GITHUB_ACCESS_TOKEN \
+            dotfile-validation \
+            bash /workspace/dotfiles/.github/scripts/validate-dotfiles.sh \
+              "$VARIANT" /workspace/dotfiles /home/testuser/.config/chezmoi/chezmoi.toml
+
+      - name: Remove Ubuntu Container
+        if: always() && matrix.platform == 'ubuntu'
+        run: docker rm -f dotfile-validation || true
+
+      # macOS: the hosted runner with HOME pointed at a new empty directory.
+      # Nothing is removed from the runner image.
+      - name: Create Empty Home (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          validation_home="$RUNNER_TEMP/dotfile-validation-home"
+          mkdir "$validation_home"
+          echo "VALIDATION_HOME=$validation_home" >> "$GITHUB_ENV"
+
+      - name: Prepare Clean Home (macOS)
+        if: matrix.platform == 'macos'
+        env:
+          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
+        run: |
+          export HOME="$VALIDATION_HOME"
+          cd "$HOME"
+          # shellcheck disable=SC2086 # PREPARE_FLAGS is a list of flags
+          "$INSTALLER_DIR/dotfiles-installer" install $PREPARE_FLAGS
+
+      - name: Validate Dotfiles (macOS)
+        if: matrix.platform == 'macos'
+        env:
+          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
+        run: |
+          export HOME="$VALIDATION_HOME"
+          cd "$HOME"
+          bash "$GITHUB_WORKSPACE/.github/scripts/validate-dotfiles.sh" \
+            "$VARIANT" "$GITHUB_WORKSPACE" "$HOME/.config/chezmoi/chezmoi.toml"
