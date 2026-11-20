@@ -180,9 +180,7 @@ bindkey '\e[K' kill-line            # ESC [ K
 bindkey '\ed' kill-word             # ESC d
 
 # Load plugins with sheldon (The list of plugins is in ~/.config/sheldon/plugins.toml)
-if (( $+commands[sheldon] )); then
-  eval "$(sheldon source)"
-fi
+eval "$(sheldon source)"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
