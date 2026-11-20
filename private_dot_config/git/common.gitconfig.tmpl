@@ -16,10 +16,10 @@
 [core]
    autocrlf = input
    editor = nvim
-   pager = diff-so-fancy | less --tabs=4 -RFX
+   pager = "( if command -v diff-so-fancy >/dev/null 2>&1; then diff-so-fancy; else cat; fi ) | less --tabs=4 -RFX"
 [diff]
    algorithm = histogram
-   external = difft
+   external = {{ .chezmoi.homeDir }}/.local/bin/git-external-diff
 [grep]
    patternType = perl
 [alias]
