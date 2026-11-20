@@ -132,56 +132,15 @@ jobs:
           "$INSTALLER_DIR/dotfiles-installer" --version || true
           "$INSTALLER_DIR/dotfiles-installer" install --help | grep -- '--prepare-only'
 
-      # Ubuntu: a fresh container from the minimal installer test image, with
-      # preparation and validation running as its passwordless-sudo testuser.
-      - name: Start Ubuntu Container
-        if: matrix.platform == 'ubuntu'
-        run: |
-          docker build -t dotfile-validation-ubuntu installer/docker/ubuntu
-          docker run -d --name dotfile-validation \
-            -v "$GITHUB_WORKSPACE:/workspace/dotfiles:ro" \
-            -v "$INSTALLER_DIR:/opt/dotfile-validation-installer:ro" \
-            dotfile-validation-ubuntu tail -f /dev/null
-
-      - name: Prepare Clean Home (Ubuntu)
-        if: matrix.platform == 'ubuntu'
-        env:
-          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
-        run: |
-          # shellcheck disable=SC2086 # PREPARE_FLAGS is a list of flags
-          docker exec --user testuser --workdir /home/testuser \
-            --env HOME=/home/testuser --env USER=testuser \
-            --env CHEZMOI_GITHUB_ACCESS_TOKEN \
-            dotfile-validation \
-            /opt/dotfile-validation-installer/dotfiles-installer install $PREPARE_FLAGS
-
-      - name: Validate Dotfiles (Ubuntu)
-        if: matrix.platform == 'ubuntu'
-        env:
-          CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
-        run: |
-          docker exec --user testuser --workdir /home/testuser \
-            --env HOME=/home/testuser --env USER=testuser \
-            --env CHEZMOI_GITHUB_ACCESS_TOKEN \
-            dotfile-validation \
-            bash /workspace/dotfiles/.github/scripts/validate-dotfiles.sh \
-              "$VARIANT" /workspace/dotfiles /home/testuser/.config/chezmoi/chezmoi.toml
-
-      - name: Remove Ubuntu Container
-        if: always() && matrix.platform == 'ubuntu'
-        run: docker rm -f dotfile-validation || true
-
-      # macOS: the hosted runner with HOME pointed at a new empty directory.
+      # The hosted runner with HOME pointed at a new empty directory.
       # Nothing is removed from the runner image.
-      - name: Create Empty Home (macOS)
-        if: matrix.platform == 'macos'
+      - name: Create Empty Home
         run: |
           validation_home="$RUNNER_TEMP/dotfile-validation-home"
           mkdir "$validation_home"
           echo "VALIDATION_HOME=$validation_home" >> "$GITHUB_ENV"
 
-      - name: Prepare Clean Home (macOS)
-        if: matrix.platform == 'macos'
+      - name: Prepare Clean Home
         env:
           CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
         run: |
@@ -190,8 +149,7 @@ jobs:
           # shellcheck disable=SC2086 # PREPARE_FLAGS is a list of flags
           "$INSTALLER_DIR/dotfiles-installer" install $PREPARE_FLAGS
 
-      - name: Validate Dotfiles (macOS)
-        if: matrix.platform == 'macos'
+      - name: Validate Dotfiles
         env:
           CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ github.token }}
         run: |
