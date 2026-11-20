@@ -2,12 +2,6 @@ name: Installer CI
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
-    paths:
-      - "installer/**"
-      - ".github/workflows/installer-ci.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -25,15 +19,9 @@ jobs:
     outputs:
       installer: ${{ steps.filter.outputs.installer }}
     steps:
-      - uses: actions/checkout@v4
-        if: github.event_name == 'push'
-        with:
-          fetch-depth: 2
-
       - uses: dorny/paths-filter@v4
         id: filter
         with:
-          base: ${{ github.ref }}
           filters: |
             installer:
               - "installer/**"
@@ -421,14 +409,16 @@ jobs:
           echo "privilege-test: ${{ needs.privilege-test.result }}"
           echo "e2e-test: ${{ needs.e2e-test.result }}"
 
-          if [[ "${{ needs.changes.result }}" == "failure" || \
-                "${{ needs.build.result }}" == "failure" || \
-                "${{ needs.test.result }}" == "failure" || \
-                "${{ needs.privilege-test.result }}" == "failure" || \
-                "${{ needs.privilege-test.result }}" == "cancelled" || \
-                "${{ needs.e2e-test.result }}" == "failure" ]]; then
-            echo "One or more jobs failed"
-            exit 1
-          fi
+          for result in \
+            "${{ needs.changes.result }}" \
+            "${{ needs.build.result }}" \
+            "${{ needs.test.result }}" \
+            "${{ needs.privilege-test.result }}" \
+            "${{ needs.e2e-test.result }}"; do
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "One or more jobs failed or were cancelled"
+              exit 1
+            fi
+          done
 
-          echo "All jobs passed (or were skipped/cancelled)"
+          echo "All jobs passed (or were skipped)"

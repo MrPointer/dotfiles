@@ -74,6 +74,8 @@ flowchart TD
 
 ### Step 3: Apply Dotfiles
 
+When the installer runs with `--prepare-only`, setup stops after Step 2 (the config file is written) and this step does not run. The chezmoi source is not cloned and no dotfiles are applied.
+
 7. **Remove existing clone** — Delete `~/.local/share/chezmoi` unconditionally (ensures a fresh clone)
 8. **Run chezmoi** — Execute `chezmoi init --apply MrPointer` with flags:
    - `--source ~/.local/share/chezmoi`

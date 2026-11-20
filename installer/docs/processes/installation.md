@@ -41,7 +41,11 @@ flowchart TD
     L --> N
     M --> N[Install chezmoi]
     N --> O[Initialize chezmoi data]
-    O --> P[Apply dotfiles]
+    O --> O1{--prepare-only?}
+    O1 -- No --> P[Apply dotfiles]
+    O1 -- Yes --> O2{--install-tools?}
+    O2 -- No --> Q
+    O2 -- Yes --> R
     P --> R{Tools available &<br>selected/auto?}
     R -- Yes --> S[Install optional tools]
     R -- No --> Q
@@ -62,10 +66,10 @@ flowchart TD
 6. **Install Homebrew on non-macOS** — If `--install-brew` is set and Homebrew wasn't installed in step 2
 7. **[Install and configure shell][shell-setup]** — Install the target shell (default: zsh) using the [shell source strategy][domain-shell-source], then set it as the user's default shell
 8. **[Set up GPG][gpg-setup]** — Ensure the GPG client is available. In interactive mode, create a key when none exists or select from existing keys; non-interactive mode skips only key creation and selection.
-9. **[Set up dotfiles manager][dotfiles-setup]** — Install chezmoi if needed, produce the [chezmoi data contract][chezmoi-data-contract] from collected input, then apply dotfiles
-10. **[Install optional tools][tools-install]** — Load [tool definitions][domain-optional-tools] from `tools.yaml`, pre-filter against the active package manager, then either auto-install all (if `--install-tools`) or present an interactive multi-select. Individual failures are logged but never abort the install.
+9. **[Set up dotfiles manager][dotfiles-setup]** — Install chezmoi if needed, produce the [chezmoi data contract][chezmoi-data-contract] from collected input, then apply dotfiles. With `--prepare-only`, the step stops after the chezmoi data is written: chezmoi is installed and its config file exists, but the source repository is not cloned and no dotfiles are applied.
+10. **[Install optional tools][tools-install]** — Load [tool definitions][domain-optional-tools] from `tools.yaml`, pre-filter against the active package manager, then either auto-install all (if `--install-tools`) or present an interactive multi-select. Individual failures are logged but never abort the install. With `--prepare-only`, this step runs only when `--install-tools` is also set; otherwise the installer exits successfully after step 9.
 
-Result: Machine is configured with the user's dotfiles and shell, an available GPG client, any interactively selected signing key, and the selected optional tools.
+Result (full install): Machine is configured with the user's dotfiles and shell, an available GPG client, any interactively selected signing key, and the selected optional tools.
 
 ### Failure Scenarios
 
